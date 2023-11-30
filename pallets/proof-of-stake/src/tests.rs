@@ -31,6 +31,9 @@ fn initialize_liquidity_rewards() {
 	TokensOf::<Test>::create(&acc_id, amount).unwrap();
 	TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 
+	let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+	is_liquidity_token_mock.expect().return_const(true);
+
 	ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
 	PromotedPoolRewards::<Test>::mutate(|pools| {
 		pools.get_mut(&4).unwrap().rewards = U256::from(0);
@@ -252,6 +255,7 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		// assert!(Test::is_enabled(4));
@@ -273,6 +277,7 @@ fn liquidity_rewards_work_after_burn_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		TokensOf::<Test>::transfer(0, &2, &3, 1000000, ExistenceRequirement::AllowDeath).unwrap();
@@ -967,7 +972,6 @@ fn rewards_storage_right_amounts_start3() {
 		)
 		.unwrap();
 
-		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 

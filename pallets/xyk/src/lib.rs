@@ -3628,6 +3628,10 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 	) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
 		Pallet::<T>::get_reserves(first_asset_id, second_asset_id)
 	}
+
+	fn is_liquidity_token(liquidity_asset_id: CurrencyIdOf<T>) -> bool {
+		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
+	}
 }
 
 impl<T: Config> PoolCreateApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {

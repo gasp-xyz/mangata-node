@@ -205,6 +205,10 @@ mockall::mock! {
 	liquidity_token_id: TokenId,
 	) -> Result<(TokenId, TokenId), DispatchError>;
 
+		fn is_liquidity_token(
+			liquidity_token_id: TokenId,
+		) -> bool;
+
 	fn valuate_liquidity_token(
 	liquidity_token_id: TokenId,
 	liquidity_token_amount: Balance,
@@ -227,6 +231,8 @@ mockall::mock! {
 	first_asset_id: TokenId,
 	second_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError>;
+
+
 	}
 }
 
@@ -427,6 +433,8 @@ impl ExtBuilder {
 
 	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
 		self.ext.execute_with(|| {
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
 			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();

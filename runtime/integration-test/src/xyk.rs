@@ -54,3 +54,10 @@ fn create_pool_disabled_meta_disabled() {
 		assert_err!(create_pool(), pallet_xyk::Error::<Runtime>::FunctionNotAvailableForThisToken);
 	});
 }
+
+#[test]
+fn test_decode_extrinsic() {
+	test_env(None).execute_with(|| {
+		UncheckedExtrinsic::decode(hex!("121212"));
+	});
+}

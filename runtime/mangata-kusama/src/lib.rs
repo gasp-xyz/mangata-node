@@ -369,8 +369,8 @@ impl Into<CallType> for RuntimeCall {
 
 use sp_runtime::generic::ExtendedCall;
 impl ExtendedCall for RuntimeCall {
-	fn context(&self) -> Option<(String, String)> {
-		Some(("dummy_call".to_string(), "dummy_params".to_string()))
+	fn context(&self) -> Option<(Vec<u8>, Vec<u8>)> {
+		Some(("dummy_call".as_bytes().to_vec(), "dummy_params".as_bytes().to_vec()))
 	}
 }
 

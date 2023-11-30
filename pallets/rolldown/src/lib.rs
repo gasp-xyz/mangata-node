@@ -49,7 +49,14 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
 			Self::end_dispute_period();
-			T::DbWeight::get().reads_writes(10,10)
+			T::DbWeight::get().reads_writes(20,20)
+		}
+
+		fn on_finalize(n: BlockNumberFor<T>){
+			let pending_updates_json = Self::get_pending_updates_as_json();
+			PendingUpdatesJson::<T>::put(pending_updates_json.clone());
+			let hash_of_pending_updates = Self::calculate_hash_of_pending_updates(pending_updates_json.as_str());
+			HashPendingUpdatesJson::<T>::put(hash_of_pending_updates);
 		}
 	}
 
@@ -158,6 +165,16 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
 	pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_pending_updates_json)]
+	pub type PendingUpdatesJson<T: Config> = StorageValue<_, String, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_hash_pending_updates_json)]
+	pub type HashPendingUpdatesJson<T: Config> = StorageValue<_, String, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -593,7 +610,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// for presentation purposes => json
-	fn get_pending_updates_json() {
+	fn get_pending_updates_as_json() -> String {
 		// let pending_updates_map = PENDING_UPDATES.lock().unwrap();
 		let mut updates_json = String::new();
 		updates_json.push_str("{\n");
@@ -616,5 +633,16 @@ impl<T: Config> Pallet<T> {
 
 		updates_json.push_str("}\n");
 		log!(info, "Pending Updates:\n{}", updates_json);
+		updates_json
+	}
+
+	fn calculate_hash_of_pending_updates(json_string_to_hash: &str) -> String {
+		let mut hash = "0".to_string();
+	
+		let hash_of_pending_updates = Self::calculate_keccak256_hash(json_string_to_hash);
+		hash = "0x".to_string() + &hash_of_pending_updates;
+		log!(info, "Keccak256 Hash of PENDING_UPDATES at {:?}", hash);
+	
+		hash
 	}
 }

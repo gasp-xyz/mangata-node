@@ -361,6 +361,17 @@ impl Valuate<Balance, TokenId> for TestTokenValuator {
 	) -> Result<(Balance, Balance), DispatchError> {
 		todo!()
 	}
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		todo!()
+	}
+
+	fn valuate_non_liquidity_token(
+		liquidity_token_id: TokenId,
+		liquidity_token_amount: Balance,
+	) -> Balance {
+		todo!()
+	}
 }
 
 pub(crate) struct ExtBuilder {

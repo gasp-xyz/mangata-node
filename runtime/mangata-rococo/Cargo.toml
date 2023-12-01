@@ -32,7 +32,7 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
-
+proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false}
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
 mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
@@ -192,6 +192,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"proof-of-stake-runtime-api/std",
 	"xyk-runtime-api/std",
 ]
 

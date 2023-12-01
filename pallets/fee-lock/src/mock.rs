@@ -147,6 +147,17 @@ impl<T: pallet_fee_lock::Config> Valuate<Balance, TokenId> for MockPoolReservesP
 			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into()),
 		}
 	}
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		unimplemented!()
+	}
+
+	fn valuate_non_liquidity_token(
+		liquidity_token_id: TokenId,
+		liquidity_token_amount: Balance,
+	) -> Balance {
+		unimplemented!()
+	}
 }
 
 parameter_types! {

@@ -1249,13 +1249,13 @@ where
 			/// Reward payments delay (number of rounds)
 			pub const RewardPaymentDelay: u32 = 2;
 			/// Minimum collators selected per round, default at genesis and minimum forever after
-			pub const MinSelectedCandidates: u32 = 25;
+			pub const MinSelectedCandidates: u32 = 50;
 			/// Maximum collator candidates allowed
-			pub const MaxCollatorCandidates: u32 = 50;
+			pub const MaxCollatorCandidates: u32 = 100;
 			/// Maximum delegators allowed per candidate
-			pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
+			pub const MaxTotalDelegatorsPerCandidate: u32 = 30;
 			/// Maximum delegators counted per candidate
-			pub const MaxDelegatorsPerCandidate: u32 = 12;
+			pub const MaxDelegatorsPerCandidate: u32 = 30;
 			/// Maximum delegations per delegator
 			pub const MaxDelegationsPerDelegator: u32 = 30;
 			/// Default fixed percent a collator takes off the top of due rewards
@@ -1470,6 +1470,18 @@ where
 			pub const ProxyDepositFactor: Balance = deposit(0, 33);
 			pub const AnnouncementDepositBase: Balance = deposit(1, 16);
 			pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
+		}
+	}
+
+	pub mod pallet_proof_of_stake {
+		use super::*;
+
+		parameter_types! {
+			pub const RewardsSchedulesLimit: u32 = 100_000u32;
+			// TODO: allign properly
+			pub const Min3rdPartyRewardValutationPerSession: u128 = 100 * 30_000 * currency::DOLLARS;
+			pub const Min3rdPartyRewardVolume: u128 = 100 * 30_000 * currency::DOLLARS;
+			pub const SchedulesPerBlock: u32 = 5;
 		}
 	}
 }

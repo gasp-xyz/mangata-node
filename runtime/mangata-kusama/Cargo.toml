@@ -37,6 +37,7 @@ pallet-xyk = { path = "../../pallets/xyk", default-features = false, version = "
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api", default-features = false, version = "2.0.0" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false }
+metamask-signature-runtime-api = { path = '../../pallets/metamask-signature-runtime-api', default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -175,6 +176,7 @@ std = [
 	"polkadot-primitives/std",
 	"polkadot-runtime-common/std",
 	"proof-of-stake-runtime-api/std",
+	"metamask-signature-runtime-api/std",
 	"scale-info/std",
 	"serde",
 	"sp-api/std",

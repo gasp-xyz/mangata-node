@@ -2,7 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::Encode;
+use codec::{alloc::string::String, Decode, Encode};
 pub use common_runtime::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -780,6 +780,17 @@ mod benches {
 }
 
 impl_runtime_apis! {
+
+	// impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
+	// 	fn get_eip712_sign_data(call: Vec<u8>) -> String{
+	// 		if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+	// 			if let Some((method, params)) = extrinsic.function.context() {
+	// 				return "ok".to_string();
+	// 			}
+	// 		}
+	// 		Default::default()
+	// 	}
+	// }
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(

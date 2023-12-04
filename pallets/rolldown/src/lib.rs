@@ -16,6 +16,7 @@ use codec::alloc::string::{String, ToString};
 use sp_runtime::serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 use scale_info::prelude::format;
+use sp_core::U256;
 
 const DISPUTE_PERIOD_LENGTH: u128 = 5;
 
@@ -57,6 +58,11 @@ pub mod pallet {
 			PendingUpdatesJson::<T>::put(pending_updates_json.clone());
 			let hash_of_pending_updates = Self::calculate_hash_of_pending_updates(pending_updates_json.as_str());
 			HashPendingUpdatesJson::<T>::put(hash_of_pending_updates);
+
+			let pending_updates_u256_array = Self::get_pending_updates_as_u256_array();
+			PendingUpdatesU256Array::<T>::put(pending_updates_u256_array.clone());
+			let hash_of_pending_updates_u256_array = Self::calculate_hash_of_u256_array(pending_updates_u256_array);
+			HashPendingUpdatesU256Array::<T>::put(hash_of_pending_updates_u256_array);
 		}
 	}
 
@@ -144,7 +150,7 @@ pub mod pallet {
 		pub canceler: String,
 		pub lastProccessedRequestOnL1: u128,
 		pub lastAcceptedRequestOnL1: u128,
-		pub hash: String,
+		pub hash: U256,
 	}
 	
 	#[derive(
@@ -175,6 +181,17 @@ pub mod pallet {
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_hash_pending_updates_json)]
 	pub type HashPendingUpdatesJson<T: Config> = StorageValue<_, String, OptionQuery>;
+
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_pending_updates_u256_array)]
+	pub type PendingUpdatesU256Array<T: Config> = StorageValue<_, Vec<U256>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_hash_pending_updates_u256_array)]
+	pub type HashPendingUpdatesU256Array<T: Config> = StorageValue<_, U256, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -591,6 +608,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn calculate_keccak256_hash_u256(input: &str) -> U256 {
+		let mut hasher = Keccak256::new();
+		hasher.update(input.as_bytes());
+		let result = hasher.finalize();
+	
+		U256::from(&result[..])
+	}
+
 	fn calculate_keccak256_hash(input: &str) -> String {
 		let mut hasher = Keccak256::new();
 		hasher.update(input.as_bytes());
@@ -599,14 +624,13 @@ impl<T: Config> Pallet<T> {
 		hex::encode(result)
 	}
 	
-	fn calculate_hash_of_pending_requests(json_string_to_hash: &str) -> String {
+	fn calculate_hash_of_pending_requests(json_string_to_hash: &str) -> U256 {
 		let mut hash = "0".to_string();
 	
-		let hash_of_pending_request = Self::calculate_keccak256_hash(json_string_to_hash);
-		hash = "0x".to_string() + &hash_of_pending_request;
-		log!(info, "Keccak256 Hash of PENDING_REQUESTS at {:?}", hash);
+		let hash_of_pending_request = Self::calculate_keccak256_hash_u256(json_string_to_hash);
+		log!(info, "Keccak256 Hash of PENDING_REQUESTS at {:#?}", hash_of_pending_request);
 	
-		hash
+		hash_of_pending_request
 	}
 
 	// for presentation purposes => json
@@ -644,5 +668,45 @@ impl<T: Config> Pallet<T> {
 		log!(info, "Keccak256 Hash of PENDING_UPDATES at {:?}", hash);
 	
 		hash
+	}
+
+	fn get_pending_updates_as_u256_array() -> Vec<U256> {
+		let mut updates: Vec<U256> = Vec::<U256>::new();
+
+		for (request_id, update) in PENDING_UPDATES::<T>::iter() {
+			match update {
+				Update::Cancel(cancel) => {
+					updates.push(1.into());
+					updates.push(cancel.lastProccessedRequestOnL1.into());
+					updates.push(cancel.lastAcceptedRequestOnL1.into());
+					updates.push(cancel.hash);
+				}
+				Update::ProcessedUpdate(success) => {
+					updates.push(1.into());
+					if success {
+						updates.push(1.into());
+					} else {
+						updates.push(0.into());
+					}
+
+				}
+				_ => {
+				}
+			}
+		}
+
+		log!(info, "Pending Updates: {:?}", updates);
+		updates
+	}
+
+	fn calculate_hash_of_u256_array(u256_vec: Vec<U256>) -> U256 {
+		let mut hasher = Keccak256::new();
+		let mut byte_array: [u8; 32] = Default::default(); 
+		for u in u256_vec.iter() {
+			u.to_big_endian(&mut byte_array[..]);
+			hasher.update(&byte_array[..]);
+		}
+		let result = hasher.finalize();
+		U256::from(&result[..])
 	}
 }

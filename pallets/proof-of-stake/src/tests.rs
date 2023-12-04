@@ -4313,3 +4313,182 @@ fn test_NotEnoughAssets_is_triggered_when_user_wants_to_deactive_more_tokens_tha
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn test_cumulative_rewards_per_liquidity_over_multiple_sessions() {
+	ExtBuilder::new()
+		.issue(ALICE, LIQUIDITY_TOKEN, 100_000_000_000u128)
+		.issue(BOB, REWARD_TOKEN, 100_000_000_000_000_000_000_000_000u128)
+		.issue(BOB, LIQUIDITY_TOKEN, 500_000_000_000u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(5);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(BOB),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				10000u128,
+				10u32.into(),
+			)
+			.unwrap();
+
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(0), 0)
+			);
+
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100u128,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(0), 0)
+			);
+
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(0), 0)
+			);
+
+			forward_to_block::<Test>(9);
+
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(0), 0)
+			);
+
+			forward_to_block::<Test>(18);
+
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(0), 0)
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap(),
+				0
+			);
+
+			forward_to_block::<Test>(25);
+
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(u128::MAX) * 1000 / 100, 1)
+			);
+
+			forward_to_block::<Test>(30);
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+
+			assert_eq!(
+				ScheduleRewardsPerLiquidity::<Test>::get((LIQUIDITY_TOKEN, REWARD_TOKEN)),
+				(U256::from(2) * (U256::from(u128::MAX) * 1000 / 100), 2)
+			);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap(),
+				2000
+			);
+
+			ScheduleRewardsCalculator::<Test>::update_cumulative_rewards(
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_amount_of_rewards_when_activation_happens_after_schedule_was_processed_in_current_session()
+{
+	ExtBuilder::new()
+		.issue(ALICE, LIQUIDITY_TOKEN, 100_000_000_000u128)
+		.issue(BOB, REWARD_TOKEN, 100_000_000_000_000_000_000_000_000u128)
+		.issue(BOB, LIQUIDITY_TOKEN, 500_000_000_000u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(36);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(BOB),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				100_000_000_000_000_000_000_000_000u128,
+				7u32.into(),
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(40);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100_000_000_000u128,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(50);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(ALICE),
+				LIQUIDITY_TOKEN,
+				100_000_000_000u128,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(64);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100_000_000_000u128,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			roll_to_next_session::<Test>();
+			roll_to_next_session::<Test>();
+			roll_to_next_session::<Test>();
+			roll_to_next_session::<Test>();
+			roll_to_next_session::<Test>();
+
+			let alice_rewards = ProofOfStake::calculate_3rdparty_rewards_amount(
+				ALICE,
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+			)
+			.unwrap();
+			let bob_rewards =
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap();
+
+			// + 1 because of rounding
+			assert_eq!((alice_rewards + bob_rewards + 1), 100_000_000_000_000_000_000_000_000);
+		});
+}

@@ -2,7 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::Encode;
+use codec::{Decode, Encode};
 pub use common_runtime::{
 	consts::DAYS, currency::*, deposit, runtime_types, tokens, types::*, CallType,
 };
@@ -74,8 +74,12 @@ pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall
 
 use sp_runtime::generic::ExtendedCall;
 impl ExtendedCall for RuntimeCall {
-	fn context(&self) -> Option<(Vec<u8>, Vec<u8>)> {
-		Some(("dummy_call".as_bytes().to_vec(), "dummy_params".as_bytes().to_vec()))
+	fn context(&self) -> Option<(String, String)> {
+		match self {
+			RuntimeCall::Tokens(orml_tokens::Call::transfer { dest, currency_id, amount }) =>
+				Some(("orml_tokens::transfer".to_string(), "".to_string())),
+			_ => Some(("todo".to_string(), "todo".to_string())),
+		}
 	}
 }
 
@@ -797,8 +801,24 @@ mod benches {
 	);
 }
 
+use codec::alloc::string::{String, ToString};
+
 impl_runtime_apis! {
 
+
+	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
+		fn get_eip712_sign_data(call: Vec<u8>) -> String{
+			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+				if let Some((method, params)) = extrinsic.function.context() {
+					metamask_signature_runtime_api::eip712_payload(method, params)
+				}else{
+					Default::default()
+				}
+			}else{
+				Default::default()
+			}
+		}
+	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(

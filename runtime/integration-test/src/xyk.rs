@@ -55,9 +55,12 @@ fn create_pool_disabled_meta_disabled() {
 	});
 }
 
+use codec::Decode;
+use hex_literal::hex;
+
 #[test]
 fn test_decode_extrinsic() {
 	test_env(None).execute_with(|| {
-		UncheckedExtrinsic::decode(hex!("121212"));
+		UncheckedExtrinsic::decode(&mut hex!("b0040a00008eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a4800000000821a0600").as_ref()).unwrap();
 	});
 }

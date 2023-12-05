@@ -380,8 +380,8 @@ impl Into<CallType> for RuntimeCall {
 
 use sp_runtime::generic::ExtendedCall;
 impl ExtendedCall for RuntimeCall {
-	fn context(&self) -> Option<(Vec<u8>, Vec<u8>)> {
-		Some(("dummy_call".as_bytes().to_vec(), "dummy_params".as_bytes().to_vec()))
+	fn context(&self) -> Option<(String, String)> {
+		Some(("dummy_call".to_string(), "dummy_params".to_string()))
 	}
 }
 
@@ -778,19 +778,23 @@ mod benches {
 		[pallet_proof_of_stake, ProofOfStake]
 	);
 }
+use codec::alloc::string::ToString;
 
 impl_runtime_apis! {
 
-	// impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
-	// 	fn get_eip712_sign_data(call: Vec<u8>) -> String{
-	// 		if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
-	// 			if let Some((method, params)) = extrinsic.function.context() {
-	// 				return "ok".to_string();
-	// 			}
-	// 		}
-	// 		Default::default()
-	// 	}
-	// }
+	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
+		fn get_eip712_sign_data(call: Vec<u8>) -> String{
+			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+				if let Some((method, params)) = extrinsic.function.context() {
+					metamask_signature_runtime_api::eip712_payload(method, params)
+				}else{
+					Default::default()
+				}
+			}else{
+				Default::default()
+			}
+		}
+	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(

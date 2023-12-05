@@ -14,12 +14,13 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 	"derive",
 ] }
 
-sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+serde_json = { version = "1.0.108", default-features = false }
+sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 
 [features]
 default = ["std"]
@@ -29,6 +30,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"serde",
+	"serde_json/std",
 	"sp-api/std",
 	"sp-core/std",
 	"sp-runtime/std",

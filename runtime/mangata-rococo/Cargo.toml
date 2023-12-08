@@ -23,6 +23,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 serde = { version = "1.0.137", optional = true, features = ["derive"] }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
+bs58 = { version = "0.5.0", default-features = false }
 
 # Local Dependencies
 common-runtime = { path = '../common', default-features = false, version = '4.0.0' }
@@ -121,6 +122,8 @@ pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan
 default = ["std"]
 std = [
 	"codec/std",
+	"bs58/std",
+	"bs58/alloc",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
 	"cumulus-pallet-parachain-system/std",

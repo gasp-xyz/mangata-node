@@ -122,6 +122,8 @@ pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan
 default = ["std"]
 std = [
 	"codec/std",
+	"common-runtime/std",
+	"pallet-root-testing/std",
 	"bs58/std",
 	"bs58/alloc",
 	"cumulus-pallet-aura-ext/std",
@@ -252,6 +254,8 @@ try-runtime = [
 fast-runtime = ["common-runtime/fast-runtime"]
 
 runtime-benchmarks = [
+	"mangata-support/runtime-benchmarks",
+	"pallet-sudo-mangata/runtime-benchmarks",
 	"common-runtime/runtime-benchmarks",
 	"cumulus-pallet-parachain-system/runtime-benchmarks",
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",

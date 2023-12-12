@@ -1507,6 +1507,8 @@ pub mod pallet {
 		type StakingIssuanceVault: Get<Self::AccountId>;
 		/// The module that provides the set of fallback accounts
 		type FallbackProvider: GetMembers<Self::AccountId>;
+		/// The module that provides the info and processing for the sequencer stakes
+		type SequencerStakingProvider: SequencerStakingProviderTrait<Self::AccountId>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -3259,7 +3261,7 @@ pub mod pallet {
 		//
 		/// Compute the top `TotalSelected` candidates in the CandidatePool and return
 		/// a vec of their AccountIds (in the order of selection)
-		pub fn compute_top_candidates() -> (
+		pub fn compute_top_candidates(now: RoundIndex) -> (
 			Vec<(T::AccountId, BalanceOf<T>)>,
 			Vec<(T::AccountId, BalanceOf<T>)>,
 			BTreeMap<T::AccountId, BTreeMap<T::AccountId, BalanceOf<T>>>,
@@ -3282,6 +3284,8 @@ pub mod pallet {
 					.filter(|x| x.1 >= T::MinCollatorStk::get())
 					.collect::<_>();
 			selected_authors.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+			selected_authors = T::SequencerStakingProvider::process_potential_authors(selected_authors).unwrap_or(selected_authors);
 
 			let mut all_selected_collators = Vec::<(T::AccountId, BalanceOf<T>)>::new();
 			for selected_author in selected_authors.iter() {
@@ -3338,7 +3342,7 @@ pub mod pallet {
 			Self::staking_liquidity_tokens_snapshot();
 			// choose the top TotalSelected qualified candidates, ordered by stake
 			let (selected_authors, all_selected_collators, aggregators_collator_info) =
-				Self::compute_top_candidates();
+				Self::compute_top_candidates(now);
 
 			RoundAggregatorInfo::<T>::insert(now, aggregators_collator_info);
 

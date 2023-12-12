@@ -4492,3 +4492,30 @@ fn test_amount_of_rewards_when_activation_happens_after_schedule_was_processed_i
 			assert_eq!((alice_rewards + bob_rewards + 1), 100_000_000_000_000_000_000_000_000);
 		});
 }
+
+#[test]
+#[serial]
+fn test_event_is_emmited_when_pool_is_rewarded() {
+	ExtBuilder::new()
+		.issue(ALICE, LIQUIDITY_TOKEN, 100_000_000_000u128)
+		.issue(BOB, REWARD_TOKEN, 100_000_000_000_000_000_000_000_000u128)
+		.issue(BOB, LIQUIDITY_TOKEN, 500_000_000_000u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(36);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(BOB),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				100_000_000_000_000_000_000_000_000u128,
+				7u32.into(),
+			)
+			.unwrap();
+
+			assert_event_emitted!(Event::<Test>::ThirdPartySuccessfulPoolPromotion(
+				BOB,
+				LIQUIDITY_TOKEN,
+				REWARD_TOKEN,
+				100_000_000_000_000_000_000_000_000u128
+			));
+		});
+}

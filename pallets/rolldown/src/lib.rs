@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -12,8 +13,9 @@ use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{convert::TryInto, prelude::*};
 
+
 use codec::alloc::string::{String, ToString};
-use sp_runtime::serde::{Deserialize, Serialize};
+use sp_runtime::{serde::{Deserialize, Serialize}, traits::TryConvert};
 use sha3::{Digest, Keccak256};
 use scale_info::prelude::format;
 use sp_core::U256;
@@ -33,12 +35,29 @@ macro_rules! log {
 	};
 }
 
-pub use pallet::*;
 
+
+#[derive(Debug, PartialEq)]
+pub struct EthereumAddressConverter<AccountId>(sp_std::marker::PhantomData<AccountId>);
+impl TryConvert<String, sp_runtime::AccountId32> for EthereumAddressConverter<sp_runtime::AccountId32>
+{
+    fn try_convert(value: String) -> Result<sp_runtime::AccountId32, String> {
+        let eth_addr : [u8; 20] = array_bytes::hex2array(value.clone()).or(Err(value))?;
+        Ok(sp_core::blake2_256(eth_addr.as_ref()).into())
+    }
+}
+
+
+#[cfg(test)]
+mod tests;
+
+pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use super::*;
+	use sp_runtime::traits::TryConvert;
+
+use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -73,7 +92,7 @@ pub mod pallet {
 		pub readRights: u128,
 		pub cancelRights: u128,
 	}
-	
+
 	//L1 incomming request structs
 	//L1 incomming request structs
 	#[derive(
@@ -84,7 +103,7 @@ pub mod pallet {
 		pub lastProccessedRequestOnL1: u128,
 		pub lastAcceptedRequestOnL1: u128,
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Deserialize
 	)]
@@ -94,7 +113,7 @@ pub mod pallet {
 		pub RightsToUpdate(UpdateRightsRequestDetails),
 		pub Withdraw(WithdrawRequestDetails),
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode , TypeInfo, Default, Deserialize
 	)]
@@ -103,7 +122,7 @@ pub mod pallet {
 		pub tokenAddress: String,
 		pub amount: u128,
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize
 	)]
@@ -112,7 +131,7 @@ pub mod pallet {
 		pub tokenAddress: String,
 		pub amount: u128,
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize
 	)]
@@ -121,7 +140,7 @@ pub mod pallet {
 		pub readRights: u128,
 		pub cancelRights: u128,
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize
 	)]
@@ -130,7 +149,7 @@ pub mod pallet {
 	}
 	//L1 incomming request structs
 	//L1 incomming request structs
-	
+
 	//L2 outgoing updates structs
 	//L2 outgoing updates structs
 	#[derive(
@@ -141,7 +160,7 @@ pub mod pallet {
 		pub ProcessedUpdate(bool),
 		pub Slash(Slash),
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize
 	)]
@@ -152,7 +171,7 @@ pub mod pallet {
 		pub lastAcceptedRequestOnL1: u128,
 		pub hash: U256,
 	}
-	
+
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize
 	)]
@@ -163,11 +182,11 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
 	pub type last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn get_prev_last_processed_request_on_l2)]
 	pub type prev_last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
 	pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
@@ -240,6 +259,8 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        type AddressConverter: TryConvert<String, Self::AccountId>;
+
 	}
 
 	#[pallet::call]
@@ -249,12 +270,12 @@ pub mod pallet {
 		// sequencer read
 		//fn update_l2_from_l1(origin: String, l1_pending_requests_json: &'static str, current_block_number: u32) {
 		pub fn update_l2_from_l1(origin: OriginFor<T>, input: String, input_json: String) -> DispatchResultWithPostInfo {
-			
+
 			//check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
 			let current_block_number= <frame_system::Pallet<T>>::block_number();
 			let dispute_period_end = current_block_number + (DISPUTE_PERIOD_LENGTH as u32).into();
 			//let sequencer = ensure_signed(origin)?;
-		
+
 
 			// //TBR IO showcase part
 			// let mut input = String::new();
@@ -273,7 +294,7 @@ pub mod pallet {
 
 			let origin = input.trim().to_string();
 			let l1_pending_requests_json = input_json.trim().to_string();
-		
+
 			// // ensure sequencer has rights to update
 			// let mut sequencer_rights_map = SEQUENCER_RIGHTS.lock().unwrap();
 			if let Some(sequencer) = SEQUENCER_RIGHTS::<T>::get(&origin) {
@@ -285,7 +306,7 @@ pub mod pallet {
 				log!(info, "{:?} not a sequencer, CHEEKY BASTARD!", origin);
 				return Err(Error::<T>::OperationFailed.into());
 			}
-		
+
 			// // Decrease readRights by 1
 			// if let Some(sequencer) = sequencer_rights_map.get_mut(&origin) {
 			// 	sequencer.readRights -= 1;
@@ -295,12 +316,12 @@ pub mod pallet {
 					sequencer.readRights -= 1;
 				}
 			});
-		
+
 			// insert pending_requests
 			// let mut pending_requests_map = PENDING_REQUESTS.lock().unwrap();
 			// pending_requests_map.insert(dispute_period_end, (origin, l1_pending_requests_json));
 			PENDING_REQUESTS::<T>::insert(dispute_period_end, (origin.clone(), l1_pending_requests_json));
-		
+
 			//TBR
 			log!(info, "Pending Requests:");
 			for (dispute_period_end, (origin, json)) in PENDING_REQUESTS::<T>::iter() {
@@ -369,7 +390,7 @@ pub mod pallet {
 						log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 					}
 				} else {
-					log!(info, 
+					log!(info,
 						"No pending requests co cancel at dispute period end {:?}",
 						requests_to_cancel
 					);
@@ -405,7 +426,7 @@ impl<T: Config> Pallet<T> {
 
 					if requests.lastProccessedRequestOnL1 < Self::get_prev_last_processed_request_on_l2()
 					{
-						log!(info, 
+						log!(info,
 							"lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2"
 						);
 
@@ -472,7 +493,7 @@ impl<T: Config> Pallet<T> {
 								Err(_) => success = false,
 							};
 						}
-	
+
 						Request::L2UpdatesToRemove(updates_to_remove_request_details) => {
 							log!(info, "L2UpdatesToRemove: {:?}", updates_to_remove_request_details);
 							match Self::process_l2_updates_to_remove(updates_to_remove_request_details) {
@@ -509,22 +530,24 @@ impl<T: Config> Pallet<T> {
 	fn process_deposit(deposit_request_details: &DepositRequestDetails) -> Result<(), &'static str> {
 		// check ferried
 		// check if token exists, if not create one
-		log!(info, 
+		log!(info,
 			"Deposit processed successfully: {:?}",
 			deposit_request_details
 		);
+
+		let account : T::AccountId = Self::eth_to_dot_address(deposit_request_details.depositRecipient.clone())?;
 		// tokens: mint tokens for user
 		Ok(())
 	}
-	
+
 	fn process_withdraw(withdraw_request_details: &WithdrawRequestDetails) -> Result<(), &'static str> {
 		// for ilustration purposes
 		// fail will occur if user has not enough balance
-	
+
 		// if user has enought balance
 		if withdraw_request_details.amount > 0 {
 			// Successful deposit handling logic goes here
-			log!(info, 
+			log!(info,
 				"Withdraw processed successfully: {:?}",
 				withdraw_request_details
 			);
@@ -534,14 +557,14 @@ impl<T: Config> Pallet<T> {
 			log!(info, "Withdraw handling failed: Not enough balance");
 			Err("Not enough balance")
 		}
-	
+
 		// burn tokes for user
 	}
-	
+
 	fn process_update_rights(
 		update_rights_request_details: &UpdateRightsRequestDetails,
 	) -> Result<(), &'static str> {
-		// check if math ok, not to negative values etc	
+		// check if math ok, not to negative values etc
 		// Insert or update sequencer rights
 		// if let Some(sequencer) = sequencer_rights_map.get_mut(&update_rights_request_details.sequencer)
 		// {
@@ -556,34 +579,34 @@ impl<T: Config> Pallet<T> {
 				sequencer.cancelRights += sequencer.cancelRights;
 			}
 		});
-		log!(info, 
+		log!(info,
 			"Rights update processed successfully for sequencer to plus: {:?}",
 			update_rights_request_details
 		);
-		
+
 		//additional checks
 		Ok(())
 	}
-	
+
 	fn process_l2_updates_to_remove(
 		updates_to_remove_request_details: &UpdatesToRemoveRequestDetails,
 	) -> Result<(), &'static str> {
 		// let mut pending_updates_map = PENDING_UPDATES.lock().unwrap();
-	
+
 		// for request_id in updates_to_remove_request_details.updates.iter() {
 		//     if let Some(_update) = pending_updates_map.get(&request_id) {
 		//         pending_updates_map.remove(request_id);
 		//     }
 		// }
 		// drop(pending_updates_map);
-	
+
 		//doesn't because of locks, solve later, will not be a problem on node
-		log!(info, 
+		log!(info,
 			"Update removal processed successfully, removed: {:?}",
 			updates_to_remove_request_details
 		);
 		//additional checks
-	
+
 		Ok(())
 	}
 
@@ -604,7 +627,7 @@ impl<T: Config> Pallet<T> {
 			}),
 		);
 		log!(info, "Node SLASH processed successfully: {:?}", sequencer);
-	
+
 		Ok(())
 	}
 
@@ -612,7 +635,7 @@ impl<T: Config> Pallet<T> {
 		let mut hasher = Keccak256::new();
 		hasher.update(input.as_bytes());
 		let result = hasher.finalize();
-	
+
 		U256::from(&result[..])
 	}
 
@@ -620,16 +643,16 @@ impl<T: Config> Pallet<T> {
 		let mut hasher = Keccak256::new();
 		hasher.update(input.as_bytes());
 		let result = hasher.finalize();
-	
+
 		hex::encode(result)
 	}
-	
+
 	fn calculate_hash_of_pending_requests(json_string_to_hash: &str) -> U256 {
 		let mut hash = "0".to_string();
-	
+
 		let hash_of_pending_request = Self::calculate_keccak256_hash_u256(json_string_to_hash);
 		log!(info, "Keccak256 Hash of PENDING_REQUESTS at {:#?}", hash_of_pending_request);
-	
+
 		hash_of_pending_request
 	}
 
@@ -662,11 +685,11 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_hash_of_pending_updates(json_string_to_hash: &str) -> String {
 		let mut hash = "0".to_string();
-	
+
 		let hash_of_pending_updates = Self::calculate_keccak256_hash(json_string_to_hash);
 		hash = "0x".to_string() + &hash_of_pending_updates;
 		log!(info, "Keccak256 Hash of PENDING_UPDATES at {:?}", hash);
-	
+
 		hash
 	}
 
@@ -701,12 +724,16 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_hash_of_u256_array(u256_vec: Vec<U256>) -> U256 {
 		let mut hasher = Keccak256::new();
-		let mut byte_array: [u8; 32] = Default::default(); 
+		let mut byte_array: [u8; 32] = Default::default();
 		for u in u256_vec.iter() {
 			u.to_big_endian(&mut byte_array[..]);
 			hasher.update(&byte_array[..]);
 		}
 		let result = hasher.finalize();
 		U256::from(&result[..])
+	}
+
+	fn eth_to_dot_address(eth_addr: String) -> Result<T::AccountId, &'static str> {
+        T::AddressConverter::try_convert(eth_addr).or(Err("Cannot convert address"))
 	}
 }

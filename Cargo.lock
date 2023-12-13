@@ -7829,6 +7829,7 @@ dependencies = [
 name = "pallet-rolldown"
 version = "0.1.0"
 dependencies = [
+ "array-bytes",
  "env_logger 0.9.3",
  "frame-benchmarking",
  "frame-support",

@@ -247,35 +247,16 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		// sequencer read
-		//fn update_l2_from_l1(origin: String, l1_pending_requests_json: &'static str, current_block_number: u32) {
 		pub fn update_l2_from_l1(origin: OriginFor<T>, input: String, input_json: String) -> DispatchResultWithPostInfo {
 			
 			//check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
 			let current_block_number= <frame_system::Pallet<T>>::block_number();
 			let dispute_period_end = current_block_number + (DISPUTE_PERIOD_LENGTH as u32).into();
-			//let sequencer = ensure_signed(origin)?;
-		
-
-			// //TBR IO showcase part
-			// let mut input = String::new();
-			// println!("Enter ORIGIN: ");
-			// io::stdin()
-			// 	.read_line(&mut input)
-			// 	.expect("Failed to read line");
-			// let origin = input.trim().to_string();
-			// let mut input_json = String::new();
-			// println!("Enter L1 pending requests JSON: ");
-			// io::stdin()
-			// 	.read_line(&mut input_json)
-			// 	.expect("Failed to read line");
-			// let l1_pending_requests_json = input_json.trim().to_string();
-			// //TBR IO showcase part
 
 			let origin = input.trim().to_string();
 			let l1_pending_requests_json = input_json.trim().to_string();
 		
-			// // ensure sequencer has rights to update
-			// let mut sequencer_rights_map = SEQUENCER_RIGHTS.lock().unwrap();
+			// ensure sequencer has rights to update
 			if let Some(sequencer) = SEQUENCER_RIGHTS::<T>::get(&origin) {
 				if sequencer.readRights == 0 {
 					log!(info, "{:?} does not have sufficient readRights", origin);
@@ -286,10 +267,7 @@ pub mod pallet {
 				return Err(Error::<T>::OperationFailed.into());
 			}
 		
-			// // Decrease readRights by 1
-			// if let Some(sequencer) = sequencer_rights_map.get_mut(&origin) {
-			// 	sequencer.readRights -= 1;
-			// }
+			// Decrease readRights by 1
 			SEQUENCER_RIGHTS::<T>::mutate_exists(origin.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
 					sequencer.readRights -= 1;
@@ -297,8 +275,6 @@ pub mod pallet {
 			});
 		
 			// insert pending_requests
-			// let mut pending_requests_map = PENDING_REQUESTS.lock().unwrap();
-			// pending_requests_map.insert(dispute_period_end, (origin, l1_pending_requests_json));
 			PENDING_REQUESTS::<T>::insert(dispute_period_end, (origin.clone(), l1_pending_requests_json));
 		
 			//TBR
@@ -309,8 +285,6 @@ pub mod pallet {
 					dispute_period_end, origin, json
 				);
 			}
-			// drop(pending_requests_map);
-			// drop(sequencer_rights_map);
 			//TBR
 			Ok(().into())
 		}
@@ -422,7 +396,7 @@ impl<T: Config> Pallet<T> {
 				}
 			}
 		}
-		// pending_requests_map.remove(unsafe { &CURRENT_BLOCK_NUMBER });
+		
 		PENDING_REQUESTS::<T>::remove(<frame_system::Pallet<T>>::block_number());
 	}
 
@@ -488,7 +462,7 @@ impl<T: Config> Pallet<T> {
 						}
 					});
 					PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedUpdate(success));
-					// unsafe { last_processed_request_on_l2 = request_id };
+					
 					last_processed_request_on_l2::<T>::put(request_id);
 				}
 			} else {
@@ -543,12 +517,6 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), &'static str> {
 		// check if math ok, not to negative values etc	
 		// Insert or update sequencer rights
-		// if let Some(sequencer) = sequencer_rights_map.get_mut(&update_rights_request_details.sequencer)
-		// {
-		// 	sequencer.readRights += sequencer.readRights;
-		// 	// might be only readrights that are updated, possibility to simplify update rights, as if seq stake is low on l1, it will be removed from list completely, think later
-		// 	sequencer.cancelRights += sequencer.cancelRights;
-		// }
 		SEQUENCER_RIGHTS::<T>::mutate_exists(update_rights_request_details.sequencer.clone(), |maybe_sequencer| {
 			if let Some(ref mut sequencer) = maybe_sequencer {
 				sequencer.readRights += sequencer.readRights;
@@ -568,14 +536,6 @@ impl<T: Config> Pallet<T> {
 	fn process_l2_updates_to_remove(
 		updates_to_remove_request_details: &UpdatesToRemoveRequestDetails,
 	) -> Result<(), &'static str> {
-		// let mut pending_updates_map = PENDING_UPDATES.lock().unwrap();
-	
-		// for request_id in updates_to_remove_request_details.updates.iter() {
-		//     if let Some(_update) = pending_updates_map.get(&request_id) {
-		//         pending_updates_map.remove(request_id);
-		//     }
-		// }
-		// drop(pending_updates_map);
 	
 		//doesn't because of locks, solve later, will not be a problem on node
 		log!(info, 
@@ -588,10 +548,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_node_slash(sequencer: &String) -> Result<(), &'static str> {
-		// let mut sequencer_rights_map = SEQUENCER_RIGHTS.lock().unwrap();
-		// if let Some(sequencer) = sequencer_rights_map.get_mut(sequencer) {
-		// 	sequencer.readRights -= 1;
-		// }
+		
 		SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 			if let Some(ref mut sequencer) = maybe_sequencer {
 				sequencer.readRights -= 1;
@@ -625,7 +582,6 @@ impl<T: Config> Pallet<T> {
 	}
 	
 	fn calculate_hash_of_pending_requests(json_string_to_hash: &str) -> U256 {
-		let mut hash = "0".to_string();
 	
 		let hash_of_pending_request = Self::calculate_keccak256_hash_u256(json_string_to_hash);
 		log!(info, "Keccak256 Hash of PENDING_REQUESTS at {:#?}", hash_of_pending_request);
@@ -635,7 +591,7 @@ impl<T: Config> Pallet<T> {
 
 	// for presentation purposes => json
 	fn get_pending_updates_as_json() -> String {
-		// let pending_updates_map = PENDING_UPDATES.lock().unwrap();
+		
 		let mut updates_json = String::new();
 		updates_json.push_str("{\n");
 

@@ -5,7 +5,7 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Get, StorageVersion},
+	traits::{Get, StorageVersion, ReservableCurrency, Currency},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
@@ -14,10 +14,19 @@ use sp_std::{convert::TryInto, prelude::*};
 
 use codec::alloc::string::{String, ToString};
 use sp_runtime::serde::{Deserialize, Serialize};
-use sha3::{Digest, Keccak256};
 use scale_info::prelude::format;
 use sp_core::U256;
+use sp_runtime::traits::CheckedAdd;
+use sp_runtime::Saturating;
+pub use mangata_support::traits::{
+	SequencerStakingProviderTrait
+};
 
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+pub type BalanceOf<T> = <<T as pallet::Config>::Currency as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::Balance;
 
 pub(crate) const LOG_TARGET: &'static str = "sequencer-staking";
 
@@ -54,10 +63,21 @@ pub mod pallet {
 	pub type SequencerStake<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		AccountId,
-		Balance,
+		AccountIdOf<T>,
+		BalanceOf<T>,
 		ValueQuery,
 	>;
+
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_slash_fine_amount)]
+	pub type SlashFineAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_minimal_stake_amount)]
+	pub type MinimalStakeAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -74,6 +94,8 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type Currency: ReservableCurrency<Self::AccountId>;
+		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
 	}
 
@@ -81,28 +103,28 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(4, 4).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn provide_sequencer_stake(origin: OriginFor<T>, stake_amount: Balance) -> DispatchResultWithPostInfo {
+		pub fn provide_sequencer_stake(origin: OriginFor<T>, stake_amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			
-			let sender = ensure_signed(origin)?:
+			let sender = ensure_signed(origin)?;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
-				*stake = stake.checked_add(stake_amount).map_err(|_| {Error::<T>::MathOverflow})?;
+				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
 				Ok(())
 			})?;
 
-			T::Tokens::reserve(T::NativeTokenId::get().into(), &sender, amount)?;
+			T::Currency::reserve(&sender, stake_amount)?;
 
 			Ok(().into())
 		}
 
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn set_sequencer_configuration(origin: OriginFor<T>, minimal_stake_amount: Balance, slash_fine_amount: Balance) -> DispatchResultWithPostInfo {
+		pub fn set_sequencer_configuration(origin: OriginFor<T>, minimal_stake_amount: BalanceOf<T>, slash_fine_amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			
-			let sender = ensure_signed(origin)?:
+			let sender = ensure_signed(origin)?;
 			
-			<MinimalStakeAmount<T>>::insert(minimal_stake_amount);
-			<SlashFineAmount<T>>::insert(slash_fine_amount);
+			<MinimalStakeAmount<T>>::put(minimal_stake_amount);
+			<SlashFineAmount<T>>::put(slash_fine_amount);
 
 			Ok(().into())
 
@@ -110,25 +132,31 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {
 
-	fn slash_sequencer(sequencer: AccountId) -> DispatchResult{
+	fn is_active_sequencer(sequencer: AccountIdOf<T>) -> bool{
+
+		<SequencerStake<T>>::get(&sequencer) >= MinimalStakeAmount::<T>::get()
+
+	}
+
+	fn slash_sequencer(sequencer: AccountIdOf<T>) -> DispatchResult{
 
 		<SequencerStake<T>>::try_mutate(&sequencer, |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
-			let slash_fine_amount_actual = stake.min(slash_fine_amount);
+			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);
 			*stake = stake.saturating_sub(slash_fine_amount_actual);
-			let _ = T::Tokens::slash_reserve(T::NativeTokenId::get().into(), &sequencer, slash_fine_amount_actual);
+			let _ = T::Currency::slash_reserved(&sequencer, slash_fine_amount_actual);
 			Ok(())
 		})?;
 		
 		Ok(().into())
 	}
 
-	fn process_potential_authors(authors: Vec<AccountId>) -> Vec<AccountId> {
+	fn process_potential_authors(authors: Vec<(AccountIdOf<T>, BalanceOf<T>)>) -> Option<Vec<(AccountIdOf<T>, BalanceOf<T>)>> {
 		let minimal_stake_amount = MinimalStakeAmount::<T>::get();
-		let filtered_authors = authors.iter().filter( |&a| <SequencerStake<T>>::get(*a) > minimal_stake_amount );
-		if filtered_authors.len() >= T::MinimumSequencers{
+		let filtered_authors: Vec<_> = authors.into_iter().filter( |a| <SequencerStake<T>>::get(&a.0) >= minimal_stake_amount).collect::<>();
+		if filtered_authors.len() as u32 >= T::MinimumSequencers::get(){
 			Some(filtered_authors)
 		} else {
 			None

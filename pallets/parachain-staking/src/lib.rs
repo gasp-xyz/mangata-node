@@ -152,7 +152,7 @@ use frame_support::{
 use frame_system::{pallet_prelude::*, RawOrigin};
 pub use mangata_support::traits::{
 	ComputeIssuance, GetIssuance, PoolCreateApi, ProofOfStakeRewardsApi,
-	StakingReservesProviderTrait, Valuate, XykFunctionsTrait,
+	StakingReservesProviderTrait, Valuate, XykFunctionsTrait, SequencerStakingProviderTrait
 };
 pub use mangata_types::multipurpose_liquidity::BondKind;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -1508,7 +1508,7 @@ pub mod pallet {
 		/// The module that provides the set of fallback accounts
 		type FallbackProvider: GetMembers<Self::AccountId>;
 		/// The module that provides the info and processing for the sequencer stakes
-		type SequencerStakingProvider: SequencerStakingProviderTrait<Self::AccountId>;
+		type SequencerStakingProvider: SequencerStakingProviderTrait<Self::AccountId, BalanceOf<Self>>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
@@ -3272,20 +3272,20 @@ pub mod pallet {
 			let mut valuated_author_candidates_vec: Vec<(T::AccountId, BalanceOf<T>)> =
 				valuated_author_candidates_btreemap.into_iter().collect::<_>();
 
+			let min_stake_filtered_authors: Vec<_> = valuated_author_candidates_vec.into_iter().filter(|x| x.1 >= T::MinCollatorStk::get()).collect::<_>();
+			let mut filtered_authors = T::SequencerStakingProvider::process_potential_authors(min_stake_filtered_authors.clone()).unwrap_or(min_stake_filtered_authors);
+
 			// order candidates by stake (least to greatest so requires `rev()`)
-			valuated_author_candidates_vec.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+			filtered_authors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 			let top_n = <TotalSelected<T>>::get() as usize;
 			// choose the top TotalSelected qualified candidates, ordered by stake
 			let mut selected_authors: Vec<(T::AccountId, BalanceOf<T>)> =
-				valuated_author_candidates_vec
+				filtered_authors
 					.into_iter()
 					.rev()
 					.take(top_n)
-					.filter(|x| x.1 >= T::MinCollatorStk::get())
 					.collect::<_>();
 			selected_authors.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
-			selected_authors = T::SequencerStakingProvider::process_potential_authors(selected_authors).unwrap_or(selected_authors);
 
 			let mut all_selected_collators = Vec::<(T::AccountId, BalanceOf<T>)>::new();
 			for selected_author in selected_authors.iter() {

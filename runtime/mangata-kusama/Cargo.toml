@@ -38,6 +38,7 @@ parachain-staking = { path = "../../pallets/parachain-staking", default-features
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api", default-features = false, version = "2.0.0" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false }
 pallet-rolldown = { path = "../../pallets/rolldown", default-features = false }
+pallet-sequencer-staking = { path = "../../pallets/sequencer-staking", default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -199,6 +200,7 @@ std = [
 	"xcm/std",
 	"xyk-runtime-api/std",
 	"pallet-rolldown/std",
+	"pallet-sequencer-staking/std",
 ]
 
 try-runtime = [
@@ -244,6 +246,7 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-rolldown/try-runtime",
+	"pallet-sequencer-staking/try-runtime",
 ]
 
 fast-runtime = ["common-runtime/fast-runtime"]
@@ -287,4 +290,5 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
 	"pallet-rolldown/runtime-benchmarks",
+	"pallet-sequencer-staking/runtime-benchmarks",
 ]

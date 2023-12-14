@@ -80,10 +80,10 @@ pub mod pallet {
 
 		fn on_finalize(n: BlockNumberFor<T>) {
 			let pending_updates_u256_array = Self::get_pending_updates_as_u256_array();
-			PendingUpdatesU256Array::<T>::put(pending_updates_u256_array.clone());
+			PendingUpdatesU256Array::<T>::insert(n, pending_updates_u256_array.clone());
 			let hash_of_pending_updates_u256_array =
 				Self::calculate_hash_of_u256_array(pending_updates_u256_array);
-			HashPendingUpdatesU256Array::<T>::put(hash_of_pending_updates_u256_array);
+			HashPendingUpdatesU256Array::<T>::insert(n,hash_of_pending_updates_u256_array);
 		}
 	}
 
@@ -193,12 +193,12 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_updates_u256_array)]
-	pub type PendingUpdatesU256Array<T: Config> = StorageValue<_, Vec<U256>, OptionQuery>;
+	pub type PendingUpdatesU256Array<T: Config> = StorageMap<_, Blake2_128Concat, BlockNumberFor<T>, Vec<U256>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_hash_pending_updates_u256_array)]
-	pub type HashPendingUpdatesU256Array<T: Config> = StorageValue<_, U256, OptionQuery>;
+	pub type HashPendingUpdatesU256Array<T: Config> = StorageMap<_, Blake2_128Concat, BlockNumberFor<T>, U256, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -480,8 +480,7 @@ impl<T: Config> Pallet<T> {
 							PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedOnlyInfoUpdate(success));
 						}
 					}
-					// add only if stake > x
-
+					
 					// return readRights to sequencer
 					SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 						match maybe_sequencer{
@@ -510,13 +509,14 @@ impl<T: Config> Pallet<T> {
 
 	fn process_deposit(deposit_request_details: &DepositRequestDetails) -> Result<(), &'static str> {
 		let account : T::AccountId = Self::eth_to_dot_address(deposit_request_details.depositRecipient.clone())?;
+
 		// check ferried
 		// check if token exists, if not create one
 		log!(info, 
 			"Deposit processed successfully: {:?}",
 			deposit_request_details
 		);
-		let account : T::AccountId = Self::eth_to_dot_address(deposit_request_details.depositRecipient.clone())?;
+		
 		// tokens: mint tokens for user
 		Ok(())
 	}
@@ -539,6 +539,16 @@ impl<T: Config> Pallet<T> {
 			Err("Not enough balance")
 		}
 	
+		// <T as Config>::Currency::ensure_can_withdraw(
+		// 	sold_asset_id.into(),
+		// 	sender,
+		// 	total_fees,
+		// 	WithdrawReasons::all(),
+		// 	// Does not fail due to earlier ensure
+		// 	Default::default(),
+		// )
+		// .or(Err(Error::<T>::NotEnoughAssets))?;
+
 		// burn tokes for user
 	}
 	
@@ -565,21 +575,28 @@ impl<T: Config> Pallet<T> {
 			canceler.clone()
 		};
 
-		Self::slash(&to_be_slashed);
-
+		
 		// return rights to canceler and updater
 		// only if active sequencer
-		SEQUENCER_RIGHTS::<T>::mutate_exists(updater, |maybe_sequencer| {
-			if let Some(ref mut sequencer) = maybe_sequencer {
-				sequencer.readRights += 1_u128;
+		SEQUENCER_RIGHTS::<T>::mutate_exists(updater.clone(), |maybe_sequencer| {
+			match maybe_sequencer{
+				&mut Some(ref mut sequencer) if T::SequencerStakingProvider::is_active_sequencer(updater) => {
+					sequencer.readRights += 1;
+				},
+				_ => {},
 			}
 		});
-		// only if active sequencer
-		SEQUENCER_RIGHTS::<T>::mutate_exists(canceler, |maybe_sequencer| {
-			if let Some(ref mut sequencer) = maybe_sequencer {
-				sequencer.cancelRights += 1_u128;
+		SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
+			match maybe_sequencer{
+				&mut Some(ref mut sequencer) if T::SequencerStakingProvider::is_active_sequencer(canceler) => {
+					sequencer.cancelRights += 1;
+				},
+				_ => {},
 			}
 		});
+
+		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
+		Self::slash(&to_be_slashed);
 
 		log!(info, 
 			"Cancel resolution processed successfully: {:?}",
@@ -608,8 +625,27 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn slash(sequencer: &T::AccountId) -> Result<(), &'static str> {
+		// check if sequencer is active
+		let is_active_sequencer_before = T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
 		// slash sequencer
-		// check if sequencer has still enough stake, then zero his rights and adjust cancel rights for others
+		T::SequencerStakingProvider::slash_sequencer(sequencer.clone())?;
+		// check if sequencer is active
+		let is_active_sequencer_after = T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
+
+		// if sequencer was active and is not active anymore, remove rights
+		if is_active_sequencer_before && !is_active_sequencer_after {
+			SEQUENCER_RIGHTS::<T>::remove(sequencer.clone());
+		}
+		
+		// remove 1 cancel right of all sequencers
+		for sequencer in SEQUENCER_RIGHTS::<T>::iter() {
+			SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+				if let Some(ref mut sequencer) = maybe_sequencer {
+					sequencer.cancelRights -= 1;
+				}
+			});
+		}
+		
 		log!(info, "SLASH for: {:?}", sequencer);
 	
 		Ok(())

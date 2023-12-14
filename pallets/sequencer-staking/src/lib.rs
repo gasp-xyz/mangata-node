@@ -112,6 +112,8 @@ pub mod pallet {
 				Ok(())
 			})?;
 
+			// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
+			// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
 			T::Currency::reserve(&sender, stake_amount)?;
 
 			Ok(().into())
@@ -120,7 +122,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn set_sequencer_configuration(origin: OriginFor<T>, minimal_stake_amount: BalanceOf<T>, slash_fine_amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
-			
+			// only root can set configuration
 			let sender = ensure_signed(origin)?;
 			
 			<MinimalStakeAmount<T>>::put(minimal_stake_amount);
@@ -141,7 +143,7 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 	}
 
 	fn slash_sequencer(sequencer: AccountIdOf<T>) -> DispatchResult{
-
+		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
 		<SequencerStake<T>>::try_mutate(&sequencer, |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
 			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);

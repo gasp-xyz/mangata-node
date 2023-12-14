@@ -5,19 +5,24 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Get, StorageVersion},
+	traits::{Get, StorageVersion, tokens::currency::MultiTokenCurrency},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{convert::TryInto, prelude::*};
-
+use mangata_support::traits::SequencerStakingProviderTrait;
 use codec::alloc::string::{String, ToString};
 use sp_runtime::serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 use scale_info::prelude::format;
 use sp_core::U256;
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
+pub type BalanceOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
+		<T as frame_system::Config>::AccountId,
+	>>::Balance;
+	
 const DISPUTE_PERIOD_LENGTH: u128 = 5;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
@@ -240,6 +245,11 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type SequencerStakingProvider: SequencerStakingProviderTrait<Self::AccountId, BalanceOf<Self>>;
+		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
+		type Tokens: MultiTokenCurrency<Self::AccountId>
+			+ MultiTokenReservableCurrency<Self::AccountId>
+			+ MultiTokenCurrencyExtended<Self::AccountId>;
 	}
 
 	#[pallet::call]
@@ -455,10 +465,18 @@ impl<T: Config> Pallet<T> {
 							};
 						}
 					}
+					// This a naked dangerous unwrap!!
+					let sequencer_account = T::AccountId::decode(&mut &hex::decode(sequencer.clone()).unwrap()[..]).unwrap();
 					// return readRights to sequencer
 					SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-						if let Some(ref mut sequencer) = maybe_sequencer {
-							sequencer.readRights += 1;
+						// if let Some(ref mut sequencer) = maybe_sequencer {
+						// 	sequencer.readRights += 1;
+						// }
+						match maybe_sequencer{
+							&mut Some(ref mut sequencer_rights) if T::SequencerStakingProvider::is_active_sequencer(sequencer_account) => {
+								sequencer_rights.readRights += 1;
+							},
+							_ => {},
 						}
 					});
 					PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedUpdate(success));

@@ -513,6 +513,7 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
+	type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -681,8 +682,15 @@ impl pallet_maintenance::Config for Runtime {
 impl pallet_rolldown::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AddressConverter = pallet_rolldown::EthereumAddressConverter<AccountId>;
+	type SequencerStakingProvider = SequencerStaking;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
+impl pallet_sequencer_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type MinimumSequencers = frame_support::traits::ConstU32<2>;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -725,6 +733,7 @@ construct_runtime!(
 		Bootstrap: pallet_bootstrap = 21,
 
 		// Collator support. The order of these 4 are important and shall not change.
+		SequencerStaking: pallet_sequencer_staking = 29,
 		Authorship: pallet_authorship = 30,
 		ParachainStaking: parachain_staking = 31,
 		Session: pallet_session = 32,

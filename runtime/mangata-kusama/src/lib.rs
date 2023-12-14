@@ -680,6 +680,7 @@ impl pallet_maintenance::Config for Runtime {
 
 impl pallet_rolldown::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type AddressConverter = pallet_rolldown::EthereumAddressConverter<AccountId>;
 }
 
 

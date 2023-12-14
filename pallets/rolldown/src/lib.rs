@@ -6,10 +6,11 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Get, StorageVersion},
+	traits::{Get, StorageVersion}, StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
+use sp_runtime::traits::BlakeTwo256;
 
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -43,7 +44,7 @@ impl TryConvert<String, sp_runtime::AccountId32> for EthereumAddressConverter<sp
 {
     fn try_convert(value: String) -> Result<sp_runtime::AccountId32, String> {
         let eth_addr : [u8; 20] = array_bytes::hex2array(value.clone()).or(Err(value))?;
-        Ok(sp_core::blake2_256(eth_addr.as_ref()).into())
+        Ok(Blake2_256::hash(eth_addr.as_ref()).into())
     }
 }
 

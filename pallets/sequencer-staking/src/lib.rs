@@ -19,7 +19,7 @@ use sp_core::U256;
 use sp_runtime::traits::CheckedAdd;
 use sp_runtime::Saturating;
 pub use mangata_support::traits::{
-	SequencerStakingProviderTrait
+	SequencerStakingProviderTrait, RolldownProviderTrait
 };
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -97,6 +97,7 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
+		type RolldownProvider: RolldownProviderTrait<Self::AccountId>;
 	}
 
 	#[pallet::call]
@@ -108,7 +109,11 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
+				let previous_stake = *stake;
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
+				if previous_stake < MinimalStakeAmount::<T>::get() && *stake >= MinimalStakeAmount::<T>::get(){
+					T::RolldownProvider::new_sequencer_active(sender.clone());
+				}
 				Ok(())
 			})?;
 
@@ -121,7 +126,7 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn set_sequencer_configuration(origin: OriginFor<T>, minimal_stake_amount: BalanceOf<T>, slash_fine_amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			
-			let sender = ensure_signed(origin)?;
+			let _ = ensure_root(origin)?;
 			
 			<MinimalStakeAmount<T>>::put(minimal_stake_amount);
 			<SlashFineAmount<T>>::put(slash_fine_amount);

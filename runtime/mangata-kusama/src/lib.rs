@@ -689,6 +689,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
+	type RolldownProvider = Rolldown;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

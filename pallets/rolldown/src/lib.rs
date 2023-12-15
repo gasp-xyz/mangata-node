@@ -11,7 +11,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{convert::TryInto, prelude::*};
-use mangata_support::traits::SequencerStakingProviderTrait;
+use mangata_support::traits::{SequencerStakingProviderTrait, RolldownProviderTrait};
 use codec::alloc::string::{String, ToString};
 use sp_runtime::serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
@@ -23,6 +23,9 @@ pub type BalanceOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 		<T as frame_system::Config>::AccountId,
 	>>::Balance;
 	
+
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
 const DISPUTE_PERIOD_LENGTH: u128 = 5;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
@@ -682,5 +685,12 @@ impl<T: Config> Pallet<T> {
 		}
 		let result = hasher.finalize();
 		U256::from(&result[..])
+	}
+}
+
+impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
+	fn new_sequencer_active(sequencer: AccountIdOf<T>){
+		// @Stano
+		// your code here
 	}
 }

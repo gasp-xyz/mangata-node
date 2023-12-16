@@ -168,3 +168,21 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 		}
 	}
 }
+
+/// Simple ensure origin struct to filter for the active sequencer accounts.
+pub struct EnsureActiveSequencer<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin> for EnsureActiveSequencer<T> {
+	type Success = T::AccountId;
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+		o.into().and_then(|o| match o {
+			frame_system::RawOrigin::Signed(ref who) if <Pallet<T> as SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>>>::is_active_sequencer(who.clone()) => Ok(who.clone()),
+			r => Err(T::RuntimeOrigin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		let founder = Founder::<T>::get().ok_or(())?;
+		Ok(T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(founder)))
+	}
+}

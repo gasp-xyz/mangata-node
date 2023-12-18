@@ -9,6 +9,7 @@ use sp_core::Get;
 use sp_runtime::Saturating;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Currency;
+pub type XykOf<Test> = <Test as crate::Config>::ValuationApi;
 use orml_tokens::MultiTokenCurrencyExtended;
 
 pub fn roll_to_next_block<T>()

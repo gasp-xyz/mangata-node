@@ -70,35 +70,32 @@ pub struct ScheduleRewards<Balance: AtLeast32BitUnsigned> {
 
 impl<Balance: AtLeast32BitUnsigned> ScheduleRewards<Balance> {
 	pub fn provide_rewards(&mut self, now: SessionId, amount: Balance) {
-		if now <= self.pending_session_id {
-			self.pending += amount;
-		} else {
+		if now > self.pending_session_id {
 			self.total += self.pending.clone();
 			self.pending = amount;
 			self.pending_session_id = now;
+		} else {
+			self.pending += amount;
 		}
 	}
 
 	pub fn total_rewards(&self, now: SessionId) -> Balance {
-		if now <= self.pending_session_id {
-			self.total.clone()
-		} else {
-			self.total.clone() + self.pending.clone()
-		}
-	}
-
-	pub fn transfer_pending(&mut self, now: SessionId) {
 		if now > self.pending_session_id {
-			self.total += self.pending.clone();
-			self.pending = Balance::zero();
-			self.pending_session_id = now;
+			self.total.clone() + self.pending.clone()
+		} else {
+			self.total.clone()
 		}
 	}
 
 	pub fn clear(&mut self, now: SessionId) {
-		self.total = Balance::zero();
-		self.pending = Balance::zero();
-		self.pending_session_id = now;
+		if now > self.pending_session_id {
+			self.total = Balance::zero();
+			self.pending = Balance::zero();
+			self.pending_session_id = now;
+		} else {
+			self.total = Balance::zero();
+			self.pending_session_id = now;
+		}
 	}
 }
 
@@ -119,8 +116,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 
 		let (cumulative, idx) =
 			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Pallet::<T>::session_index() as u64) {
-		} else {
+		if (idx + 1) < (Pallet::<T>::session_index() as u64) {
 			let total_activated_liquidity =
 				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
 			let total_schedule_rewards =
@@ -129,7 +125,6 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 				ScheduleRewardsTotal::<T>::mutate(
 					(liquidity_asset_id, liquidity_assets_reward),
 					|schedule| {
-						schedule.transfer_pending(session_id);
 						schedule.clear(session_id);
 					},
 				);
@@ -138,7 +133,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 					.unwrap_or_default();
 				ScheduleRewardsPerLiquidity::<T>::insert(
 					(liquidity_asset_id, liquidity_assets_reward),
-					(cumulative + pending, (Pallet::<T>::session_index() as u64)),
+					(cumulative + pending, ((Pallet::<T>::session_index() - 1) as u64)),
 				);
 			}
 		}

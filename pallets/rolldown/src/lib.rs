@@ -29,6 +29,7 @@ pub type BalanceOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	>>::Balance;
 	
 const DISPUTE_PERIOD_LENGTH: u128 = 5;
+const RIGHTS_MULTIPLIER: u128 = 1;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
 
@@ -167,6 +168,10 @@ pub mod pallet {
 		pub lastAcceptedRequestOnL1: u128,
 		pub hash: U256,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_sequencer_count)]
+	pub type sequencer_count<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -634,16 +639,7 @@ impl<T: Config> Pallet<T> {
 
 		// if sequencer was active and is not active anymore, remove rights
 		if is_active_sequencer_before && !is_active_sequencer_after {
-			SEQUENCER_RIGHTS::<T>::remove(sequencer.clone());
-		}
-		
-		// remove 1 cancel right of all sequencers
-		for sequencer in SEQUENCER_RIGHTS::<T>::iter() {
-			SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-				if let Some(ref mut sequencer) = maybe_sequencer {
-					sequencer.cancelRights -= 1;
-				}
-			});
+			Self::handle_sequencer_deactivation(sequencer.clone());
 		}
 		
 		log!(info, "SLASH for: {:?}", sequencer);
@@ -723,6 +719,46 @@ impl<T: Config> Pallet<T> {
 		updates
 	}
 
+	fn handle_sequencer_activation(new_sequencer: T::AccountId) {
+		// raise sequencer count
+		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
+		// add rights to new sequencer
+		SEQUENCER_RIGHTS::<T>::insert(
+			new_sequencer.clone(),
+			SequencerRights {
+				readRights: RIGHTS_MULTIPLIER,
+				cancelRights: RIGHTS_MULTIPLIER * sequencer_count::<T>::get(),
+			},
+		);
+		// add 1 cancel right of all sequencers
+		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
+			if sequencer_rights.cancelRights > 0 {
+				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+					if let Some(ref mut sequencer) = maybe_sequencer {
+						sequencer.cancelRights += RIGHTS_MULTIPLIER;
+					}
+				});
+			}
+		}
+	}
+
+	fn handle_sequencer_deactivation(deactivated_sequencer: T::AccountId) {
+		// lower sequencer count
+		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
+		// remove all rights of deactivated sequencer
+		SEQUENCER_RIGHTS::<T>::remove(deactivated_sequencer.clone());
+		// remove 1 cancel right of all sequencers
+		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
+			if sequencer_rights.cancelRights > 0 {
+				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+					if let Some(ref mut sequencer) = maybe_sequencer {
+						sequencer.cancelRights -= RIGHTS_MULTIPLIER;
+					}
+				});
+			}
+		}
+	}
+
 	fn calculate_hash_of_u256_array(u256_vec: Vec<U256>) -> U256 {
 		let mut hasher = Keccak256::new();
 		let mut byte_array: [u8; 32] = Default::default(); 
@@ -735,5 +771,9 @@ impl<T: Config> Pallet<T> {
 	}
 	fn eth_to_dot_address(eth_addr: String) -> Result<T::AccountId, &'static str> {
         T::AddressConverter::try_convert(eth_addr).or(Err("Cannot convert address"))
+	}
+
+	fn unblock() -> (){
+		
 	}
 }

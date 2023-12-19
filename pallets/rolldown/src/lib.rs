@@ -13,7 +13,7 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{convert::TryInto, prelude::*};
-use mangata_support::traits::SequencerStakingProviderTrait;
+use mangata_support::traits::{SequencerStakingProviderTrait, RolldownProviderTrait};
 use codec::alloc::string::{String, ToString};
 use scale_info::prelude::format;
 use sha3::{Digest, Keccak256};
@@ -28,6 +28,9 @@ pub type BalanceOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 		<T as frame_system::Config>::AccountId,
 	>>::Balance;
 	
+
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
 const DISPUTE_PERIOD_LENGTH: u128 = 5;
 const RIGHTS_MULTIPLIER: u128 = 1;
 
@@ -775,5 +778,12 @@ impl<T: Config> Pallet<T> {
 
 	fn unblock() -> (){
 		
+	}
+}
+
+impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
+	fn new_sequencer_active(sequencer: AccountIdOf<T>){
+		// @Stano
+		// your code here
 	}
 }

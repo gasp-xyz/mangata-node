@@ -478,6 +478,8 @@ pub mod pallet {
 		LiquidityLockedIn3rdpartyRewards,
 		// No rewards to claim
 		NoThirdPartyPartyRewardsToClaim,
+		// cannot promote solo token
+		SoloTokenPromotionForbiddenError,
 	}
 
 	#[pallet::event]
@@ -490,6 +492,12 @@ pub mod pallet {
 		ThirdPartyRewardsClaimed(T::AccountId, CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>),
 		ThirdPartyLiquidityActivated(T::AccountId, CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>),
 		ThirdPartyLiquidityDeactivated(
+			T::AccountId,
+			CurrencyIdOf<T>,
+			CurrencyIdOf<T>,
+			BalanceOf<T>,
+		),
+		ThirdPartySuccessfulPoolPromotion(
 			T::AccountId,
 			CurrencyIdOf<T>,
 			CurrencyIdOf<T>,
@@ -685,6 +693,11 @@ pub mod pallet {
 			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
+
+			ensure!(
+				<<T as Config>::ValuationApi as Valuate<BalanceOf<T>, CurrencyIdOf<T>>>::is_liquidity_token(liquidity_token_id),
+				Error::<T>::SoloTokenPromotionForbiddenError
+			);
 
 			if liquidity_mining_issuance_weight > 0 {
 				<Self as ProofOfStakeRewardsApi<_, _, _>>::enable(
@@ -1464,7 +1477,6 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn reward_pool_impl(
 		sender: T::AccountId,
-
 		pool: (CurrencyIdOf<T>, CurrencyIdOf<T>),
 		token_id: CurrencyIdOf<T>,
 		amount: BalanceOf<T>,
@@ -1544,6 +1556,13 @@ impl<T: Config> Pallet<T> {
 			},
 			_ => {}, // invariant assures this will never happen
 		}
+
+		Pallet::<T>::deposit_event(Event::ThirdPartySuccessfulPoolPromotion(
+			sender,
+			liquidity_token_id,
+			token_id,
+			amount,
+		));
 
 		Ok(())
 	}

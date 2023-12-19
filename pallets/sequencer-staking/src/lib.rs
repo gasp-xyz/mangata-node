@@ -19,7 +19,7 @@ use sp_core::U256;
 use sp_runtime::traits::CheckedAdd;
 use sp_runtime::Saturating;
 pub use mangata_support::traits::{
-	SequencerStakingProviderTrait
+	SequencerStakingProviderTrait, RolldownProviderTrait
 };
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -97,6 +97,7 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
+		type RolldownProvider: RolldownProviderTrait<Self::AccountId>;
 	}
 
 	#[pallet::call]
@@ -108,7 +109,11 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
+				let previous_stake = *stake;
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
+				if previous_stake < MinimalStakeAmount::<T>::get() && *stake >= MinimalStakeAmount::<T>::get(){
+					T::RolldownProvider::new_sequencer_active(sender.clone());
+				}
 				Ok(())
 			})?;
 
@@ -122,8 +127,8 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn set_sequencer_configuration(origin: OriginFor<T>, minimal_stake_amount: BalanceOf<T>, slash_fine_amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
-			// only root can set configuration
-			let sender = ensure_signed(origin)?;
+			
+			let _ = ensure_root(origin)?;
 			
 			<MinimalStakeAmount<T>>::put(minimal_stake_amount);
 			<SlashFineAmount<T>>::put(slash_fine_amount);
@@ -163,5 +168,23 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 		} else {
 			None
 		}
+	}
+}
+
+/// Simple ensure origin struct to filter for the active sequencer accounts.
+pub struct EnsureActiveSequencer<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin> for EnsureActiveSequencer<T> {
+	type Success = T::AccountId;
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+		o.into().and_then(|o| match o {
+			frame_system::RawOrigin::Signed(ref who) if <Pallet<T> as SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>>>::is_active_sequencer(who.clone()) => Ok(who.clone()),
+			r => Err(T::RuntimeOrigin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		let founder = Founder::<T>::get().ok_or(())?;
+		Ok(T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(founder)))
 	}
 }

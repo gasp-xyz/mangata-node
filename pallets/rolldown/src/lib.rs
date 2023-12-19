@@ -382,6 +382,93 @@ pub mod pallet {
 			);
 			Ok(().into())
 		}
+
+		// no checks if this read is correct, can put counters out of sync
+		#[pallet::call_index(2)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn council_update_l2_from_l1(
+			origin: OriginFor<T>,
+			input_json: String,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_root(origin)?;
+
+			match Self::deserialize_json(&input_json) {
+				Ok(deserialized) => {
+					log!(info, "Deserialized struct: {:?}", deserialized);
+			
+					// Add a new variable of type Requests
+					let requests: Requests = deserialized;
+			
+					if requests.lastProccessedRequestOnL1 < Self::get_prev_last_processed_request_on_l2()
+					{
+						log!(info, 
+							"lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2"
+						);
+					} else {
+						for request_id in
+			(requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
+		{
+			if let Some(request) = requests.requests.get(&request_id) {
+				// ignore if already processed
+				if request_id > Self::get_last_processed_request_on_l2() {
+					log!(info, "EXECUTING: ");
+					let mut success = true;
+					match request {
+						Request::Deposit(deposit_request_details) => {
+							log!(info, "Deposit: {:?}", deposit_request_details);
+							match Self::process_deposit(deposit_request_details) {
+								Ok(_) => (),
+								Err(_) => success = false,
+							};
+							PENDING_UPDATES::<T>::insert(request_id, Update::DepositUpdate(success));
+						}
+						Request::Withdraw(withdraw_request_details) => {
+							log!(info, "Withdraw: {:?}", withdraw_request_details);
+							match Self::process_withdraw(withdraw_request_details) {
+								Ok(_) => (),
+								Err(_) => success = false,
+							};
+							PENDING_UPDATES::<T>::insert(request_id, Update::WithdrawUpdate(success));
+						}
+						Request::CancelResolution(cancel_resolution_request_details) => {
+							log!(info, "CancelResolution: {:?}", cancel_resolution_request_details);
+							match Self::process_cancel_resolution(cancel_resolution_request_details) {
+								Ok(_) => (),
+								Err(_) => success = false,
+							};
+							PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedOnlyInfoUpdate(success));
+						}
+	
+						Request::L2UpdatesToRemove(updates_to_remove_request_details) => {
+							log!(info, "L2UpdatesToRemove: {:?}", updates_to_remove_request_details);
+							match Self::process_l2_updates_to_remove(updates_to_remove_request_details) {
+								Ok(_) => (),
+								Err(_) => success = false,
+							};
+							PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedOnlyInfoUpdate(success));
+						}
+					}
+					// if success, increase last_processed_request_on_l2
+					last_processed_request_on_l2::<T>::put(request_id);
+				}
+			} else {
+				log!(info, "No request found for request_id: {:?}", request_id);
+			}
+		}
+
+		log!(info, "Pending Updates:");
+		for (request_id, update) in PENDING_UPDATES::<T>::iter() {
+			log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+		}
+					}
+				}
+				Err(e) => {
+					log!(info, "Error deserializing JSON: {:?}", e);
+
+				}
+			}
+			Ok(().into())
+		}
 	}
 }
 
@@ -416,6 +503,15 @@ impl<T: Config> Pallet<T> {
 						// SLASH sequencer for bringing unnecessary past requests, to be tested
 						Self::slash(sequencer);
 					} else {
+						// return readRights to sequencer
+					SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+						match maybe_sequencer{
+							&mut Some(ref mut sequencer_rights) if T::SequencerStakingProvider::is_active_sequencer(sequencer.clone()) => {
+								sequencer_rights.readRights += 1;
+							},
+							_ => {},
+						}
+					});
 						Self::process_requests(sequencer, &requests);
 					}
 				}
@@ -488,16 +584,7 @@ impl<T: Config> Pallet<T> {
 							PENDING_UPDATES::<T>::insert(request_id, Update::ProcessedOnlyInfoUpdate(success));
 						}
 					}
-					
-					// return readRights to sequencer
-					SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-						match maybe_sequencer{
-							&mut Some(ref mut sequencer_rights) if T::SequencerStakingProvider::is_active_sequencer(sequencer.clone()) => {
-								sequencer_rights.readRights += 1;
-							},
-							_ => {},
-						}
-					});
+					// if success, increase last_processed_request_on_l2
 					last_processed_request_on_l2::<T>::put(request_id);
 				}
 			} else {
@@ -507,12 +594,10 @@ impl<T: Config> Pallet<T> {
 				return;
 			}
 		}
-		//TBR
 		log!(info, "Pending Updates:");
 		for (request_id, update) in PENDING_UPDATES::<T>::iter() {
 			log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 		}
-		//TBR
 	}
 
 	fn process_deposit(deposit_request_details: &DepositRequestDetails) -> Result<(), &'static str> {
@@ -722,29 +807,6 @@ impl<T: Config> Pallet<T> {
 		updates
 	}
 
-	fn handle_sequencer_activation(new_sequencer: T::AccountId) {
-		// raise sequencer count
-		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
-		// add rights to new sequencer
-		SEQUENCER_RIGHTS::<T>::insert(
-			new_sequencer.clone(),
-			SequencerRights {
-				readRights: RIGHTS_MULTIPLIER,
-				cancelRights: RIGHTS_MULTIPLIER * sequencer_count::<T>::get(),
-			},
-		);
-		// add 1 cancel right of all sequencers
-		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
-			if sequencer_rights.cancelRights > 0 {
-				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-					if let Some(ref mut sequencer) = maybe_sequencer {
-						sequencer.cancelRights += RIGHTS_MULTIPLIER;
-					}
-				});
-			}
-		}
-	}
-
 	fn handle_sequencer_deactivation(deactivated_sequencer: T::AccountId) {
 		// lower sequencer count
 		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
@@ -775,15 +837,29 @@ impl<T: Config> Pallet<T> {
 	fn eth_to_dot_address(eth_addr: String) -> Result<T::AccountId, &'static str> {
         T::AddressConverter::try_convert(eth_addr).or(Err("Cannot convert address"))
 	}
-
-	fn unblock() -> (){
-		
-	}
 }
 
 impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 	fn new_sequencer_active(sequencer: AccountIdOf<T>){
-		// @Stano
-		// your code here
+		// raise sequencer count
+		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
+		// add rights to new sequencer
+		SEQUENCER_RIGHTS::<T>::insert(
+			sequencer.clone(),
+			SequencerRights {
+				readRights: RIGHTS_MULTIPLIER,
+				cancelRights: RIGHTS_MULTIPLIER * sequencer_count::<T>::get(),
+			},
+		);
+		// add 1 cancel right of all sequencers
+		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
+			if sequencer_rights.cancelRights > 0 {
+				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+					if let Some(ref mut sequencer) = maybe_sequencer {
+						sequencer.cancelRights += RIGHTS_MULTIPLIER;
+					}
+				});
+			}
+		}
 	}
 }

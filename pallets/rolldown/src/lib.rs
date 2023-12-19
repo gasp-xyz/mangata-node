@@ -655,11 +655,14 @@ impl<T: Config> Pallet<T> {
 	fn process_deposit(
 		deposit_request_details: &DepositRequestDetails,
 	) -> Result<(), &'static str> {
+		let amount = deposit_request_details.amount;
+		let eth_token_address = deposit_request_details.tokenAddress.clone();
 		let account: T::AccountId =
 			Self::eth_to_dot_address(deposit_request_details.depositRecipient.clone())?;
 
 		// check ferried
 
+		// translate to token id
 		// Add check if token exists, if not create one
 		log!(info, "Deposit processed successfully: {:?}", deposit_request_details);
 
@@ -671,22 +674,25 @@ impl<T: Config> Pallet<T> {
 		withdraw_request_details: &WithdrawRequestDetails,
 	) -> Result<(), &'static str> {
 		// fail will occur if user has not enough balance
-
+		let amount = withdraw_request_details.amount;
+		let eth_token_address = withdraw_request_details.tokenAddress.clone();
+		//let tokenId = "eth token address to id
 		let account: T::AccountId =
 			Self::eth_to_dot_address(withdraw_request_details.withdrawRecipient.clone())?;
 
-		// Add ensure
+		
 		// <T as Config>::Currency::ensure_can_withdraw(
-		// 	sold_asset_id.into(),
-		// 	sender,
-		// 	total_fees,
+		// 	tokenId.into(),
+		// 	account,
+		// 	amount,
 		// 	WithdrawReasons::all(),
 		// 	// Does not fail due to earlier ensure
 		// 	Default::default(),
 		// )
 		// .or(Err(Error::<T>::NotEnoughAssets))?;
 
-		// Add burn tokes for user
+		// burn tokes for user
+		
 		Ok(())
 	}
 
@@ -893,7 +899,7 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 			sequencer.clone(),
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
-				cancelRights: RIGHTS_MULTIPLIER * sequencer_count::<T>::get(),
+				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get()-1),
 			},
 		);
 		// add 1 cancel right of all sequencers

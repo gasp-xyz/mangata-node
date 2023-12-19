@@ -675,7 +675,7 @@ impl<T: Config> Pallet<T> {
 		let account: T::AccountId =
 			Self::eth_to_dot_address(withdraw_request_details.withdrawRecipient.clone())?;
 
-		// Add ensure	
+		// Add ensure
 		// <T as Config>::Currency::ensure_can_withdraw(
 		// 	sold_asset_id.into(),
 		// 	sender,

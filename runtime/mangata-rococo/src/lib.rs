@@ -8,7 +8,7 @@ pub use common_runtime::{
 };
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, InstanceFilter, EitherOfDiverse},
+	traits::{EitherOfDiverse, Everything, InstanceFilter},
 	weights::{constants::RocksDbWeight, Weight},
 };
 #[cfg(any(feature = "std", test))]
@@ -30,8 +30,8 @@ pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		SignedExtension, StaticLookup, Keccak256
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Keccak256,
+		SignedExtension, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -638,7 +638,10 @@ impl orml_asset_registry::Config for Runtime {
 	type StringLimit = cfg::orml_asset_registry::StringLimit;
 	type Hash = Hash;
 	type Hashing = Keccak256;
-	type L1AssetAuthority = EitherOfDiverse<EnsureRoot<AccountId>, pallet_sequencer_staking::EnsureActiveSequencer<Runtime>>;
+	type L1AssetAuthority = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		pallet_sequencer_staking::EnsureActiveSequencer<Runtime>,
+	>;
 }
 
 use cfg::pallet_proxy::ProxyType;

@@ -497,6 +497,12 @@ pub mod pallet {
 			CurrencyIdOf<T>,
 			BalanceOf<T>,
 		),
+		ThirdPartySuccessfulPoolPromotion(
+			T::AccountId,
+			CurrencyIdOf<T>,
+			CurrencyIdOf<T>,
+			BalanceOf<T>,
+		),
 	}
 
 	#[pallet::storage]
@@ -1471,7 +1477,6 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn reward_pool_impl(
 		sender: T::AccountId,
-
 		pool: (CurrencyIdOf<T>, CurrencyIdOf<T>),
 		token_id: CurrencyIdOf<T>,
 		amount: BalanceOf<T>,
@@ -1551,6 +1556,13 @@ impl<T: Config> Pallet<T> {
 			},
 			_ => {}, // invariant assures this will never happen
 		}
+
+		Pallet::<T>::deposit_event(Event::ThirdPartySuccessfulPoolPromotion(
+			sender,
+			liquidity_token_id,
+			token_id,
+			amount,
+		));
 
 		Ok(())
 	}

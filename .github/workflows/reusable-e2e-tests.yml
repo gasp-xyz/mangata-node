@@ -285,6 +285,10 @@ jobs:
         run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   test-complete:
     needs: [setup-report, e2e-test-matrix]

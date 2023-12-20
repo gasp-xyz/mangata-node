@@ -690,6 +690,7 @@ impl pallet_rolldown::Config for Runtime {
 	type AddressConverter = pallet_rolldown::EthereumAddressConverter<AccountId>;
 	type SequencerStakingProvider = SequencerStaking;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {

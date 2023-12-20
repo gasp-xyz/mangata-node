@@ -1,5 +1,5 @@
 relaychain:
-  image: mangatasolutions/polkadot:0.9.32-fast-runtime
+  image: p1k1m4n/polkadot-fast-runtime:1.1.0-6
   chain: kusama-local
   runtimeGenesisConfig:
     configuration:
@@ -17,9 +17,9 @@ relaychain:
     - name: bob
 
 parachains:
-- image: mangatasolutions/mangata-node:develop-fast
+- image: mangatasolutions/mangata-node:rc-0.31.0-fast
   chain:
-    base: mangata-kusama-local
+    base: kusama-local
     collators:
       - alice
       - bob

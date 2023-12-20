@@ -264,7 +264,7 @@ jobs:
   run-benchmarks:
     name: Run runtime benchmarks
     # `performance` self-hosted runners have 8 cores and 16GB of RAM
-    runs-on: [performance-gke]
+    runs-on: [compile]
     env:
       STEPS: 2
       REPEATS: 1

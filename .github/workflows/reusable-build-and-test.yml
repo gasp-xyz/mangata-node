@@ -33,10 +33,10 @@ jobs:
     runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
-      env:
-        DOCKER_HOST: "unix:///run/docker/docker.sock"
-      volumes:
-        - /run/docker:/run/docker
+      # env:
+      #   DOCKER_HOST: "unix:///run/docker/docker.sock"
+      # volumes:
+      #   - /run/docker:/run/docker
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud

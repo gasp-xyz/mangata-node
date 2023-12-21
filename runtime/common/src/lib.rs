@@ -4,6 +4,7 @@
 
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use constants::{fee::*, parachains::*};
+use core::convert::TryInto;
 pub use currency::*;
 #[cfg(feature = "runtime-benchmarks")]
 use frame_support::traits::OriginTrait;
@@ -25,8 +26,10 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use mangata_support::traits::{AssetRegistryProviderTrait, AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
-pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata, L1Asset};
+use mangata_support::traits::{
+	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps,
+};
+pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 pub use orml_tokens;
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
@@ -56,7 +59,6 @@ pub use sp_runtime::{
 };
 use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use types::*;
-use core::convert::TryInto;
 
 pub mod constants;
 pub mod migration;
@@ -1361,27 +1363,24 @@ where
 		}
 
 		pub struct AssetRegistryProvider<T>(PhantomData<T>);
-		impl<T: orml_asset_registry::Config<
-		CustomMetadata = CustomMetadata>> AssetRegistryProviderTrait<T::AssetId> for AssetRegistryProvider<T> {
+		impl<T: orml_asset_registry::Config<CustomMetadata = CustomMetadata>>
+			AssetRegistryProviderTrait<T::AssetId> for AssetRegistryProvider<T>
+		{
 			fn get_l1_asset_id(l1_asset: L1Asset) -> Option<T::AssetId> {
 				orml_asset_registry::L1AssetToId::<T>::get(l1_asset)
 			}
-		
+
 			fn create_l1_asset(l1_asset: L1Asset) -> Result<T::AssetId, DispatchError> {
-				let metadata = AssetMetadata{
+				let metadata = AssetMetadata {
 					decimals: 18_u32,
 					name: b"L1Asset".to_vec().try_into().unwrap(),
 					symbol: b"L1Asset".to_vec().try_into().unwrap(),
 					existential_deposit: Zero::zero(),
 					location: None,
-					additional: CustomMetadata{
-						xcm: None,
-						xyk: None
-					},
+					additional: CustomMetadata { xcm: None, xyk: None },
 				};
 
 				orml_asset_registry::Pallet::<T>::do_register_l1_asset(metadata, None, l1_asset)
-
 			}
 		}
 	}

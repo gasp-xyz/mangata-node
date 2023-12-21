@@ -13,7 +13,11 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_std::collections::btree_map::BTreeMap;
 
 use codec::alloc::string::{String, ToString};
-use mangata_support::traits::{AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait};
+use frame_support::traits::WithdrawReasons;
+use mangata_support::traits::{
+	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
+};
+use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use scale_info::prelude::format;
 use sha3::{Digest, Keccak256};
@@ -23,12 +27,10 @@ use sp_runtime::{
 	traits::TryConvert,
 };
 use sp_std::{convert::TryInto, prelude::*};
-use mangata_types::assets::L1Asset;
-use frame_support::traits::WithdrawReasons;
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
-		<T as frame_system::Config>::AccountId,
-	>>::CurrencyId;
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
 
 pub type BalanceOf<T> =
 	<<T as Config>::Tokens as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -243,7 +245,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config{
+	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type AddressConverter: TryConvert<String, Self::AccountId>;
 		type SequencerStakingProvider: SequencerStakingProviderTrait<
@@ -671,16 +673,23 @@ impl<T: Config> Pallet<T> {
 
 		// translate to token id
 		// Add check if token exists, if not create one
-		let eth_token_address: [u8; 20] = array_bytes::hex2array::<_, 20>(eth_token_address_string.clone()).or(Err("Cannot convert address"))?;
+		let eth_token_address: [u8; 20] =
+			array_bytes::hex2array::<_, 20>(eth_token_address_string.clone())
+				.or(Err("Cannot convert address"))?;
 		let eth_asset = L1Asset::Ethereum(eth_token_address);
-		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()){
+		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
-			None => T::AssetRegistryProvider::create_l1_asset(eth_asset).or(Err("Failed to create L1 Asset"))?,
+			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
+				.or(Err("Failed to create L1 Asset"))?,
 		};
 		log!(info, "Deposit processed successfully: {:?}", deposit_request_details);
 
 		// ADD tokens: mint tokens for user
-		T::Tokens::mint(asset_id, &account, amount.try_into().map_err(|_| "u128 to Balance failed")?)?;
+		T::Tokens::mint(
+			asset_id,
+			&account,
+			amount.try_into().map_err(|_| "u128 to Balance failed")?,
+		)?;
 		Ok(())
 	}
 
@@ -694,9 +703,12 @@ impl<T: Config> Pallet<T> {
 		let account: T::AccountId =
 			Self::eth_to_dot_address(withdraw_request_details.withdrawRecipient.clone())?;
 
-		let eth_token_address: [u8; 20] = array_bytes::hex2array::<_, 20>(eth_token_address_string.clone()).or(Err("Cannot convert address"))?;
+		let eth_token_address: [u8; 20] =
+			array_bytes::hex2array::<_, 20>(eth_token_address_string.clone())
+				.or(Err("Cannot convert address"))?;
 		let eth_asset = L1Asset::Ethereum(eth_token_address);
-		let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()).ok_or("L1AssetNotFound")?;
+		let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
+			.ok_or("L1AssetNotFound")?;
 
 		<T as Config>::Tokens::ensure_can_withdraw(
 			asset_id.into(),
@@ -708,8 +720,12 @@ impl<T: Config> Pallet<T> {
 		.or(Err("NotEnoughAssets"))?;
 
 		// burn tokes for user
-		T::Tokens::burn_and_settle(asset_id, &account, amount.try_into().map_err(|_| "u128 to Balance failed")?)?;
-		
+		T::Tokens::burn_and_settle(
+			asset_id,
+			&account,
+			amount.try_into().map_err(|_| "u128 to Balance failed")?,
+		)?;
+
 		Ok(())
 	}
 
@@ -916,7 +932,7 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 			sequencer.clone(),
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
-				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get()-1),
+				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get() - 1),
 			},
 		);
 		// add 1 cancel right of all sequencers

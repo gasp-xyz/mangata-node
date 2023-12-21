@@ -6,7 +6,7 @@
 <h2 align="center">Mangata Node</h2>
 
 <p align="center">
-    Application-specific blockchain for decentralized exchange, a parachain in Polkadot ecosystem. Implementation includes <a href="https://blog.mangata.finance/blog/2021-10-10-themis-protocol/" target="_blank" rel="noopener noreferrer">MEV solution</a>, Proof of Liquidity and no gas economy.
+    Omnichain zk-rollup for L1-grade native liquidity. Implementation includes <a href="https://blog.mangata.finance/blog/2021-10-10-themis-protocol/" target="_blank" rel="noopener noreferrer">MEV solution</a>, Proof-of-Liquidity, gas-free swaps, algorithmic buy & burn, weight voting & liquidity gauges, time-incentivized liquidity provision, 3rd party incentives, and more.
 </p>
 
 ![Themis](https://blog.mangata.finance/assets/posts/themis-cover.png)
@@ -19,7 +19,7 @@
 
 ## Description
 
-Mangata operates as a cross-chain liquidity protocol, facilitating seamless transactions between Ethereum and various other blockchains through a Multirollup Interchain Infrastructure. We leverage the power of ZK-rollup, a second-layer (L2) solution, to ensure universal connectivity with first-layer (L1) blockchains. Additionally, our decentralized exchange platform is designed to provide robust protection against Miner Extractable Value (MEV) and frontrunning attempts, thereby safeguarding the interests of our users.
+Mangata operates as a cross-chain liquidity protocol, facilitating seamless transactions between Ethereum and various other blockchains through a omnichain zk-rollup Infrastructure. We leverage the power of ZK-rollup, a second-layer (L2) solution, to ensure universal connectivity with first-layer (L1) blockchains. Additionally, our decentralized exchange platform is designed to provide robust protection against Miner Extractable Value (MEV) and frontrunning attempts, thereby safeguarding the interests of our users.
 
 ## API
 

@@ -790,6 +790,8 @@ mod benches {
 	);
 }
 
+use frame_support::dispatch::GetDispatchInfo;
+
 impl_runtime_apis! {
 
 
@@ -876,6 +878,13 @@ impl_runtime_apis! {
 
 		fn start_prevalidation() {
 			System::set_prevalidation()
+		}
+
+		fn account_extrinsic_dispatch_weight(consumed: ver_api::ConsumedWeight, tx: <Block as BlockT>::Extrinsic) -> Result<ver_api::ConsumedWeight, ()> {
+			let info = tx.get_dispatch_info();
+			let maximum_weight = <Runtime as frame_system::Config>::BlockWeights::get();
+			frame_system::calculate_consumed_weight::<RuntimeCall>(maximum_weight, consumed, &info)
+			.or(Err(()))
 		}
 	}
 

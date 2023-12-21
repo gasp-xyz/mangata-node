@@ -123,6 +123,9 @@ jobs:
             fast: false
           - command: "yarn test-sdk"
             fast: true
+          - command: "yarn test-parallel-3rdPartyRewards"
+            fast: true
+    
     runs-on: [compile]
     timeout-minutes: 180
     env:

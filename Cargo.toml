@@ -599,284 +599,284 @@ members = [
 # sp-inherents = { path = "../polkadot-sdk/substrate/primitives/inherents" }
 # sp-statement-store = { path = "../polkadot-sdk/substrate/primitives/statement-store" }
 
-[patch."https://github.com/mangata-finance/polkadot-sdk"]
-pallet-whitelist = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-referenda = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-indices = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-offences = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-asset-tx-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-collective-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-proxy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-identity = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-conviction-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-sudo-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-mangata-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-child-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-beefy-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-preimage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-multisig = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-scheduler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-nomination-pools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-nomination-pools-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-society = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-utility-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-fast-unstake = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-ranked-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-vesting-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-system-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-vesting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-support-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-support-procedural-tools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-im-online = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-staking-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-bags-list = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-election-provider-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-election-provider-solution-type = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-tips = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-balances = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-message-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-nis = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-state-trie-migration = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-sudo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-treasury = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-try-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-elections-phragmen = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-assets = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-election-provider-multi-phase = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-democracy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-membership = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-root-testing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-executive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-wasm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-fork-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-build-script-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-remote-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-frame-benchmarking-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-try-runtime-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-frame-rpc-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-state-trie-migration-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-rpc-client = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-binary-merkle-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-database = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-runtime-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-runtime-interface-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-maybe-compressed-blob = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-core-hashing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-core-hashing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-state-machine = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-metadata-ir = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-statement-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-weights = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-io = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-inherents = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-std = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-storage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-panic-handler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-debug-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-blockchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-trie = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-mmr-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-mangata-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-version = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-version-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-keyring = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-wasm-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-transaction-storage-proof = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-extrinsic-shuffler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-arithmetic = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-api-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-application-crypto = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-ver-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-npos-elections = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-genesis-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sp-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-grandpa-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-epochs = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-beefy-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-babe-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-tracing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-rpc-spec-v2 = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-state-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-proposer-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-rpc-server = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-bitswap = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-transactions = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-light = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-sync = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-informant = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-transaction-pool-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-chain-spec = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-chain-spec-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-sync-state-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-basic-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-block-builder-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-mmr-gadget = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-mmr-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-storage-monitor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-allocator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-network-gossip = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-client-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-client-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-sysinfo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-executor-wasmtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-executor-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-telemetry = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-sc-rpc-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-xcm-emulator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-test-relay-sproof-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-primitives-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-primitives-parachain-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-primitives-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-primitives-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-primitives-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-dmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-xcmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-aura-ext = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-session-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-parachain-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-pallet-parachain-system-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-collator-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-consensus-proposer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-consensus-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-consensus-relay-chain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-relay-chain-minimal-node = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-relay-chain-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-relay-chain-inprocess-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-pov-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-collator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-client-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-cumulus-relay-chain-rpc-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-parachains-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-parachain-info = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-parachain-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-staging-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-staging-xcm-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-staging-xcm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-xcm-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-statement-table = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-runtime-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-rococo-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-rococo-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-staging-kusama-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-kusama-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-runtime-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-slot-range-helper = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-westend-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-runtime-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-tracing-gum = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-tracing-gum-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-candidate-validation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-prospective-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-parachains-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-av-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-approval-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-pvf = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-pvf-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-dispute-coordinator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-chain-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-backing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-provisioner = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-chain-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-bitfield-signing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-core-pvf-checker = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-subsystem-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-collation-generation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-jaeger = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-availability-bitfield-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-gossip-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-network-bridge = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-network-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-approval-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-statement-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-availability-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-availability-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-collator-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-dispute-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-subsystem = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-node-subsystem-util = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-overseer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
-polkadot-core-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# [patch."https://github.com/mangata-finance/polkadot-sdk"]
+# pallet-whitelist = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-referenda = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-indices = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-offences = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-asset-tx-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-collective-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-proxy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-identity = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-conviction-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-sudo-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# mangata-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-child-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-beefy-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-preimage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-multisig = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-scheduler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-nomination-pools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-nomination-pools-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-society = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-utility-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-fast-unstake = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-ranked-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-vesting-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-system-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-vesting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-support-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-support-procedural-tools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-im-online = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-staking-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-bags-list = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-election-provider-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-election-provider-solution-type = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-tips = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-balances = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-message-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-nis = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-state-trie-migration = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-sudo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-treasury = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-try-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-elections-phragmen = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-assets = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-election-provider-multi-phase = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-democracy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-membership = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-root-testing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-executive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-wasm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# fork-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-build-script-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-remote-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# frame-benchmarking-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# try-runtime-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-frame-rpc-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-state-trie-migration-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-rpc-client = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# binary-merkle-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-database = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-runtime-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-runtime-interface-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-maybe-compressed-blob = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-core-hashing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-core-hashing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-state-machine = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-metadata-ir = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-statement-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-weights = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-io = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-inherents = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-std = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-storage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-panic-handler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-debug-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-blockchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-trie = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-mmr-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# mangata-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-version = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-version-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-keyring = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-wasm-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-transaction-storage-proof = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# extrinsic-shuffler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-arithmetic = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-api-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-application-crypto = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# ver-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-npos-elections = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-genesis-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sp-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-grandpa-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-epochs = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-beefy-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-babe-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-tracing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-rpc-spec-v2 = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-state-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-proposer-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-rpc-server = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-bitswap = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-transactions = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-light = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-sync = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-informant = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-transaction-pool-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-chain-spec = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-chain-spec-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-sync-state-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-basic-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-block-builder-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# mmr-gadget = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# mmr-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-storage-monitor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-allocator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-network-gossip = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-client-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-client-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-sysinfo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-executor-wasmtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-executor-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-telemetry = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# sc-rpc-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# xcm-emulator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-test-relay-sproof-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-primitives-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-primitives-parachain-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-primitives-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-primitives-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-primitives-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-dmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-xcmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-aura-ext = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-session-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-parachain-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-pallet-parachain-system-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-collator-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-consensus-proposer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-consensus-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-consensus-relay-chain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-relay-chain-minimal-node = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-relay-chain-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-relay-chain-inprocess-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-pov-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-collator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-client-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# cumulus-relay-chain-rpc-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# parachains-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# parachain-info = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-parachain-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# staging-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# staging-xcm-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# staging-xcm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# xcm-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-statement-table = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-runtime-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# rococo-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# rococo-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# staging-kusama-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# kusama-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-runtime-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# slot-range-helper = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# westend-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-runtime-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# tracing-gum = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# tracing-gum-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-candidate-validation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-prospective-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-parachains-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-av-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-approval-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-pvf = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-pvf-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-dispute-coordinator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-chain-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-backing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-provisioner = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-chain-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-bitfield-signing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-core-pvf-checker = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-subsystem-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-collation-generation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-jaeger = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-availability-bitfield-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-gossip-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-network-bridge = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-network-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-approval-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-statement-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-availability-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-availability-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-collator-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-dispute-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-subsystem = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-node-subsystem-util = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-overseer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
+# polkadot-core-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "rolldown-sequencer-staking" }
 
 # # patch generated by './scripts/dev_manifest.sh ../open-runtime-module-library/'
 # [patch."https://github.com/mangata-finance/open-runtime-module-library"]
@@ -889,13 +889,303 @@ polkadot-core-primitives = { git = "https://github.com/mangata-finance//polkadot
 # orml-traits = { path = "../open-runtime-module-library/traits" }
 # orml-tokens = { path = "../open-runtime-module-library/tokens" }
 
+# # patch generated by './scripts/dev_manifest.sh ../open-runtime-module-library'
+# [patch."https://github.com/mangata-finance/open-runtime-module-library"]
+# orml-xcm = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-traits = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-xtokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-asset-registry = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-xcm-support = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-utilities = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-unknown-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+# orml-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+
 # patch generated by './scripts/dev_manifest.sh ../open-runtime-module-library'
 [patch."https://github.com/mangata-finance/open-runtime-module-library"]
-orml-xcm = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-traits = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-xtokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-asset-registry = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-xcm-support = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-utilities = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-unknown-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
-orml-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "rolldown-asset-registry" }
+orml-xcm = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-traits = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-xtokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-asset-registry = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-xcm-support = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-utilities = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-unknown-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+orml-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+
+[patch."https://github.com/mangata-finance/polkadot-sdk"]
+pallet-whitelist = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-referenda = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-indices = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-offences = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-asset-tx-payment = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-collective-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-proxy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-identity = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-conviction-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-sudo-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+mangata-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-child-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-beefy-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-preimage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-multisig = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-scheduler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-nomination-pools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-society = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-utility-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-bounties = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-fast-unstake = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-ranked-collective = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-vesting-mangata = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-system-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-mmr = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-vesting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-support-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-support-procedural-tools = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-im-online = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-staking-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-bags-list = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-election-provider-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-election-provider-solution-type = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-tips = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-balances = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-message-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-nis = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-state-trie-migration = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-sudo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-treasury = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-try-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-elections-phragmen = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-assets = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-election-provider-multi-phase = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-democracy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-membership = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-root-testing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-executive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-wasm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+fork-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-build-script-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-remote-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+frame-benchmarking-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+try-runtime-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-frame-rpc-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-state-trie-migration-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-rpc-client = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+binary-merkle-tree = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-database = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-runtime-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-maybe-compressed-blob = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-core-hashing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-core-hashing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-state-machine = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-metadata-ir = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-statement-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-weights = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-io = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-inherents = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-std = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-storage = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-panic-handler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-debug-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-blockchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-externalities = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-trie = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-mmr-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+mangata-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-version = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-version-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-keyring = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-staking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-wasm-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-transaction-storage-proof = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+extrinsic-shuffler = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-arithmetic = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-api-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-application-crypto = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+ver-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-npos-elections = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-genesis-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sp-session = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-grandpa = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-grandpa-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-epochs = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-beefy = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-beefy-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-babe = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-babe-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-consensus-slots = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-tracing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-tracing-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-rpc-spec-v2 = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-state-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-proposer-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-keystore = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-rpc-server = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-bitswap = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-transactions = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-light = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-sync = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-informant = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-transaction-pool = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-transaction-pool-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-utils = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-chain-spec = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-chain-spec-derive = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-sync-state-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-basic-authorship = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-block-builder-ver = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+mmr-gadget = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+mmr-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-storage-monitor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-authority-discovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-block-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-allocator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-network-gossip = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-client-db = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-client-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-sysinfo = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-executor-wasmtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-executor-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-telemetry = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-offchain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+sc-rpc-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+xcm-emulator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-test-relay-sproof-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-primitives-core = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-primitives-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-primitives-timestamp = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-primitives-utility = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-dmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-aura-ext = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-session-benchmarking = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-parachain-system = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-pallet-parachain-system-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-collator-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-consensus-proposer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-consensus-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-consensus-relay-chain = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-consensus-aura = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-relay-chain-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-network = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-pov-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-collator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-client-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+cumulus-relay-chain-rpc-interface = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+parachains-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+parachain-info = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-parachain-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+staging-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+staging-xcm-executor = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+staging-xcm-builder = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+xcm-procedural = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+pallet-xcm = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-statement-table = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-runtime-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+rococo-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+rococo-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+staging-kusama-runtime = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+kusama-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-runtime-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+slot-range-helper = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+westend-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-runtime-constants = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-runtime-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-cli = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-metrics = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+tracing-gum = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+tracing-gum-proc-macro = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-candidate-validation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-prospective-parachains = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-runtime-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-parachains-inherent = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-av-store = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-approval-voting = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-pvf = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-pvf-common = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-dispute-coordinator = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-chain-api = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-backing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-provisioner = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-chain-selection = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-bitfield-signing = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-core-pvf-checker = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-subsystem-types = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-collation-generation = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-jaeger = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-availability-bitfield-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-gossip-support = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-network-bridge = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-network-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-approval-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-statement-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-availability-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-availability-recovery = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-collator-protocol = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-dispute-distribution = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-subsystem = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-node-subsystem-util = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-service = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-overseer = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-rpc = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }
+polkadot-core-primitives = { git = "https://github.com/mangata-finance//polkadot-sdk", branch = "stano-rolldown-prototype-asset-registry-hooks" }

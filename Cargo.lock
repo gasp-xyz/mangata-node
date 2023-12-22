@@ -7232,7 +7232,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=feature/remove-migration#92de30ade9e5383252b5504d4c67eede7dca3630"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=feature/remove-migration#750f5c9ff7de96ae5b33466b0440103d23823792"
 dependencies = [
  "ed25519-dalek 1.0.1",
  "frame-benchmarking",

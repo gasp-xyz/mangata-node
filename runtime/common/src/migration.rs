@@ -69,7 +69,7 @@ where
 			info!(target: "pallet_bootstrap", "No migration applied, remove");
 			reads += 1;
 		} else {
-			StorageVersion::new(1).put::<pallet_bootstrap::Pallet<T>>();
+			StorageVersion::new(2).put::<pallet_bootstrap::Pallet<T>>();
 			reads += 1;
 			writes += 1;
 		};
@@ -93,19 +93,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
-		assert_eq!(orml_asset_registry::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(pallet_maintenance::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(orml_unknown_tokens::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(pallet_xcm::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(pallet_bootstrap::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(pallet_crowdloan_rewards::Pallet::<T>::on_chain_storage_version(), 0);
-		assert_eq!(pallet_fee_lock::Pallet::<T>::on_chain_storage_version(), 0);
-		Ok(Vec::new())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), TryRuntimeError> {
+	fn post_upgrade(_state: sp_std::vec::Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
 		assert_eq!(orml_asset_registry::Pallet::<T>::on_chain_storage_version(), 2);
 		assert_eq!(pallet_maintenance::Pallet::<T>::on_chain_storage_version(), 0);
 		assert_eq!(orml_unknown_tokens::Pallet::<T>::on_chain_storage_version(), 2);

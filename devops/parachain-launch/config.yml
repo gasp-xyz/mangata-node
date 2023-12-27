@@ -1,6 +1,6 @@
 relaychain:
-  image: --platform=linux/amd64 parity/polkadot:v1.1.0@sha256:cacf6f2f18f65d4d2ae4dd75b77ea655972d31e8f9c000bd393b70734c376d89
-  chain: rococo-local
+  image: p1k1m4n/polkadot-fast-runtime:1.1.0-6
+  chain: kusama-local
   runtimeGenesisConfig:
     configuration:
       config:
@@ -17,9 +17,9 @@ relaychain:
     - name: bob
 
 parachains:
-  - image: mangatasolutions/mangata-node:rc-0.32.0
+  - image: mangatasolutions/mangata-node:rc-0.32.1
     chain:
-      base: mangata-rococo-local
+      base: mangata-kusama-local
       collators:
         - alice
         - bob
@@ -38,7 +38,7 @@ parachains:
       - --execution=wasm
     env:
       # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
-      RUST_LOG: info,block_builder=trace
+      RUST_LOG: info,migration=debug
     volumePath: /mangata/data
     nodes:
       - flags:

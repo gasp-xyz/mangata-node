@@ -36,9 +36,10 @@ where
 
 		// AssetRegistry -> 2
 		if orml_asset_registry::Pallet::<T>::on_chain_storage_version() == 2 {
-			info!(target: "asset-registry", "No migration applied, remove");
+			info!(target: "migration::asset-registry", "No migration applied, remove");
 			reads += 1;
 		} else {
+			info!(target: "migration::asset-registry", "Migration applied");
 			StorageVersion::new(2).put::<orml_asset_registry::Pallet<T>>();
 			reads += 1;
 			writes += 1;
@@ -46,19 +47,21 @@ where
 
 		//UnknwonTokens -> 2
 		if orml_unknown_tokens::Pallet::<T>::on_chain_storage_version() == 2 {
-			info!(target: "unknown-tokens", "No migration applied, remove");
+			info!(target: "migration::unknown-tokens", "No migration applied, remove");
 			reads += 1;
 		} else {
+			info!(target: "migration::unknown-tokens", "Migration applied");
 			StorageVersion::new(2).put::<orml_unknown_tokens::Pallet<T>>();
 			reads += 1;
 			writes += 1;
 		};
 
 		// PolkadotXcm -> 1
-		if pallet_xcm::Pallet::<T>::on_chain_storage_version() == 2 {
-			info!(target: "pallet_xcm", "No migration applied, remove");
+		if pallet_xcm::Pallet::<T>::on_chain_storage_version() != 1 {
+			info!(target: "migration::pallet_xcm", "No migration applied, remove");
 			reads += 1;
 		} else {
+			info!(target: "migration::pallet_xcm", "Migration applied");
 			StorageVersion::new(1).put::<pallet_xcm::Pallet<T>>();
 			reads += 1;
 			writes += 1;
@@ -66,9 +69,10 @@ where
 
 		// Bootstrap -> 2
 		if pallet_bootstrap::Pallet::<T>::on_chain_storage_version() == 2 {
-			info!(target: "pallet_bootstrap", "No migration applied, remove");
+			info!(target: "migration::pallet_bootstrap", "No migration applied, remove");
 			reads += 1;
 		} else {
+			info!(target: "migration::pallet_bootstrap", "Migration applied");
 			StorageVersion::new(2).put::<pallet_bootstrap::Pallet<T>>();
 			reads += 1;
 			writes += 1;
@@ -76,9 +80,10 @@ where
 
 		// Crowdloan -> 1
 		if pallet_crowdloan_rewards::Pallet::<T>::on_chain_storage_version() == 1 {
-			info!(target: "pallet_crowdloan_rewards", "No migration applied, remove");
+			info!(target: "migration::pallet_crowdloan_rewards", "No migration applied, remove");
 			reads += 1;
 		} else {
+			info!(target: "migration::pallet_crowdloan_rewards", "Migration applied");
 			StorageVersion::new(1).put::<pallet_crowdloan_rewards::Pallet<T>>();
 			reads += 1;
 			writes += 1;

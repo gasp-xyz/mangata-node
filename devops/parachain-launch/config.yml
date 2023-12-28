@@ -1,13 +1,13 @@
 relaychain:
-  image: p1k1m4n/polkadot-fast-runtime:1.1.0-6
-  chain: kusama-local
+  image: --platform=linux/amd64 parity/polkadot:v1.1.0@sha256:cacf6f2f18f65d4d2ae4dd75b77ea655972d31e8f9c000bd393b70734c376d89
+  chain: rococo-local
   runtimeGenesisConfig:
     configuration:
       config:
         validation_upgrade_cooldown: 10
         validation_upgrade_delay: 10
   env:
-    RUST_LOG: info
+    RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
   flags:
     - --rpc-methods=unsafe
     - --wasm-execution=compiled
@@ -17,31 +17,31 @@ relaychain:
     - name: bob
 
 parachains:
-  - image: mangatasolutions/mangata-node:rc-0.32.1
-    chain:
-      base: mangata-kusama-local
-      collators:
-        - alice
-        - bob
-      sudo: alice
-      skipCollatorSelection: true
-      skipBalances: true
-    id: 2110
-    parachain: true
-    flags:
-      - --rpc-methods=unsafe
-      - --force-authoring
-      - --wasm-execution=compiled
-      - --execution=wasm
-    relaychainFlags:
-      - --wasm-execution=compiled
-      - --execution=wasm
-    env:
-      # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
-      RUST_LOG: info,migration=debug
-    volumePath: /mangata/data
-    nodes:
-      - flags:
-          - --alice
-      - flags:
-          - --bob
+- image: mangatasolutions/mangata-node:dev
+  chain:
+    base: mangata-rococo-local
+    collators:
+      - alice
+      - bob
+    sudo: alice
+    skipCollatorSelection: true
+    skipBalances: true
+  id: 2110
+  parachain: true
+  flags:
+    - --rpc-methods=unsafe
+    - --force-authoring
+    - --wasm-execution=compiled
+    - --execution=wasm
+  relaychainFlags:
+    - --wasm-execution=compiled
+    - --execution=wasm
+  env:
+    # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
+    RUST_LOG: info,block_builder=trace
+  volumePath: /mangata/data
+  nodes:
+  - flags:
+    - --alice
+  - flags:
+    - --bob

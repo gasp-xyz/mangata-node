@@ -19,6 +19,8 @@ where
 	T: pallet_bootstrap::Config,
 	T: pallet_crowdloan_rewards::Config,
 	T: pallet_fee_lock::Config,
+	T: cumulus_pallet_dmp_queue::Config,
+	T: cumulus_pallet_xcmp_queue::Config,
 {
 	fn on_runtime_upgrade() -> Weight {
 		info!(
@@ -57,7 +59,7 @@ where
 		};
 
 		// PolkadotXcm -> 1
-		if pallet_xcm::Pallet::<T>::on_chain_storage_version() != 1 {
+		if pallet_xcm::Pallet::<T>::on_chain_storage_version() == 1 {
 			info!(target: "migration::pallet_xcm", "No migration applied, remove");
 			reads += 1;
 		} else {
@@ -102,10 +104,12 @@ where
 		assert_eq!(orml_asset_registry::Pallet::<T>::on_chain_storage_version(), 2);
 		assert_eq!(pallet_maintenance::Pallet::<T>::on_chain_storage_version(), 0);
 		assert_eq!(orml_unknown_tokens::Pallet::<T>::on_chain_storage_version(), 2);
-		assert_eq!(pallet_xcm::Pallet::<T>::on_chain_storage_version(), 1);
 		assert_eq!(pallet_bootstrap::Pallet::<T>::on_chain_storage_version(), 2);
 		assert_eq!(pallet_crowdloan_rewards::Pallet::<T>::on_chain_storage_version(), 1);
 		assert_eq!(pallet_fee_lock::Pallet::<T>::on_chain_storage_version(), 0);
+		assert_eq!(cumulus_pallet_dmp_queue::Pallet::<T>::on_chain_storage_version(), 2);
+		assert_eq!(cumulus_pallet_xcmp_queue::Pallet::<T>::on_chain_storage_version(), 3);
+		assert_eq!(pallet_xcm::Pallet::<T>::on_chain_storage_version(), 1);
 		Ok(())
 	}
 }

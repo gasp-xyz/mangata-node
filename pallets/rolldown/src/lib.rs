@@ -334,7 +334,7 @@ pub mod pallet {
 						// reduce sequencer cancel rights
 						SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
 							if let Some(ref mut sequencer) = maybe_sequencer {
-								sequencer.readRights -= 1;
+								sequencer.cancelRights -= 1;
 							}
 						});
 
@@ -345,14 +345,14 @@ pub mod pallet {
 
 						//get last processed request on L1
 						//deserialize json
-						let pending_requests_json =
+						let pending_request =
 							// add SLASH if json is invalid to process
 							Self::deserialize_json(pending_requests_to_cancel.1.as_str()).unwrap();
 						// get last processed request on L1 and last accepted request on L1
 						let last_processed_request_on_l1 =
-							pending_requests_json.lastProccessedRequestOnL1;
+							pending_request.lastProccessedRequestOnL1;
 						let last_accepted_request_on_l1 =
-							pending_requests_json.lastAcceptedRequestOnL1;
+							pending_request.lastAcceptedRequestOnL1;
 
 						// create cancel request
 						let cancel_request = Cancel {
@@ -379,7 +379,7 @@ pub mod pallet {
 							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 						}
 						log!(info, "Pending requests:");
-						for (request_id, update) in PENDING_REQUESTS::<T>::iter() {
+						for (request_id, update) in PENDING_UPDATES::<T>::iter() {
 							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 						}
 					} else {
@@ -564,6 +564,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		PENDING_REQUESTS::<T>::remove(<frame_system::Pallet<T>>::block_number());
+		// prev_last_processed_request_on_l2 update goes here?
 	}
 
 	fn deserialize_json(json_str: &str) -> Result<Requests, serde_json::Error> {
@@ -893,7 +894,7 @@ impl<T: Config> Pallet<T> {
 
 	fn handle_sequencer_deactivation(deactivated_sequencer: T::AccountId) {
 		// lower sequencer count
-		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
+		sequencer_count::<T>::put(Self::get_sequencer_count() - 1);
 		// remove all rights of deactivated sequencer
 		SEQUENCER_RIGHTS::<T>::remove(deactivated_sequencer.clone());
 		// remove 1 cancel right of all sequencers

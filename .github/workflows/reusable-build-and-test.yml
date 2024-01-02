@@ -178,7 +178,7 @@ jobs:
 
   coverage-report:
     name: Coverage report
-    runs-on: [compile]
+    runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
       options: --security-opt seccomp=unconfined

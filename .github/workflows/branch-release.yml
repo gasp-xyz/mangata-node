@@ -46,6 +46,7 @@ jobs:
       GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
       RELEASE_BRANCH_PATTERN: ${{ steps.set_vars.outputs.RELEASE_BRANCH_PATTERN }}
       RELEASE_TAG: ${{ steps.set_vars.outputs.RELEASE_TAG }}
+      GIT_BRANCH_UNFORMATTED: ${{ steps.branch-name.outputs.current_branch }}
     steps:
       - name: Get branch name
         id: branch-name
@@ -120,7 +121,7 @@ jobs:
     uses: ./.github/workflows/reusable-generate-types.yml
     secrets: inherit
     with:
-      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH_UNFORMATTED }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 

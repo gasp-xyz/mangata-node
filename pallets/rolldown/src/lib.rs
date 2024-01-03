@@ -537,7 +537,7 @@ impl<T: Config> Pallet<T> {
 						log!(info, "lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2");
 
 						// SLASH sequencer for bringing unnecessary past requests, to be tested
-						Self::slash(sequencer);
+						// Self::slash(sequencer);
 					} else {
 						// return readRights to sequencer
 						SEQUENCER_RIGHTS::<T>::mutate_exists(

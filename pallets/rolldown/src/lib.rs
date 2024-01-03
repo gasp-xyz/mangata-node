@@ -538,23 +538,22 @@ impl<T: Config> Pallet<T> {
 
 						// SLASH sequencer for bringing unnecessary past requests, to be tested
 						// Self::slash(sequencer);
-					} else {
-						// return readRights to sequencer
-						SEQUENCER_RIGHTS::<T>::mutate_exists(
-							sequencer.clone(),
-							|maybe_sequencer| match maybe_sequencer {
-								&mut Some(ref mut sequencer_rights)
-									if T::SequencerStakingProvider::is_active_sequencer(
-										sequencer.clone(),
-									) =>
-								{
-									sequencer_rights.readRights += 1;
-								},
-								_ => {},
-							},
-						);
-						Self::process_requests(sequencer, &requests);
 					}
+					// return readRights to sequencer
+					SEQUENCER_RIGHTS::<T>::mutate_exists(
+						sequencer.clone(),
+						|maybe_sequencer| match maybe_sequencer {
+							&mut Some(ref mut sequencer_rights)
+								if T::SequencerStakingProvider::is_active_sequencer(
+									sequencer.clone(),
+								) =>
+							{
+								sequencer_rights.readRights += 1;
+							},
+							_ => {},
+						},
+					);
+					Self::process_requests(sequencer, &requests);
 				},
 				Err(e) => {
 					log!(info, "Error deserializing JSON: {:?}", e);

@@ -351,8 +351,7 @@ pub mod pallet {
 						// get last processed request on L1 and last accepted request on L1
 						let last_processed_request_on_l1 =
 							pending_request.lastProccessedRequestOnL1;
-						let last_accepted_request_on_l1 =
-							pending_request.lastAcceptedRequestOnL1;
+						let last_accepted_request_on_l1 = pending_request.lastAcceptedRequestOnL1;
 
 						// create cancel request
 						let cancel_request = Cancel {
@@ -540,9 +539,8 @@ impl<T: Config> Pallet<T> {
 						// Self::slash(sequencer);
 					}
 					// return readRights to sequencer
-					SEQUENCER_RIGHTS::<T>::mutate_exists(
-						sequencer.clone(),
-						|maybe_sequencer| match maybe_sequencer {
+					SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+						match maybe_sequencer {
 							&mut Some(ref mut sequencer_rights)
 								if T::SequencerStakingProvider::is_active_sequencer(
 									sequencer.clone(),
@@ -551,8 +549,8 @@ impl<T: Config> Pallet<T> {
 								sequencer_rights.readRights += 1;
 							},
 							_ => {},
-						},
-					);
+						}
+					});
 					Self::process_requests(sequencer, &requests);
 				},
 				Err(e) => {

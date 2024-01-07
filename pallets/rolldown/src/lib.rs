@@ -825,7 +825,6 @@ impl<T: Config> Pallet<T> {
 		let mut hasher = Keccak256::new();
 		hasher.update(input.as_bytes());
 		let result = hasher.finalize();
-
 		U256::from(&result[..])
 	}
 

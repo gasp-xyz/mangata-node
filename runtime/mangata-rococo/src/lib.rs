@@ -638,7 +638,10 @@ impl orml_asset_registry::Config for Runtime {
 	type StringLimit = cfg::orml_asset_registry::StringLimit;
 	type Hash = Hash;
 	type Hashing = Keccak256;
-	type L1AssetAuthority = EitherOfDiverse<EnsureRoot<AccountId>, pallet_sequencer_staking::EnsureActiveSequencer<Runtime>>;
+	type L1AssetAuthority = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		pallet_sequencer_staking::EnsureActiveSequencer<Runtime>,
+	>;
 }
 
 use cfg::pallet_proxy::ProxyType;
@@ -702,8 +705,10 @@ impl pallet_maintenance::Config for Runtime {
 
 impl pallet_rolldown::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type AddressConverter = pallet_rolldown::EthereumAddressConverter<AccountId>;
 	type SequencerStakingProvider = SequencerStaking;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {

@@ -17,6 +17,7 @@ serde = {version = "1.0.101",default-features = false, features = ["derive"]  }
 serde_json = { version = "1.0.108", default-features = false }
 # serde-json-wasm = { version =  "1.0.0", default-features = false }
 sha3 = { version = "0.9.1", default-features = false }
+array-bytes = "6.1"
 
 
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }

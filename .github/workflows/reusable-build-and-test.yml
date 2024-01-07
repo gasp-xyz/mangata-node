@@ -30,13 +30,13 @@ permissions:
 jobs:
   build-node-image:
     name: Build Docker image
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
-      env:
-        DOCKER_HOST: "unix:///run/docker/docker.sock"
-      volumes:
-        - /run/docker:/run/docker
+      # env:
+      #   DOCKER_HOST: "unix:///run/docker/docker.sock"
+      # volumes:
+      #   - /run/docker:/run/docker
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud
@@ -109,6 +109,10 @@ jobs:
             ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
             ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
             ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   rustfmt-check:
     name: Formatting check
@@ -146,7 +150,7 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -167,10 +171,14 @@ jobs:
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
         run: cargo test -j2
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   coverage-report:
     name: Coverage report
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
       options: --security-opt seccomp=unconfined
@@ -199,6 +207,10 @@ jobs:
         with:
           token: ${{ secrets.ORG_CODECOV_TOKEN }}
           fail_ci_if_error: true
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -231,7 +243,7 @@ jobs:
 
   build-and-run-try-runtime:
     name: Run try-runtime checks
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -261,10 +273,14 @@ jobs:
       - name: Run try-runtime Kusama Mainnet
         run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
 
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+
   run-benchmarks:
     name: Run runtime benchmarks
     # `performance` self-hosted runners have 8 cores and 16GB of RAM
-    runs-on: [performance-gke]
+    runs-on: [compile]
     env:
       STEPS: 2
       REPEATS: 1
@@ -323,10 +339,14 @@ jobs:
         with:
           name: benchmarks
           path: ./benchmarks
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   build-wasms:
     name: Export wasm artifacts
-    runs-on: [compile-gke]
+    runs-on: [compile]
     env:
       STEPS: 2
       REPEATS: 1
@@ -364,3 +384,7 @@ jobs:
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

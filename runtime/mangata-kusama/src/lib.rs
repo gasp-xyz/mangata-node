@@ -6,7 +6,7 @@ use codec::Encode;
 pub use common_runtime::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, InstanceFilter},
+	traits::{Everything, InstanceFilter, EitherOfDiverse},
 	weights::{constants::RocksDbWeight, Weight},
 };
 #[cfg(any(feature = "std", test))]
@@ -29,7 +29,7 @@ use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		SignedExtension, StaticLookup,
+		SignedExtension, StaticLookup, Keccak256
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -513,6 +513,7 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
+	type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -617,6 +618,9 @@ impl orml_asset_registry::Config for Runtime {
 	type Balance = Balance;
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 	type StringLimit = cfg::orml_asset_registry::StringLimit;
+	type Hash = Hash;
+	type Hashing = Keccak256;
+	type L1AssetAuthority = EitherOfDiverse<EnsureRoot<AccountId>, pallet_sequencer_staking::EnsureActiveSequencer<Runtime>>;
 }
 
 use cfg::pallet_proxy::ProxyType;
@@ -678,6 +682,19 @@ impl pallet_maintenance::Config for Runtime {
 	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 }
 
+impl pallet_rolldown::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type SequencerStakingProvider = SequencerStaking;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
+impl pallet_sequencer_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type MinimumSequencers = frame_support::traits::ConstU32<2>;
+	type RolldownProvider = Rolldown;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -690,6 +707,7 @@ construct_runtime!(
 		Utility: pallet_utility_mangata = 4,
 		Proxy: pallet_proxy = 5,
 		Maintenance: pallet_maintenance = 6,
+		Rolldown: pallet_rolldown = 7,
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,
@@ -718,6 +736,7 @@ construct_runtime!(
 		Bootstrap: pallet_bootstrap = 21,
 
 		// Collator support. The order of these 4 are important and shall not change.
+		SequencerStaking: pallet_sequencer_staking = 29,
 		Authorship: pallet_authorship = 30,
 		ParachainStaking: parachain_staking = 31,
 		Session: pallet_session = 32,

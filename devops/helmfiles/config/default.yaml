@@ -1,9 +1,10 @@
+nodeChain: mangata-rococo-local
 enableLocalRelaychain: true
 enableParachainRegisterSidecar: true
 enableServiceMonitorCollectors: false
-storageSize: 5Gi
-relaychainImage: parity/polkadot:v0.9.38
-relaychainStorageSize: 5Gi
+storageSize: 20Gi
+relaychainImage: parity/polkadot:v1.1.0
+relaychainStorageSize: 20Gi
 relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
 
 # Correspond to `pd-balanced` storage type in GCP
@@ -13,13 +14,13 @@ storageClass: node-data-volume
 node01:
   isCollator: true
   bootnodeAddr: ''
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
+  accountKeySeed: '0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a'
   nodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
 
 node02:
   isCollator: true
   bootnodeAddr: /dns4/node-01-p2p/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
+  accountKeySeed: '0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89'
   nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
 
 resources:

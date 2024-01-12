@@ -1,79 +1,74 @@
 // Copyright (C) 2020 Mangata team
 
 use super::*;
-
-use sp_core::H256;
-
-use sp_runtime::{
-	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-};
+use mangata_support::traits::GetMaintenanceStatusTrait;
+use mangata_types::assets::CustomMetadata;
 
 use crate as pos;
+use core::convert::TryFrom;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything},
+	traits::{
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+		WithdrawReasons,
+	},
 	PalletId,
 };
-
 use frame_system as system;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
-use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
-use sp_runtime::{Perbill, Percent};
-use std::{collections::HashMap, sync::Mutex};
+use pallet_xyk::AssetMetadataMutationTrait;
+use sp_runtime::{traits::AccountIdConversion, BuildStorage, Perbill, Percent, Saturating};
+use std::{collections::hash_map::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
-pub(crate) type AccountId = u128;
+pub(crate) type AccountId = u64;
+pub(crate) type Amount = i128;
+pub(crate) type Balance = u128;
+pub(crate) type TokenId = u32;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-use core::convert::TryFrom;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		ProofOfStake: pos::{Pallet, Call, Storage, Event<T>},
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
+	pub enum Test {
+		System: frame_system,
+		Tokens: orml_tokens,
+		ProofOfStake: pos,
+		Vesting: pallet_vesting_mangata,
+		Issuance: pallet_issuance,
+		Xyk: pallet_xyk,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
+	type Hash = sp_runtime::testing::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
 	type BlockHashCount = BlockHashCount;
+	type BlockWeights = ();
+	type BlockLength = ();
 	type DbWeight = ();
 	type Version = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type PalletInfo = PalletInfo;
-	type BlockWeights = ();
-	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -139,6 +134,8 @@ parameter_types! {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 0;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting_mangata::Config for Test {
@@ -147,6 +144,7 @@ impl pallet_vesting_mangata::Config for Test {
 	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;
@@ -167,7 +165,7 @@ parameter_types! {
 	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
 	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
 	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
-	pub const BlocksPerRound: u32 = 5u32;
+	pub const BlocksPerRound: u32 = 10u32;
 	pub const HistoryLimit: u32 = 10u32;
 }
 
@@ -187,21 +185,102 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 pub struct MockAssetRegister;
 
 lazy_static::lazy_static! {
-	static ref ASSET_REGISTER: Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> = {
+	static ref ASSET_REGISTER: Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata, ConstU32<20>>>> = {
 		let m = HashMap::new();
 		Mutex::new(m)
 	};
 }
 
-pub struct MockMaintenanceStatusProvider;
+mockall::mock! {
+	pub ValuationApi {}
 
-lazy_static::lazy_static! {
-	static ref MAINTENANCE_STATUS: Mutex<bool> = {
-		let m: bool = false;
-		Mutex::new(m)
-	};
+	impl Valuate<Balance, TokenId> for ValuationApi {
+
+	fn get_liquidity_asset(
+	first_asset_id: TokenId,
+	second_asset_id: TokenId,
+	) -> Result<TokenId, DispatchError>;
+
+	fn get_liquidity_token_mga_pool(
+	liquidity_token_id: TokenId,
+	) -> Result<(TokenId, TokenId), DispatchError>;
+
+		fn is_liquidity_token(
+			liquidity_token_id: TokenId,
+		) -> bool;
+
+	fn valuate_liquidity_token(
+	liquidity_token_id: TokenId,
+	liquidity_token_amount: Balance,
+	) -> Balance;
+
+	fn valuate_non_liquidity_token(
+	liquidity_token_id: TokenId,
+	liquidity_token_amount: Balance,
+	) -> Balance;
+
+	fn scale_liquidity_by_mga_valuation(
+	mga_valuation: Balance,
+	liquidity_token_amount: Balance,
+	mga_token_amount: Balance,
+	) -> Balance;
+
+	fn get_pool_state(liquidity_token_id: TokenId) -> Option<(Balance, Balance)>;
+
+	fn get_reserves(
+	first_asset_id: TokenId,
+	second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError>;
+
+
+	}
 }
 
+pub struct AssetMetadataMutation;
+impl AssetMetadataMutationTrait<TokenId> for AssetMetadataMutation {
+	fn set_asset_info(
+		_asset: TokenId,
+		_name: Vec<u8>,
+		_symbol: Vec<u8>,
+		_decimals: u32,
+	) -> DispatchResult {
+		Ok(())
+	}
+}
+
+pub struct MockMaintenanceStatusProvider;
+impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
+	fn is_maintenance() -> bool {
+		false
+	}
+
+	fn is_upgradable() -> bool {
+		true
+	}
+}
+
+impl pallet_xyk::XykBenchmarkingConfig for Test {}
+
+impl pallet_xyk::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type TreasuryPalletId = TreasuryPalletId;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningRewards = ProofOfStake;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type WeightInfo = ();
+	type DisallowedPools = ();
+	type DisabledTokens = Nothing;
+	type VestingProvider = Vesting;
+	type AssetMetadataMutation = AssetMetadataMutation;
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -209,83 +288,98 @@ impl pos::Config for Test {
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
+	type ValuationApi = MockValuationApi;
+	type SchedulesPerBlock = ConstU32<5>;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pos::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = ConstU32<10>;
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<100_000>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
+	type WeightInfo = ();
+	type ValuationApi = Xyk;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
 
-impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
+impl<T: Config> ActivationReservesProviderTrait<AccountId, Balance, TokenId>
+	for TokensActivationPassthrough<T>
 where
-	AccountId: From<<T as frame_system::Config>::AccountId>,
+	T::Currency: MultiTokenReservableCurrency<AccountId, Balance = Balance, CurrencyId = TokenId>,
 {
-	type AccountId = T::AccountId;
-
-	fn get_max_instant_unreserve_amount(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-	) -> Balance {
-		let account_id: u128 = (account_id.clone()).into();
-		let token_id: u32 = token_id;
+	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &AccountId) -> Balance {
 		ProofOfStake::get_rewards_info(account_id, token_id).activated_amount
 	}
 
 	fn can_activate(
 		token_id: TokenId,
-		account_id: &Self::AccountId,
+		account_id: &AccountId,
 		amount: Balance,
 		_use_balance_from: Option<ActivateKind>,
 	) -> bool {
-		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount.into())
+		<T as pallet::Config>::Currency::can_reserve(token_id, account_id, amount)
 	}
 
 	fn activate(
 		token_id: TokenId,
-		account_id: &Self::AccountId,
+		account_id: &AccountId,
 		amount: Balance,
 		_use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount.into())
+		<T as pallet::Config>::Currency::reserve(token_id, account_id, amount)
 	}
 
-	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
-		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into())
-			.into()
+	fn deactivate(token_id: TokenId, account_id: &AccountId, amount: Balance) -> Balance {
+		<T as pallet::Config>::Currency::unreserve(token_id, account_id, amount)
 	}
 }
 
-impl<T: Config> Pallet<T> {
-	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		<T as Config>::Currency::free_balance(id.into(), &who).into()
+impl<T: Config> Pallet<T>
+where
+	T::Currency: MultiTokenReservableCurrency<AccountId, Balance = Balance, CurrencyId = TokenId>
+		+ MultiTokenCurrencyExtended<AccountId>,
+{
+	pub fn balance(id: TokenId, who: AccountId) -> Balance {
+		<T as Config>::Currency::free_balance(id, &who)
 	}
-	pub fn reserved(id: TokenId, who: T::AccountId) -> Balance {
-		<T as Config>::Currency::reserved_balance(id.into(), &who).into()
+	pub fn reserved(id: TokenId, who: AccountId) -> Balance {
+		<T as Config>::Currency::reserved_balance(id, &who)
 	}
 	pub fn total_supply(id: TokenId) -> Balance {
-		<T as Config>::Currency::total_issuance(id.into()).into()
+		<T as Config>::Currency::total_issuance(id)
 	}
 	pub fn transfer(
 		currency_id: TokenId,
-		source: T::AccountId,
-		dest: T::AccountId,
+		source: AccountId,
+		dest: AccountId,
 		value: Balance,
 	) -> DispatchResult {
 		<T as Config>::Currency::transfer(
-			currency_id.into(),
+			currency_id,
 			&source,
 			&dest,
-			value.into(),
+			value,
 			ExistenceRequirement::KeepAlive,
 		)
 	}
-	pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-		<T as Config>::Currency::create(who, amount.into())
-			.expect("Token creation failed")
-			.into()
+	pub fn create_new_token(who: &AccountId, amount: Balance) -> TokenId {
+		<T as Config>::Currency::create(who, amount).expect("Token creation failed")
 	}
 
-	pub fn mint_token(token_id: TokenId, who: &T::AccountId, amount: Balance) {
-		<T as Config>::Currency::mint(token_id.into(), who, amount.into())
-			.expect("Token minting failed")
+	pub fn mint_token(token_id: TokenId, who: &AccountId, amount: Balance) {
+		<T as Config>::Currency::mint(token_id, who, amount).expect("Token minting failed")
 	}
 }
 
@@ -293,11 +387,73 @@ impl<T: Config> Pallet<T> {
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
-		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+		system::GenesisConfig::<Test>::default().build_storage().unwrap().into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
 	});
 	ext
+}
+
+pub struct ExtBuilder {
+	ext: sp_io::TestExternalities,
+}
+
+fn min_req_volume() -> u128 {
+	<<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
+}
+
+impl ExtBuilder {
+	pub fn new() -> Self {
+		let t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
+			.expect("Frame system builds valid default genesis config");
+
+		let mut ext = sp_io::TestExternalities::new(t);
+		Self { ext }
+	}
+
+	fn create_if_does_not_exists(&mut self, token_id: TokenId) {
+		self.ext.execute_with(|| {
+			while token_id >= Tokens::next_asset_id() {
+				Tokens::create(RuntimeOrigin::root(), 0, 0).unwrap();
+			}
+		});
+	}
+
+	pub fn issue(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self {
+		self.create_if_does_not_exists(token_id);
+		self.ext
+			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
+		return self
+	}
+
+	pub fn build(self) -> sp_io::TestExternalities {
+		self.ext
+	}
+
+	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
+		self.ext.execute_with(|| {
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock
+				.expect()
+				.return_const(Some((min_req_volume(), min_req_volume())));
+			f()
+		})
+	}
+}
+
+pub(crate) fn events() -> Vec<pallet::Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| if let RuntimeEvent::ProofOfStake(inner) = e { Some(inner) } else { None })
+		.collect::<Vec<_>>()
 }
 
 /// Compares the system events with passed in events

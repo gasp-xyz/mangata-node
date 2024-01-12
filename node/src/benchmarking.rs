@@ -1,6 +1,4 @@
-// use crate::service::{create_extrinsic, FullClient};
-
-// use node_runtime::SystemCall;
+use crate::service::ParachainClient;
 use codec::Encode;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
@@ -8,20 +6,15 @@ use sp_api::ProvideRuntimeApi;
 use sp_core::{crypto::key_types::AURA, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
-use sp_keystore::SyncCryptoStore;
+use sp_keystore::Keystore;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
+use std::{cell::RefCell, rc::Rc, time::Duration};
 use substrate_frame_rpc_system::AccountNonceApi;
 
-use std::{cell::RefCell, rc::Rc, time::Duration};
+type Runtime = mangata_kusama_runtime::RuntimeApi;
+type Client = ParachainClient<Runtime>;
 
-#[cfg(feature = "mangata-kusama")]
-pub type KusamaFullClient = crate::service::FullClient<
-	mangata_kusama_runtime::RuntimeApi,
-	crate::service::MangataKusamaRuntimeExecutor,
->;
-
-#[cfg(feature = "mangata-kusama")]
-pub fn fetch_nonce(client: &KusamaFullClient, account: sp_core::sr25519::Pair) -> u32 {
+pub fn fetch_nonce(client: &Client, account: sp_core::sr25519::Pair) -> u32 {
 	let best_hash = client.chain_info().best_hash;
 	client
 		.runtime_api()
@@ -29,9 +22,8 @@ pub fn fetch_nonce(client: &KusamaFullClient, account: sp_core::sr25519::Pair) -
 		.expect("Fetching account nonce works; qed")
 }
 
-#[cfg(feature = "mangata-kusama")]
 pub fn create_extrinsic(
-	client: &KusamaFullClient,
+	client: &Client,
 	sender: sp_core::sr25519::Pair,
 	function: impl Into<mangata_kusama_runtime::RuntimeCall>,
 	nonce: Option<u32>,
@@ -85,21 +77,17 @@ pub fn create_extrinsic(
 	)
 }
 
-/// Generates extrinsics for the `benchmark overhead` command.
-#[cfg(feature = "mangata-kusama")]
 pub struct BenchmarkExtrinsicBuilder {
-	client: Rc<RefCell<KusamaFullClient>>,
+	client: Rc<RefCell<Client>>,
 }
 
-#[cfg(feature = "mangata-kusama")]
 impl BenchmarkExtrinsicBuilder {
 	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Rc<RefCell<KusamaFullClient>>) -> Self {
+	pub fn new(client: Rc<RefCell<Client>>) -> Self {
 		Self { client }
 	}
 }
 
-#[cfg(feature = "mangata-kusama")]
 impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 	fn pallet(&self) -> &str {
 		"system"
@@ -128,12 +116,12 @@ pub async fn inherent_benchmark_data(
 	prev_seed: [u8; 32],
 	duration: Duration,
 ) -> Result<InherentData> {
-	let keystore = sp_keystore::testing::KeyStore::new();
+	let keystore = sp_keystore::testing::MemoryKeystore::new();
 	let secret_uri = "//Alice";
 	let key_pair =
 		sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
 	keystore
-		.insert_unknown(AURA, secret_uri, key_pair.public().as_ref())
+		.insert(AURA, secret_uri, key_pair.public().as_ref())
 		.expect("Inserts unknown key");
 
 	let seed =

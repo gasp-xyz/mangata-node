@@ -20,7 +20,9 @@ permissions:
 
 jobs:
   performance-tests:
-    runs-on: [compile-gke]
+    # Allows to keep e2e tests jobs running even if performance-tests fail
+    continue-on-error: true
+    runs-on: [compile]
     timeout-minutes: 180
     env:
       ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
@@ -88,3 +90,7 @@ jobs:
             ./e2e/performance/enqueued.txt
             ./e2e/performance/executed.txt
             ./e2e/performance/pending.txt
+
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

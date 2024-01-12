@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       builder_image:
-        default: mangatasolutions/node-builder:multi-nightly-2022-11-15
+        default: mangatasolutions/node-builder:multi-nightly-2023-05-22
         description: Docker image used for Rust builds
         required: false
         type: string
@@ -30,20 +30,20 @@ permissions:
 jobs:
   build-node-image:
     name: Build Docker image
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
-      env:
-        DOCKER_HOST: 'unix:///run/docker/docker.sock'
-      volumes:
-        - /run/docker:/run/docker
+      # env:
+      #   DOCKER_HOST: "unix:///run/docker/docker.sock"
+      # volumes:
+      #   - /run/docker:/run/docker
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -109,6 +109,10 @@ jobs:
             ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
             ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
             ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   rustfmt-check:
     name: Formatting check
@@ -130,8 +134,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -146,7 +150,7 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -154,8 +158,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -167,10 +171,14 @@ jobs:
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
         run: cargo test -j2
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   coverage-report:
     name: Coverage report
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
       options: --security-opt seccomp=unconfined
@@ -179,8 +187,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -199,6 +207,10 @@ jobs:
         with:
           token: ${{ secrets.ORG_CODECOV_TOKEN }}
           fail_ci_if_error: true
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -210,8 +222,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -222,13 +234,16 @@ jobs:
             /usr/local/cargo/registry
           key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock -p pallet-proof-of-stake -p pallet-proof-of-stake
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-bootstrap
+      # NOTE: MGX-742
+      - name: Run benchmarks tests
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake
 
   build-and-run-try-runtime:
     name: Run try-runtime checks
-    runs-on: [compile-gke]
+    runs-on: [compile]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -236,8 +251,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -249,17 +264,23 @@ jobs:
             ~/.cache/sccache
           key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
-      # NOTE: Rococo has been already upgraded so lets disable rococo try-runtime
-      # - name: Run try-runtime Rococo testnet
-      #   run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=rococo --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
+      - name: Build try-runtime Rococo & Kusama node
+        run: cargo build --release --features=try-runtime,mangata-rococo,mangata-kusama
+
+      - name: Run try-runtime Rococo testnet
+        run: try-runtime --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
 
       - name: Run try-runtime Kusama Mainnet
-        run: cargo run --release --features=try-runtime try-runtime --chain=kusama --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
+        run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
+
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks:
     name: Run runtime benchmarks
     # `performance` self-hosted runners have 8 cores and 16GB of RAM
-    runs-on: [performance-gke]
+    runs-on: [compile]
     env:
       STEPS: 2
       REPEATS: 1
@@ -270,8 +291,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -296,8 +317,8 @@ jobs:
       - name: Run pallet benchmarks
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
-          -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
-          --chain kusama \
+          -l=info,runtime::collective=warn,xyk=warn \
+          --chain mangata-kusama \
           --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \
@@ -309,7 +330,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/mangata-node benchmark overhead --execution native --chain kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/mangata-node benchmark overhead --execution native --chain mangata-kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Upload logs and docker images to GitHub
@@ -318,11 +339,14 @@ jobs:
         with:
           name: benchmarks
           path: ./benchmarks
-
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   build-wasms:
     name: Export wasm artifacts
-    runs-on: [compile-gke]
+    runs-on: [compile]
     env:
       STEPS: 2
       REPEATS: 1
@@ -333,8 +357,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -352,12 +376,15 @@ jobs:
 
       - name: Export wasms
         run: |
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error > /dev/null'
-
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

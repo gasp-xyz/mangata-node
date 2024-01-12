@@ -1,73 +1,63 @@
 // Copyright (C) 2020 Mangata team
 
 use super::*;
-use sp_std::convert::TryFrom;
-
-use sp_core::H256;
-
-use sp_runtime::{
-	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-};
 
 use crate as pallet_fee_lock;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, Contains, Everything},
-	weights::{constants::RocksDbWeight, Weight},
+	traits::{Contains, Everything},
+	weights::constants::RocksDbWeight,
 	PalletId,
 };
 use frame_system as system;
-use mangata_types::Amount;
 use orml_traits::parameter_type_with_key;
+use sp_runtime::{traits::AccountIdConversion, BuildStorage};
+use sp_std::convert::TryFrom;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
-
 pub(crate) type AccountId = u128;
+pub(crate) type Balance = u128;
+pub(crate) type TokenId = u32;
+pub(crate) type Amount = i128;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>},
+	pub enum Test {
+		System: frame_system,
+		Tokens: orml_tokens,
+		FeeLock: pallet_fee_lock,
 	}
 );
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
-impl system::Config for Test {
+parameter_types!(
+	pub const BlockHashCount: u32 = 250;
+);
+
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
+	type Hash = sp_runtime::testing::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
 	type BlockHashCount = BlockHashCount;
+	type BlockWeights = ();
+	type BlockLength = ();
 	type DbWeight = RocksDbWeight;
 	type Version = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type PalletInfo = PalletInfo;
-	type BlockWeights = ();
-	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -112,42 +102,36 @@ parameter_types! {
 
 pub struct MockPoolReservesProvider<T>(PhantomData<T>);
 
-impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
-	type Balance = Balance;
-
-	type CurrencyId = TokenId;
-
+impl<T: pallet_fee_lock::Config> Valuate<Balance, TokenId> for MockPoolReservesProvider<T> {
 	fn get_liquidity_asset(
-		_first_asset_id: Self::CurrencyId,
-		_second_asset_id: Self::CurrencyId,
+		_first_asset_id: TokenId,
+		_second_asset_id: TokenId,
 	) -> Result<TokenId, DispatchError> {
 		unimplemented!()
 	}
 
 	fn get_liquidity_token_mga_pool(
-		_liquidity_token_id: Self::CurrencyId,
-	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
+		_liquidity_token_id: TokenId,
+	) -> Result<(TokenId, TokenId), DispatchError> {
 		unimplemented!()
 	}
 
 	fn valuate_liquidity_token(
-		_liquidity_token_id: Self::CurrencyId,
-		_liquidity_token_amount: Self::Balance,
-	) -> Self::Balance {
+		_liquidity_token_id: TokenId,
+		_liquidity_token_amount: Balance,
+	) -> Balance {
 		unimplemented!()
 	}
 
 	fn scale_liquidity_by_mga_valuation(
-		_mga_valuation: Self::Balance,
-		_liquidity_token_amount: Self::Balance,
-		_mga_token_amount: Self::Balance,
-	) -> Self::Balance {
+		_mga_valuation: Balance,
+		_liquidity_token_amount: Balance,
+		_mga_token_amount: Balance,
+	) -> Balance {
 		unimplemented!()
 	}
 
-	fn get_pool_state(
-		_liquidity_token_id: Self::CurrencyId,
-	) -> Option<(Self::Balance, Self::Balance)> {
+	fn get_pool_state(_liquidity_token_id: TokenId) -> Option<(Balance, Balance)> {
 		unimplemented!()
 	}
 
@@ -162,6 +146,17 @@ impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
 			(0, 4) => Ok((5000, 0)),
 			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into()),
 		}
+	}
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		unimplemented!()
+	}
+
+	fn valuate_non_liquidity_token(
+		liquidity_token_id: TokenId,
+		liquidity_token_amount: Balance,
+	) -> Balance {
+		unimplemented!()
 	}
 }
 
@@ -182,7 +177,7 @@ impl pallet_fee_lock::Config for Test {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::<Test>::default().build_storage().unwrap().into()
 }
 
 pub struct ExtBuilder {
@@ -191,11 +186,11 @@ pub struct ExtBuilder {
 
 impl ExtBuilder {
 	pub fn new() -> Self {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
+		let t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		let mut ext = sp_io::TestExternalities::new(t);
+		let ext = sp_io::TestExternalities::new(t);
 		Self { ext }
 	}
 

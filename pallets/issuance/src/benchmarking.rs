@@ -22,18 +22,17 @@ use super::*;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use mangata_types::Balance;
 use orml_tokens::MultiTokenCurrencyExtended;
 
 use crate::{Pallet as Issuance, TgeInfo};
 
 const SEED: u32 = u32::max_value();
-const TGE_AMOUNT: Balance = 1_000_000;
+const TGE_AMOUNT: u32 = 1_000_000;
 
-fn create_tge_infos<T: Config>(x: u32) -> Vec<TgeInfo<T::AccountId>> {
-	let mut tge_infos: Vec<TgeInfo<T::AccountId>> = Vec::new();
+fn create_tge_infos<T: Config>(x: u32) -> Vec<TgeInfo<T::AccountId, BalanceOf<T>>> {
+	let mut tge_infos: Vec<TgeInfo<T::AccountId, BalanceOf<T>>> = Vec::new();
 	for i in 0..x {
-		tge_infos.push(TgeInfo { who: account("who", 0, SEED - i), amount: TGE_AMOUNT });
+		tge_infos.push(TgeInfo { who: account("who", 0, SEED - i), amount: TGE_AMOUNT.into() });
 	}
 	tge_infos
 }
@@ -86,15 +85,15 @@ benchmarks! {
 			IssuanceConfigStore::<T>::get().is_none()
 		);
 
-		assert_eq!(TGETotal::<T>::get(), tge_infos.iter().fold(Balance::zero(), |acc: Balance, tge_info| acc.saturating_add(tge_info.amount)));
+		assert_eq!(TGETotal::<T>::get(), tge_infos.iter().fold(BalanceOf::<T>::zero(), |acc: BalanceOf<T>, tge_info| acc.saturating_add(tge_info.amount)));
 
 		let lock_percent = Percent::from_percent(100)
 				.checked_sub(&T::ImmediateTGEReleasePercent::get()).unwrap();
 
 		for tge_info in tge_infos{
-			assert_eq!(T::VestingProvider::vesting_balance(&tge_info.who, T::NativeCurrencyId::get().into()).unwrap().into(), lock_percent * tge_info.amount);
-			assert_eq!(T::Tokens::free_balance(T::NativeCurrencyId::get().into(), &tge_info.who).into(), tge_info.amount);
-			assert_eq!(<T::Tokens as MultiTokenCurrencyExtended<T::AccountId>>::locked_balance(T::NativeCurrencyId::get().into(), &tge_info.who).into(), lock_percent * tge_info.amount);
+			assert_eq!(T::VestingProvider::vesting_balance(&tge_info.who, T::NativeCurrencyId::get()).unwrap(), lock_percent * tge_info.amount);
+			assert_eq!(T::Tokens::free_balance(T::NativeCurrencyId::get(), &tge_info.who), tge_info.amount);
+			assert_eq!(<T::Tokens as MultiTokenCurrencyExtended<T::AccountId>>::locked_balance(T::NativeCurrencyId::get(), &tge_info.who), lock_percent * tge_info.amount);
 		}
 
 	}

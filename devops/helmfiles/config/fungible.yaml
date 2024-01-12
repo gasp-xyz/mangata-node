@@ -1,11 +1,3 @@
-nodeChain: rococo-local
-
-node01:
-  accountKeySeed: '0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a'
-
-node02:
-  accountKeySeed: '0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89'
-
 resources:
   requests:
     cpu: 200m

@@ -1,23 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![feature(custom_test_frameworks)]
+// #![feature(custom_test_frameworks)]
 
 use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
 	storage::bounded_btree_set::BoundedBTreeSet,
-	traits::{Get, StorageVersion},
+	traits::{Get, MultiTokenCurrency, StorageVersion},
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::{FeeLockTriggerTrait, Valuate};
-use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
 use sp_runtime::{
-	traits::{CheckedAdd, Zero},
+	traits::{Bounded, CheckedAdd, SaturatedConversion, Zero},
 	Saturating,
 };
 use sp_std::{convert::TryInto, prelude::*};
@@ -47,6 +46,14 @@ macro_rules! log {
 
 pub use pallet::*;
 
+pub type BalanceOf<T> = <<T as pallet::Config>::Tokens as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::Balance;
+
+pub type CurrencyIdOf<T> = <<T as pallet::Config>::Tokens as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -58,8 +65,8 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_idle(now: T::BlockNumber, remaining_weight: Weight) -> Weight {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_idle(now: BlockNumberFor<T>, remaining_weight: Weight) -> Weight {
 			let mut consumed_weight: Weight = Default::default();
 
 			// process only up to 80% or remaining weight
@@ -105,8 +112,11 @@ pub mod pallet {
 							if matches!(unlock_block, Some(unlock) if unlock <= now) {
 								UnlockQueueBegin::<T>::put(i + 1);
 								consumed_weight += T::WeightInfo::unlock_fee();
-								let _ =
-									<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who);
+								let _ = <Self as FeeLockTriggerTrait<
+									T::AccountId,
+									BalanceOf<T>,
+									CurrencyIdOf<T>,
+								>>::unlock_fee(&who);
 							} else {
 								break
 							}
@@ -131,14 +141,14 @@ pub mod pallet {
 	#[codec(mel_bound(T: Config))]
 	#[scale_info(skip_type_params(T))]
 	pub struct FeeLockMetadataInfo<T: Config> {
-		pub period_length: T::BlockNumber,
-		pub fee_lock_amount: Balance,
-		pub swap_value_threshold: Balance,
-		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
+		pub period_length: BlockNumberFor<T>,
+		pub fee_lock_amount: BalanceOf<T>,
+		pub swap_value_threshold: BalanceOf<T>,
+		pub whitelisted_tokens: BoundedBTreeSet<CurrencyIdOf<T>, T::MaxCuratedTokens>,
 	}
 
 	impl<T: Config> FeeLockMetadataInfo<T> {
-		pub fn is_whitelisted(&self, token_id: TokenId) -> bool {
+		pub fn is_whitelisted(&self, token_id: CurrencyIdOf<T>) -> bool {
 			if T::NativeTokenId::get() == token_id {
 				return true
 			}
@@ -166,7 +176,7 @@ pub mod pallet {
 	#[derive(
 		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
 	)]
-	pub struct AccountFeeLockDataInfo<BlockNumber: Default> {
+	pub struct AccountFeeLockDataInfo<BlockNumber, Balance> {
 		pub total_fee_lock_amount: Balance,
 		pub last_fee_lock_block: BlockNumber,
 	}
@@ -177,7 +187,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::AccountId,
-		AccountFeeLockDataInfo<T::BlockNumber>,
+		AccountFeeLockDataInfo<BlockNumberFor<T>, BalanceOf<T>>,
 		ValueQuery,
 	>;
 
@@ -185,8 +195,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		FeeLockMetadataUpdated,
-		FeeLockUnlocked(T::AccountId, Balance),
-		FeeLocked { who: T::AccountId, lock_amount: Balance, total_locked: Balance },
+		FeeLockUnlocked(T::AccountId, BalanceOf<T>),
+		FeeLocked { who: T::AccountId, lock_amount: BalanceOf<T>, total_locked: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -215,21 +225,20 @@ pub mod pallet {
 		type MaxCuratedTokens: Get<u32>;
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
-		type PoolReservesProvider: Valuate;
+		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>;
 		#[pallet::constant]
-		type NativeTokenId: Get<TokenId>;
+		type NativeTokenId: Get<CurrencyIdOf<Self>>;
 		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub period_length: Option<T::BlockNumber>,
-		pub fee_lock_amount: Option<Balance>,
-		pub swap_value_threshold: Option<Balance>,
-		pub whitelisted_tokens: Vec<TokenId>,
+		pub period_length: Option<BlockNumberFor<T>>,
+		pub fee_lock_amount: Option<BalanceOf<T>>,
+		pub swap_value_threshold: Option<BalanceOf<T>>,
+		pub whitelisted_tokens: Vec<CurrencyIdOf<T>>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			GenesisConfig {
@@ -242,11 +251,11 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			match (self.period_length, self.fee_lock_amount, self.swap_value_threshold) {
 				(Some(period), Some(amount), Some(threshold)) => {
-					let mut tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens> =
+					let mut tokens: BoundedBTreeSet<CurrencyIdOf<T>, T::MaxCuratedTokens> =
 						Default::default();
 					for t in self.whitelisted_tokens.iter() {
 						tokens
@@ -277,10 +286,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::update_fee_lock_metadata())]
 		pub fn update_fee_lock_metadata(
 			origin: OriginFor<T>,
-			period_length: Option<T::BlockNumber>,
-			fee_lock_amount: Option<Balance>,
-			swap_value_threshold: Option<Balance>,
-			should_be_whitelisted: Option<Vec<(TokenId, bool)>>,
+			period_length: Option<BlockNumberFor<T>>,
+			fee_lock_amount: Option<BalanceOf<T>>,
+			swap_value_threshold: Option<BalanceOf<T>>,
+			should_be_whitelisted: Option<Vec<(CurrencyIdOf<T>, bool)>>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
@@ -338,7 +347,7 @@ pub mod pallet {
 		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			Ok(<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who)?.into())
+			Ok(<Self as FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::unlock_fee(&who)?.into())
 		}
 	}
 }
@@ -364,8 +373,8 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
-	fn is_whitelisted(token_id: TokenId) -> bool {
+impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
+	fn is_whitelisted(token_id: CurrencyIdOf<T>) -> bool {
 		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata() {
 			fee_lock_metadata.is_whitelisted(token_id)
 		} else {
@@ -374,14 +383,14 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 	}
 
 	fn get_swap_valuation_for_token(
-		valuating_token_id: TokenId,
-		valuating_token_amount: Balance,
-	) -> Option<Balance> {
+		valuating_token_id: CurrencyIdOf<T>,
+		valuating_token_amount: BalanceOf<T>,
+	) -> Option<BalanceOf<T>> {
 		if T::NativeTokenId::get() == valuating_token_id {
 			return Some(valuating_token_amount)
 		}
 		let (native_token_pool_reserve, valuating_token_pool_reserve) =
-			<T::PoolReservesProvider as Valuate>::get_reserves(
+			<T::PoolReservesProvider as Valuate<BalanceOf<T>, CurrencyIdOf<T>>>::get_reserves(
 				T::NativeTokenId::get(),
 				valuating_token_id,
 			)
@@ -391,12 +400,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		}
 		Some(
 			multiply_by_rational_with_rounding(
-				valuating_token_amount,
-				native_token_pool_reserve,
-				valuating_token_pool_reserve,
+				valuating_token_amount.into(),
+				native_token_pool_reserve.into(),
+				valuating_token_pool_reserve.into(),
 				Rounding::Down,
 			)
-			.unwrap_or(Balance::max_value()),
+			.map(SaturatedConversion::saturated_into)
+			.unwrap_or(BalanceOf::<T>::max_value()),
 		)
 	}
 
@@ -420,7 +430,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			<T as pallet::Config>::Tokens::reserve(
 				<T as pallet::Config>::NativeTokenId::get().into(),
 				who,
-				fee_lock_metadata.fee_lock_amount.into(),
+				fee_lock_metadata.fee_lock_amount,
 			)?;
 
 			// Insert updated account_lock_info into storage
@@ -442,13 +452,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 				(x, y) if x > y => <T as pallet::Config>::Tokens::reserve(
 					<T as pallet::Config>::NativeTokenId::get().into(),
 					who,
-					x.saturating_sub(y).into(),
+					x.saturating_sub(y),
 				)?,
 				(x, y) if x < y => {
 					let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
 						<T as pallet::Config>::NativeTokenId::get().into(),
 						who,
-						y.saturating_sub(x).into(),
+						y.saturating_sub(x),
 					);
 					if !unreserve_result.is_zero() {
 						log::warn!(
@@ -521,7 +531,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
 			<T as pallet::Config>::NativeTokenId::get().into(),
 			&who,
-			account_fee_lock_data.total_fee_lock_amount.into(),
+			account_fee_lock_data.total_fee_lock_amount,
 		);
 		if !unreserve_result.is_zero() {
 			log::warn!(

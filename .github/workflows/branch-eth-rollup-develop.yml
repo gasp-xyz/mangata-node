@@ -2,7 +2,7 @@ name: eth-rollup-develop branch workflow
 
 on:
   push:
-    branches: [eth-rollup-develop, ci/add-eigen-environment-deployment-MGX-878]
+    branches: [eth-rollup-develop]
   pull_request:
     types: [ labeled, opened, synchronize, unlabeled, closed ]
     branches: [eth-rollup-develop]
@@ -119,6 +119,7 @@ jobs:
   deploy-eigen-mococo:
     name: Deploy to eigen-mococo on merge to `eth-rollup-develop` branch
     needs: [init, build-and-test]
+    if: startsWith(github.head_ref, 'eth-rollup-develop')
     uses: ./.github/workflows/reusable-deploy-eigen-mococo.yml
     secrets: inherit
     with:

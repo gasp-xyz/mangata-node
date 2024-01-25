@@ -1,0 +1,116 @@
+name: eth-rollup-develop branch workflow
+
+on:
+  push:
+    branches: [eth-rollup-develop, ci/add-eigen-environment-deployment-MGX-878]
+
+  workflow_dispatch:
+    # For manually trigger
+    inputs:
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        required: false
+        default: "main"
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+
+jobs:
+  init:
+    name: Global init
+    runs-on: ubuntu-latest
+    outputs:
+      GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
+      GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
+    steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
+      - name: Set global version
+        id: set_vars
+        run: |
+          echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
+
+  build-and-test:
+    needs: [init]
+    name: Build
+    uses: ./.github/workflows/reusable-build-and-test.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+
+  deploy-fungible:
+    name: Deploy fungible environment
+    needs: [init, build-and-test]
+    uses: ./.github/workflows/reusable-deploy.yml
+    secrets: inherit
+    with:
+      env: fungible
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      cluster_name: mangata-dev-alpha
+  
+  clean-up-fungible:
+    name: Delete fungible environment
+    needs: [init]
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.2
+        with:
+          cluster_name: mangata-dev-alpha
+          location: europe-west1
+
+      - name: Delete Kubernetes namespace with resources for fungible environment
+        run: kubectl delete namespace pr-${{ github.event.number }}
+      
+      - name: Delete GitHub Deployment environment
+        if: always()
+        uses: bobheadxi/deployments@v1.3.0
+        with:
+          step: delete-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: pr-${{ github.event.number }}
+
+  run-e2e-test:
+    name: Run e2e tests
+    needs: [init, build-and-test]
+    uses: ./.github/workflows/reusable-e2e-tests.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      id-token: write
+      deployments: write
+      checks: write
+    with:
+      e2eBranch: ${{ github.event.inputs.e2eBranch }}
+      parachainDocker: ${{ github.event.inputs.parachainDocker }}
+      skipBuild: 'false'
+      globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
+
+  deploy-eigen-mococo:
+    name: Deploy to eigen-mococo on merge to `eth-rollup-develop` branch
+    needs: [init, build-and-test]
+    uses: ./.github/workflows/reusable-deploy-eigen-mococo.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}

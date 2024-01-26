@@ -798,6 +798,12 @@ mod benches {
 
 impl_runtime_apis! {
 
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
+		fn get_pending_requests_hash() -> sp_core::H256 {
+			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+		}
+	}
+
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(
 			user: AccountId,

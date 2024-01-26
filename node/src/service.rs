@@ -108,6 +108,7 @@ pub trait RuntimeApiCollection:
 	+ ver_api::VerNonceApi<Block, AccountId>
 	+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 	+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
+	+ rolldown_runtime_api::RolldownRuntimeApi<Block>
 {
 }
 
@@ -126,6 +127,7 @@ impl<Api> RuntimeApiCollection for Api where
 		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ rolldown_runtime_api::RolldownRuntimeApi<Block>
 {
 }
 

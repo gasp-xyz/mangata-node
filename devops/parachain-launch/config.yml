@@ -17,31 +17,31 @@ relaychain:
     - name: bob
 
 parachains:
-- image: mangatasolutions/mangata-node:dev
-  chain:
-    base: mangata-rococo-local
-    collators:
-      - alice
-      - bob
-    sudo: alice
-    skipCollatorSelection: true
-    skipBalances: true
-  id: 2110
-  parachain: true
-  flags:
-    - --rpc-methods=unsafe
-    - --force-authoring
-    - --wasm-execution=compiled
-    - --execution=wasm
-  relaychainFlags:
-    - --wasm-execution=compiled
-    - --execution=wasm
-  env:
-    # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
-    RUST_LOG: info,block_builder=trace
-  volumePath: /mangata/data
-  nodes:
-  - flags:
-    - --alice
-  - flags:
-    - --bob
+  - image: mangatasolutions/mangata-node:rollup
+    chain:
+      base: mangata-rococo-local
+      collators:
+        - alice
+        - bob
+      sudo: alice
+      skipCollatorSelection: true
+      skipBalances: true
+    id: 2110
+    parachain: true
+    flags:
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --wasm-execution=compiled
+      - --execution=wasm
+    relaychainFlags:
+      - --wasm-execution=compiled
+      - --execution=wasm
+    env:
+      # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
+      RUST_LOG: info,block_builder=trace
+    volumePath: /mangata/data
+    nodes:
+      - flags:
+          - --alice
+      - flags:
+          - --bob

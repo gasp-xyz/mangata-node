@@ -9,7 +9,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use sp_runtime::traits::BlakeTwo256;
+use sp_runtime::traits::{SaturatedConversion};
 use sp_std::collections::btree_map::BTreeMap;
 
 use codec::alloc::string::{String, ToString};
@@ -21,12 +21,17 @@ use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use scale_info::prelude::format;
 use sha3::{Digest, Keccak256};
-use sp_core::U256;
+use sp_core::{U256, H256};
 use sp_runtime::{
 	serde::{Deserialize, Serialize},
 	traits::TryConvert,
 };
 use sp_std::{convert::TryInto, prelude::*};
+
+
+use alloy_primitives::address;
+use alloy_sol_types::{sol, SolStruct, SolValue};
+
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -89,11 +94,12 @@ pub mod pallet {
 		}
 
 		fn on_finalize(n: BlockNumberFor<T>) {
-			let pending_updates_u256_array = Self::get_pending_updates_as_u256_array();
-			PendingUpdatesU256Array::<T>::insert(n, pending_updates_u256_array.clone());
-			let hash_of_pending_updates_u256_array =
-				Self::calculate_hash_of_u256_array(pending_updates_u256_array);
-			HashPendingUpdatesU256Array::<T>::insert(n, hash_of_pending_updates_u256_array);
+			// TODO: fix
+			// let pending_updates_u256_array = Self::get_pending_updates_as_u256_array();
+			// PendingUpdatesU256Array::<T>::insert(n, pending_updates_u256_array.clone());
+			// let hash_of_pending_updates_u256_array =
+			// 	Self::calculate_hash_of_u256_array(pending_updates_u256_array);
+			// HashPendingUpdatesU256Array::<T>::insert(n, hash_of_pending_updates_u256_array);
 		}
 	}
 
@@ -116,6 +122,15 @@ pub mod pallet {
 		pub lastAcceptedRequestOnL1: u128,
 	}
 
+	#[derive(
+		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default
+	)]
+	pub struct RequestsMat {
+		pub requests: Vec<(u128, MatRequest)>,
+		pub lastProccessedRequestOnL1: u128,
+		pub lastAcceptedRequestOnL1: u128,
+	}
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Deserialize)]
 	pub enum Request {
 		Deposit(DepositRequestDetails),
@@ -123,6 +138,104 @@ pub mod pallet {
 		L2UpdatesToRemove(UpdatesToRemoveRequestDetails),
 		CancelResolution(CancelResolutionRequestDetails),
 	}
+
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
+	pub enum MatRequest{
+		Deposit(DepositRequestDetailsMat),
+		Withdraw(WithdrawRequestDetailsMat),
+		L2UpdatesToRemove(UpdatesToRemoveRequestDetailsMat),
+		CancelResolution(CancelResolutionRequestDetailsMat),
+	}
+
+
+
+sol! {
+	#[derive(
+		Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
+	)]
+	struct DepositRequestDetailsMat {
+		string depositRecipient;
+		string tokenAddress;
+		uint128 amount;
+	}
+
+	#[derive(
+		Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
+	)]
+	struct WithdrawRequestDetailsMat {
+		string withdrawRecipient;
+		string tokenAddress;
+		uint128 amount;
+	}
+
+
+	#[derive(
+		Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
+	)]
+	struct CancelResolutionRequestDetailsMat {
+		uint128 l2RequestId;
+		bool cancelJustified;
+	}
+
+	#[derive(
+		Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
+	)]
+	struct UpdatesToRemoveRequestDetailsMat {
+		uint128[] updates;
+	}
+
+	enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE}
+
+	struct StatusUpdate {
+		UpdateType updateType;
+		uint128 requestId;
+		bool status;
+	}
+
+	struct L2ToL1Update {
+		StatusUpdate[] updates;
+		CancelEth[] cancels;
+	}
+
+	struct CancelEth {
+		bytes32 updater;
+		bytes32 canceler;
+		uint128 lastProccessedRequestOnL1;
+		uint128 lastAcceptedRequestOnL1;
+		bytes32 hash;
+	}
+
+	// L2 -> L1
+
+	//
+	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+	// pub enum Update<AccountId> {
+	// 	DepositUpdate(bool),
+	// 	WithdrawUpdate(bool),
+	// 	Cancel(Cancel<AccountId>),
+	// 	ProcessedOnlyInfoUpdate(bool),
+	// }
+	//
+	//
+	// //L2 outgoing updates structs
+	// //L2 outgoing updates structs
+	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+	// pub enum Update<AccountId> {
+	// 	DepositUpdate(bool),
+	// 	WithdrawUpdate(bool),
+	// 	Cancel(Cancel<AccountId>),
+	// 	ProcessedOnlyInfoUpdate(bool),
+	// }
+	//
+	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+	// pub struct Cancel<AccountId> {
+	// 	pub updater: AccountId,
+	// 	pub canceler: AccountId,
+	// 	pub lastProccessedRequestOnL1: u128,
+	// 	pub lastAcceptedRequestOnL1: u128,
+	// 	pub hash: H256,
+	// }
+}
 
 	#[derive(
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
@@ -175,7 +288,15 @@ pub mod pallet {
 		pub canceler: AccountId,
 		pub lastProccessedRequestOnL1: u128,
 		pub lastAcceptedRequestOnL1: u128,
-		pub hash: U256,
+		pub hash: H256,
+	}
+
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
+	pub enum PendingUpdate<AccountId>{
+		Deposit(u128, bool),
+		Withdraw(u128, bool),
+		IndexUpdate(u128, bool),
+		Cancel(Cancel<AccountId>)
 	}
 
 	#[pallet::storage]
@@ -224,6 +345,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
+	#[pallet::getter(fn get_pending_requests_mat)]
+	pub type PENDING_REQUESTS_MAT<T: Config> =
+		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, RequestsMat), OptionQuery>;
+
+
+	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn get_sequencer_rights)]
 	pub type SEQUENCER_RIGHTS<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
@@ -233,6 +361,12 @@ pub mod pallet {
 	#[pallet::getter(fn get_pending_updates)]
 	pub type PENDING_UPDATES<T: Config> =
 		StorageMap<_, Blake2_128Concat, u128, Update<T::AccountId>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_pending_updates_mat)]
+	pub type PENDING_UPDATES_MAT<T: Config> =
+		StorageMap<_, Blake2_128Concat, u128, PendingUpdate<T::AccountId>, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -267,14 +401,14 @@ pub mod pallet {
 		//fn update_l2_from_l1(origin: String, l1_pending_requests_json: &'static str, current_block_number: u32) {
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
-			input_json: String,
+			requests: RequestsMat,
 		) -> DispatchResultWithPostInfo {
 			let sequencer = ensure_signed(origin)?;
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
-			let current_block_number = <frame_system::Pallet<T>>::block_number();
-			let dispute_period_end = current_block_number + (DISPUTE_PERIOD_LENGTH as u32).into();
+			let current_block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
+			let dispute_period_end: u128 = current_block_number + (DISPUTE_PERIOD_LENGTH as u128);
 
-			let l1_pending_requests_json = input_json.trim().to_string();
+			// let l1_pending_requests_json = input_json.trim().to_string();
 
 			// ensure sequencer has rights to update
 			if let Some(sequencer) = SEQUENCER_RIGHTS::<T>::get(&sequencer) {
@@ -295,21 +429,11 @@ pub mod pallet {
 			});
 
 			// insert pending_requests
-			PENDING_REQUESTS::<T>::insert(
-				dispute_period_end,
-				(sequencer.clone(), l1_pending_requests_json),
+			PENDING_REQUESTS_MAT::<T>::insert(
+				U256::from(dispute_period_end),
+				(sequencer.clone(), requests),
 			);
 
-			log!(info, "Pending Requests:");
-			for (dispute_period_end, (origin, json)) in PENDING_REQUESTS::<T>::iter() {
-				log!(
-					info,
-					"dispute period end: {:?}: Origin: {:?}, JSON: {:?}",
-					dispute_period_end,
-					origin,
-					json
-				);
-			}
 			Ok(().into())
 		}
 
@@ -318,14 +442,14 @@ pub mod pallet {
 		//EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
 		pub fn cancel_requests_from_l1(
 			origin: OriginFor<T>,
-			input_2: String,
+			requests_to_cancel: U256,
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
-			let requests_to_cancel: BlockNumberFor<T> =
-				input_2.trim().to_string().parse::<u32>().unwrap().into();
+			// let requests_to_cancel: BlockNumberFor<T> =
+			// 	input_2.trim().to_string().parse::<u32>().unwrap().into();
 
 			// remove pending requests update (sequencer read))
-			PENDING_REQUESTS::<T>::mutate_exists(
+			PENDING_REQUESTS_MAT::<T>::mutate_exists(
 				requests_to_cancel.clone(),
 				|maybe_pending_requests_to_cancel| {
 					if let Some(ref mut pending_requests_to_cancel) =
@@ -338,21 +462,21 @@ pub mod pallet {
 							}
 						});
 
+						// r.encode()
+
 						// create hash of pending requests
 						let hash_of_pending_request = Self::calculate_hash_of_pending_requests(
-							pending_requests_to_cancel.1.as_str(),
+							pending_requests_to_cancel.1.clone(),
 						);
 
 						//get last processed request on L1
 						//deserialize json
-						let pending_request =
-							// add SLASH if json is invalid to process
-							Self::deserialize_json(pending_requests_to_cancel.1.as_str()).unwrap();
+
 						// get last processed request on L1 and last accepted request on L1
 						let last_processed_request_on_l1 =
-							pending_request.lastProccessedRequestOnL1;
+							pending_requests_to_cancel.1.lastProccessedRequestOnL1;
 						let last_accepted_request_on_l1 =
-							pending_request.lastAcceptedRequestOnL1;
+							pending_requests_to_cancel.1.lastAcceptedRequestOnL1;
 
 						// create cancel request
 						let cancel_request = Cancel {
@@ -372,7 +496,7 @@ pub mod pallet {
 							Update::Cancel(cancel_request),
 						);
 						// remove whole l1l2 update (read) from pending requests
-						PENDING_REQUESTS::<T>::remove(&requests_to_cancel);
+						PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
 
 						log!(info, "Pending Updates:");
 						for (request_id, update) in PENDING_REQUESTS::<T>::iter() {
@@ -395,274 +519,215 @@ pub mod pallet {
 		}
 
 		// no checks if this read is correct, can put counters out of sync
-		#[pallet::call_index(2)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn council_update_l2_from_l1(
-			origin: OriginFor<T>,
-			input_json: String,
-		) -> DispatchResultWithPostInfo {
-			let _ = ensure_root(origin)?;
-
-			match Self::deserialize_json(&input_json) {
-				Ok(deserialized) => {
-					log!(info, "Deserialized struct: {:?}", deserialized);
-
-					// Add a new variable of type Requests
-					let requests: Requests = deserialized;
-
-					if requests.lastProccessedRequestOnL1 <
-						Self::get_prev_last_processed_request_on_l2()
-					{
-						log!(info, "lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2");
-					} else {
-						for request_id in (requests.lastProccessedRequestOnL1 + 1_u128)..=
-							requests.lastAcceptedRequestOnL1
-						{
-							if let Some(request) = requests.requests.get(&request_id) {
-								// ignore if already processed
-								if request_id > Self::get_last_processed_request_on_l2() {
-									log!(info, "EXECUTING: ");
-									let mut success = true;
-									match request {
-										Request::Deposit(deposit_request_details) => {
-											log!(info, "Deposit: {:?}", deposit_request_details);
-											match Self::process_deposit(deposit_request_details) {
-												Ok(_) => (),
-												Err(_) => success = false,
-											};
-											PENDING_UPDATES::<T>::insert(
-												request_id,
-												Update::DepositUpdate(success),
-											);
-										},
-										Request::Withdraw(withdraw_request_details) => {
-											log!(info, "Withdraw: {:?}", withdraw_request_details);
-											match Self::process_withdraw(withdraw_request_details) {
-												Ok(_) => (),
-												Err(_) => success = false,
-											};
-											PENDING_UPDATES::<T>::insert(
-												request_id,
-												Update::WithdrawUpdate(success),
-											);
-										},
-										Request::CancelResolution(
-											cancel_resolution_request_details,
-										) => {
-											log!(
-												info,
-												"CancelResolution: {:?}",
-												cancel_resolution_request_details
-											);
-											match Self::process_cancel_resolution(
-												cancel_resolution_request_details,
-											) {
-												Ok(_) => (),
-												Err(_) => success = false,
-											};
-											PENDING_UPDATES::<T>::insert(
-												request_id,
-												Update::ProcessedOnlyInfoUpdate(success),
-											);
-										},
-
-										Request::L2UpdatesToRemove(
-											updates_to_remove_request_details,
-										) => {
-											log!(
-												info,
-												"L2UpdatesToRemove: {:?}",
-												updates_to_remove_request_details
-											);
-											match Self::process_l2_updates_to_remove(
-												updates_to_remove_request_details,
-											) {
-												Ok(_) => (),
-												Err(_) => success = false,
-											};
-											PENDING_UPDATES::<T>::insert(
-												request_id,
-												Update::ProcessedOnlyInfoUpdate(success),
-											);
-										},
-									}
-									// if success, increase last_processed_request_on_l2
-									last_processed_request_on_l2::<T>::put(request_id);
-								}
-							} else {
-								log!(info, "No request found for request_id: {:?}", request_id);
-							}
-						}
-
-						log!(info, "Pending Updates:");
-						for (request_id, update) in PENDING_UPDATES::<T>::iter() {
-							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
-						}
-					}
-				},
-				Err(e) => {
-					log!(info, "Error deserializing JSON: {:?}", e);
-				},
-			}
-			Ok(().into())
-		}
+		// #[pallet::call_index(2)]
+		// #[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		// pub fn council_update_l2_from_l1(
+		// 	origin: OriginFor<T>,
+		// 	input_json: String,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let _ = ensure_root(origin)?;
+		//
+		// 	match Self::deserialize_json(&input_json) {
+		// 		Ok(deserialized) => {
+		// 			log!(info, "Deserialized struct: {:?}", deserialized);
+		//
+		// 			// Add a new variable of type Requests
+		// 			let requests: Requests = deserialized;
+		//
+		// 			if requests.lastProccessedRequestOnL1 <
+		// 				Self::get_prev_last_processed_request_on_l2()
+		// 			{
+		// 				log!(info, "lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2");
+		// 			} else {
+		// 				for request_id in (requests.lastProccessedRequestOnL1 + 1_u128)..=
+		// 					requests.lastAcceptedRequestOnL1
+		// 				{
+		// 					if let Some(request) = requests.requests.get(&request_id) {
+		// 						// ignore if already processed
+		// 						if request_id > Self::get_last_processed_request_on_l2() {
+		// 							log!(info, "EXECUTING: ");
+		// 							let mut success = true;
+		// 							match request {
+		// 								Request::Deposit(deposit_request_details) => {
+		// 									log!(info, "Deposit: {:?}", deposit_request_details);
+		// 									match Self::process_deposit(deposit_request_details) {
+		// 										Ok(_) => (),
+		// 										Err(_) => success = false,
+		// 									};
+		// 									PENDING_UPDATES::<T>::insert(
+		// 										request_id,
+		// 										Update::DepositUpdate(success),
+		// 									);
+		// 								},
+		// 								Request::Withdraw(withdraw_request_details) => {
+		// 									log!(info, "Withdraw: {:?}", withdraw_request_details);
+		// 									match Self::process_withdraw(withdraw_request_details) {
+		// 										Ok(_) => (),
+		// 										Err(_) => success = false,
+		// 									};
+		// 									PENDING_UPDATES::<T>::insert(
+		// 										request_id,
+		// 										Update::WithdrawUpdate(success),
+		// 									);
+		// 								},
+		// 								Request::CancelResolution(
+		// 									cancel_resolution_request_details,
+		// 								) => {
+		// 									log!(
+		// 										info,
+		// 										"CancelResolution: {:?}",
+		// 										cancel_resolution_request_details
+		// 									);
+		// 									match Self::process_cancel_resolution(
+		// 										cancel_resolution_request_details,
+		// 									) {
+		// 										Ok(_) => (),
+		// 										Err(_) => success = false,
+		// 									};
+		// 									PENDING_UPDATES::<T>::insert(
+		// 										request_id,
+		// 										Update::ProcessedOnlyInfoUpdate(success),
+		// 									);
+		// 								},
+		//
+		// 								Request::L2UpdatesToRemove(
+		// 									updates_to_remove_request_details,
+		// 								) => {
+		// 									log!(
+		// 										info,
+		// 										"L2UpdatesToRemove: {:?}",
+		// 										updates_to_remove_request_details
+		// 									);
+		// 									match Self::process_l2_updates_to_remove(
+		// 										updates_to_remove_request_details,
+		// 									) {
+		// 										Ok(_) => (),
+		// 										Err(_) => success = false,
+		// 									};
+		// 									PENDING_UPDATES::<T>::insert(
+		// 										request_id,
+		// 										Update::ProcessedOnlyInfoUpdate(success),
+		// 									);
+		// 								},
+		// 							}
+		// 							// if success, increase last_processed_request_on_l2
+		// 							last_processed_request_on_l2::<T>::put(request_id);
+		// 						}
+		// 					} else {
+		// 						log!(info, "No request found for request_id: {:?}", request_id);
+		// 					}
+		// 				}
+		//
+		// 				log!(info, "Pending Updates:");
+		// 				for (request_id, update) in PENDING_UPDATES::<T>::iter() {
+		// 					log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+		// 				}
+		// 			}
+		// 		},
+		// 		Err(e) => {
+		// 			log!(info, "Error deserializing JSON: {:?}", e);
+		// 		},
+		// 	}
+		// 	Ok(().into())
+		// }
 	}
 }
 
 impl<T: Config> Pallet<T> {
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
-		// get pending requests at blocknumber
-		if let Some(pending_requests_to_process) =
-			PENDING_REQUESTS::<T>::get(<frame_system::Pallet<T>>::block_number())
+		if let Some(pending_requests_to_process) = PENDING_REQUESTS_MAT::<T>::get(U256::from(<frame_system::Pallet<T>>::block_number().saturated_into::<u128>()))
 		{
 			log!(info, "dispute end ",);
 
 			let sequencer = &pending_requests_to_process.0;
-			let pending_requests_json = &pending_requests_to_process.1.as_str();
+			let requests = pending_requests_to_process.1.clone();
 
-			// deserialize json
-			match Self::deserialize_json(pending_requests_json) {
-				Ok(deserialized) => {
-					log!(info, "Deserialized struct: {:?}", deserialized);
+			if requests.lastProccessedRequestOnL1 <
+			Self::get_prev_last_processed_request_on_l2()
+			{
+				log!(info, "lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2");
 
-					// Add a new variable of type Requests
-					let requests: Requests = deserialized;
-
-					// Iterate over requests from lastProccessedRequestOnL1 to lastAcceptedRequestOnL1
-
-					if requests.lastProccessedRequestOnL1 <
-						Self::get_prev_last_processed_request_on_l2()
-					{
-						log!(info, "lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2");
-
-						// SLASH sequencer for bringing unnecessary past requests, to be tested
-						// Self::slash(sequencer);
-					}
-					// return readRights to sequencer
-					SEQUENCER_RIGHTS::<T>::mutate_exists(
-						sequencer.clone(),
-						|maybe_sequencer| match maybe_sequencer {
-							&mut Some(ref mut sequencer_rights)
-								if T::SequencerStakingProvider::is_active_sequencer(
-									sequencer.clone(),
-								) =>
-							{
-								sequencer_rights.readRights += 1;
-							},
-							_ => {},
-						},
-					);
-					Self::process_requests(sequencer, &requests);
-				},
-				Err(e) => {
-					log!(info, "Error deserializing JSON: {:?}", e);
-					// SLASH sequencer for invalid json
-					Self::slash(sequencer);
-				},
+				// TODO: SLASH sequencer for bringing unnecessary past requests, to be tested
+				// Self::slash(sequencer);
 			}
+
+			// return readRights to sequencer
+			SEQUENCER_RIGHTS::<T>::mutate_exists(
+				sequencer.clone(),
+				|maybe_sequencer| match maybe_sequencer {
+					&mut Some(ref mut sequencer_rights)
+						if T::SequencerStakingProvider::is_active_sequencer(
+							sequencer.clone(),
+						) =>
+						{
+							sequencer_rights.readRights += 1;
+					},
+					_ => {},
+				},
+			);
+			Self::process_requests(sequencer, &requests);
 		}
-		PENDING_REQUESTS::<T>::remove(<frame_system::Pallet<T>>::block_number());
-		// prev_last_processed_request_on_l2 update goes here?
+		PENDING_REQUESTS_MAT::<T>::remove(U256::from(<frame_system::Pallet<T>>::block_number().saturated_into::<u128>()));
+		// TODO: prev_last_processed_request_on_l2 update goes here?
 	}
 
-	fn deserialize_json(json_str: &str) -> Result<Requests, serde_json::Error> {
-		serde_json::from_str(json_str)
-	}
+	fn process_requests(sequencer: &T::AccountId, requests: &RequestsMat) {
+		// TODO: check if not missing any request, not processing requests. This is double check, first should be done by sequencers and requests with missing request should be canceled
+		// for key in (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
+		// {
+		// 	if let Some(_request) = requests.requests.get(&key) {
+		// 	} else {
+		// 		log!(info, "No request found for key: {:?}", key);
+		// 		// SLASH sequencer for missing request
+		// 		Self::slash(sequencer);
+		// 		return
+		// 	}
+		// }
 
-	fn process_requests(sequencer: &T::AccountId, requests: &Requests) {
-		// check if not missing any request, not processing requests. This is double check, first should be done by sequencers and requests with missing request should be canceled
-		for key in (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
-		{
-			if let Some(_request) = requests.requests.get(&key) {
-			} else {
-				log!(info, "No request found for key: {:?}", key);
-				// SLASH sequencer for missing request
-				Self::slash(sequencer);
-				return
-			}
-		}
 		// process requests and checks if all requests are present from starting to ending one
-		for request_id in
-			(requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
-		{
-			if let Some(request) = requests.requests.get(&request_id) {
+		for (request_id, request) in requests.requests.iter() {
+			// (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
+			// if let Some(request) = requests.requests.get(&request_id) {
 				// ignore if already processed
-				if request_id > Self::get_last_processed_request_on_l2() {
-					log!(info, "EXECUTING: ");
-					let mut success = true;
-					match request {
-						Request::Deposit(deposit_request_details) => {
-							log!(info, "Deposit: {:?}", deposit_request_details);
-							match Self::process_deposit(deposit_request_details) {
-								Ok(_) => (),
-								Err(_) => success = false,
-							};
-							PENDING_UPDATES::<T>::insert(
-								request_id,
-								Update::DepositUpdate(success),
-							);
-						},
-						Request::Withdraw(withdraw_request_details) => {
-							log!(info, "Withdraw: {:?}", withdraw_request_details);
-							match Self::process_withdraw(withdraw_request_details) {
-								Ok(_) => (),
-								Err(_) => success = false,
-							};
-							PENDING_UPDATES::<T>::insert(
-								request_id,
-								Update::WithdrawUpdate(success),
-							);
-						},
-						Request::CancelResolution(cancel_resolution_request_details) => {
-							log!(info, "CancelResolution: {:?}", cancel_resolution_request_details);
-							match Self::process_cancel_resolution(cancel_resolution_request_details)
-							{
-								Ok(_) => (),
-								Err(_) => success = false,
-							};
-							PENDING_UPDATES::<T>::insert(
-								request_id,
-								Update::ProcessedOnlyInfoUpdate(success),
-							);
-						},
+				if *request_id > Self::get_last_processed_request_on_l2() {
 
-						Request::L2UpdatesToRemove(updates_to_remove_request_details) => {
-							log!(
-								info,
-								"L2UpdatesToRemove: {:?}",
-								updates_to_remove_request_details
-							);
-							match Self::process_l2_updates_to_remove(
-								updates_to_remove_request_details,
-							) {
-								Ok(_) => (),
-								Err(_) => success = false,
-							};
-							PENDING_UPDATES::<T>::insert(
+					log!(info, "Req: {:?}", request);
+					match request {
+						MatRequest::Deposit(deposit_request_details) => {
+							PENDING_UPDATES_MAT::<T>::insert(
 								request_id,
-								Update::ProcessedOnlyInfoUpdate(success),
+								PendingUpdate::Deposit(*request_id, Self::process_deposit(deposit_request_details).is_ok()),
+							);
+						},
+						MatRequest::Withdraw(withdraw_request_details) => {
+							PENDING_UPDATES_MAT::<T>::insert(
+								request_id,
+								PendingUpdate::Withdraw(*request_id, Self::process_withdraw(withdraw_request_details).is_ok()),
+							);
+						},
+						MatRequest::CancelResolution(cancel_resolution_request_details) => {
+							// TODO: hello
+							// PENDING_UPDATES_MAT::<T>::insert(
+							// 	request_id,
+							// 	PendingUpdate::IndexUpdate(*request_id, Self::process_cancel_resolution( cancel_resolution_request_details).is_ok()),
+							// );
+						},
+						MatRequest::L2UpdatesToRemove(updates_to_remove_request_details) => {
+							PENDING_UPDATES_MAT::<T>::insert(
+								request_id,
+								PendingUpdate::IndexUpdate(*request_id, Self::process_l2_updates_to_remove( updates_to_remove_request_details).is_ok()),
 							);
 						},
 					}
 					// if success, increase last_processed_request_on_l2
 					last_processed_request_on_l2::<T>::put(request_id);
 				}
-			} else {
-				log!(info, "No request found for request_id: {:?}", request_id);
-				// SLASH sequencer for missing request
-				Self::slash(sequencer);
-				return
-			}
-		}
-		log!(info, "Pending Updates:");
-		for (request_id, update) in PENDING_UPDATES::<T>::iter() {
-			log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 		}
 	}
 
 	fn process_deposit(
-		deposit_request_details: &DepositRequestDetails,
+		deposit_request_details: &DepositRequestDetailsMat,
 	) -> Result<(), &'static str> {
 		let amount = deposit_request_details.amount;
 		let eth_token_address_string = deposit_request_details.tokenAddress.clone();
@@ -694,7 +759,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_withdraw(
-		withdraw_request_details: &WithdrawRequestDetails,
+		withdraw_request_details: &WithdrawRequestDetailsMat,
 	) -> Result<(), &'static str> {
 		// fail will occur if user has not enough balance
 		let amount = withdraw_request_details.amount;
@@ -730,7 +795,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_cancel_resolution(
-		cancel_resolution_request_details: &CancelResolutionRequestDetails,
+		cancel_resolution_request_details: &CancelResolutionRequestDetailsMat,
 	) -> Result<(), &'static str> {
 		let cancel_request_id = cancel_resolution_request_details.l2RequestId;
 		let cancel_justified = cancel_resolution_request_details.cancelJustified;
@@ -785,7 +850,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_l2_updates_to_remove(
-		updates_to_remove_request_details: &UpdatesToRemoveRequestDetails,
+		updates_to_remove_request_details: &UpdatesToRemoveRequestDetailsMat,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.updates.iter() {
 			PENDING_UPDATES::<T>::remove(requestId);
@@ -836,58 +901,54 @@ impl<T: Config> Pallet<T> {
 		hex::encode(result)
 	}
 
-	fn calculate_hash_of_pending_requests(json_string_to_hash: &str) -> U256 {
-		let hash_of_pending_request = Self::calculate_keccak256_hash_u256(json_string_to_hash);
-		log!(info, "Keccak256 Hash of PENDING_REQUESTS at {:#?}", hash_of_pending_request);
+	fn calculate_hash_of_pending_requests(input: RequestsMat) -> H256 {
+		let mut digest = Keccak256::new();
 
-		hash_of_pending_request
-	}
-
-	fn get_pending_updates_as_u256_array() -> Vec<U256> {
-		let mut updates: Vec<U256> = Vec::<U256>::new();
-
-		for (request_id, update) in PENDING_UPDATES::<T>::iter() {
-			match update {
-				Update::DepositUpdate(success) => {
-					updates.push(1.into());
-					updates.push(request_id.into());
-					if success {
-						updates.push(1.into());
-					} else {
-						updates.push(0.into());
-					}
-				},
-				Update::WithdrawUpdate(success) => {
-					updates.push(2.into());
-					updates.push(request_id.into());
-					if success {
-						updates.push(1.into());
-					} else {
-						updates.push(0.into());
-					}
-				},
-				Update::Cancel(cancel) => {
-					updates.push(3.into());
-					updates.push(request_id.into());
-					updates.push(cancel.lastProccessedRequestOnL1.into());
-					updates.push(cancel.lastAcceptedRequestOnL1.into());
-					updates.push(cancel.hash);
-				},
-				Update::ProcessedOnlyInfoUpdate(success) => {
-					updates.push(4.into());
-					updates.push(request_id.into());
-					if success {
-						updates.push(1.into());
-					} else {
-						updates.push(0.into());
-					}
-				},
-				_ => {},
-			}
+		for (_, r) in input.requests.iter(){
+			match r {
+				MatRequest::Deposit(r) => digest.update(r.abi_encode()),
+				MatRequest::Withdraw(r) => digest.update(r.abi_encode()),
+				MatRequest::CancelResolution(r) => digest.update(r.abi_encode()),
+				MatRequest::L2UpdatesToRemove(r) => digest.update(r.abi_encode()),
+			};
 		}
 
-		log!(info, "Pending Updates: {:?}", updates);
-		updates
+		let array: [u8; 32] = digest.finalize().into();
+		H256::from(array)
+	}
+
+	fn get_pending_updates_as_u256_array() -> L2ToL1Update {
+		let mut update = L2ToL1Update{
+			updates: Vec::new(),
+			cancels: Vec::new()
+		};
+
+		for (_, req) in PENDING_UPDATES_MAT::<T>::iter(){
+			match req {
+				PendingUpdate::Deposit(request_id, success) =>
+					update.updates.push(StatusUpdate {
+					updateType: UpdateType::DEPOSIT,
+					requestId: request_id,
+					status: success,
+				}),
+				PendingUpdate::Withdraw(request_id, success) =>
+					update.updates.push(StatusUpdate {
+					updateType: UpdateType::WITHDRAWAL,
+					requestId: request_id,
+					status: success,
+				}),
+				PendingUpdate::IndexUpdate(request_id, success) =>
+					update.updates.push(StatusUpdate {
+					updateType: UpdateType::INDEX_UPDATE,
+					requestId: request_id,
+					status: success,
+				}),
+				_ => {}
+			};
+		}
+
+		// log!(info, "Pending Updates: {:?}", update);
+		update
 	}
 
 	fn handle_sequencer_deactivation(deactivated_sequencer: T::AccountId) {
@@ -919,6 +980,10 @@ impl<T: Config> Pallet<T> {
 	}
 	fn eth_to_dot_address(eth_addr: String) -> Result<T::AccountId, &'static str> {
 		T::AddressConverter::try_convert(eth_addr).or(Err("Cannot convert address"))
+	}
+
+	pub fn pending_updates_proof() -> sp_core::H256{
+		unimplemented!()
 	}
 }
 

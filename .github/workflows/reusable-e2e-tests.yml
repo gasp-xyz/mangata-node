@@ -115,6 +115,8 @@ jobs:
             fast: true
           - command: "yarn test-governance"
             fast: true
+          - command: "yarn test-governance-maintanance"
+            fast: true
           - command: "yarn test-multiswap"
             fast: false
           - command: "yarn test-experimentalStaking"

@@ -62,9 +62,9 @@ jobs:
     outputs:
       DOCKER_IMAGE_DIGEST: ${{ steps.export_docker_image.outputs.DOCKER_IMAGE_DIGEST }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Login to Docker Hub
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -76,10 +76,10 @@ jobs:
           docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ needs.init.outputs.RELEASE_VERSION }}.tar
           zip -r docker-${{ needs.init.outputs.RELEASE_VERSION }}.zip docker-${{ needs.init.outputs.RELEASE_VERSION }}.tar
           # Save docker image SHA256 digest as an output variable
-          echo "DOCKER_IMAGE_DIGEST=$(docker inspect mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} --format='{{index .RepoDigests 0}}')" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_DIGEST=$(docker inspect mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} --format='{{index .RepoDigests 0}}' | sed 's|mangatasolutions/mangata-node@||')" >> $GITHUB_OUTPUT
       
       - name: Tag and push image rococo and kusama specific images
-        uses: akhilerm/tag-push-action@v2.0.0
+        uses: akhilerm/tag-push-action@v2.1.0
         with:
           src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
           dst: |
@@ -156,7 +156,7 @@ jobs:
       - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: ${{ needs.create-draft-release-and-publish-docker-images.outputs.DOCKER_IMAGE_DIGEST }}
+          src: mangatasolutions/mangata-node@${{ needs.create-draft-release-and-publish-docker-images.outputs.DOCKER_IMAGE_DIGEST }}
           dst: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
 
       - name: Upload wasms to release page

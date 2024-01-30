@@ -148,7 +148,6 @@ pub mod pallet {
 	}
 
 
-
 sol! {
 	#[derive(
 		Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
@@ -204,37 +203,6 @@ sol! {
 		uint128 lastAcceptedRequestOnL1;
 		bytes32 hash;
 	}
-
-	// L2 -> L1
-
-	//
-	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-	// pub enum Update<AccountId> {
-	// 	DepositUpdate(bool),
-	// 	WithdrawUpdate(bool),
-	// 	Cancel(Cancel<AccountId>),
-	// 	ProcessedOnlyInfoUpdate(bool),
-	// }
-	//
-	//
-	// //L2 outgoing updates structs
-	// //L2 outgoing updates structs
-	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-	// pub enum Update<AccountId> {
-	// 	DepositUpdate(bool),
-	// 	WithdrawUpdate(bool),
-	// 	Cancel(Cancel<AccountId>),
-	// 	ProcessedOnlyInfoUpdate(bool),
-	// }
-	//
-	// #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
-	// pub struct Cancel<AccountId> {
-	// 	pub updater: AccountId,
-	// 	pub canceler: AccountId,
-	// 	pub lastProccessedRequestOnL1: u128,
-	// 	pub lastAcceptedRequestOnL1: u128,
-	// 	pub hash: H256,
-	// }
 }
 
 	#[derive(

@@ -126,7 +126,7 @@ jobs:
           - command: "yarn test-parallel-3rdPartyRewards"
             fast: true
     
-    runs-on: [e2e-gke]
+    runs-on: [compile]
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"
@@ -288,6 +288,10 @@ jobs:
         run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   test-complete:
     needs: [setup-report, e2e-test-matrix]

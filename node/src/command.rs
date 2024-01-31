@@ -91,6 +91,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 		// - Rococo based
 		"mangata-rococo-local" =>
 			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+		"mangata-rococo-eigen-local" =>
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_eigen_local()),
 		"mangata-rococo" => Box::new(chain_spec::mangata_rococo::mangata_rococo_prod_config()),
 		// - Kusama based
 		"mangata-kusama-local" =>

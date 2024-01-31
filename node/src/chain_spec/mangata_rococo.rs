@@ -417,6 +417,152 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 	)
 }
 
+pub fn mangata_rococo_eigen_local() -> ChainSpec {
+	// Give your base currency a unit name and decimal places
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("tokenSymbol".into(), "MGA".into());
+	properties.insert("tokenDecimals".into(), 18u32.into());
+	properties.insert("ss58Format".into(), 42u32.into());
+
+	ChainSpec::from_genesis(
+		// Name
+		"Mangata Rococo Eigen Local",
+		// ID
+		"mangata_rococo_eigen_local",
+		ChainType::Local,
+		move || {
+			mangata_genesis(
+				// initial collators.
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+				],
+				// Initial relay account
+				get_account_id_from_seed::<sr25519::Public>("Relay"),
+				// Sudo account
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// Tokens endowment
+				vec![
+					// MGA
+					(
+						0u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+					),
+					// ETH
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Relay"),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+					),
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					),
+				],
+				// Config for Staking
+				// Make sure it works with initial-authorities as staking uses both
+				vec![
+					(
+						// Who gets to stake initially
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						100_000_000__000_000_000_000_000_000_u128,
+						// Id of the eth token,
+						1u32,
+						// How many eth tokens they pool,
+						200_000_000__000_000_000_000_000_000_u128,
+						// Id of the liquidity token that is generated
+						2u32,
+						// How many liquidity tokens they stake,
+						100_000_000__000_000_000_000_000_000_u128,
+					),
+					(
+						// Who gets to stake initially
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						80_000_000__000_000_000_000_000_000_u128,
+						// Id of the dummy token,
+						1u32,
+						// How many eth tokens they pool,
+						200_000_000__000_000_000_000_000_000_u128,
+						// Id of the liquidity token that is generated
+						2u32,
+						// How many liquidity tokens they stake,
+						50_000_000__000_000_000_000_000_000_u128,
+					),
+				],
+				vec![
+					(
+						MGX_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
+							symbol: BoundedVec::truncate_from(b"MGA".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Goerli Ether".to_vec()),
+							symbol: BoundedVec::truncate_from(b"gETH".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+				],
+				parachains::mangata::ID.into(),
+			)
+		},
+		// Bootnodes
+		Vec::new(),
+		// Telemetry
+		None,
+		// Protocol ID
+		Some("mangata-rococo-eigen-local"),
+		// ForkId
+		None,
+		// Properties
+		Some(properties),
+		// Extensions
+		Extensions {
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			para_id: parachains::mangata::ID,
+		},
+	)
+}
+
 pub(crate) fn mangata_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	_relay_key: AccountId,

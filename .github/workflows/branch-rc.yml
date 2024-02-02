@@ -1,4 +1,4 @@
-name: Release branch workflow
+name: Release Candidate branch workflow
 
 # available flags:
 ## skip-e2e-tests: skip running e2e tests

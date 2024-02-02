@@ -2,8 +2,7 @@ name: Deploy docs
 
 on:
   push:
-    # TODO: temporary for test - to be removed
-    branches: [develop, ci/workflow-fixes]
+    branches: [develop]
 
 jobs:
   docs:

@@ -270,17 +270,6 @@ pub mod pallet {
 				T::DbWeight::get().reads(2)
 			}
 		}
-
-		fn on_runtime_upgrade() -> Weight {
-			let onchain = Pallet::<T>::on_chain_storage_version();
-			if onchain == 0 {
-				STORAGE_VERSION.put::<Pallet<T>>();
-				T::DbWeight::get().reads_writes(1, 1)
-			} else {
-				log!(warn, "skipping version upgrade, remove migration");
-				T::DbWeight::get().reads(1)
-			}
-		}
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]

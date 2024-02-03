@@ -80,7 +80,7 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-type Migrations = (common_runtime::migration::PalletsVersionsAlignment<Runtime>,);
+type Migrations = ();
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -107,10 +107,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 003200,
+	spec_version: 003400,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003200,
+	transaction_version: 003400,
 	state_version: 0,
 };
 

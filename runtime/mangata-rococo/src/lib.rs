@@ -2,12 +2,17 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use codec::{
+	alloc::string::{String, ToString},
+	Decode, Encode,
+};
 pub use common_runtime::{
 	consts::DAYS, currency::*, deposit, runtime_types, tokens, types::*, CallType,
 };
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	dispatch::GetDispatchInfo,
+	parameter_types,
 	traits::{Everything, InstanceFilter},
 	weights::{constants::RocksDbWeight, Weight},
 };
@@ -836,7 +841,6 @@ mod benches {
 		[pallet_proof_of_stake, ProofOfStake]
 	);
 }
-
 
 impl_runtime_apis! {
 

@@ -448,6 +448,14 @@ impl ExtBuilder {
 	}
 }
 
+pub(crate) fn events() -> Vec<pallet::Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| if let RuntimeEvent::ProofOfStake(inner) = e { Some(inner) } else { None })
+		.collect::<Vec<_>>()
+}
+
 /// Compares the system events with passed in events
 /// Prints highlighted diff iff assert_eq fails
 #[macro_export]

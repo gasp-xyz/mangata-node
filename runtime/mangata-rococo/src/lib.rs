@@ -132,10 +132,7 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-type Migrations = (
-	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
-	orml_unknown_tokens::Migration<Runtime>,
-);
+type Migrations = ();
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -163,10 +160,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 003200,
+	spec_version: 003400,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003200,
+	transaction_version: 003400,
 	state_version: 0,
 };
 
@@ -840,7 +837,6 @@ mod benches {
 	);
 }
 
-use codec::alloc::string::{String, ToString};
 
 impl_runtime_apis! {
 
@@ -942,6 +938,13 @@ impl_runtime_apis! {
 
 		fn start_prevalidation() {
 			System::set_prevalidation()
+		}
+
+		fn account_extrinsic_dispatch_weight(consumed: ver_api::ConsumedWeight, tx: <Block as BlockT>::Extrinsic) -> Result<ver_api::ConsumedWeight, ()> {
+			let info = tx.get_dispatch_info();
+			let maximum_weight = <Runtime as frame_system::Config>::BlockWeights::get();
+			frame_system::calculate_consumed_weight::<RuntimeCall>(maximum_weight, consumed, &info)
+			.or(Err(()))
 		}
 	}
 

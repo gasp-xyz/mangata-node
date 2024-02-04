@@ -58,7 +58,6 @@ use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use types::*;
 
 pub mod constants;
-pub mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -1477,10 +1476,10 @@ where
 		use super::*;
 
 		parameter_types! {
-			pub const RewardsSchedulesLimit: u32 = 100_000u32;
-			// TODO: allign properly
-			pub const Min3rdPartyRewardValutationPerSession: u128 = 100 * 30_000 * currency::DOLLARS;
-			pub const Min3rdPartyRewardVolume: u128 = 100 * 30_000 * currency::DOLLARS;
+			pub const RewardsSchedulesLimit: u32 = 10_000u32;
+			// NOTE: 1725 is how much USDT you get for one MGX as of 12.2023
+			pub const Min3rdPartyRewardValutationPerSession: u128 = 10 * 1725 * currency::DOLLARS;
+			pub const Min3rdPartyRewardVolume: u128 = 10_000 * 1725 * currency::DOLLARS;
 			pub const SchedulesPerBlock: u32 = 5;
 		}
 	}

@@ -2,12 +2,17 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::Encode;
+use codec::{
+	alloc::string::{String, ToString},
+	Decode, Encode,
+};
 pub use common_runtime::{
 	consts::DAYS, currency::*, deposit, runtime_types, tokens, types::*, CallType,
 };
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	dispatch::GetDispatchInfo,
+	parameter_types,
 	traits::{Everything, InstanceFilter},
 	weights::{constants::RocksDbWeight, Weight},
 };
@@ -24,7 +29,10 @@ pub use pallet_xyk;
 pub use polkadot_runtime_common::BlockHashCount;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, ConstBool, OpaqueMetadata};
+use sp_core::{
+	crypto::{KeyTypeId, Ss58Codec},
+	ConstBool, OpaqueMetadata,
+};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -71,6 +79,53 @@ pub type SignedPayload = runtime_types::SignedPayload<Runtime, RuntimeCall>;
 pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, RuntimeCall>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
+
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::{generic::ExtendedCall, AccountId32};
+use sp_std::{fmt::Write, prelude::*};
+
+impl ExtendedCall for RuntimeCall {
+	fn context(&self) -> Option<(String, String)> {
+		match self {
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
+				..
+			}) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
+				let _ = write!(&mut buffer, "sold_asset_amount: {sold_asset_amount}\n");
+				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
+				let _ = write!(&mut buffer, "min_amount_out: {min_amount_out}\n");
+				Some(("xyk::sell_asset".to_string(), buffer))
+			},
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
+				..
+			}) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
+				let _ = write!(&mut buffer, "bought_asset_amount: {bought_asset_amount}\n");
+				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
+				let _ = write!(&mut buffer, "max_amount_in: {max_amount_in}\n");
+				Some(("xyk::buy_asset".to_string(), buffer))
+			},
+			RuntimeCall::Tokens(orml_tokens::Call::transfer { dest, currency_id, amount }) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "dest: {dest:?}\n");
+				let _ = write!(&mut buffer, "currency_id: {currency_id}\n");
+				let _ = write!(&mut buffer, "amount: {amount}\n");
+				Some(("orml_tokens::transfer".to_string(), buffer))
+			},
+			_ => Some(("todo".to_string(), "todo".to_string())),
+		}
+	}
+}
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -787,10 +842,22 @@ mod benches {
 	);
 }
 
-use frame_support::dispatch::GetDispatchInfo;
-
 impl_runtime_apis! {
 
+
+	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
+		fn get_eip712_sign_data(call: Vec<u8>) -> String{
+			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+				if let Some((method, params)) = extrinsic.function.context() {
+					metamask_signature_runtime_api::eip712_payload(method, params)
+				}else{
+					Default::default()
+				}
+			}else{
+				Default::default()
+			}
+		}
+	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(

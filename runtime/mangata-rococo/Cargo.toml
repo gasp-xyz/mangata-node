@@ -12,13 +12,18 @@ targets = ["x86_64-unknown-linux-gnu"]
 substrate-wasm-builder = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+	"derive",
+] }
 hex-literal = { version = '0.3.1' }
 log = { version = "0.4.17", default-features = false }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = [
+	"derive",
+] }
 serde = { version = "1.0.137", optional = true, features = ["derive"] }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
+bs58 = { version = "0.5.0", default-features = false }
 
 # Local Dependencies
 common-runtime = { path = '../common', default-features = false, version = '4.0.0' }
@@ -32,7 +37,8 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
-proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false}
+proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false }
+metamask-signature-runtime-api = { path = '../../pallets/metamask-signature-runtime-api', default-features = false }
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
 mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
@@ -113,11 +119,13 @@ xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/man
 pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "develop", default-features = false }
 
 [features]
-default = [
-	"std",
-]
+default = ["std"]
 std = [
 	"codec/std",
+	"common-runtime/std",
+	"pallet-root-testing/std",
+	"bs58/std",
+	"bs58/alloc",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
 	"cumulus-pallet-parachain-system/std",
@@ -193,6 +201,7 @@ std = [
 	"xcm-executor/std",
 	"xcm/std",
 	"proof-of-stake-runtime-api/std",
+	"metamask-signature-runtime-api/std",
 	"xyk-runtime-api/std",
 ]
 
@@ -245,6 +254,8 @@ try-runtime = [
 fast-runtime = ["common-runtime/fast-runtime"]
 
 runtime-benchmarks = [
+	"mangata-support/runtime-benchmarks",
+	"pallet-sudo-mangata/runtime-benchmarks",
 	"common-runtime/runtime-benchmarks",
 	"cumulus-pallet-parachain-system/runtime-benchmarks",
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",

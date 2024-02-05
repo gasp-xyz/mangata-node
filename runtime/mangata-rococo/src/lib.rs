@@ -817,8 +817,12 @@ mod benches {
 impl_runtime_apis! {
 
 	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
-		fn get_pending_requests_hash() -> sp_core::H256 {
+		fn get_pending_updates_hash() -> sp_core::H256 {
 			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+		}
+
+		fn get_pending_updates() -> Vec<u8> {
+			pallet_rolldown::Pallet::<Runtime>::pending_updates_eth_encoded()
 		}
 	}
 

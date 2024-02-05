@@ -8,6 +8,7 @@ license = "GPL-3.0-or-later"
 [dependencies]
 
 sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 
 [features]
@@ -15,5 +16,6 @@ default = ["std"]
 
 std = [
 	"sp-api/std",
+	"sp-std/std",
 	"sp-core/std",
 ]

@@ -478,7 +478,7 @@ pub(crate) fn mangata_genesis(
 			delegations: vec![],
 		},
 		session: mangata_rococo_runtime::SessionConfig {
-			keys: initial_authorities
+			keys: initial_authorities.clone()
 				.into_iter()
 				.map(|(acc, aura)| {
 					(
@@ -545,5 +545,11 @@ pub(crate) fn mangata_genesis(
 				.collect(),
 		},
 		vesting: Default::default(),
+		rolldown: mangata_rococo_runtime::RolldownConfig {
+			sequencers: initial_authorities
+				.iter()
+				.map(|(acc, _)| acc.clone())
+				.collect(),
+		},
 	}
 }

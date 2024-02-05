@@ -28,7 +28,7 @@ pub trait RolldownApi<BlockHash> {
 	fn pending_updates(
 		&self,
 		at: Option<BlockHash>,
-	) -> RpcResult<sp_core::H256>;
+	) -> RpcResult<Vec<u8>>;
 
 }
 
@@ -60,7 +60,7 @@ where
 	) -> RpcResult<sp_core::H256> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_requests_hash(at)
+		api.get_pending_updates_hash(at)
 			.map_err(|e| {
 				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 					1,
@@ -73,10 +73,10 @@ where
 	fn pending_updates(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<sp_core::H256> {
+	) -> RpcResult<Vec<u8>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_requests_hash(at)
+		api.get_pending_updates(at)
 			.map_err(|e| {
 				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 					1,

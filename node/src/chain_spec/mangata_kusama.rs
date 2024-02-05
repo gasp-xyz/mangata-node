@@ -545,5 +545,6 @@ fn mangata_genesis(
 				.collect(),
 		},
 		vesting: Default::default(),
+		rolldown: Default::default(),
 	}
 }

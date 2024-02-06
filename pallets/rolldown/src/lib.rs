@@ -120,7 +120,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
-		Status(bool),
+		RequestResult(bool),
 		Cancel(Cancel<AccountId>),
 	}
 
@@ -142,20 +142,21 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_requests_mat)]
-	pub type PENDING_REQUESTS_MAT<T: Config> =
+	#[pallet::getter(fn get_pending_requests)]
+	pub type pending_requests<T: Config> =
+
 		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_sequencer_rights)]
-	pub type SEQUENCER_RIGHTS<T: Config> =
+	pub type sequencer_rights<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_updates_mat)]
-	pub type PENDING_UPDATES_MAT<T: Config> =
+	#[pallet::getter(fn get_pending_updates)]
+	pub type pending_updates<T: Config> =
 		StorageMap<_, Blake2_128Concat, sp_core::U256, PendingUpdate<T::AccountId>, OptionQuery>;
 
 	#[pallet::event]
@@ -204,7 +205,7 @@ pub mod pallet {
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for s in self.sequencers.iter() {
-				SEQUENCER_RIGHTS::<T>::insert(
+				sequencer_rights::<T>::insert(
 					s.clone(),
 					SequencerRights {
 						readRights: 1,
@@ -236,7 +237,7 @@ pub mod pallet {
 			let dispute_period_end: u128 = current_block_number + (DISPUTE_PERIOD_LENGTH as u128);
 
 			// ensure sequencer has rights to update
-			if let Some(sequencer) = SEQUENCER_RIGHTS::<T>::get(&sequencer) {
+			if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
 				if sequencer.readRights == 0 {
 					log!(info, "{:?} does not have sufficient readRights", sequencer);
 					return Err(Error::<T>::OperationFailed.into())
@@ -247,19 +248,19 @@ pub mod pallet {
 			}
 
 			// // Decrease readRights by 1
-			SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
 					sequencer.readRights -= 1;
 				}
 			});
 
 			// insert pending_requests
-			PENDING_REQUESTS_MAT::<T>::insert(
+			pending_requests::<T>::insert(
 				U256::from(dispute_period_end),
 				(sequencer.clone(), requests.clone()),
 			);
 
-			let update: messages::eth::L1Update = requests.clone().into();
+			let update: messages::eth_abi::L1Update = requests.clone().into();
 			let request_hash = Keccak256::digest(&update.abi_encode());
 
 			Pallet::<T>::deposit_event(Event::PendingRequestStored((
@@ -279,7 +280,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
 
-			SEQUENCER_RIGHTS::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
+			sequencer_rights::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
 					sequencer.cancelRights -= 1;
 					Ok(())
@@ -288,7 +289,7 @@ pub mod pallet {
 				}
 			})?;
 
-			let (submitter, request) = PENDING_REQUESTS_MAT::<T>::take(requests_to_cancel)
+			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
@@ -306,19 +307,19 @@ pub mod pallet {
 			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			let update_id = Self::get_l2_origin_updates_counter();
 			// add cancel request to pending updates
-			PENDING_UPDATES_MAT::<T>::insert(
+			pending_updates::<T>::insert(
 				U256::from(update_id),
 				PendingUpdate::Cancel(cancel_request),
 			);
 			// remove whole l1l2 update (read) from pending requests
-			PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
+			pending_requests::<T>::remove(&requests_to_cancel);
 
 			log!(info, "Pending Updates:");
-			for (request_id, update) in PENDING_REQUESTS_MAT::<T>::iter() {
+			for (request_id, update) in pending_requests::<T>::iter() {
 				log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 			}
 			log!(info, "Pending requests:");
-			for (request_id, update) in PENDING_UPDATES_MAT::<T>::iter() {
+			for (request_id, update) in pending_updates::<T>::iter() {
 				log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 			}
 
@@ -443,7 +444,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
-		if let Some(pending_requests_to_process) = PENDING_REQUESTS_MAT::<T>::get(U256::from(
+		if let Some(pending_requests_to_process) = pending_requests::<T>::get(U256::from(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 		)) {
 			log!(info, "dispute end ",);
@@ -464,7 +465,7 @@ impl<T: Config> Pallet<T> {
 			}
 
 			// return readRights to sequencer
-			SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
 						if T::SequencerStakingProvider::is_active_sequencer(sequencer.clone()) =>
@@ -476,7 +477,7 @@ impl<T: Config> Pallet<T> {
 			});
 			Self::process_requests(sequencer, requests.clone());
 		}
-		PENDING_REQUESTS_MAT::<T>::remove(U256::from(
+		pending_requests::<T>::remove(U256::from(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 		));
 		// TODO: prev_last_processed_request_on_l2 update goes here?
@@ -496,26 +497,26 @@ impl<T: Config> Pallet<T> {
 		// }
 
 		for (request_id, request_details) in update.into_requests() {
-			if PENDING_UPDATES_MAT::<T>::contains_key(request_id) {
+			if pending_updates::<T>::contains_key(request_id) {
 				continue
 			}
 
 			match request_details {
-				messages::L1UpdateRequest::Deposit(deposit) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::Status(Self::process_deposit(&deposit).is_ok()),
+					PendingUpdate::RequestResult(Self::process_deposit(&deposit).is_ok()),
 				),
-				messages::L1UpdateRequest::Withdraw(withdraw) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Withdraw(withdraw) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::Status(Self::process_withdraw(&withdraw).is_ok()),
+					PendingUpdate::RequestResult(Self::process_withdraw(&withdraw).is_ok()),
 				),
-				messages::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::Status(Self::process_cancel_resolution(&cancel.into()).is_ok()),
+					PendingUpdate::RequestResult(Self::process_cancel_resolution(&cancel.into()).is_ok()),
 				),
-				messages::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::Status(Self::process_l2_updates_to_remove(&remove).is_ok()),
+					PendingUpdate::RequestResult(Self::process_l2_updates_to_remove(&remove).is_ok()),
 				),
 				_ => {},
 			};
@@ -591,7 +592,7 @@ impl<T: Config> Pallet<T> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
 
-		let cancel_update = match PENDING_UPDATES_MAT::<T>::get(cancel_request_id) {
+		let cancel_update = match pending_updates::<T>::get(cancel_request_id) {
 			Some(PendingUpdate::Cancel(cancel)) => Some(cancel),
 			_ => None,
 		}
@@ -603,7 +604,7 @@ impl<T: Config> Pallet<T> {
 
 		// return rights to canceler and updater
 		// only if active sequencer
-		SEQUENCER_RIGHTS::<T>::mutate_exists(updater.clone(), |maybe_sequencer| {
+		sequencer_rights::<T>::mutate_exists(updater.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
 					if T::SequencerStakingProvider::is_active_sequencer(updater) =>
@@ -613,7 +614,7 @@ impl<T: Config> Pallet<T> {
 				_ => {},
 			}
 		});
-		SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
+		sequencer_rights::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
 					if T::SequencerStakingProvider::is_active_sequencer(canceler) =>
@@ -635,7 +636,7 @@ impl<T: Config> Pallet<T> {
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			PENDING_UPDATES_MAT::<T>::remove(requestId);
+			pending_updates::<T>::remove(requestId);
 		}
 
 		log!(
@@ -689,8 +690,8 @@ impl<T: Config> Pallet<T> {
 		alloy_primitives::U256::from_be_bytes(bytes)
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth::Cancel {
-		messages::eth::Cancel {
+	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+		messages::eth_abi::Cancel {
 			updater: cancel.updater.encode(),
 			canceler: cancel.canceler.encode(),
 			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
@@ -700,18 +701,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
-		let update: messages::eth::L1Update = update.into();
+		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
 
-	fn get_pending_updates_as_u256_array() -> messages::eth::L2Update {
-		let mut update = messages::eth::L2Update { results: Vec::new(), cancles: Vec::new() };
+	fn get_pending_updates_as_u256_array() -> messages::eth_abi::L2Update {
+		let mut update = messages::eth_abi::L2Update { results: Vec::new(), cancles: Vec::new() };
 
-		for (request_id, req) in PENDING_UPDATES_MAT::<T>::iter() {
+		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
-				PendingUpdate::Status(status) => {
-					update.results.push(messages::eth::RequestResult {
+				PendingUpdate::RequestResult(status) => {
+					update.results.push(messages::eth_abi::RequestResult {
 						// TODO: proper U256 conversion
 						requestId: alloy_primitives::U256::from(0),
 						status,
@@ -729,11 +730,11 @@ impl<T: Config> Pallet<T> {
 		// lower sequencer count
 		sequencer_count::<T>::put(Self::get_sequencer_count() - 1);
 		// remove all rights of deactivated sequencer
-		SEQUENCER_RIGHTS::<T>::remove(deactivated_sequencer.clone());
+		sequencer_rights::<T>::remove(deactivated_sequencer.clone());
 		// remove 1 cancel right of all sequencers
-		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
+		for (sequencer, sequencer_rights) in sequencer_rights::<T>::iter() {
 			if sequencer_rights.cancelRights > 0 {
-				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+				sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 					if let Some(ref mut sequencer) = maybe_sequencer {
 						sequencer.cancelRights -= RIGHTS_MULTIPLIER;
 					}
@@ -768,7 +769,7 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 		// raise sequencer count
 		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
 		// add rights to new sequencer
-		SEQUENCER_RIGHTS::<T>::insert(
+		sequencer_rights::<T>::insert(
 			sequencer.clone(),
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
@@ -777,9 +778,9 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 		);
 
 		// add 1 cancel right of all sequencers
-		for (sequencer, sequencer_rights) in SEQUENCER_RIGHTS::<T>::iter() {
+		for (sequencer, sequencer_rights) in sequencer_rights::<T>::iter() {
 			if sequencer_rights.cancelRights > 0 {
-				SEQUENCER_RIGHTS::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+				sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 					if let Some(ref mut sequencer) = maybe_sequencer {
 						sequencer.cancelRights += RIGHTS_MULTIPLIER;
 					}

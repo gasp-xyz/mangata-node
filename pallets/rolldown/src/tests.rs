@@ -102,15 +102,15 @@ fn create_pending_update_after_dispute_period() {
 		forward_to_block::<Test>(11);
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
-		assert_eq!(PENDING_UPDATES_MAT::<Test>::iter().next(), None);
-		assert!(PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)).is_none());
-		assert!(PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(1u128)).is_none());
+		assert_eq!(pending_updates::<Test>::iter().next(), None);
+		assert!(pending_updates::<Test>::get(sp_core::U256::from(0u128)).is_none());
+		assert!(pending_updates::<Test>::get(sp_core::U256::from(1u128)).is_none());
 
 		forward_to_block::<Test>(15);
-		assert!(PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)).is_some());
+		assert!(pending_updates::<Test>::get(sp_core::U256::from(0u128)).is_some());
 
 		forward_to_block::<Test>(16);
-		assert!(PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(1u128)).is_some());
+		assert!(pending_updates::<Test>::get(sp_core::U256::from(1u128)).is_some());
 	});
 }
 
@@ -163,13 +163,13 @@ fn deposit_executed_after_dispute_period() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
-			assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
+			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::Status(true))
+				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
+				Some(PendingUpdate::RequestResult(true))
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
@@ -194,8 +194,8 @@ fn withdraw_executed_after_dispute_period() {
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::Status(true))
+				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
+				Some(PendingUpdate::RequestResult(true))
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
@@ -216,8 +216,8 @@ fn withdraw_executed_after_dispute_period_when_not_enough_tokens() {
 
 		forward_to_block::<Test>(15);
 		assert_eq!(
-			PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)),
-			Some(PendingUpdate::Status(false))
+			pending_updates::<Test>::get(sp_core::U256::from(0u128)),
+			Some(PendingUpdate::RequestResult(false))
 		);
 	});
 }
@@ -246,23 +246,23 @@ fn updates_to_remove_executed_after_dispute_period() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
 
 			forward_to_block::<Test>(15);
-			assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
+			assert!(pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
 
 			forward_to_block::<Test>(100);
 			assert_eq!(
-				PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::Status(true))
+				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
+				Some(PendingUpdate::RequestResult(true))
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
 				.unwrap();
 
 			forward_to_block::<Test>(104);
-			assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
-			assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(1u128)));
+			assert!(pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
+			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(1u128)));
 
 			forward_to_block::<Test>(105);
-			assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(1u128)));
-			assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
+			assert!(pending_updates::<Test>::contains_key(sp_core::U256::from(1u128)));
+			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
 		});
 }
 
@@ -293,43 +293,43 @@ fn cancel_request() {
 			);
 
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				sequencer_rights::<Test>::get(BOB).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
-			assert!(PENDING_REQUESTS_MAT::<Test>::contains_key(U256::from(15u128)));
+			assert!(pending_requests::<Test>::contains_key(U256::from(15u128)));
 
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
 
-			assert!(!PENDING_REQUESTS_MAT::<Test>::contains_key(U256::from(15u128)));
+			assert!(!pending_requests::<Test>::contains_key(U256::from(15u128)));
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
 				SequencerRights { readRights: 0u128, cancelRights: 1u128 }
 			);
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				sequencer_rights::<Test>::get(BOB).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
 			);
 
 			forward_to_block::<Test>(11);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				sequencer_rights::<Test>::get(BOB).unwrap(),
 				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
 			);
 
 			forward_to_block::<Test>(16);
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 			assert_eq!(
-				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				sequencer_rights::<Test>::get(BOB).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 		});

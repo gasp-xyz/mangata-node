@@ -1,7 +1,8 @@
+#![allow(non_snake_case)]
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::Serialize;
-use sp_core::RuntimeDebug;
+use sp_core::{RuntimeDebug, U256, H256};
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Deposit {
@@ -11,6 +12,7 @@ pub struct Deposit {
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+#[allow(non_snake_case)]
 pub struct Withdraw {
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
@@ -90,9 +92,9 @@ impl L1Update {
 	}
 }
 
-impl Into<eth::L1Update> for L1Update {
-	fn into(self) -> eth::L1Update {
-		eth::L1Update {
+impl Into<eth_abi::L1Update> for L1Update {
+	fn into(self) -> eth_abi::L1Update {
+		eth_abi::L1Update {
 			lastProccessedRequestOnL1: Default::default(),
 			lastAcceptedRequestOnL1: Default::default(),
 			offset: Default::default(),
@@ -105,9 +107,25 @@ impl Into<eth::L1Update> for L1Update {
 	}
 }
 
-pub use eth::L2Update;
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+pub struct Cancel<AccountId> {
+    pub updater: AccountId,
+    pub canceler: AccountId,
+    pub lastProccessedRequestOnL1: U256,
+    pub lastAcceptedRequestOnL1: U256,
+    pub hash: H256,
+}
 
-pub mod eth {
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
+pub enum PendingUpdate<AccountId> {
+    RequestResult(bool),
+    Cancel(Cancel<AccountId>),
+}
+
+
+pub use eth_abi::L2Update;
+
+pub mod eth_abi {
 	use alloy_sol_types::sol;
 	sol! {
 		// L1 to L2

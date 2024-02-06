@@ -19,17 +19,10 @@ pub trait RolldownApi<BlockHash> {
 	/// * `liquidity_token` - liquidity token id
 	/// * `at` - optional block hash
 	#[method(name = "rolldown_pending_updates_hash")]
-	fn pending_updates_hash(
-		&self,
-		at: Option<BlockHash>,
-	) -> RpcResult<sp_core::H256>;
+	fn pending_updates_hash(&self, at: Option<BlockHash>) -> RpcResult<sp_core::H256>;
 
 	#[method(name = "rolldown_pending_updates")]
-	fn pending_updates(
-		&self,
-		at: Option<BlockHash>,
-	) -> RpcResult<Vec<u8>>;
-
+	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 }
 
 pub struct Rolldown<C, M> {
@@ -44,9 +37,7 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block>
-	RolldownApiServer<<Block as BlockT>::Hash>
-	for Rolldown<C, Block>
+impl<C, Block> RolldownApiServer<<Block as BlockT>::Hash> for Rolldown<C, Block>
 where
 	Block: BlockT,
 	C: Send + Sync + 'static,
@@ -60,29 +51,24 @@ where
 	) -> RpcResult<sp_core::H256> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates_hash(at)
-			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
-			})
+		api.get_pending_updates_hash(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
-	fn pending_updates(
-		&self,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<u8>> {
+	fn pending_updates(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<u8>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates(at)
-			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
-			})
+		api.get_pending_updates(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 }

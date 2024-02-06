@@ -69,7 +69,6 @@ impl Convert<[u8; 20], sp_runtime::AccountId32>
 	}
 }
 
-
 #[cfg(test)]
 mod tests;
 
@@ -635,13 +634,13 @@ pub mod pallet {
 				if let Some(ref mut sequencer) = maybe_sequencer {
 					sequencer.cancelRights -= 1;
 					Ok(())
-				}else{
+				} else {
 					Err(Error::<T>::ReadRightsExhausted)
 				}
 			})?;
 
-
-			let (submitter, request) = PENDING_REQUESTS_MAT::<T>::take(requests_to_cancel).ok_or(Error::<T>::RequestDoesNotExist)?;
+			let (submitter, request) = PENDING_REQUESTS_MAT::<T>::take(requests_to_cancel)
+				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
@@ -654,11 +653,8 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-
 			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(
-				Self::get_l2_origin_updates_counter() + 1,
-			);
+			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			let update_id = Self::get_l2_origin_updates_counter();
 			// add cancel request to pending updates
 			PENDING_UPDATES_MAT::<T>::insert(
@@ -676,8 +672,6 @@ pub mod pallet {
 			for (request_id, update) in PENDING_UPDATES_MAT::<T>::iter() {
 				log!(info, "request_id: {:?}:  {:?} ", request_id, update);
 			}
-
-
 
 			Ok(().into())
 		}
@@ -948,11 +942,11 @@ impl<T: Config> Pallet<T> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
 
-		let cancel_update = match PENDING_UPDATES_MAT::<T>::get(cancel_request_id){
-			Some(PendingUpdate::Cancel(cancel)) => { Some(cancel) },
-			_ => {None}
-		}.ok_or("NoCancelRequest")?;
-
+		let cancel_update = match PENDING_UPDATES_MAT::<T>::get(cancel_request_id) {
+			Some(PendingUpdate::Cancel(cancel)) => Some(cancel),
+			_ => None,
+		}
+		.ok_or("NoCancelRequest")?;
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
@@ -1034,18 +1028,19 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_keccak256_hash(input: &str) -> String {
 		let mut hasher = Keccak256::new();
-		hasher.update(input.as_bytes()); let result = hasher.finalize();
+		hasher.update(input.as_bytes());
+		let result = hasher.finalize();
 
 		hex::encode(result)
 	}
 
-	fn to_eth_u256(value: U256) -> alloy_primitives::U256{
-			let mut bytes = [0u8; 32];
-			value.to_big_endian(&mut bytes);
-			alloy_primitives::U256::from_be_bytes(bytes)
+	fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
+		let mut bytes = [0u8; 32];
+		value.to_big_endian(&mut bytes);
+		alloy_primitives::U256::from_be_bytes(bytes)
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> eth_api::eth::Cancel{
+	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> eth_api::eth::Cancel {
 		eth_api::eth::Cancel {
 			updater: cancel.updater.encode(),
 			canceler: cancel.canceler.encode(),
@@ -1055,10 +1050,9 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-
 	fn calculate_hash_of_pending_requests(update: eth_api::L1Update) -> H256 {
 		let update: eth_api::eth::L1Update = update.into();
-		let hash : [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
+		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
 
@@ -1076,8 +1070,7 @@ impl<T: Config> Pallet<T> {
 				},
 				PendingUpdate::Cancel(cancel) => {
 					update.cancles.push(Self::to_eth_cancel(cancel));
-				}
-
+				},
 			};
 		}
 		update

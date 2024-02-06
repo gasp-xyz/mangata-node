@@ -4,31 +4,24 @@ use super::*;
 
 use crate as rolldown;
 use core::convert::TryFrom;
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{
-		Everything,
-	},
-};
+use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
-use orml_traits::{parameter_type_with_key};
+use orml_traits::parameter_type_with_key;
 use sp_runtime::{BuildStorage, Saturating};
-
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
 pub(crate) type Balance = u128;
 pub(crate) type TokenId = u32;
 
-pub mod consts{
+pub mod consts {
 	pub const MILLION: u128 = 1_000_000;
 	pub const ALICE: u64 = 2;
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
 	pub const EVE: u64 = 5;
 }
-
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -77,7 +70,6 @@ parameter_type_with_key! {
 	};
 }
 
-
 impl orml_tokens::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -112,27 +104,33 @@ mockall::mock! {
 
 pub struct DummyAddressConverter();
 
-impl Convert<[u8;20], AccountId> for DummyAddressConverter {
-	fn convert(account: [u8;20]) -> AccountId{
+impl Convert<[u8; 20], AccountId> for DummyAddressConverter {
+	fn convert(account: [u8; 20]) -> AccountId {
 		let mut bytes = [0u8; 8];
 		bytes.copy_from_slice(&account[0..8]);
 		AccountId::from_be_bytes(bytes)
 	}
 }
 
-impl ConvertBack<[u8;20], AccountId> for DummyAddressConverter {
-	fn convert_back(account: AccountId) -> [u8;20]{
+impl ConvertBack<[u8; 20], AccountId> for DummyAddressConverter {
+	fn convert_back(account: AccountId) -> [u8; 20] {
 		let mut address = [0u8; 20];
-		let bytes : Vec<u8> = account.to_be_bytes().iter().cloned().chain(std::iter::repeat(0u8).take(12)).into_iter().collect();
+		let bytes: Vec<u8> = account
+			.to_be_bytes()
+			.iter()
+			.cloned()
+			.chain(std::iter::repeat(0u8).take(12))
+			.into_iter()
+			.collect();
 
 		address.copy_from_slice(&bytes[..]);
 		address
 	}
 }
 
-impl rolldown::Config for Test{
+impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type SequencerStakingProvider= MockSequencerStakingProviderApi;
+	type SequencerStakingProvider = MockSequencerStakingProviderApi;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type AssetRegistryProvider = MockAssetRegistryProviderApi;
 	type AddressConverter = DummyAddressConverter;
@@ -148,11 +146,9 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> {
-			sequencers: vec![consts::ALICE, consts::BOB]
-		}
-		.assimilate_storage(&mut t)
-		.expect("Tokens storage can be assimilated");
+		rolldown::GenesisConfig::<Test> { sequencers: vec![consts::ALICE, consts::BOB] }
+			.assimilate_storage(&mut t)
+			.expect("Tokens storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		Self { ext }
@@ -179,18 +175,17 @@ impl ExtBuilder {
 
 	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
 		self.ext.execute_with(|| {
-			let is_liquidity_token_mock = MockSequencerStakingProviderApi::is_active_sequencer_context();
+			let is_liquidity_token_mock =
+				MockSequencerStakingProviderApi::is_active_sequencer_context();
 			is_liquidity_token_mock.expect().return_const(true);
 
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
-
 			f()
 		})
 	}
 }
-
 
 pub fn forward_to_block<T>(n: BlockNumberFor<T>)
 where
@@ -198,7 +193,8 @@ where
 	T: rolldown::Config,
 {
 	while frame_system::Pallet::<T>::block_number() < n {
-		let new_block_number = frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
+		let new_block_number =
+			frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
 		frame_system::Pallet::<T>::set_block_number(new_block_number);
 
 		frame_system::Pallet::<T>::on_initialize(new_block_number);

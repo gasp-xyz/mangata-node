@@ -1,19 +1,19 @@
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::Serialize;
 use sp_core::RuntimeDebug;
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Deposit {
-	pub depositRecipient: [u8;20],
-	pub tokenAddress: [u8;20],
-	pub amount: sp_core::U256
+	pub depositRecipient: [u8; 20],
+	pub tokenAddress: [u8; 20],
+	pub amount: sp_core::U256,
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Withdraw {
-	pub depositRecipient: [u8;20],
-	pub tokenAddress: [u8;20],
+	pub depositRecipient: [u8; 20],
+	pub tokenAddress: [u8; 20],
 	pub amount: sp_core::U256,
 }
 
@@ -30,8 +30,11 @@ pub struct CancelResolution {
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 #[repr(u8)]
-pub enum PendingRequestType{
-	DEPOSIT, WITHDRAWAL, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE
+pub enum PendingRequestType {
+	DEPOSIT,
+	WITHDRAWAL,
+	CANCEL_RESOLUTION,
+	L2_UPDATES_TO_REMOVE,
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
@@ -46,7 +49,7 @@ pub struct L1Update {
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
-pub enum L1UpdateRequest{
+pub enum L1UpdateRequest {
 	Withdraw(Withdraw),
 	Deposit(Deposit),
 	Cancel(CancelResolution),
@@ -56,27 +59,40 @@ pub enum L1UpdateRequest{
 impl L1Update {
 	pub fn into_requests(self) -> Vec<(sp_core::U256, L1UpdateRequest)> {
 		let L1Update {
-		offset, order, mut pendingWithdraws, mut pendingDeposits, mut pendingCancelResultions, mut pendingL2UpdatesToRemove, ..} = self;
+			offset,
+			order,
+			mut pendingWithdraws,
+			mut pendingDeposits,
+			mut pendingCancelResultions,
+			mut pendingL2UpdatesToRemove,
+			..
+		} = self;
 
-		order.into_iter()
+		order
+			.into_iter()
 			.enumerate()
-			.map(|(request_id, request_type)|
+			.map(|(request_id, request_type)| {
 				(
 					sp_core::U256::from(request_id) + offset,
 					match request_type {
-						PendingRequestType::DEPOSIT => L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),
-						PendingRequestType::WITHDRAWAL => L1UpdateRequest::Withdraw(pendingWithdraws.pop().unwrap()),
-						PendingRequestType::CANCEL_RESOLUTION => L1UpdateRequest::Cancel(pendingCancelResultions.pop().unwrap()),
-						PendingRequestType::L2_UPDATES_TO_REMOVE => L1UpdateRequest::Remove(pendingL2UpdatesToRemove.pop().unwrap()),
-					}
+						PendingRequestType::DEPOSIT =>
+							L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),
+						PendingRequestType::WITHDRAWAL =>
+							L1UpdateRequest::Withdraw(pendingWithdraws.pop().unwrap()),
+						PendingRequestType::CANCEL_RESOLUTION =>
+							L1UpdateRequest::Cancel(pendingCancelResultions.pop().unwrap()),
+						PendingRequestType::L2_UPDATES_TO_REMOVE =>
+							L1UpdateRequest::Remove(pendingL2UpdatesToRemove.pop().unwrap()),
+					},
 				)
-			).collect()
+			})
+			.collect()
 	}
 }
 
 impl Into<eth::L1Update> for L1Update {
 	fn into(self) -> eth::L1Update {
-		eth::L1Update{
+		eth::L1Update {
 			lastProccessedRequestOnL1: Default::default(),
 			lastAcceptedRequestOnL1: Default::default(),
 			offset: Default::default(),
@@ -91,7 +107,7 @@ impl Into<eth::L1Update> for L1Update {
 
 pub use eth::L2Update;
 
-pub mod eth{
+pub mod eth {
 	use alloy_sol_types::sol;
 	sol! {
 		// L1 to L2

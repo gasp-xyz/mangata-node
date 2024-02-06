@@ -150,7 +150,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Tokens storage can be assimilated");
 
-		let mut ext = sp_io::TestExternalities::new(t);
+		let ext = sp_io::TestExternalities::new(t);
 		Self { ext }
 	}
 

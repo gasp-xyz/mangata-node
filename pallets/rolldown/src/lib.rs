@@ -73,7 +73,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use sp_runtime::traits::TryConvert;
+	
 
 	use super::*;
 
@@ -85,7 +85,7 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			Self::end_dispute_period();
 			T::DbWeight::get().reads_writes(20, 20)
 		}
@@ -475,7 +475,7 @@ impl<T: Config> Pallet<T> {
 		// TODO: prev_last_processed_request_on_l2 update goes here?
 	}
 
-	fn process_requests(sequencer: &T::AccountId, update: messages::L1Update) {
+	fn process_requests(_sequencer: &T::AccountId, update: messages::L1Update) {
 		// TODO: check if not missing any request, not processing requests. This is double check, first should be done by sequencers and requests with missing request should be canceled
 		// for key in (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
 		// {

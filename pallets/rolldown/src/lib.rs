@@ -28,7 +28,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::{Deserialize, Serialize},
-	traits::TryConvert,
+	traits::Convert,
 };
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -62,12 +62,11 @@ macro_rules! log {
 
 #[derive(Debug, PartialEq)]
 pub struct EthereumAddressConverter<AccountId>(sp_std::marker::PhantomData<AccountId>);
-impl TryConvert<String, sp_runtime::AccountId32>
+impl Convert<[u8; 20], sp_runtime::AccountId32>
 	for EthereumAddressConverter<sp_runtime::AccountId32>
 {
-	fn try_convert(value: String) -> Result<sp_runtime::AccountId32, String> {
-		let eth_addr: [u8; 20] = array_bytes::hex2array(value.clone()).or(Err(value))?;
-		Ok(Blake2_256::hash(eth_addr.as_ref()).into())
+	fn convert(eth_addr: [u8; 20]) -> sp_runtime::AccountId32 {
+		Blake2_256::hash(eth_addr.as_ref()).into()
 	}
 }
 
@@ -432,8 +431,8 @@ pub mod pallet {
 	pub struct Cancel<AccountId> {
 		pub updater: AccountId,
 		pub canceler: AccountId,
-		pub lastProccessedRequestOnL1: u128,
-		pub lastAcceptedRequestOnL1: u128,
+		pub lastProccessedRequestOnL1: U256,
+		pub lastAcceptedRequestOnL1: U256,
 		pub hash: H256,
 	}
 
@@ -513,7 +512,9 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		PendingRequestStored((T::AccountId, H256)),
+	}
 
 	#[pallet::error]
 	/// Errors
@@ -530,6 +531,7 @@ pub mod pallet {
 			Self::AccountId,
 			BalanceOf<Self>,
 		>;
+		type AddressConverter: Convert<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>
@@ -582,8 +584,6 @@ pub mod pallet {
 				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 			let dispute_period_end: u128 = current_block_number + (DISPUTE_PERIOD_LENGTH as u128);
 
-			// let l1_pending_requests_json = input_json.trim().to_string();
-
 			// ensure sequencer has rights to update
 			if let Some(sequencer) = SEQUENCER_RIGHTS::<T>::get(&sequencer) {
 				if sequencer.readRights == 0 {
@@ -605,92 +605,101 @@ pub mod pallet {
 			// insert pending_requests
 			PENDING_REQUESTS_MAT::<T>::insert(
 				U256::from(dispute_period_end),
-				(sequencer.clone(), requests),
+				(sequencer.clone(), requests.clone()),
 			);
+
+			let update: eth_api::eth::L1Update = requests.clone().into();
+			let request_hash = Keccak256::digest(&update.abi_encode());
+
+			Pallet::<T>::deposit_event(Event::PendingRequestStored((
+				sequencer,
+				H256::from_slice(request_hash.as_slice()),
+			)));
 
 			Ok(().into())
 		}
 
-		// #[pallet::call_index(1)]
-		// #[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		// //EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
-		// pub fn cancel_requests_from_l1(
-		// 	origin: OriginFor<T>,
-		// 	requests_to_cancel: U256,
-		// ) -> DispatchResultWithPostInfo {
-		// 	let canceler = ensure_signed(origin)?;
-		// 	// let requests_to_cancel: BlockNumberFor<T> =
-		// 	// 	input_2.trim().to_string().parse::<u32>().unwrap().into();
-		//
-		// 	// remove pending requests update (sequencer read))
-		// 	PENDING_REQUESTS_MAT::<T>::mutate_exists(
-		// 		requests_to_cancel.clone(),
-		// 		|maybe_pending_requests_to_cancel| {
-		// 			if let Some(ref mut pending_requests_to_cancel) =
-		// 				maybe_pending_requests_to_cancel
-		// 			{
-		// 				// reduce sequencer cancel rights
-		// 				SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
-		// 					if let Some(ref mut sequencer) = maybe_sequencer {
-		// 						sequencer.cancelRights -= 1;
-		// 					}
-		// 				});
-		//
-		// 				// r.encode()
-		//
-		// 				// create hash of pending requests
-		// 				let hash_of_pending_request = Self::calculate_hash_of_pending_requests(
-		// 					pending_requests_to_cancel.1.clone(),
-		// 				);
-		//
-		// 				//get last processed request on L1
-		// 				//deserialize json
-		//
-		// 				// get last processed request on L1 and last accepted request on L1
-		// 				let last_processed_request_on_l1 =
-		// 					pending_requests_to_cancel.1.lastProccessedRequestOnL1;
-		// 				let last_accepted_request_on_l1 =
-		// 					pending_requests_to_cancel.1.lastAcceptedRequestOnL1;
-		//
-		// 				// create cancel request
-		// 				let cancel_request = Cancel {
-		// 					updater: pending_requests_to_cancel.0.clone(),
-		// 					canceler,
-		// 					lastProccessedRequestOnL1: last_processed_request_on_l1,
-		// 					lastAcceptedRequestOnL1: last_accepted_request_on_l1,
-		// 					hash: hash_of_pending_request,
-		// 				};
-		// 				// increase counter for updates originating on l2
-		// 				l2_origin_updates_counter::<T>::put(
-		// 					Self::get_l2_origin_updates_counter() + 1,
-		// 				);
-		// 				// add cancel request to pending updates
-		// 				PENDING_UPDATES::<T>::insert(
-		// 					Self::get_l2_origin_updates_counter(),
-		// 					Update::Cancel(cancel_request),
-		// 				);
-		// 				// remove whole l1l2 update (read) from pending requests
-		// 				PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
-		//
-		// 				log!(info, "Pending Updates:");
-		// 				for (request_id, update) in PENDING_REQUESTS::<T>::iter() {
-		// 					log!(info, "request_id: {:?}:  {:?} ", request_id, update);
-		// 				}
-		// 				log!(info, "Pending requests:");
-		// 				for (request_id, update) in PENDING_UPDATES::<T>::iter() {
-		// 					log!(info, "request_id: {:?}:  {:?} ", request_id, update);
-		// 				}
-		// 			} else {
-		// 				log!(
-		// 					info,
-		// 					"No pending requests co cancel at dispute period end {:?}",
-		// 					requests_to_cancel
-		// 				);
-		// 			}
-		// 		},
-		// 	);
-		// 	Ok(().into())
-		// }
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		//EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
+		pub fn cancel_requests_from_l1(
+			origin: OriginFor<T>,
+			requests_to_cancel: U256,
+		) -> DispatchResultWithPostInfo {
+			let canceler = ensure_signed(origin)?;
+			// let requests_to_cancel: BlockNumberFor<T> =
+			// 	input_2.trim().to_string().parse::<u32>().unwrap().into();
+
+			// remove pending requests update (sequencer read))
+			PENDING_REQUESTS_MAT::<T>::mutate_exists(
+				requests_to_cancel.clone(),
+				|maybe_pending_requests_to_cancel| {
+					if let Some(ref mut pending_requests_to_cancel) =
+						maybe_pending_requests_to_cancel
+					{
+						// reduce sequencer cancel rights
+						SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
+							if let Some(ref mut sequencer) = maybe_sequencer {
+								sequencer.cancelRights -= 1;
+							}
+						});
+
+						// r.encode()
+
+						// create hash of pending requests
+						let hash_of_pending_request = Self::calculate_hash_of_pending_requests(
+							pending_requests_to_cancel.1.clone(),
+						);
+
+						//get last processed request on L1
+						//deserialize json
+
+						// get last processed request on L1 and last accepted request on L1
+						let last_processed_request_on_l1 =
+							pending_requests_to_cancel.1.lastProccessedRequestOnL1;
+						let last_accepted_request_on_l1 =
+							pending_requests_to_cancel.1.lastAcceptedRequestOnL1;
+
+
+						// create cancel request
+						let cancel_request = Cancel {
+							updater: pending_requests_to_cancel.0.clone(),
+							canceler,
+							lastProccessedRequestOnL1: last_processed_request_on_l1,
+							lastAcceptedRequestOnL1: last_accepted_request_on_l1,
+							hash: hash_of_pending_request,
+						};
+						// increase counter for updates originating on l2
+						l2_origin_updates_counter::<T>::put(
+							Self::get_l2_origin_updates_counter() + 1,
+						);
+						// add cancel request to pending updates
+						PENDING_UPDATES_MAT::<T>::insert(
+							U256::from(Self::get_l2_origin_updates_counter()),
+							PendingUpdate::Cancel(cancel_request),
+						);
+						// remove whole l1l2 update (read) from pending requests
+						PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
+
+						log!(info, "Pending Updates:");
+						for (request_id, update) in PENDING_REQUESTS::<T>::iter() {
+							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+						}
+						log!(info, "Pending requests:");
+						for (request_id, update) in PENDING_UPDATES::<T>::iter() {
+							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+						}
+					} else {
+						log!(
+							info,
+							"No pending requests co cancel at dispute period end {:?}",
+							requests_to_cancel
+						);
+					}
+				},
+			);
+			Ok(().into())
+		}
 
 		// #[pallet::call_index(2)]
 		// #[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
@@ -880,28 +889,30 @@ impl<T: Config> Pallet<T> {
 					request_id,
 					PendingUpdate::Status(Self::process_deposit(&deposit).is_ok()),
 				),
-				// eth_api::L1UpdateRequest::Withdraw(withdraw) => PENDING_UPDATES_MAT::insert(
-				// 	request_id,
-				// 	PendingUpdate::StatusUpdate(Self::process_withdraw(&withdraw).is_ok()),
-				// ),
+				eth_api::L1UpdateRequest::Withdraw(withdraw) => PENDING_UPDATES_MAT::<T>::insert(
+					request_id,
+					PendingUpdate::Status(Self::process_withdraw(&withdraw).is_ok()),
+				),
 				// eth_api::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::insert(
 				// 	request_id,
 				// 	PendingUpdate::StatusUpdate(Self::process_cancel_resolution(&cancel).is_ok()),
 				// ),
-				// eth_api::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::insert(
-				// 	request_id,
-				// 	PendingUpdate::StatusUpdate(Self::process_cancel_resolution(&cancel).is_ok()),
-				// ),
+				eth_api::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::<T>::insert(
+					request_id,
+					PendingUpdate::Status(Self::process_l2_updates_to_remove(&remove).is_ok()),
+				),
 				_ => {},
 			};
+			// if success, increase last_processed_request_on_l2
+			let request_id: u128 = request_id.try_into().unwrap();
+			last_processed_request_on_l2::<T>::put(request_id);
 		}
 	}
 
 	fn process_deposit(deposit_request_details: &eth_api::Deposit) -> Result<(), &'static str> {
-		let account: T::AccountId = T::AccountId::decode(
-			&mut &(Blake2_256::hash(deposit_request_details.depositRecipient.as_ref()))[..],
-		)
-		.unwrap();
+		let account: T::AccountId =
+			T::AddressConverter::convert(deposit_request_details.depositRecipient);
+
 		let amount: u128 = deposit_request_details.amount.try_into().unwrap();
 
 		// check ferried
@@ -926,24 +937,20 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn process_withdraw(
-		withdraw_request_details: &WithdrawRequestDetailsMat,
-	) -> Result<(), &'static str> {
+	fn process_withdraw(withdraw_request_details: &eth_api::Withdraw) -> Result<(), &'static str> {
 		// fail will occur if user has not enough balance
-		let amount = withdraw_request_details.amount;
-		let eth_token_address_string = withdraw_request_details.tokenAddress.clone();
-		//let tokenId = "eth token address to id
-		let account = T::AccountId::decode(&mut &(withdraw_request_details.withdrawRecipient)[..])
-			.or(Err("AddressDeserializationFailure"))?;
+		let amount: u128 = withdraw_request_details
+			.amount
+			.try_into()
+			.map_err(|_| "u128 to Balance failed")?;
+		let account: T::AccountId =
+			T::AddressConverter::convert(withdraw_request_details.depositRecipient);
 
-		let eth_token_address: [u8; 20] =
-			array_bytes::hex2array::<_, 20>(eth_token_address_string.clone())
-				.or(Err("Cannot convert address"))?;
-		let eth_asset = L1Asset::Ethereum(eth_token_address);
+		let eth_asset = L1Asset::Ethereum(withdraw_request_details.tokenAddress);
 		let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
 			.ok_or("L1AssetNotFound")?;
 
-		<T as Config>::Tokens::ensure_can_withdraw(
+		T::Tokens::ensure_can_withdraw(
 			asset_id.into(),
 			&account,
 			amount.try_into().map_err(|_| "u128 to Balance failed")?,
@@ -1018,10 +1025,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_l2_updates_to_remove(
-		updates_to_remove_request_details: &UpdatesToRemoveRequestDetailsMat,
+		updates_to_remove_request_details: &eth_api::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
-		for requestId in updates_to_remove_request_details.updates.iter() {
-			PENDING_UPDATES::<T>::remove(requestId);
+		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
+			PENDING_UPDATES_MAT::<T>::remove(requestId);
 		}
 
 		log!(

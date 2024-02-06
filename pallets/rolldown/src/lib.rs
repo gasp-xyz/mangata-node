@@ -1,6 +1,3 @@
-#![allow(non_camel_case_types)]
-
-use messages::L1UpdateRequest;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -9,29 +6,22 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::traits::SaturatedConversion;
-use sp_std::collections::btree_map::BTreeMap;
 
-use codec::{
-	alloc::string::{String, ToString},
-	EncodeAsRef, WrapperTypeDecode,
-};
 use frame_support::traits::WithdrawReasons;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use scale_info::prelude::format;
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
-	serde::{Deserialize, Serialize},
-	traits::{Convert, ConvertBack},
+	serde::Serialize,
+	traits::Convert,
 };
 use sp_std::{convert::TryInto, prelude::*};
+use alloy_sol_types::SolValue;
 
-use alloy_primitives::address;
-use alloy_sol_types::{sol, SolStruct, SolValue};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -667,21 +657,6 @@ impl<T: Config> Pallet<T> {
 		log!(info, "SLASH for: {:?}", sequencer);
 
 		Ok(())
-	}
-
-	fn calculate_keccak256_hash_u256(input: &str) -> U256 {
-		let mut hasher = Keccak256::new();
-		hasher.update(input.as_bytes());
-		let result = hasher.finalize();
-		U256::from(&result[..])
-	}
-
-	fn calculate_keccak256_hash(input: &str) -> String {
-		let mut hasher = Keccak256::new();
-		hasher.update(input.as_bytes());
-		let result = hasher.finalize();
-
-		hex::encode(result)
 	}
 
 	fn to_eth_u256(value: U256) -> alloy_primitives::U256 {

@@ -9,6 +9,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::UpdateType;
 use sp_runtime::traits::SaturatedConversion;
 
+use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
@@ -17,14 +18,8 @@ use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
-use sp_runtime::{
-	serde::Serialize,
-	traits::Convert,
-};
-use sp_std::{convert::TryInto, prelude::*};
-use alloy_sol_types::SolValue;
-use sp_std::vec::Vec;
-
+use sp_runtime::{serde::Serialize, traits::Convert};
+use sp_std::{convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -74,11 +69,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-
-
 	use crate::messages::UpdateType;
 
-use super::*;
+	use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -92,7 +85,6 @@ use super::*;
 			Self::end_dispute_period();
 			T::DbWeight::get().reads_writes(20, 20)
 		}
-
 	}
 
 	#[derive(
@@ -102,7 +94,6 @@ use super::*;
 		pub readRights: u128,
 		pub cancelRights: u128,
 	}
-
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
@@ -139,7 +130,6 @@ use super::*;
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
 	pub type pending_requests<T: Config> =
-
 		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
@@ -499,19 +489,31 @@ impl<T: Config> Pallet<T> {
 			match request_details {
 				messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult((Self::process_deposit(&deposit).is_ok(), UpdateType::DEPOSIT)),
+					PendingUpdate::RequestResult((
+						Self::process_deposit(&deposit).is_ok(),
+						UpdateType::DEPOSIT,
+					)),
 				),
 				messages::L1UpdateRequest::Withdraw(withdraw) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult((Self::process_withdraw(&withdraw).is_ok(), UpdateType::WITHDRAWAL)),
+					PendingUpdate::RequestResult((
+						Self::process_withdraw(&withdraw).is_ok(),
+						UpdateType::WITHDRAWAL,
+					)),
 				),
 				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult((Self::process_cancel_resolution(&cancel.into()).is_ok(), UpdateType::CANCEL_RESOLUTION))
+					PendingUpdate::RequestResult((
+						Self::process_cancel_resolution(&cancel.into()).is_ok(),
+						UpdateType::CANCEL_RESOLUTION,
+					)),
 				),
 				messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult((Self::process_l2_updates_to_remove(&remove).is_ok(), UpdateType::INDEX_UPDATE)),
+					PendingUpdate::RequestResult((
+						Self::process_l2_updates_to_remove(&remove).is_ok(),
+						UpdateType::INDEX_UPDATE,
+					)),
 				),
 				_ => {},
 			};
@@ -691,13 +693,12 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
-				PendingUpdate::RequestResult((status, request_type)) => {
+				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
 						requestId: Self::to_eth_u256(request_id),
 						updateType: request_type,
 						status,
-					})
-				},
+					}),
 				PendingUpdate::Cancel(cancel) => {
 					update.cancles.push(Self::to_eth_cancel(cancel));
 				},
@@ -724,8 +725,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn pending_updates_proof() -> sp_core::H256 {
-		let hash : [u8; 32] = Keccak256::digest(Self::l2_update_encoded().as_slice()).into();
-        hash.into()
+		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded().as_slice()).into();
+		hash.into()
 	}
 
 	pub fn l2_update_encoded() -> Vec<u8> {

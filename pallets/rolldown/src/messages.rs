@@ -2,7 +2,7 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::Serialize;
-use sp_core::{RuntimeDebug, U256, H256};
+use sp_core::{RuntimeDebug, H256, U256};
 use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
@@ -110,20 +110,19 @@ impl Into<eth_abi::L1Update> for L1Update {
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Cancel<AccountId> {
-    pub updater: AccountId,
-    pub canceler: AccountId,
-    pub lastProccessedRequestOnL1: U256,
-    pub lastAcceptedRequestOnL1: U256,
-    pub hash: H256,
+	pub updater: AccountId,
+	pub canceler: AccountId,
+	pub lastProccessedRequestOnL1: U256,
+	pub lastAcceptedRequestOnL1: U256,
+	pub hash: H256,
 }
 
-pub use eth_abi::L2Update;
-pub use eth_abi::UpdateType;
+pub use eth_abi::{L2Update, UpdateType};
 
 pub mod eth_abi {
 	use alloy_sol_types::sol;
-use codec::{Encode, Decode};
-use scale_info::TypeInfo;
+	use codec::{Decode, Encode};
+	use scale_info::TypeInfo;
 	sol! {
 		// L1 to L2
 		struct Deposit {

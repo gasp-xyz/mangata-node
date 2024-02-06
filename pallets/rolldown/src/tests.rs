@@ -1,4 +1,4 @@
-use frame_support::{assert_err};
+use frame_support::assert_err;
 
 use sp_runtime::traits::ConvertBack;
 
@@ -6,8 +6,8 @@ use crate::{
 	mock::{consts::*, *},
 	*,
 };
-use messages::{L1Update, L1UpdateRequest};
 use hex_literal::hex;
+use messages::{L1Update, L1UpdateRequest};
 use serial_test::serial;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");

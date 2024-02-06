@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use eth_api::L1UpdateRequest;
+use messages::L1UpdateRequest;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -75,7 +75,7 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod eth_api;
+mod messages;
 
 pub use pallet::*;
 #[frame_support::pallet]
@@ -98,15 +98,6 @@ pub mod pallet {
 			T::DbWeight::get().reads_writes(20, 20)
 		}
 
-		fn on_finalize(n: BlockNumberFor<T>) {
-			// TODO: fix
-			let pending_updates_u256_array = Self::get_pending_updates_as_u256_array();
-
-			// PendingUpdatesU256Array::<T>::insert(n, pending_updates_u256_array.clone());
-			// let hash_of_pending_updates_u256_array =
-			// 	Self::calculate_hash_of_u256_array(pending_updates_u256_array);
-			// HashPendingUpdatesU256Array::<T>::insert(n, hash_of_pending_updates_u256_array);
-		}
 	}
 
 	#[derive(
@@ -117,314 +108,6 @@ pub mod pallet {
 		pub cancelRights: u128,
 	}
 
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
-	pub struct PendingRequestStatus {
-		pub status: bool,
-	}
-
-	//L1 incomming request structs
-	//L1 incomming request structs
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	pub struct Requests {
-		pub requests: BTreeMap<u128, Request>,
-		pub lastProccessedRequestOnL1: u128,
-		pub lastAcceptedRequestOnL1: u128,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default)]
-	pub struct L1ToL2Update {
-		pub requests: Vec<(u128, MatRequest)>,
-		pub lastProccessedRequestOnL1: u128,
-		pub lastAcceptedRequestOnL1: u128,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Deserialize)]
-	pub enum Request {
-		Deposit(DepositRequestDetails),
-		Withdraw(WithdrawRequestDetails),
-		L2UpdatesToRemove(UpdatesToRemoveRequestDetails),
-		CancelResolution(CancelResolutionRequestDetails),
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub enum MatRequest {
-		Deposit(DepositRequestDetailsMat),
-		Withdraw(WithdrawRequestDetailsMat),
-		L2UpdatesToRemove(UpdatesToRemoveRequestDetailsMat),
-		CancelResolution(CancelResolutionRequestDetailsMat),
-	}
-
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	struct EthAddress(pub [u8; 20]);
-
-	struct U256Wrapper(sp_core::U256);
-
-	impl<'a> EncodeAsRef<'a, alloy_primitives::Address> for EthAddress {
-		type RefType = &'a [u8; 20];
-	}
-
-	// impl<'a> EncodeAsRef<'a, alloy_primitives::Address> for U256Wrapper {
-	// 	type RefType = &'a [u8; 32];
-	// }
-
-	// impl WrapperTypeDecode for U256Wrapper {
-	// 	type Wrapped = alloy_primitives::U256;
-	// }
-
-	// impl From<alloy_primitives::U256> for U256Wrapper {
-	// 	fn from(input: alloy_primitives::U256) -> Self {
-	// 		Default::default()
-	// 	}
-	// }
-
-	impl Into<alloy_primitives::U256> for U256Wrapper {
-		fn into(self) -> alloy_primitives::U256 {
-			alloy_primitives::U256::default()
-		}
-	}
-
-	impl Into<alloy_primitives::Address> for EthAddress {
-		fn into(self) -> alloy_primitives::Address {
-			alloy_primitives::Address::from([0u8; 20])
-		}
-	}
-
-	impl TypeInfo for Foo {
-		type Identity = Self;
-
-		fn type_info() -> scale_info::Type {
-			scale_info::Type::builder()
-				.path(scale_info::Path::new("Foo", module_path!()))
-				.composite(
-					scale_info::build::Fields::named().field(|f| {
-						f.ty::<[u8; 20]>().name("depositRecipient").type_name("[u8;20]")
-					}),
-				)
-		}
-	}
-
-	impl TypeInfo for Deposit {
-		type Identity = Self;
-
-		fn type_info() -> scale_info::Type {
-			scale_info::Type::builder()
-				.path(scale_info::Path::new("Deposit", module_path!()))
-				.composite(
-					scale_info::build::Fields::named()
-						.field(|f| f.ty::<[u8; 20]>().name("depositRecipient").type_name("[u8;20]"))
-						.field(|f| f.ty::<[u8; 20]>().name("tokenAddress").type_name("[u8;20]"))
-						.field(|f| f.ty::<u128>().name("tokenAddress").type_name("u128")),
-				)
-		}
-	}
-
-	sol! {
-		#[derive( Eq, Debug, PartialEq, Encode, Default)]
-		struct Foo {
-			#[codec(encoded_as = "EthAddress")]
-			address depositRecipient;
-			// #[codec(encoded_as = "U256Wrapper")]
-			// uint256 bar;
-		}
-
-		#[derive(Debug)]
-		struct Foo2 {
-			address depositRecipient;
-		}
-	}
-
-	// impl TypeInfo for Foo {
-	//
-	// }
-	//
-	sol! {
-
-		// type U256 is uint256;
-		// #[derive( Eq, Debug, PartialEq, Default, Encode)]
-		// struct Foo {
-		// 	#[codec(encoded_as = "[u8; 20]")]
-		// 	address depositRecipient;
-		// }
-
-		// #[derive( Eq, Debug, PartialEq, Default, Encode)]
-		// struct Foo {
-		// 	uint256 depositRecipient;
-		// }
-
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode, Default)]
-		struct Deposit {
-			#[codec(encoded_as = "EthAddress")]
-			address depositRecipient;
-			#[codec(encoded_as = "EthAddress")]
-			address tokenAddress;
-			uint128 amount;
-		}
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode, Default)]
-		struct Withdraw {
-			#[codec(encoded_as = "EthAddress")]
-			address withdrawRecipient;
-			#[codec(encoded_as = "EthAddress")]
-			address tokenAddress;
-			uint128 amount;
-		}
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default)]
-		struct L2UpdatesToRemove {
-			uint128[] l2UpdatesToRemove;
-		}
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default)]
-		struct CancelResolution {
-			uint128 l2RequestId;
-			bool cancelJustified;
-		}
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode, TypeInfo)]
-		enum PendingRequestType{ DEPOSIT, WITHDRAWAL, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
-
-		#[derive( Eq, Debug, PartialEq, Encode, Decode)]
-		struct L1Update {
-		  PendingRequestType[] order;
-		  Withdraw[] pendingWithdraws;
-		  Deposit[] pendingDeposits;
-		  CancelResolution[] pendingCancelResultions;
-		  L2UpdatesToRemove[] pendingL2UpdatesToRemove;
-		}
-
-
-		// /// PENING REQUESTS TYPES (L1)
-		// struct Withdraw {
-		//     address withdrawRecipient;
-		//     address tokenAddress;
-		//     uint256 amount;
-		// }
-		//
-		// struct L2UpdatesToRemove {
-		//     uint256[] l2UpdatesToRemove;
-		// }
-		//
-		// struct CancelResolution {
-		//     uint256 l2RequestId;
-		//     bool cancelJustified;
-		// }
-		//
-		// enum PendingRequestType{ DEPOSIT, WITHDRAWAL, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
-		//
-		// struct L1Update {
-		//   PendingRequestType[] order;
-		//   Withdraw[] pendingWithdraws;
-		//   Deposit[] pendingDeposits;
-		//   CancelResolution[] pendingCancelResultions;
-		//   L2UpdatesToRemove[] pendingL2UpdatesToRemove;
-		// }
-
-
-		#[derive(
-			Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
-		)]
-		struct DepositRequestDetailsMat {
-			bytes depositRecipient;
-			bytes tokenAddress;
-			uint128 amount;
-		}
-
-		#[derive(
-			Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
-		)]
-		struct WithdrawRequestDetailsMat {
-			bytes withdrawRecipient;
-			bytes tokenAddress;
-			uint128 amount;
-		}
-
-
-		#[derive(
-			Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
-		)]
-		struct CancelResolutionRequestDetailsMat {
-			uint128 l2RequestId;
-			bool cancelJustified;
-		}
-
-		#[derive(
-			Eq, Debug, PartialEq, Encode, Decode, TypeInfo, Default
-		)]
-		struct UpdatesToRemoveRequestDetailsMat {
-			uint128[] updates;
-		}
-
-		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE}
-
-		struct StatusUpdate {
-			UpdateType updateType;
-			uint128 requestId;
-			bool status;
-		}
-
-		struct L2ToL1Update {
-			StatusUpdate[] updates;
-			CancelEth[] cancels;
-		}
-
-		struct CancelEth {
-			bytes32 updater;
-			bytes32 canceler;
-			uint128 lastProccessedRequestOnL1;
-			uint128 lastAcceptedRequestOnL1;
-			bytes32 hash;
-		}
-	}
-
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	pub struct DepositRequestDetails {
-		pub depositRecipient: String,
-		pub tokenAddress: String,
-		pub amount: u128,
-	}
-
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	pub struct WithdrawRequestDetails {
-		pub withdrawRecipient: String,
-		pub tokenAddress: String,
-		pub amount: u128,
-	}
-
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	pub struct CancelResolutionRequestDetails {
-		pub l2RequestId: u128,
-		pub cancelJustified: bool,
-	}
-
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Deserialize,
-	)]
-	pub struct UpdatesToRemoveRequestDetails {
-		pub updates: Vec<u128>,
-	}
-	//L1 incomming request structs
-	//L1 incomming request structs
-
-	//L2 outgoing updates structs
-	//L2 outgoing updates structs
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-	pub enum Update<AccountId> {
-		DepositUpdate(bool),
-		WithdrawUpdate(bool),
-		Cancel(Cancel<AccountId>),
-		ProcessedOnlyInfoUpdate(bool),
-	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
@@ -459,49 +142,15 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_updates_json)]
-	pub type PendingUpdatesJson<T: Config> = StorageValue<_, String, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_hash_pending_updates_json)]
-	pub type HashPendingUpdatesJson<T: Config> = StorageValue<_, String, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_updates_u256_array)]
-	pub type PendingUpdatesU256Array<T: Config> =
-		StorageMap<_, Blake2_128Concat, BlockNumberFor<T>, Vec<U256>, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_hash_pending_updates_u256_array)]
-	pub type HashPendingUpdatesU256Array<T: Config> =
-		StorageMap<_, Blake2_128Concat, BlockNumberFor<T>, U256, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_requests)]
-	pub type PENDING_REQUESTS<T: Config> =
-		StorageMap<_, Blake2_128Concat, BlockNumberFor<T>, (T::AccountId, String), OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests_mat)]
 	pub type PENDING_REQUESTS_MAT<T: Config> =
-		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, eth_api::L1Update), OptionQuery>;
+		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_sequencer_rights)]
 	pub type SEQUENCER_RIGHTS<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_updates)]
-	pub type PENDING_UPDATES<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, Update<T::AccountId>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -575,7 +224,7 @@ pub mod pallet {
 		//fn update_l2_from_l1(origin: String, l1_pending_requests_json: &'static str, current_block_number: u32) {
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
-			requests: eth_api::L1Update,
+			requests: messages::L1Update,
 		) -> DispatchResultWithPostInfo {
 			let sequencer = ensure_signed(origin)?;
 
@@ -610,7 +259,7 @@ pub mod pallet {
 				(sequencer.clone(), requests.clone()),
 			);
 
-			let update: eth_api::eth::L1Update = requests.clone().into();
+			let update: messages::eth::L1Update = requests.clone().into();
 			let request_hash = Keccak256::digest(&update.abi_encode());
 
 			Pallet::<T>::deposit_event(Event::PendingRequestStored((
@@ -833,7 +482,7 @@ impl<T: Config> Pallet<T> {
 		// TODO: prev_last_processed_request_on_l2 update goes here?
 	}
 
-	fn process_requests(sequencer: &T::AccountId, update: eth_api::L1Update) {
+	fn process_requests(sequencer: &T::AccountId, update: messages::L1Update) {
 		// TODO: check if not missing any request, not processing requests. This is double check, first should be done by sequencers and requests with missing request should be canceled
 		// for key in (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
 		// {
@@ -852,19 +501,19 @@ impl<T: Config> Pallet<T> {
 			}
 
 			match request_details {
-				eth_api::L1UpdateRequest::Deposit(deposit) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Deposit(deposit) => PENDING_UPDATES_MAT::<T>::insert(
 					request_id,
 					PendingUpdate::Status(Self::process_deposit(&deposit).is_ok()),
 				),
-				eth_api::L1UpdateRequest::Withdraw(withdraw) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Withdraw(withdraw) => PENDING_UPDATES_MAT::<T>::insert(
 					request_id,
 					PendingUpdate::Status(Self::process_withdraw(&withdraw).is_ok()),
 				),
-				eth_api::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::<T>::insert(
 					request_id,
 					PendingUpdate::Status(Self::process_cancel_resolution(&cancel.into()).is_ok()),
 				),
-				eth_api::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::<T>::insert(
+				messages::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::<T>::insert(
 					request_id,
 					PendingUpdate::Status(Self::process_l2_updates_to_remove(&remove).is_ok()),
 				),
@@ -876,7 +525,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn process_deposit(deposit_request_details: &eth_api::Deposit) -> Result<(), &'static str> {
+	fn process_deposit(deposit_request_details: &messages::Deposit) -> Result<(), &'static str> {
 		let account: T::AccountId =
 			T::AddressConverter::convert(deposit_request_details.depositRecipient);
 
@@ -904,7 +553,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn process_withdraw(withdraw_request_details: &eth_api::Withdraw) -> Result<(), &'static str> {
+	fn process_withdraw(withdraw_request_details: &messages::Withdraw) -> Result<(), &'static str> {
 		// fail will occur if user has not enough balance
 		let amount: u128 = withdraw_request_details
 			.amount
@@ -937,7 +586,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_cancel_resolution(
-		cancel_resolution: &eth_api::CancelResolution,
+		cancel_resolution: &messages::CancelResolution,
 	) -> Result<(), &'static str> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
@@ -983,7 +632,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_l2_updates_to_remove(
-		updates_to_remove_request_details: &eth_api::L2UpdatesToRemove,
+		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
 			PENDING_UPDATES_MAT::<T>::remove(requestId);
@@ -1040,8 +689,8 @@ impl<T: Config> Pallet<T> {
 		alloy_primitives::U256::from_be_bytes(bytes)
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> eth_api::eth::Cancel {
-		eth_api::eth::Cancel {
+	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth::Cancel {
+		messages::eth::Cancel {
 			updater: cancel.updater.encode(),
 			canceler: cancel.canceler.encode(),
 			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
@@ -1050,19 +699,19 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn calculate_hash_of_pending_requests(update: eth_api::L1Update) -> H256 {
-		let update: eth_api::eth::L1Update = update.into();
+	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
+		let update: messages::eth::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
 
-	fn get_pending_updates_as_u256_array() -> eth_api::eth::L2Update {
-		let mut update = eth_api::eth::L2Update { results: Vec::new(), cancles: Vec::new() };
+	fn get_pending_updates_as_u256_array() -> messages::eth::L2Update {
+		let mut update = messages::eth::L2Update { results: Vec::new(), cancles: Vec::new() };
 
 		for (request_id, req) in PENDING_UPDATES_MAT::<T>::iter() {
 			match req {
 				PendingUpdate::Status(status) => {
-					update.results.push(eth_api::eth::RequestResult {
+					update.results.push(messages::eth::RequestResult {
 						// TODO: proper U256 conversion
 						requestId: alloy_primitives::U256::from(0),
 						status,

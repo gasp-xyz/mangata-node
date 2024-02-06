@@ -116,13 +116,6 @@ pub struct Cancel<AccountId> {
     pub hash: H256,
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-pub enum PendingUpdate<AccountId> {
-    RequestResult(bool),
-    Cancel(Cancel<AccountId>),
-}
-
-
 pub use eth_abi::L2Update;
 
 pub mod eth_abi {

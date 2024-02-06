@@ -822,7 +822,7 @@ impl_runtime_apis! {
 		}
 
 		fn get_pending_updates() -> Vec<u8> {
-			pallet_rolldown::Pallet::<Runtime>::pending_updates_eth_encoded()
+			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 	}
 

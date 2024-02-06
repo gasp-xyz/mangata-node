@@ -706,15 +706,14 @@ impl<T: Config> Pallet<T> {
 		H256::from(hash)
 	}
 
-	fn get_pending_updates_as_u256_array() -> messages::eth_abi::L2Update {
+	fn get_l2_update() -> messages::eth_abi::L2Update {
 		let mut update = messages::eth_abi::L2Update { results: Vec::new(), cancles: Vec::new() };
 
 		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
 				PendingUpdate::RequestResult(status) => {
 					update.results.push(messages::eth_abi::RequestResult {
-						// TODO: proper U256 conversion
-						requestId: alloy_primitives::U256::from(0),
+						requestId: Self::to_eth_u256(request_id),
 						status,
 					})
 				},
@@ -743,23 +742,13 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn calculate_hash_of_u256_array(u256_vec: Vec<U256>) -> U256 {
-		let mut hasher = Keccak256::new();
-		let mut byte_array: [u8; 32] = Default::default();
-		for u in u256_vec.iter() {
-			u.to_big_endian(&mut byte_array[..]);
-			hasher.update(&byte_array[..]);
-		}
-		let result = hasher.finalize();
-		U256::from(&result[..])
-	}
-
 	pub fn pending_updates_proof() -> sp_core::H256 {
-		unimplemented!()
+		let hash : [u8; 32] = Keccak256::digest(Self::l2_update_encoded().as_slice()).into();
+        hash.into()
 	}
 
-	pub fn pending_updates_eth_encoded() -> Vec<u8> {
-		let update = Pallet::<T>::get_pending_updates_as_u256_array();
+	pub fn l2_update_encoded() -> Vec<u8> {
+		let update = Pallet::<T>::get_l2_update();
 		update.abi_encode()
 	}
 }

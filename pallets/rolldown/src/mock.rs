@@ -110,11 +110,23 @@ mockall::mock! {
 	}
 }
 
-mockall::mock! {
-	pub AddressConverterApi {}
+pub struct DummyAddressConverter();
 
-	impl Convert<[u8;20], AccountId> for AddressConverterApi {
-		fn convert(account: [u8;20]) -> AccountId;
+impl Convert<[u8;20], AccountId> for DummyAddressConverter {
+	fn convert(account: [u8;20]) -> AccountId{
+		let mut bytes = [0u8; 8];
+		bytes.copy_from_slice(&account[0..8]);
+		AccountId::from_be_bytes(bytes)
+	}
+}
+
+impl ConvertBack<[u8;20], AccountId> for DummyAddressConverter {
+	fn convert_back(account: AccountId) -> [u8;20]{
+		let mut address = [0u8; 20];
+		let bytes : Vec<u8> = account.to_be_bytes().iter().cloned().chain(std::iter::repeat(0u8).take(12)).into_iter().collect();
+
+		address.copy_from_slice(&bytes[..]);
+		address
 	}
 }
 
@@ -123,7 +135,7 @@ impl rolldown::Config for Test{
 	type SequencerStakingProvider= MockSequencerStakingProviderApi;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type AssetRegistryProvider = MockAssetRegistryProviderApi;
-	type AddressConverter = MockAddressConverterApi;
+	type AddressConverter = DummyAddressConverter;
 }
 
 pub struct ExtBuilder {
@@ -173,8 +185,6 @@ impl ExtBuilder {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
-			let address_converter_mock = MockAddressConverterApi::convert_context();
-			address_converter_mock.expect().return_const(crate::tests::ETH_RECIPIENT_ACCOUNT_MGX);
 			f()
 		})
 	}

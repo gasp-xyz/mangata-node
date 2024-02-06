@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-#![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
 use eth_api::L1UpdateRequest;
@@ -28,7 +26,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::{Deserialize, Serialize},
-	traits::Convert,
+	traits::{Convert, ConvertBack},
 };
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -436,6 +434,54 @@ pub mod pallet {
 		pub hash: H256,
 	}
 
+	impl Into<eth_api::eth::Cancel> for Cancel<sp_runtime::AccountId32> {
+
+		fn into(self) -> eth_api::eth::Cancel {
+			let mut last_processed_bytes = [0u8; 32];
+			let mut last_accepted_bytes = [0u8; 32];
+
+			self.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
+			self.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
+
+			eth_api::eth::Cancel {
+			updater: alloy_primitives::Address::from_slice(self.updater.to_owned().as_ref()),
+			canceler: alloy_primitives::Address::from_slice(self.canceler.to_owned().as_ref()),
+			lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+			lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+			hash: alloy_primitives::FixedBytes::<32>::from_slice(&self.hash[..]),
+			}
+		}
+	}
+
+	// TODO: move to some converter interface
+	impl Into<eth_api::eth::Cancel> for Cancel<u64> {
+
+		fn into(self) -> eth_api::eth::Cancel {
+			let mut last_processed_bytes = [0u8; 32];
+			self.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
+
+			let mut last_accepted_bytes = [0u8; 32];
+			self.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
+
+			let mut updater = [0u8; 20];
+			updater.copy_from_slice(&self.updater.to_be_bytes()[..]);
+
+			let mut canceler = [0u8; 20];
+			canceler.copy_from_slice(&self.canceler.to_be_bytes()[..]);
+
+
+			eth_api::eth::Cancel {
+			updater: alloy_primitives::Address::from_slice(&updater[..]),
+			canceler: alloy_primitives::Address::from_slice(&canceler[..]),
+			lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+			lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+			hash: alloy_primitives::FixedBytes::<32>::from_slice(&self.hash[..]),
+			}
+		}
+	}
+
+
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
 		Status(bool),
@@ -520,8 +566,10 @@ pub mod pallet {
 	/// Errors
 	pub enum Error<T> {
 		OperationFailed,
+		ReadRightsExhausted,
 		EmptyUpdate,
 		AddressDeserializationFailure,
+		RequestDoesNotExist,
 	}
 
 	#[pallet::config]
@@ -531,7 +579,7 @@ pub mod pallet {
 			Self::AccountId,
 			BalanceOf<Self>,
 		>;
-		type AddressConverter: Convert<[u8; 20], Self::AccountId>;
+		type AddressConverter: ConvertBack<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>
@@ -562,6 +610,7 @@ pub mod pallet {
 					},
 				);
 			}
+			// l2_origin_updates_counter::<T>::put(u128::MAX/2);
 		}
 	}
 
@@ -627,87 +676,57 @@ pub mod pallet {
 			requests_to_cancel: U256,
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
-			// let requests_to_cancel: BlockNumberFor<T> =
-			// 	input_2.trim().to_string().parse::<u32>().unwrap().into();
 
-			// remove pending requests update (sequencer read))
-			PENDING_REQUESTS_MAT::<T>::mutate_exists(
-				requests_to_cancel.clone(),
-				|maybe_pending_requests_to_cancel| {
-					if let Some(ref mut pending_requests_to_cancel) =
-						maybe_pending_requests_to_cancel
-					{
-						// reduce sequencer cancel rights
-						SEQUENCER_RIGHTS::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
-							if let Some(ref mut sequencer) = maybe_sequencer {
-								sequencer.cancelRights -= 1;
-							}
-						});
-
-						// r.encode()
-
-						// create hash of pending requests
-						let hash_of_pending_request = Self::calculate_hash_of_pending_requests(
-							pending_requests_to_cancel.1.clone(),
-						);
-
-						//get last processed request on L1
-						//deserialize json
-
-						// get last processed request on L1 and last accepted request on L1
-						let last_processed_request_on_l1 =
-							pending_requests_to_cancel.1.lastProccessedRequestOnL1;
-						let last_accepted_request_on_l1 =
-							pending_requests_to_cancel.1.lastAcceptedRequestOnL1;
+			SEQUENCER_RIGHTS::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
+				if let Some(ref mut sequencer) = maybe_sequencer {
+					sequencer.cancelRights -= 1;
+					Ok(())
+				}else{
+					Err(Error::<T>::ReadRightsExhausted)
+				}
+			})?;
 
 
-						// create cancel request
-						let cancel_request = Cancel {
-							updater: pending_requests_to_cancel.0.clone(),
-							canceler,
-							lastProccessedRequestOnL1: last_processed_request_on_l1,
-							lastAcceptedRequestOnL1: last_accepted_request_on_l1,
-							hash: hash_of_pending_request,
-						};
-						// increase counter for updates originating on l2
-						l2_origin_updates_counter::<T>::put(
-							Self::get_l2_origin_updates_counter() + 1,
-						);
-						// add cancel request to pending updates
-						PENDING_UPDATES_MAT::<T>::insert(
-							U256::from(Self::get_l2_origin_updates_counter()),
-							PendingUpdate::Cancel(cancel_request),
-						);
-						// remove whole l1l2 update (read) from pending requests
-						PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
+			let (submitter, request) = PENDING_REQUESTS_MAT::<T>::take(requests_to_cancel).ok_or(Error::<T>::RequestDoesNotExist)?;
 
-						log!(info, "Pending Updates:");
-						for (request_id, update) in PENDING_REQUESTS::<T>::iter() {
-							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
-						}
-						log!(info, "Pending requests:");
-						for (request_id, update) in PENDING_UPDATES::<T>::iter() {
-							log!(info, "request_id: {:?}:  {:?} ", request_id, update);
-						}
-					} else {
-						log!(
-							info,
-							"No pending requests co cancel at dispute period end {:?}",
-							requests_to_cancel
-						);
-					}
-				},
+			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
+
+			// create cancel request
+			let cancel_request = Cancel {
+				updater: submitter,
+				canceler,
+				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
+				lastAcceptedRequestOnL1: request.lastAcceptedRequestOnL1,
+				hash: hash_of_pending_request,
+			};
+
+
+			// increase counter for updates originating on l2
+			l2_origin_updates_counter::<T>::put(
+				Self::get_l2_origin_updates_counter() + 1,
 			);
+			let update_id = Self::get_l2_origin_updates_counter();
+			// add cancel request to pending updates
+			PENDING_UPDATES_MAT::<T>::insert(
+				U256::from(update_id),
+				PendingUpdate::Cancel(cancel_request),
+			);
+			// remove whole l1l2 update (read) from pending requests
+			PENDING_REQUESTS_MAT::<T>::remove(&requests_to_cancel);
+
+			log!(info, "Pending Updates:");
+			for (request_id, update) in PENDING_REQUESTS_MAT::<T>::iter() {
+				log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+			}
+			log!(info, "Pending requests:");
+			for (request_id, update) in PENDING_UPDATES_MAT::<T>::iter() {
+				log!(info, "request_id: {:?}:  {:?} ", request_id, update);
+			}
+
+
+
 			Ok(().into())
 		}
-
-		// #[pallet::call_index(2)]
-		// #[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		// //EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
-		// pub fn mat(origin: OriginFor<T>, f: Foo) -> DispatchResultWithPostInfo {
-		// 	let canceler = ensure_signed(origin)?;
-		// 	Ok(().into())
-		// }
 
 		// no checks if this read is correct, can put counters out of sync
 		// #[pallet::call_index(2)]
@@ -893,10 +912,10 @@ impl<T: Config> Pallet<T> {
 					request_id,
 					PendingUpdate::Status(Self::process_withdraw(&withdraw).is_ok()),
 				),
-				// eth_api::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::insert(
-				// 	request_id,
-				// 	PendingUpdate::StatusUpdate(Self::process_cancel_resolution(&cancel).is_ok()),
-				// ),
+				eth_api::L1UpdateRequest::Cancel(cancel) => PENDING_UPDATES_MAT::<T>::insert(
+					request_id,
+					PendingUpdate::Status(Self::process_cancel_resolution(&cancel.into()).is_ok()),
+				),
 				eth_api::L1UpdateRequest::Remove(remove) => PENDING_UPDATES_MAT::<T>::insert(
 					request_id,
 					PendingUpdate::Status(Self::process_l2_updates_to_remove(&remove).is_ok()),
@@ -970,20 +989,17 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_cancel_resolution(
-		cancel_resolution_request_details: &CancelResolutionRequestDetailsMat,
+		cancel_resolution: &eth_api::CancelResolution,
 	) -> Result<(), &'static str> {
-		let cancel_request_id = cancel_resolution_request_details.l2RequestId;
-		let cancel_justified = cancel_resolution_request_details.cancelJustified;
-		let cancel_update: Cancel<T::AccountId> = match PENDING_UPDATES::<T>::get(cancel_request_id)
-		{
-			Some(update) =>
-				if let Update::Cancel(cancel) = update {
-					cancel
-				} else {
-					return Err("Invalid update type")
-				},
-			None => return Err("Cancel update not found"),
-		};
+		let cancel_request_id = cancel_resolution.l2RequestId;
+		let cancel_justified = cancel_resolution.cancelJustified;
+
+		let cancel_update = match PENDING_UPDATES_MAT::<T>::get(cancel_request_id){
+			Some(PendingUpdate::Cancel(cancel)) => { Some(cancel) },
+			_ => {None}
+		}.ok_or("NoCancelRequest")?;
+
+
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
 		let to_be_slashed = if cancel_justified { updater.clone() } else { canceler.clone() };
@@ -1014,13 +1030,7 @@ impl<T: Config> Pallet<T> {
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
 
-		log!(
-			info,
-			"Cancel resolution processed successfully: {:?}",
-			cancel_resolution_request_details
-		);
-
-		//additional checks
+		// additional checks
 		Ok(())
 	}
 
@@ -1070,11 +1080,31 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_keccak256_hash(input: &str) -> String {
 		let mut hasher = Keccak256::new();
-		hasher.update(input.as_bytes());
-		let result = hasher.finalize();
+		hasher.update(input.as_bytes()); let result = hasher.finalize();
 
 		hex::encode(result)
 	}
+
+	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> eth_api::eth::Cancel{
+
+			let mut last_processed_bytes = [0u8; 32];
+			cancel.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
+
+			let mut last_accepted_bytes = [0u8; 32];
+			cancel.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
+
+			let updater_address = T::AddressConverter::convert_back(cancel.updater);
+			let canceler_address = T::AddressConverter::convert_back(cancel.canceler);
+
+			eth_api::eth::Cancel {
+				updater: alloy_primitives::Address::from(updater_address),
+				canceler: alloy_primitives::Address::from(canceler_address),
+				lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+				lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
+				hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
+			}
+	}
+
 
 	fn calculate_hash_of_pending_requests(input: eth_api::L1Update) -> H256 {
 		let mut digest = Keccak256::new();
@@ -1098,12 +1128,17 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in PENDING_UPDATES_MAT::<T>::iter() {
 			match req {
-				PendingUpdate::Status(status) => update.results.push(eth_api::eth::RequestResult {
-					// TODO: proper U256 conversion
-					requestId: alloy_primitives::U256::from(0),
-					status,
-				}),
-				PendingUpdate::Cancel(status) => unimplemented!(),
+				PendingUpdate::Status(status) => {
+					update.results.push(eth_api::eth::RequestResult {
+						// TODO: proper U256 conversion
+						requestId: alloy_primitives::U256::from(0),
+						status,
+					})
+				},
+				PendingUpdate::Cancel(cancel) => {
+					update.cancles.push(Self::to_eth_cancel(cancel));
+				}
+
 			};
 		}
 		update

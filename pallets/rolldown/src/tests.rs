@@ -10,7 +10,7 @@ use serial_test::serial;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
 pub const ETH_TOKEN_ADDRESS_MGX: TokenId = 100_u32;
-pub const ETH_RECIPIENT_ACCOUNT: [u8; 20] = hex!("7ff7e3EFaa58E130293fbcEE011Ce7C72104B318");
+pub const ETH_RECIPIENT_ACCOUNT: [u8; 20] = hex!("0000000000000000000000000000000000000004");
 pub const ETH_RECIPIENT_ACCOUNT_MGX: AccountId = CHARLIE;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Tokens;
@@ -172,7 +172,7 @@ fn deposit_executed_after_dispute_period() {
 			let update = create_l1_update(vec![
 				L1UpdateRequest::Deposit(
 					eth_api::Deposit{
-					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 				})
@@ -182,7 +182,7 @@ fn deposit_executed_after_dispute_period() {
 			forward_to_block::<Test>(14);
 			assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
 			assert_eq!(
-				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ETH_RECIPIENT_ACCOUNT_MGX),
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
 				0_u128
 			);
 
@@ -192,7 +192,7 @@ fn deposit_executed_after_dispute_period() {
 				Some(PendingUpdate::Status(true))
 			);
 			assert_eq!(
-				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ETH_RECIPIENT_ACCOUNT_MGX),
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
 				MILLION
 			);
 		});
@@ -209,7 +209,7 @@ fn withdraw_executed_after_dispute_period() {
 			let update = create_l1_update(vec![
 				L1UpdateRequest::Withdraw(
 					eth_api::Withdraw{
-					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 				})
@@ -218,7 +218,7 @@ fn withdraw_executed_after_dispute_period() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
 			assert_eq!(
-				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ETH_RECIPIENT_ACCOUNT_MGX),
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
 				MILLION
 			);
 
@@ -228,7 +228,7 @@ fn withdraw_executed_after_dispute_period() {
 				Some(PendingUpdate::Status(true))
 			);
 			assert_eq!(
-				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ETH_RECIPIENT_ACCOUNT_MGX),
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
 				0_u128
 			);
 		});
@@ -263,14 +263,14 @@ fn withdraw_executed_after_dispute_period_when_not_enough_tokens() {
 #[serial]
 fn updates_to_remove_executed_after_dispute_period() {
 	ExtBuilder::new()
-		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(CHARLIE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
 			let withdraw_update = create_l1_update(vec![
 				L1UpdateRequest::Withdraw(
 					eth_api::Withdraw{
-					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 				})
@@ -314,6 +314,9 @@ fn cancel_request() {
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
 			let withdraw_update = create_l1_update(vec![
 				L1UpdateRequest::Withdraw(
 					eth_api::Withdraw{
@@ -323,26 +326,64 @@ fn cancel_request() {
 				})
 			]);
 
-			// Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
-			// Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			let cancel_resolution = create_l1_update_with_offset(vec![
+				L1UpdateRequest::Cancel(
+					eth_api::CancelResolution{ l2RequestId: U256::from(1u128), cancelJustified: true })
+			], sp_core::U256::from(0u128));
 
-			// forward_to_block::<Test>(15);
-			// assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
-			//
-			// forward_to_block::<Test>(100);
-			// assert_eq!(
-			// 	PENDING_UPDATES_MAT::<Test>::get(sp_core::U256::from(0u128)),
-			// 	Some(PendingUpdate::Status(true))
-			// );
-			// Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove).unwrap();
-			//
-			// forward_to_block::<Test>(104);
-			// assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
-			// assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(1u128)));
-			//
-			// forward_to_block::<Test>(105);
-			// assert!(PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(1u128)));
-			// assert!(!PENDING_UPDATES_MAT::<Test>::contains_key(sp_core::U256::from(0u128)));
+
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				SequencerRights{ readRights: 1u128, cancelRights: 1u128 }
+			);
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				SequencerRights{ readRights: 1u128, cancelRights: 1u128 }
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			assert!(PENDING_REQUESTS_MAT::<Test>::contains_key(U256::from(15u128)));
+
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
+			assert!(!PENDING_REQUESTS_MAT::<Test>::contains_key(U256::from(15u128)));
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				SequencerRights{ readRights: 0u128, cancelRights: 1u128 }
+			);
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				SequencerRights{ readRights: 1u128, cancelRights: 0u128 }
+			);
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				SequencerRights{ readRights: 0u128, cancelRights: 0u128 }
+			);
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(ALICE).unwrap(),
+				SequencerRights{ readRights: 1u128, cancelRights: 1u128 }
+			);
+			assert_eq!(
+				SEQUENCER_RIGHTS::<Test>::get(BOB).unwrap(),
+				SequencerRights{ readRights: 1u128, cancelRights: 1u128 }
+			);
+
 		});
 }
 
+#[test]
+fn test_conversion_address(){
+
+	let byte_address : [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);
+
+	assert_eq!(
+		DummyAddressConverter::convert(byte_address),
+		consts::CHARLIE
+	);
+
+}

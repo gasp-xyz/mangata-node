@@ -3,6 +3,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::Serialize;
 use sp_core::{RuntimeDebug, U256, H256};
+use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Deposit {

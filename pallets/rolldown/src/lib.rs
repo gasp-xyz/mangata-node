@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -21,6 +22,7 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryInto, prelude::*};
 use alloy_sol_types::SolValue;
+use sp_std::vec::Vec;
 
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<

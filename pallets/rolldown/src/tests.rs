@@ -377,6 +377,19 @@ fn cancel_request() {
 }
 
 #[test]
+fn test_conversion_u256(){
+
+	let val = sp_core::U256::from(1u8);
+	let eth_val = alloy_primitives::U256::from(1u8);
+
+	assert_eq!(
+		Rolldown::to_eth_u256(val),
+		eth_val
+	);
+
+}
+
+#[test]
 fn test_conversion_address(){
 
 	let byte_address : [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);

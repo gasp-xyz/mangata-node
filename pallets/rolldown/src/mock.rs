@@ -185,6 +185,7 @@ impl ExtBuilder {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
+
 			f()
 		})
 	}

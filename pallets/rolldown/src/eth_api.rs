@@ -137,8 +137,8 @@ pub mod eth{
 
 
 		struct Cancel {
-			address updater;
-			address canceler;
+			bytes updater;
+			bytes canceler;
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			bytes32 hash;

@@ -60,6 +60,7 @@ macro_rules! log {
 
 #[derive(Debug, PartialEq)]
 pub struct EthereumAddressConverter<AccountId>(sp_std::marker::PhantomData<AccountId>);
+
 impl Convert<[u8; 20], sp_runtime::AccountId32>
 	for EthereumAddressConverter<sp_runtime::AccountId32>
 {
@@ -67,6 +68,7 @@ impl Convert<[u8; 20], sp_runtime::AccountId32>
 		Blake2_256::hash(eth_addr.as_ref()).into()
 	}
 }
+
 
 #[cfg(test)]
 mod tests;
@@ -434,54 +436,6 @@ pub mod pallet {
 		pub hash: H256,
 	}
 
-	impl Into<eth_api::eth::Cancel> for Cancel<sp_runtime::AccountId32> {
-
-		fn into(self) -> eth_api::eth::Cancel {
-			let mut last_processed_bytes = [0u8; 32];
-			let mut last_accepted_bytes = [0u8; 32];
-
-			self.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
-			self.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
-
-			eth_api::eth::Cancel {
-			updater: alloy_primitives::Address::from_slice(self.updater.to_owned().as_ref()),
-			canceler: alloy_primitives::Address::from_slice(self.canceler.to_owned().as_ref()),
-			lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-			lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-			hash: alloy_primitives::FixedBytes::<32>::from_slice(&self.hash[..]),
-			}
-		}
-	}
-
-	// TODO: move to some converter interface
-	impl Into<eth_api::eth::Cancel> for Cancel<u64> {
-
-		fn into(self) -> eth_api::eth::Cancel {
-			let mut last_processed_bytes = [0u8; 32];
-			self.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
-
-			let mut last_accepted_bytes = [0u8; 32];
-			self.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
-
-			let mut updater = [0u8; 20];
-			updater.copy_from_slice(&self.updater.to_be_bytes()[..]);
-
-			let mut canceler = [0u8; 20];
-			canceler.copy_from_slice(&self.canceler.to_be_bytes()[..]);
-
-
-			eth_api::eth::Cancel {
-			updater: alloy_primitives::Address::from_slice(&updater[..]),
-			canceler: alloy_primitives::Address::from_slice(&canceler[..]),
-			lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-			lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-			hash: alloy_primitives::FixedBytes::<32>::from_slice(&self.hash[..]),
-			}
-		}
-	}
-
-
-
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
 		Status(bool),
@@ -579,7 +533,7 @@ pub mod pallet {
 			Self::AccountId,
 			BalanceOf<Self>,
 		>;
-		type AddressConverter: ConvertBack<[u8; 20], Self::AccountId>;
+		type AddressConverter: Convert<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>
@@ -1085,42 +1039,27 @@ impl<T: Config> Pallet<T> {
 		hex::encode(result)
 	}
 
+	fn to_eth_u256(value: U256) -> alloy_primitives::U256{
+			let mut bytes = [0u8; 32];
+			value.to_big_endian(&mut bytes);
+			alloy_primitives::U256::from_be_bytes(bytes)
+	}
+
 	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> eth_api::eth::Cancel{
-
-			let mut last_processed_bytes = [0u8; 32];
-			cancel.lastProccessedRequestOnL1.to_big_endian(&mut last_processed_bytes);
-
-			let mut last_accepted_bytes = [0u8; 32];
-			cancel.lastAcceptedRequestOnL1.to_big_endian(&mut last_accepted_bytes);
-
-			let updater_address = T::AddressConverter::convert_back(cancel.updater);
-			let canceler_address = T::AddressConverter::convert_back(cancel.canceler);
-
-			eth_api::eth::Cancel {
-				updater: alloy_primitives::Address::from(updater_address),
-				canceler: alloy_primitives::Address::from(canceler_address),
-				lastProccessedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-				lastAcceptedRequestOnL1: alloy_primitives::U256::from_be_bytes(last_accepted_bytes),
-				hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
-			}
+		eth_api::eth::Cancel {
+			updater: cancel.updater.encode(),
+			canceler: cancel.canceler.encode(),
+			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
+			lastAcceptedRequestOnL1: Self::to_eth_u256(cancel.lastAcceptedRequestOnL1),
+			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
+		}
 	}
 
 
-	fn calculate_hash_of_pending_requests(input: eth_api::L1Update) -> H256 {
-		let mut digest = Keccak256::new();
-
-		//TODO: check hash
-		// for (_, r) in input.requests.iter() {
-		// 	match r {
-		// 		MatRequest::Deposit(r) => digest.update(r.abi_encode()),
-		// 		MatRequest::Withdraw(r) => digest.update(r.abi_encode()),
-		// 		MatRequest::CancelResolution(r) => digest.update(r.abi_encode()),
-		// 		MatRequest::L2UpdatesToRemove(r) => digest.update(r.abi_encode()),
-		// 	};
-		// }
-
-		let array: [u8; 32] = digest.finalize().into();
-		H256::from(array)
+	fn calculate_hash_of_pending_requests(update: eth_api::L1Update) -> H256 {
+		let update: eth_api::eth::L1Update = update.into();
+		let hash : [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
+		H256::from(hash)
 	}
 
 	fn get_pending_updates_as_u256_array() -> eth_api::eth::L2Update {

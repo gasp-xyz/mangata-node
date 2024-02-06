@@ -6,6 +6,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use messages::UpdateType;
 use sp_runtime::traits::SaturatedConversion;
 
 use frame_support::traits::WithdrawReasons;
@@ -73,9 +74,11 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	
 
-	use super::*;
+
+	use crate::messages::UpdateType;
+
+use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -112,7 +115,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
-		RequestResult(bool),
+		RequestResult((bool, UpdateType)),
 		Cancel(Cancel<AccountId>),
 	}
 
@@ -496,19 +499,19 @@ impl<T: Config> Pallet<T> {
 			match request_details {
 				messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult(Self::process_deposit(&deposit).is_ok()),
+					PendingUpdate::RequestResult((Self::process_deposit(&deposit).is_ok(), UpdateType::DEPOSIT)),
 				),
 				messages::L1UpdateRequest::Withdraw(withdraw) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult(Self::process_withdraw(&withdraw).is_ok()),
+					PendingUpdate::RequestResult((Self::process_withdraw(&withdraw).is_ok(), UpdateType::WITHDRAWAL)),
 				),
 				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult(Self::process_cancel_resolution(&cancel.into()).is_ok()),
+					PendingUpdate::RequestResult((Self::process_cancel_resolution(&cancel.into()).is_ok(), UpdateType::CANCEL_RESOLUTION))
 				),
 				messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
 					request_id,
-					PendingUpdate::RequestResult(Self::process_l2_updates_to_remove(&remove).is_ok()),
+					PendingUpdate::RequestResult((Self::process_l2_updates_to_remove(&remove).is_ok(), UpdateType::INDEX_UPDATE)),
 				),
 				_ => {},
 			};
@@ -688,9 +691,10 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
-				PendingUpdate::RequestResult(status) => {
+				PendingUpdate::RequestResult((status, request_type)) => {
 					update.results.push(messages::eth_abi::RequestResult {
 						requestId: Self::to_eth_u256(request_id),
+						updateType: request_type,
 						status,
 					})
 				},

@@ -118,9 +118,12 @@ pub struct Cancel<AccountId> {
 }
 
 pub use eth_abi::L2Update;
+pub use eth_abi::UpdateType;
 
 pub mod eth_abi {
 	use alloy_sol_types::sol;
+use codec::{Encode, Decode};
+use scale_info::TypeInfo;
 	sol! {
 		// L1 to L2
 		struct Deposit {
@@ -157,9 +160,14 @@ pub mod eth_abi {
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
 		}
 
+
+		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
+		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
+
 		// L2 to L1
 		struct RequestResult {
 			uint256 requestId;
+			UpdateType updateType;
 			bool status;
 		}
 

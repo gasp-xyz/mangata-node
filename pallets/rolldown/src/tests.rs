@@ -170,7 +170,7 @@ fn deposit_executed_after_dispute_period() {
 			forward_to_block::<Test>(15);
 			assert_eq!(
 				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::RequestResult(true))
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
@@ -196,7 +196,7 @@ fn withdraw_executed_after_dispute_period() {
 			forward_to_block::<Test>(15);
 			assert_eq!(
 				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::RequestResult(true))
+				Some(PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)))
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
@@ -218,7 +218,7 @@ fn withdraw_executed_after_dispute_period_when_not_enough_tokens() {
 		forward_to_block::<Test>(15);
 		assert_eq!(
 			pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-			Some(PendingUpdate::RequestResult(false))
+			Some(PendingUpdate::RequestResult((false, UpdateType::WITHDRAWAL)))
 		);
 	});
 }
@@ -252,7 +252,7 @@ fn updates_to_remove_executed_after_dispute_period() {
 			forward_to_block::<Test>(100);
 			assert_eq!(
 				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::RequestResult(true))
+				Some(PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)))
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
 				.unwrap();

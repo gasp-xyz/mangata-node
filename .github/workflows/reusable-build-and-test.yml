@@ -30,13 +30,13 @@ permissions:
 jobs:
   build-node-image:
     name: Build Docker image
-    runs-on: [compile]
+    runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
-      # env:
-      #   DOCKER_HOST: "unix:///run/docker/docker.sock"
-      # volumes:
-      #   - /run/docker:/run/docker
+      env:
+        DOCKER_HOST: "unix:///run/docker/docker.sock"
+      volumes:
+        - /run/docker:/run/docker
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud
@@ -150,7 +150,7 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: [compile]
+    runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -178,7 +178,7 @@ jobs:
 
   coverage-report:
     name: Coverage report
-    runs-on: [compile]
+    runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
       options: --security-opt seccomp=unconfined
@@ -243,7 +243,7 @@ jobs:
 
   build-and-run-try-runtime:
     name: Run try-runtime checks
-    runs-on: [compile]
+    runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -280,7 +280,7 @@ jobs:
   run-benchmarks:
     name: Run runtime benchmarks
     # `performance` self-hosted runners have 8 cores and 16GB of RAM
-    runs-on: [compile]
+    runs-on: [performance-gke]
     env:
       STEPS: 2
       REPEATS: 1
@@ -346,7 +346,7 @@ jobs:
 
   build-wasms:
     name: Export wasm artifacts
-    runs-on: [compile]
+    runs-on: [compile-gke]
     env:
       STEPS: 2
       REPEATS: 1

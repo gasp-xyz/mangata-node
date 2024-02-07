@@ -11,8 +11,7 @@ use frame_support::{
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
-use frame_system::ConsumedWeight;
-use frame_system::EnsureRoot;
+use frame_system::{ConsumedWeight, EnsureRoot};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;

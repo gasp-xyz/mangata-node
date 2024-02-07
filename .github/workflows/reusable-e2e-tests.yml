@@ -107,6 +107,8 @@ jobs:
             fast: false
           - command: "yarn test-rewards-bootstrap"
             fast: false
+          - command: "yarn test-claiming-bootstrap"
+            fast: false
           - command: "yarn test-parallel-autocompound"
             fast: true
           - command: "yarn test-sequential-autocompound"
@@ -114,6 +116,8 @@ jobs:
           - command: "yarn test-poolliquidity"
             fast: true
           - command: "yarn test-governance"
+            fast: true
+          - command: "yarn test-governance-maintenance"
             fast: true
           - command: "yarn test-multiswap"
             fast: false

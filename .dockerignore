@@ -1,5 +1,5 @@
 *
-
+./target/
 !/target/release/polkadot-collator
 !/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
 !/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5

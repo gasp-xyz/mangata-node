@@ -25,6 +25,7 @@ use common_runtime::{
 	types::{AccountId, Balance, Nonce, TokenId},
 };
 
+use metamask_signature_rpc::MetamaskSignatureApiServer;
 use sc_client_api::AuxStore;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_transaction_pool_api::TransactionPool;
@@ -63,11 +64,13 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>,
+	C::Api: metamask_signature_rpc::MetamaskSignatureRuntimeApi<Block>,
 	C::Api: rolldown_runtime_api::RolldownRuntimeApi<Block>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + Sync + Send + 'static,
 {
+	use metamask_signature_rpc::MetamaskSignature;
 	use pallet_transaction_payment_mangata_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
 	use rolldown_rpc::{Rolldown, RolldownApiServer};
@@ -81,7 +84,8 @@ where
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(Xyk::new(client.clone()).into_rpc())?;
 	module.merge(Rolldown::new(client.clone()).into_rpc())?;
-	module.merge(ProofOfStake::new(client).into_rpc())?;
+	module.merge(ProofOfStake::new(client.clone()).into_rpc())?;
+	module.merge(MetamaskSignature::new(client).into_rpc())?;
 
 	Ok(module)
 }

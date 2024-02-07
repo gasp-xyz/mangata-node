@@ -17,7 +17,7 @@ relaychain:
     - name: bob
 
 parachains:
-  - image: mangatasolutions/mangata-node:rollup
+- image: mangatasolutions/mangata-node:dev
     chain:
       base: mangata-rococo-local
       collators:
@@ -37,7 +37,7 @@ parachains:
       - --wasm-execution=compiled
       - --execution=wasm
     env:
-      RUST_LOG: warn,substrate=info
+    RUST_LOG: info,block_builder=trace
     volumePath: /mangata/data
     nodes:
       - flags:

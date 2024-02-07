@@ -19,15 +19,16 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
 
 # Local
-common-runtime = { path = "../runtime/common"}
-mangata-kusama-runtime = { path = "../runtime/mangata-kusama"}
-mangata-rococo-runtime = { path = "../runtime/mangata-rococo"}
+common-runtime = { path = "../runtime/common" }
+mangata-kusama-runtime = { path = "../runtime/mangata-kusama" }
+mangata-rococo-runtime = { path = "../runtime/mangata-rococo" }
 xyk-rpc = { path = "../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../pallets/xyk/runtime-api" }
 rolldown-runtime-api = { path = "../pallets/rolldown/runtime-api" }
 rolldown-rpc = { path = "../pallets/rolldown/rpc" }
 proof-of-stake-runtime-api = { path = '../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../pallets/proof-of-stake/rpc' }
+metamask-signature-rpc = { path = '../pallets/metamask-signature-rpc/' }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
@@ -65,7 +66,9 @@ sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch =
 sp-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-timestamp = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", features = ["helpers"] }
+sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", features = [
+	"helpers",
+] }
 substrate-frame-rpc-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

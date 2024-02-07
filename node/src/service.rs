@@ -109,6 +109,7 @@ pub trait RuntimeApiCollection:
 	+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 	+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
 	+ rolldown_runtime_api::RolldownRuntimeApi<Block>
+	+ metamask_signature_rpc::MetamaskSignatureRuntimeApi<Block>
 {
 }
 
@@ -128,6 +129,7 @@ impl<Api> RuntimeApiCollection for Api where
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ rolldown_runtime_api::RolldownRuntimeApi<Block>
+		+ metamask_signature_rpc::MetamaskSignatureRuntimeApi<Block>
 {
 }
 

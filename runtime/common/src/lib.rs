@@ -61,7 +61,6 @@ use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use types::*;
 
 pub mod constants;
-pub mod migration;
 mod weights;
 pub mod xcm_config;
 

@@ -106,7 +106,7 @@ jobs:
     uses: ./.github/workflows/reusable-generate-types.yml
     secrets: inherit
     with:
-      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+      branch: ${{ steps.branch-name.outputs.current_branch }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 

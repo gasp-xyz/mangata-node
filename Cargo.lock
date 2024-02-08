@@ -945,13 +945,14 @@ dependencies = [
 
 [[package]]
 name = "auto_impl"
-version = "1.1.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "823b8bb275161044e2ac7a25879cb3e2480cb403e3943022c7c769c599b756aa"
+checksum = "fee3da8ef1276b0bee5dd1c7258010d8fffd31801447323115a25560e1327b89"
 dependencies = [
+ "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -6049,6 +6050,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "proof-of-stake-runtime-api",
+ "rolldown-runtime-api",
  "scale-info",
  "serde",
  "serde_json",
@@ -6111,6 +6113,8 @@ dependencies = [
  "polkadot-primitives",
  "proof-of-stake-rpc",
  "proof-of-stake-runtime-api",
+ "rolldown-rpc",
+ "rolldown-runtime-api",
  "sc-basic-authorship-ver",
  "sc-chain-spec",
  "sc-cli",
@@ -6221,6 +6225,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "proof-of-stake-runtime-api",
+ "rolldown-runtime-api",
  "scale-info",
  "serde",
  "smallvec",
@@ -8071,6 +8076,8 @@ dependencies = [
 name = "pallet-rolldown"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
  "array-bytes",
  "env_logger 0.9.3",
  "frame-benchmarking",
@@ -8082,6 +8089,7 @@ dependencies = [
  "log",
  "mangata-support",
  "mangata-types",
+ "mockall",
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
@@ -11140,6 +11148,32 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-weights",
+]
+
+[[package]]
+name = "rolldown-rpc"
+version = "2.0.0"
+dependencies = [
+ "jsonrpsee",
+ "mangata-types",
+ "parity-scale-codec",
+ "rolldown-runtime-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "rolldown-runtime-api"
+version = "2.0.0"
+dependencies = [
+ "sp-api",
+ "sp-core",
+ "sp-std",
 ]
 
 [[package]]

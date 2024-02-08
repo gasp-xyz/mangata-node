@@ -37,6 +37,7 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
+rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api", default-features = false, version = "2.0.0" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false}
 pallet-rolldown = { path = "../../pallets/rolldown", default-features = false }
 pallet-sequencer-staking = { path = "../../pallets/sequencer-staking", default-features = false }
@@ -206,6 +207,7 @@ std = [
 	"proof-of-stake-runtime-api/std",
 	"metamask-signature-runtime-api/std",
 	"xyk-runtime-api/std",
+	"rolldown-runtime-api/std",
 	"pallet-rolldown/std",
 	"pallet-sequencer-staking/std",
 ]

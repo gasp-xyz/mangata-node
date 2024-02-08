@@ -18,7 +18,7 @@ use frame_support::{
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
+use frame_system::{ConsumedWeight, EnsureRoot};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;
@@ -867,6 +867,16 @@ mod benches {
 }
 
 impl_runtime_apis! {
+
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
+		fn get_pending_updates_hash() -> sp_core::H256 {
+			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+		}
+
+		fn get_pending_updates() -> Vec<u8> {
+			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+		}
+	}
 
 
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {

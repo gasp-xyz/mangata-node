@@ -24,6 +24,8 @@ mangata-kusama-runtime = { path = "../runtime/mangata-kusama" }
 mangata-rococo-runtime = { path = "../runtime/mangata-rococo" }
 xyk-rpc = { path = "../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../pallets/xyk/runtime-api" }
+rolldown-runtime-api = { path = "../pallets/rolldown/runtime-api" }
+rolldown-rpc = { path = "../pallets/rolldown/rpc" }
 proof-of-stake-runtime-api = { path = '../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../pallets/metamask-signature-rpc/' }
@@ -101,11 +103,13 @@ default = ["mangata-kusama", "mangata-rococo"]
 mangata-kusama = [
 	"mangata-kusama-runtime/std",
 	"xyk-rpc/std",
+	"rolldown-rpc/std",
 	"polkadot-cli/kusama-native",
 ]
 mangata-rococo = [
 	"mangata-rococo-runtime/std",
 	"xyk-rpc/std",
+	"rolldown-rpc/std",
 	"polkadot-cli/rococo-native",
 ]
 runtime-benchmarks = [

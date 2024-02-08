@@ -7,7 +7,7 @@ relaychain:
         validation_upgrade_cooldown: 10
         validation_upgrade_delay: 10
   env:
-    RUST_LOG: warn,substrate=info
+    RUST_LOG: warn
   flags:
     - --rpc-methods=unsafe
     - --wasm-execution=compiled
@@ -17,7 +17,7 @@ relaychain:
     - name: bob
 
 parachains:
-- image: mangatasolutions/mangata-node:dev
+  - image: mangatasolutions/mangata-node:matamask
     chain:
       base: mangata-rococo-local
       collators:
@@ -37,7 +37,8 @@ parachains:
       - --wasm-execution=compiled
       - --execution=wasm
     env:
-    RUST_LOG: info,block_builder=trace
+      # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
+      RUST_LOG: warn,metamask=trace
     volumePath: /mangata/data
     nodes:
       - flags:

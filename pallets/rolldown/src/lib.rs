@@ -704,6 +704,9 @@ impl<T: Config> Pallet<T> {
 				},
 			};
 		}
+
+		update.results.sort_by(|a, b| a.requestId.partial_cmp(&b.requestId).unwrap());
+
 		update
 	}
 

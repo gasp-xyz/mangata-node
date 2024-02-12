@@ -21,6 +21,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 	"derive",
 ] }
 serde = { version = "1.0.137", optional = true, features = ["derive"] }
+serde_json = { version = "1.0.108", default-features = false }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
 
@@ -36,9 +37,11 @@ pallet-sudo-origin = { path = "../../pallets/sudo-origin", default-features = fa
 pallet-xyk = { path = "../../pallets/xyk", default-features = false, version = "0.1.0" }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api", default-features = false, version = "2.0.0" }
+rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api", default-features = false, version = "2.0.0" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false }
 pallet-rolldown = { path = "../../pallets/rolldown", default-features = false }
 pallet-sequencer-staking = { path = "../../pallets/sequencer-staking", default-features = false }
+metamask-signature-runtime-api = { path = '../../pallets/metamask-signature-runtime-api', default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -177,8 +180,10 @@ std = [
 	"polkadot-primitives/std",
 	"polkadot-runtime-common/std",
 	"proof-of-stake-runtime-api/std",
+	"metamask-signature-runtime-api/std",
 	"scale-info/std",
 	"serde",
+	"serde_json/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -199,6 +204,7 @@ std = [
 	"xcm-executor/std",
 	"xcm/std",
 	"xyk-runtime-api/std",
+	"rolldown-runtime-api/std",
 	"pallet-rolldown/std",
 	"pallet-sequencer-staking/std",
 ]

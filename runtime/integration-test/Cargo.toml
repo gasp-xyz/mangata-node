@@ -19,6 +19,8 @@ pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", bran
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-storage = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+hex-literal = { version = "0.3.4" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
 
 # Polkadot
 kusama-runtime = { package = "staging-kusama-runtime", git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

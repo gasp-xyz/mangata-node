@@ -8,6 +8,8 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+alloy-sol-types = { version = "0.5.0", default-features = false }
+alloy-primitives = { version = "0.5.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 hex-literal = { version = "0.3.3", default-features = false }
@@ -15,7 +17,6 @@ log = { version = "0.4.14", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 serde = {version = "1.0.101",default-features = false, features = ["derive"]  }
 serde_json = { version = "1.0.108", default-features = false }
-# serde-json-wasm = { version =  "1.0.0", default-features = false }
 sha3 = { version = "0.9.1", default-features = false }
 array-bytes = "6.1"
 
@@ -35,9 +36,8 @@ orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-li
 env_logger = "0.9.0"
 lazy_static = "1.1.1"
 serial_test = { version = "0.6.0", default-features = false }
-
+mockall = "0.11.0"
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-
 orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 
 
@@ -45,6 +45,8 @@ orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-li
 default = ["std"]
 enable-trading = []
 std = [
+	"alloy-sol-types/std",
+	"alloy-primitives/std",
 	"codec/std",
 	"frame-benchmarking/std",
 	"frame-support/std",

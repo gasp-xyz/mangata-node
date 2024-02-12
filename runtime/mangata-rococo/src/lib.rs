@@ -2,18 +2,23 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::Encode;
+use codec::{
+	alloc::string::{String, ToString},
+	Decode, Encode,
+};
 pub use common_runtime::{
 	consts::DAYS, currency::*, deposit, runtime_types, tokens, types::*, CallType,
 };
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	dispatch::GetDispatchInfo,
+	parameter_types,
 	traits::{EitherOfDiverse, Everything, InstanceFilter},
 	weights::{constants::RocksDbWeight, Weight},
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
+use frame_system::{ConsumedWeight, EnsureRoot};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;
@@ -24,7 +29,10 @@ pub use pallet_xyk;
 pub use polkadot_runtime_common::BlockHashCount;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, ConstBool, OpaqueMetadata};
+use sp_core::{
+	crypto::{KeyTypeId, Ss58Codec},
+	ConstBool, OpaqueMetadata,
+};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -72,6 +80,53 @@ pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, Runtime
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
 
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::{generic::ExtendedCall, AccountId32};
+use sp_std::{fmt::Write, prelude::*};
+
+impl ExtendedCall for RuntimeCall {
+	fn context(&self) -> Option<(String, String)> {
+		match self {
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
+				..
+			}) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
+				let _ = write!(&mut buffer, "sold_asset_amount: {sold_asset_amount}\n");
+				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
+				let _ = write!(&mut buffer, "min_amount_out: {min_amount_out}\n");
+				Some(("xyk::sell_asset".to_string(), buffer))
+			},
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
+				..
+			}) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
+				let _ = write!(&mut buffer, "bought_asset_amount: {bought_asset_amount}\n");
+				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
+				let _ = write!(&mut buffer, "max_amount_in: {max_amount_in}\n");
+				Some(("xyk::buy_asset".to_string(), buffer))
+			},
+			RuntimeCall::Tokens(orml_tokens::Call::transfer { dest, currency_id, amount }) => {
+				let mut buffer = String::new();
+				let _ = write!(&mut buffer, "dest: {dest:?}\n");
+				let _ = write!(&mut buffer, "currency_id: {currency_id}\n");
+				let _ = write!(&mut buffer, "amount: {amount}\n");
+				Some(("orml_tokens::transfer".to_string(), buffer))
+			},
+			_ => Some(("todo".to_string(), "todo".to_string())),
+		}
+	}
+}
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -82,10 +137,7 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-type Migrations = (
-	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
-	orml_unknown_tokens::Migration<Runtime>,
-);
+type Migrations = ();
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -113,10 +165,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 003200,
+	spec_version: 003400,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003200,
+	transaction_version: 003400,
 	state_version: 0,
 };
 
@@ -816,6 +868,30 @@ mod benches {
 
 impl_runtime_apis! {
 
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
+		fn get_pending_updates_hash() -> sp_core::H256 {
+			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+		}
+
+		fn get_pending_updates() -> Vec<u8> {
+			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+		}
+	}
+
+
+	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
+		fn get_eip712_sign_data(call: Vec<u8>) -> String{
+			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+				if let Some((method, params)) = extrinsic.function.context() {
+					metamask_signature_runtime_api::eip712_payload(method, params)
+				}else{
+					Default::default()
+				}
+			}else{
+				Default::default()
+			}
+		}
+	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
 		fn calculate_native_rewards_amount(
@@ -900,6 +976,13 @@ impl_runtime_apis! {
 
 		fn start_prevalidation() {
 			System::set_prevalidation()
+		}
+
+		fn account_extrinsic_dispatch_weight(consumed: ver_api::ConsumedWeight, tx: <Block as BlockT>::Extrinsic) -> Result<ver_api::ConsumedWeight, ()> {
+			let info = tx.get_dispatch_info();
+			let maximum_weight = <Runtime as frame_system::Config>::BlockWeights::get();
+			frame_system::calculate_consumed_weight::<RuntimeCall>(maximum_weight, consumed, &info)
+			.or(Err(()))
 		}
 	}
 

@@ -192,7 +192,8 @@ impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin>
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		let founder = Founder::<T>::get().ok_or(())?;
-		Ok(T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(founder)))
+		unimplemented!();
+		// let founder = Founder::<T>::get().ok_or(())?;
+		// Ok(T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(founder)))
 	}
 }

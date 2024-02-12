@@ -1,0 +1,40 @@
+[package]
+authors = ['Mangata team']
+name = "rolldown-rpc"
+version = "2.0.0"
+edition = "2018"
+description = "RPC calls for Proof of Stake"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+jsonrpsee = { version = "0.16.2", features = ["server", "client", "macros"] }
+serde = { version = "1.0.126", features = ["derive"], optional = true }
+
+# Substrate packages
+
+sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+
+# local packages
+
+rolldown-runtime-api = { version = "2.0.0", path = "../runtime-api", default-features = false }
+
+[features]
+default = ["std"]
+
+std = [
+	"serde",
+	"sp-api/std",
+	"sp-core/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"rolldown-runtime-api/std",
+	"mangata-types/std",
+	"codec/std",
+]

@@ -28,7 +28,7 @@ Mangata operates as a cross-chain liquidity protocol, facilitating seamless tran
 ## Build mangata-node locally
 - Install [docker](https://docs.docker.com/engine/install/ubuntu/)
 
-### Compilie mangata-node binary and wasms artifacts
+### Compile mangata-node binary and wasms artifacts
 - use docker wrapper for cargo to build `mangata-node`
 
 ```
@@ -42,7 +42,7 @@ Run unit tests only:
 ```bash
 cargo test
 ```
-Run unit tests and generat code coverage report in html format:
+Run unit tests and generate code coverage report in html format:
 ```bash
 cargo install cargo-tarpaulin
 cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Html
@@ -100,7 +100,7 @@ yarn down
 ### Sudo access
 `Alice` is set as sudo account for parachain-launch docker setup
 
-## Managata node configuration
+## Mangata node configuration
 
 There is number of chain configurations available for both development and production environements:
 

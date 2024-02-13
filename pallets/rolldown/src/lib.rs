@@ -311,6 +311,53 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn withdraw(
+			origin: OriginFor<T>,
+			tokenAddress: [u8; 20],
+			amount: u128,
+		) -> DispatchResultWithPostInfo {
+			let account = ensure_signed(origin)?;
+
+			let eth_token_address: [u8; 20] = array_bytes::hex2array::<_, 20>(tokenAddress.clone())
+				.or(Err("Cannot convert address"))?;
+			let eth_asset = L1Asset::Ethereum(eth_token_address);
+			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
+				.ok_or("L1AssetNotFound")?;
+
+			// fail will occur if user has not enough balance
+			<T as Config>::Tokens::ensure_can_withdraw(
+				asset_id.into(),
+				&account,
+				amount.try_into().map_err(|_| "u128 to Balance failed")?,
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err("NotEnoughAssets"))?;
+
+			// burn tokes for user
+			T::Tokens::burn_and_settle(
+				asset_id,
+				&account,
+				amount.try_into().map_err(|_| "u128 to Balance failed")?,
+			)?;
+
+			// increase counter for updates originating on l2		
+			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
+			let update_id = Self::get_l2_origin_updates_counter();
+			// add cancel request to pending updates
+			pending_updates::<T>::insert(
+				U256::from(update_id),
+				PendingUpdate::RequestResult((
+					true,
+					UpdateType::WITHDRAWAL,
+				)),
+			);
+
+			Ok(().into())
+		}
+
 		// no checks if this read is correct, can put counters out of sync
 		// #[pallet::call_index(2)]
 		// #[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]

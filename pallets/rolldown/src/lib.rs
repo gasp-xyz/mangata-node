@@ -343,16 +343,13 @@ pub mod pallet {
 				amount.try_into().map_err(|_| "u128 to Balance failed")?,
 			)?;
 
-			// increase counter for updates originating on l2		
+			// increase counter for updates originating on l2
 			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			let update_id = Self::get_l2_origin_updates_counter();
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
 				U256::from(update_id),
-				PendingUpdate::RequestResult((
-					true,
-					UpdateType::WITHDRAWAL,
-				)),
+				PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)),
 			);
 
 			Ok(().into())

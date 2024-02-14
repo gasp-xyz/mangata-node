@@ -127,11 +127,11 @@ jobs:
       skipBuild: 'false'
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
-  deploy-eigen-mococo:
-    name: Deploy to eigen-mococo on merge to `eth-rollup-develop` branch
+  deploy-rollup-testnet:
+    name: Deploy to rollup-testnet on merge to `eth-rollup-develop` branch
     needs: [init, build-and-test]
     if: startsWith(github.head_ref, 'eth-rollup-develop')
-    uses: ./.github/workflows/reusable-deploy-eigen-mococo.yml
+    uses: ./.github/workflows/reusable-deploy-rollup-testnet.yml
     secrets: inherit
     with:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}

@@ -193,7 +193,6 @@ fn each_request_executed_only_once() {
 			forward_to_block::<Test>(11);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
 
-
 			forward_to_block::<Test>(14);
 			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
@@ -369,44 +368,41 @@ fn cancel_request() {
 #[test]
 #[serial]
 fn reject_update_with_too_many_requests() {
-	ExtBuilder::new()
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
 
-			let requests =
-				vec![
-					L1UpdateRequest::Withdraw(messages::Withdraw {
-					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-					tokenAddress: ETH_TOKEN_ADDRESS,
-					amount: sp_core::U256::from(MILLION),
-				}); 11];
+		let requests = vec![
+			L1UpdateRequest::Withdraw(messages::Withdraw {
+				depositRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
+			11
+		];
 
-			let withdraw_update = create_l1_update(requests);
+		let withdraw_update = create_l1_update(requests);
 
-			assert_err!(
-				Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update),
-				Error::<Test>::TooManyRequests
-			);
-		});
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update),
+			Error::<Test>::TooManyRequests
+		);
+	});
 }
 
 #[test]
 #[serial]
 fn reject_update_with_missing_requests() {
-	ExtBuilder::new()
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
 
-			let update = L1Update {
-				order: vec![messages::PendingRequestType::DEPOSIT],
-				.. Default::default()
-			};
+		let update =
+			L1Update { order: vec![messages::PendingRequestType::DEPOSIT], ..Default::default() };
 
-			assert_err!(
-				Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update),
-				Error::<Test>::InvalidUpdate
-			);
-		});
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update),
+			Error::<Test>::InvalidUpdate
+		);
+	});
 }
 
 #[test]

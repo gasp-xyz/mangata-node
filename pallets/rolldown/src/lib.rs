@@ -6,7 +6,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{UpdateType, PendingRequestType};
+use messages::{PendingRequestType, UpdateType};
 use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
@@ -219,26 +219,35 @@ pub mod pallet {
 			ensure!(!requests.order.is_empty(), Error::<T>::EmptyUpdate);
 			ensure!(requests.order.len() <= 10, Error::<T>::TooManyRequests);
 
-
 			let withdraws_count = requests.pendingWithdraws.len();
 			let deposits_count = requests.pendingDeposits.len();
 			let cancels_count = requests.pendingCancelResultions.len();
 			let l2_updates_count = requests.pendingL2UpdatesToRemove.len();
 
 			ensure!(
-				requests.order.iter().filter(|e| **e == PendingRequestType::DEPOSIT).count() == deposits_count,
+				requests.order.iter().filter(|e| **e == PendingRequestType::DEPOSIT).count() ==
+					deposits_count,
 				Error::<T>::InvalidUpdate
 			);
 			ensure!(
-				requests.order.iter().filter(|e| **e == PendingRequestType::WITHDRAWAL).count() == withdraws_count,
+				requests.order.iter().filter(|e| **e == PendingRequestType::WITHDRAWAL).count() ==
+					withdraws_count,
 				Error::<T>::InvalidUpdate
 			);
 			ensure!(
-				requests.order.iter().filter(|e| **e == PendingRequestType::CANCEL_RESOLUTION).count() == cancels_count,
+				requests
+					.order
+					.iter()
+					.filter(|e| **e == PendingRequestType::CANCEL_RESOLUTION)
+					.count() == cancels_count,
 				Error::<T>::InvalidUpdate
 			);
 			ensure!(
-				requests.order.iter().filter(|e| **e == PendingRequestType::L2_UPDATES_TO_REMOVE).count() == l2_updates_count,
+				requests
+					.order
+					.iter()
+					.filter(|e| **e == PendingRequestType::L2_UPDATES_TO_REMOVE)
+					.count() == l2_updates_count,
 				Error::<T>::InvalidUpdate
 			);
 

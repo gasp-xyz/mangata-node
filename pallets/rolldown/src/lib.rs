@@ -104,10 +104,18 @@ pub mod pallet {
 		pub hash: H256,
 	}
 
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+	pub struct Withdraw {
+		pub withdrawRecipient: [u8; 20],
+		pub tokenAddress: [u8; 20],
+		pub amount: U256,
+	}
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
 		RequestResult((bool, UpdateType)),
 		Cancel(Cancel<AccountId>),
+		Withdraw(Withdraw),
 	}
 
 	#[pallet::storage]
@@ -158,6 +166,9 @@ pub mod pallet {
 		EmptyUpdate,
 		AddressDeserializationFailure,
 		RequestDoesNotExist,
+		NotEnoughAssets,
+		BalanceOverflow,
+		L1AssetCreationFailed,
 	}
 
 	#[pallet::config]
@@ -198,7 +209,7 @@ pub mod pallet {
 					},
 				);
 			}
-			// l2_origin_updates_counter::<T>::put(u128::MAX/2);
+			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
 		}
 	}
 
@@ -315,14 +326,13 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn withdraw(
 			origin: OriginFor<T>,
+			withdrawRecipient: [u8; 20],
 			tokenAddress: [u8; 20],
 			amount: u128,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
 
-			let eth_token_address: [u8; 20] = array_bytes::hex2array::<_, 20>(tokenAddress.clone())
-				.or(Err("Cannot convert address"))?;
-			let eth_asset = L1Asset::Ethereum(eth_token_address);
+			let eth_asset = L1Asset::Ethereum(tokenAddress);
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
 				.ok_or("L1AssetNotFound")?;
 
@@ -330,18 +340,21 @@ pub mod pallet {
 			<T as Config>::Tokens::ensure_can_withdraw(
 				asset_id.into(),
 				&account,
-				amount.try_into().map_err(|_| "u128 to Balance failed")?,
+				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 				WithdrawReasons::all(),
 				Default::default(),
 			)
-			.or(Err("NotEnoughAssets"))?;
+			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			// burn tokes for user
 			T::Tokens::burn_and_settle(
 				asset_id,
 				&account,
-				amount.try_into().map_err(|_| "u128 to Balance failed")?,
+				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
+
+			let withdraw_update =
+				Withdraw { withdrawRecipient, tokenAddress, amount: U256::from(amount) };
 
 			// increase counter for updates originating on l2
 			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
@@ -349,7 +362,7 @@ pub mod pallet {
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
 				U256::from(update_id),
-				PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)),
+				PendingUpdate::Withdraw(withdraw_update),
 			);
 
 			Ok(().into())
@@ -538,13 +551,6 @@ impl<T: Config> Pallet<T> {
 						UpdateType::DEPOSIT,
 					)),
 				),
-				messages::L1UpdateRequest::Withdraw(withdraw) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_withdraw(&withdraw).is_ok(),
-						UpdateType::WITHDRAWAL,
-					)),
-				),
 				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
 					request_id,
 					PendingUpdate::RequestResult((
@@ -582,7 +588,7 @@ impl<T: Config> Pallet<T> {
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.or(Err("Failed to create L1 Asset"))?,
+				.or(Err(Error::<T>::L1AssetCreationFailed))?,
 		};
 		log!(info, "Deposit processed successfully: {:?}", deposit_request_details);
 
@@ -590,42 +596,42 @@ impl<T: Config> Pallet<T> {
 		T::Tokens::mint(
 			asset_id,
 			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
+			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 		)?;
 		Ok(())
 	}
 
-	fn process_withdraw(withdraw_request_details: &messages::Withdraw) -> Result<(), &'static str> {
-		// fail will occur if user has not enough balance
-		let amount: u128 = withdraw_request_details
-			.amount
-			.try_into()
-			.map_err(|_| "u128 to Balance failed")?;
-		let account: T::AccountId =
-			T::AddressConverter::convert(withdraw_request_details.depositRecipient);
+	// fn process_withdraw(withdraw_request_details: &messages::Withdraw) -> Result<(), &'static str> {
+	// 	// fail will occur if user has not enough balance
+	// 	let amount: u128 = withdraw_request_details
+	// 		.amount
+	// 		.try_into()
+	// 		.or(Err(Error::<T>::BalanceOverflow))?;
+	// 	let account: T::AccountId =
+	// 		T::AddressConverter::convert(withdraw_request_details.depositRecipient);
 
-		let eth_asset = L1Asset::Ethereum(withdraw_request_details.tokenAddress);
-		let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
-			.ok_or("L1AssetNotFound")?;
+	// 	let eth_asset = L1Asset::Ethereum(withdraw_request_details.tokenAddress);
+	// 	let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
+	// 		.ok_or("L1AssetNotFound")?;
 
-		T::Tokens::ensure_can_withdraw(
-			asset_id.into(),
-			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
-			WithdrawReasons::all(),
-			Default::default(),
-		)
-		.or(Err("NotEnoughAssets"))?;
+	// 	T::Tokens::ensure_can_withdraw(
+	// 		asset_id.into(),
+	// 		&account,
+	// 		amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
+	// 		WithdrawReasons::all(),
+	// 		Default::default(),
+	// 	)
+	// 	.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		// burn tokes for user
-		T::Tokens::burn_and_settle(
-			asset_id,
-			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
-		)?;
+	// 	// burn tokes for user
+	// 	T::Tokens::burn_and_settle(
+	// 		asset_id,
+	// 		&account,
+	// 		amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
+	// 	)?;
 
-		Ok(())
-	}
+	// 	Ok(())
+	// }
 
 	fn process_cancel_resolution(
 		cancel_resolution: &messages::CancelResolution,
@@ -669,6 +675,7 @@ impl<T: Config> Pallet<T> {
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
 
+		log!(info, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
 		// additional checks
 		Ok(())
 	}
@@ -726,6 +733,14 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	fn to_eth_withdraw(withdraw: Withdraw) -> messages::eth_abi::Withdraw {
+		messages::eth_abi::Withdraw {
+			withdrawRecipient: withdraw.withdrawRecipient.encode(),
+			tokenAddress: withdraw.tokenAddress.encode(),
+			amount: Self::to_eth_u256(withdraw.amount),
+		}
+	}
+
 	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
@@ -733,7 +748,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_l2_update() -> messages::eth_abi::L2Update {
-		let mut update = messages::eth_abi::L2Update { results: Vec::new(), cancles: Vec::new() };
+		let mut update = messages::eth_abi::L2Update {
+			results: Vec::new(),
+			cancels: Vec::new(),
+			withdraws: Vec::new(),
+		};
 
 		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
@@ -744,7 +763,10 @@ impl<T: Config> Pallet<T> {
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancles.push(Self::to_eth_cancel(cancel));
+					update.cancels.push(Self::to_eth_cancel(cancel));
+				},
+				PendingUpdate::Withdraw(withdraw) => {
+					update.withdraws.push(Self::to_eth_withdraw(withdraw));
 				},
 			};
 		}

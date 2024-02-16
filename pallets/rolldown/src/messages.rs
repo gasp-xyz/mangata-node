@@ -35,7 +35,6 @@ pub struct CancelResolution {
 #[repr(u8)]
 pub enum PendingRequestType {
 	DEPOSIT,
-	WITHDRAWAL,
 	CANCEL_RESOLUTION,
 	L2_UPDATES_TO_REMOVE,
 }
@@ -46,14 +45,12 @@ pub struct L1Update {
 	pub lastAcceptedRequestOnL1: sp_core::U256,
 	pub offset: sp_core::U256,
 	pub order: Vec<PendingRequestType>,
-	pub pendingWithdraws: Vec<Withdraw>,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResultions: Vec<CancelResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
 pub enum L1UpdateRequest {
-	Withdraw(Withdraw),
 	Deposit(Deposit),
 	Cancel(CancelResolution),
 	Remove(L2UpdatesToRemove),
@@ -64,7 +61,6 @@ impl L1Update {
 		let L1Update {
 			offset,
 			order,
-			mut pendingWithdraws,
 			mut pendingDeposits,
 			mut pendingCancelResultions,
 			mut pendingL2UpdatesToRemove,
@@ -80,8 +76,6 @@ impl L1Update {
 					match request_type {
 						PendingRequestType::DEPOSIT =>
 							L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),
-						PendingRequestType::WITHDRAWAL =>
-							L1UpdateRequest::Withdraw(pendingWithdraws.pop().unwrap()),
 						PendingRequestType::CANCEL_RESOLUTION =>
 							L1UpdateRequest::Cancel(pendingCancelResultions.pop().unwrap()),
 						PendingRequestType::L2_UPDATES_TO_REMOVE =>
@@ -100,7 +94,6 @@ impl Into<eth_abi::L1Update> for L1Update {
 			lastAcceptedRequestOnL1: Default::default(),
 			offset: Default::default(),
 			order: Default::default(),
-			pendingWithdraws: Default::default(),
 			pendingDeposits: Default::default(),
 			pendingCancelResultions: Default::default(),
 			pendingL2UpdatesToRemove: Default::default(),
@@ -131,12 +124,6 @@ pub mod eth_abi {
 			uint256 amount;
 		}
 
-		struct Withdraw {
-			address withdrawRecipient;
-			address tokenAddress;
-			uint256 amount;
-		}
-
 		struct L2UpdatesToRemove {
 			uint256[] l2UpdatesToRemove;
 		}
@@ -146,14 +133,13 @@ pub mod eth_abi {
 			bool cancelJustified;
 		}
 
-		enum PendingRequestType{ DEPOSIT, WITHDRAWAL, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
+		enum PendingRequestType{ DEPOSIT, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
 
 		struct L1Update {
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			uint256 offset;
 			PendingRequestType[] order;
-			Withdraw[] pendingWithdraws;
 			Deposit[] pendingDeposits;
 			CancelResolution[] pendingCancelResultions;
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
@@ -161,7 +147,7 @@ pub mod eth_abi {
 
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
-		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
+		enum UpdateType{ DEPOSIT, WITHDRAW, INDEX_UPDATE, CANCEL_RESOLUTION}
 
 		// L2 to L1
 		struct RequestResult {
@@ -170,6 +156,11 @@ pub mod eth_abi {
 			bool status;
 		}
 
+		struct Withdraw {
+			bytes withdrawRecipient;
+			bytes tokenAddress;
+			uint256 amount;
+		}
 
 		struct Cancel {
 			bytes updater;
@@ -180,7 +171,8 @@ pub mod eth_abi {
 		}
 
 		struct L2Update {
-			Cancel[] cancles;
+			Withdraw[] withdraws;
+			Cancel[] cancels;
 			RequestResult[] results;
 		}
 	}

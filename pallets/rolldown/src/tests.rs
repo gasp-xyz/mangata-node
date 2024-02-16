@@ -1,14 +1,12 @@
-use frame_support::assert_err;
-
-use sp_runtime::traits::ConvertBack;
-
 use crate::{
 	mock::{consts::*, *},
 	*,
 };
+use frame_support::assert_err;
 use hex_literal::hex;
 use messages::{L1Update, L1UpdateRequest};
 use serial_test::serial;
+use sp_runtime::traits::ConvertBack;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
 pub const ETH_TOKEN_ADDRESS_MGX: TokenId = 100_u32;
@@ -32,10 +30,6 @@ fn create_l1_update_with_offset(
 			L1UpdateRequest::Deposit(d) => {
 				update.order.push(messages::PendingRequestType::DEPOSIT);
 				update.pendingDeposits.push(d);
-			},
-			L1UpdateRequest::Withdraw(w) => {
-				update.order.push(messages::PendingRequestType::WITHDRAWAL);
-				update.pendingWithdraws.push(w);
 			},
 			L1UpdateRequest::Cancel(c) => {
 				update.order.push(messages::PendingRequestType::CANCEL_RESOLUTION);
@@ -73,7 +67,7 @@ fn process_single_deposit() {
 
 		assert_event_emitted!(Event::PendingRequestStored((
 			ALICE,
-			H256::from(hex!("2a48bbdcd86e4e5571feef2579e2c4098c95b5aecc82a603c873429bf72651c3"))
+			H256::from(hex!("9298a2da7b53339aba8219da51f88635095b06462e2df124d986f1123810971b"))
 		)));
 	});
 }
@@ -89,7 +83,7 @@ fn create_pending_update_after_dispute_period() {
 		})]);
 
 		let update2 = create_l1_update_with_offset(
-			vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			vec![L1UpdateRequest::Deposit(messages::Deposit {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
@@ -126,7 +120,7 @@ fn l2_counter_updates_when_requests_are_processed() {
 		})]);
 
 		let update2 = create_l1_update_with_offset(
-			vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			vec![L1UpdateRequest::Deposit(messages::Deposit {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
@@ -178,65 +172,19 @@ fn deposit_executed_after_dispute_period() {
 
 #[test]
 #[serial]
-fn withdraw_executed_after_dispute_period() {
-	ExtBuilder::new()
-		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
-			let update = create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
-				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-				tokenAddress: ETH_TOKEN_ADDRESS,
-				amount: sp_core::U256::from(MILLION),
-			})]);
-
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
-			forward_to_block::<Test>(14);
-			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-
-			forward_to_block::<Test>(15);
-			assert_eq!(
-				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)))
-			);
-			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-		});
-}
-
-#[test]
-#[serial]
-fn withdraw_executed_after_dispute_period_when_not_enough_tokens() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		forward_to_block::<Test>(10);
-		let update = create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
-			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-			tokenAddress: ETH_TOKEN_ADDRESS,
-			amount: sp_core::U256::from(MILLION),
-		})]);
-
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
-
-		forward_to_block::<Test>(15);
-		assert_eq!(
-			pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-			Some(PendingUpdate::RequestResult((false, UpdateType::WITHDRAWAL)))
-		);
-	});
-}
-
-#[test]
-#[serial]
 fn updates_to_remove_executed_after_dispute_period() {
 	ExtBuilder::new()
 		.issue(CHARLIE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
-			let withdraw_update =
-				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			let deposit_update =
+				create_l1_update(vec![L1UpdateRequest::Deposit(messages::Deposit {
 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 				})]);
+
 			let l2_updates_to_remove = create_l1_update_with_offset(
 				vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 					l2UpdatesToRemove: vec![sp_core::U256::from(0u128)],
@@ -244,7 +192,7 @@ fn updates_to_remove_executed_after_dispute_period() {
 				sp_core::U256::from(1u128),
 			);
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 			forward_to_block::<Test>(15);
 			assert!(pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
@@ -252,7 +200,7 @@ fn updates_to_remove_executed_after_dispute_period() {
 			forward_to_block::<Test>(100);
 			assert_eq!(
 				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
-				Some(PendingUpdate::RequestResult((true, UpdateType::WITHDRAWAL)))
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
 				.unwrap();
@@ -278,16 +226,16 @@ fn cancel_request() {
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock.expect().return_const(Ok(().into()));
 
-			let withdraw_update =
-				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
-					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+			let deposit_update =
+				create_l1_update(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 				})]);
 
 			let cancel_resolution = create_l1_update_with_offset(
 				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-					l2RequestId: U256::from(1u128),
+					l2RequestId: U256::from(u128::MAX / 2 + 1),
 					cancelJustified: true,
 				})],
 				sp_core::U256::from(0u128),
@@ -302,7 +250,7 @@ fn cancel_request() {
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			assert!(pending_requests::<Test>::contains_key(U256::from(15u128)));
 
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
@@ -349,4 +297,49 @@ fn test_conversion_address() {
 	let byte_address: [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);
 
 	assert_eq!(DummyAddressConverter::convert(byte_address), consts::CHARLIE);
+}
+
+#[test]
+#[serial]
+fn withdraw() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000_000u128,
+			)
+			.unwrap();
+
+			let withdraw_update = Withdraw {
+				withdrawRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: U256::from(1_000_000u128),
+			};
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
+			assert_eq!(
+				pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)),
+				Some(PendingUpdate::Withdraw(withdraw_update))
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn error_on_withdraw_more() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					10_000_000u128
+				),
+				Error::<Test>::NotEnoughAssets
+			);
+		});
 }

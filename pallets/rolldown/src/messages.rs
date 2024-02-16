@@ -52,6 +52,7 @@ pub struct L1Update {
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
 	Withdraw(Withdraw),
 	Deposit(Deposit),

@@ -178,6 +178,35 @@ fn deposit_executed_after_dispute_period() {
 
 #[test]
 #[serial]
+fn each_request_executed_only_once() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = create_l1_update(vec![L1UpdateRequest::Deposit(messages::Deposit {
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			})]);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
+
+			forward_to_block::<Test>(14);
+			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+
+			forward_to_block::<Test>(15);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+
+			forward_to_block::<Test>(20);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+		});
+}
+
+#[test]
+#[serial]
 fn withdraw_executed_after_dispute_period() {
 	ExtBuilder::new()
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
@@ -334,6 +363,46 @@ fn cancel_request() {
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 		});
+}
+
+#[test]
+#[serial]
+fn reject_update_with_too_many_requests() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+		let requests = vec![
+			L1UpdateRequest::Withdraw(messages::Withdraw {
+				depositRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
+			11
+		];
+
+		let withdraw_update = create_l1_update(requests);
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update),
+			Error::<Test>::TooManyRequests
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn reject_update_with_missing_requests() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+		let update =
+			L1Update { order: vec![messages::PendingRequestType::DEPOSIT], ..Default::default() };
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update),
+			Error::<Test>::InvalidUpdate
+		);
+	});
 }
 
 #[test]

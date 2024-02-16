@@ -127,11 +127,11 @@ jobs:
       skipBuild: 'false'
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
-  deploy-rollup-testnet:
-    name: Deploy to rollup-testnet on merge to `eth-rollup-develop` branch
+  deploy-rollup-dev:
+    name: Deploy to rollup-dev on every commit to `eth-rollup-develop` branch
     needs: [init, build-and-test]
     if: startsWith(github.head_ref, 'eth-rollup-develop')
-    uses: ./.github/workflows/reusable-deploy-rollup-testnet.yml
+    uses: ./.github/workflows/reusable-deploy-rollup-dev.yml
     secrets: inherit
     with:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}

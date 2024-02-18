@@ -4,6 +4,7 @@
 
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use constants::{fee::*, parachains::*};
+use core::convert::TryInto;
 pub use currency::*;
 #[cfg(feature = "runtime-benchmarks")]
 use frame_support::traits::OriginTrait;
@@ -25,8 +26,10 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
-pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
+use mangata_support::traits::{
+	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps,
+};
+pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 pub use orml_tokens;
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
@@ -73,128 +76,14 @@ pub mod currency {
 	}
 }
 
-pub mod types {
-	use super::*;
-
-	pub type TokenId = u32;
-	pub type Balance = u128;
-	pub type Amount = i128;
-
-	// /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-	pub type Signature = MultiSignature;
-
-	// /// Some way of identifying an account on the chain. We intentionally make it equivalent
-	// /// to the public key of our transaction signing scheme.
-	pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-	// /// Index of a transaction in the chain.
-	pub type Nonce = u32;
-
-	// /// A hash of some data used by the chain.
-	pub type Hash = sp_core::H256;
-
-	// /// An index to a block.
-	pub type BlockNumber = u32;
-
-	// /// The address format for describing accounts.
-	pub type Address = MultiAddress<AccountId, ()>;
-}
 
 pub mod tokens {
 	use super::*;
-	pub const MGX_TOKEN_ID: TokenId = 0;
-	pub const RELAY_TOKEN_ID: TokenId = 4;
-	pub const KAR_TOKEN_ID: TokenId = 6;
-	pub const TUR_TOKEN_ID: TokenId = 7;
+	pub const RX_TOKEN_ID: TokenId = 0;
 
 	parameter_types! {
-		pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
-		pub const RelayTokenId: TokenId = RELAY_TOKEN_ID;
-		pub const TurTokenId: TokenId = TUR_TOKEN_ID;
+		pub const RxTokenId: TokenId = RX_TOKEN_ID;
 	}
-}
-
-/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
-/// the specifics of the runtime. They can then be made to be agnostic over specific formats
-/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
-/// to even the core data structures.
-pub mod opaque {
-	use super::*;
-	use sp_runtime::{
-		generic,
-		traits::{BlakeTwo256, Hash as HashT},
-	};
-
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-	/// Opaque block header type.
-	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-	/// Opaque block identifier type.
-	pub type BlockId = generic::BlockId<Block>;
-	/// Opaque block hash type.
-	pub type Hash = <BlakeTwo256 as HashT>::Output;
-}
-
-pub mod runtime_types {
-	use super::*;
-
-	pub type SignedExtra<Runtime> = (
-		frame_system::CheckSpecVersion<Runtime>,
-		frame_system::CheckTxVersion<Runtime>,
-		frame_system::CheckGenesis<Runtime>,
-		frame_system::CheckEra<Runtime>,
-		frame_system::CheckNonce<Runtime>,
-		frame_system::CheckWeight<Runtime>,
-		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
-	);
-
-	pub type SignedPayload<Runtime, RuntimeCall> =
-		generic::SignedPayload<RuntimeCall, SignedExtra<Runtime>>;
-	pub type UncheckedExtrinsic<Runtime, RuntimeCall> =
-		generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra<Runtime>>;
-	pub type CheckedExtrinsic<Runtime, RuntimeCall> =
-		generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra<Runtime>>;
-	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-	pub type Block<Runtime, RuntimeCall> =
-		generic::Block<Header, UncheckedExtrinsic<Runtime, RuntimeCall>>;
-	pub type SignedBlock<Runtime, RuntimeCall> = generic::SignedBlock<Block<Runtime, RuntimeCall>>;
-	pub type BlockId<Runtime, RuntimeCall> = generic::BlockId<Block<Runtime, RuntimeCall>>;
-
-	pub type OpaqueBlock = generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
-	pub type OpaqueBlockId = generic::BlockId<OpaqueBlock>;
-}
-
-pub mod consts {
-	use super::*;
-	/// This determines the average expected block time that we are targeting.
-	/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
-	/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
-	/// up by `pallet_aura` to implement `fn slot_duration()`.
-	///
-	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 12000;
-
-	// Time is measured by number of blocks.
-	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-	pub const HOURS: BlockNumber = MINUTES * 60;
-	pub const DAYS: BlockNumber = HOURS * 24;
-
-	// Unit = the base number of indivisible units for balance
-	pub const UNIT: Balance = 1_000_000_000_000_000_000;
-	pub const MILLIUNIT: Balance = 1_000_000_000_000_000;
-	pub const MICROUNIT: Balance = 1_000_000_000_000;
-
-	/// We allow for 0.5 of a second of compute with a 12 second average block time.
-	/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
-	/// so there is room for new extrinsics in the next block
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-		WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
-		polkadot_primitives::v5::MAX_POV_SIZE as u64,
-	);
-
-	/// The existential deposit. Set to 1/10 of the Connected Relay Chain.
-	pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
 }
 
 pub enum CallType {
@@ -1355,6 +1244,28 @@ where
 			#[cfg(feature = "runtime-benchmarks")]
 			fn try_successful_origin(_: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
 				Ok(T::RuntimeOrigin::root())
+			}
+		}
+
+		pub struct AssetRegistryProvider<T>(PhantomData<T>);
+		impl<T: orml_asset_registry::Config<CustomMetadata = CustomMetadata>>
+			AssetRegistryProviderTrait<T::AssetId> for AssetRegistryProvider<T>
+		{
+			fn get_l1_asset_id(l1_asset: L1Asset) -> Option<T::AssetId> {
+				orml_asset_registry::L1AssetToId::<T>::get(l1_asset)
+			}
+
+			fn create_l1_asset(l1_asset: L1Asset) -> Result<T::AssetId, DispatchError> {
+				let metadata = AssetMetadata {
+					decimals: 18_u32,
+					name: b"L1Asset".to_vec().try_into().unwrap(),
+					symbol: b"L1Asset".to_vec().try_into().unwrap(),
+					existential_deposit: Zero::zero(),
+					location: None,
+					additional: CustomMetadata { xcm: None, xyk: None },
+				};
+
+				orml_asset_registry::Pallet::<T>::do_register_l1_asset(metadata, None, l1_asset)
 			}
 		}
 	}

@@ -2,74 +2,96 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{alloc::string::String, Decode, Encode};
-pub use common_runtime::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Everything, InstanceFilter},
-	weights::{constants::RocksDbWeight, Weight},
-};
-#[cfg(any(feature = "std", test))]
-pub use frame_system::Call as SystemCall;
-use frame_system::EnsureRoot;
-use mangata_support::traits::ProofOfStakeRewardsApi;
-pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
-pub use orml_tokens;
-pub use pallet_issuance::IssuanceInfo;
-pub use pallet_sudo_mangata;
-pub use pallet_sudo_origin;
-pub use pallet_xyk;
-pub use polkadot_runtime_common::BlockHashCount;
-use sp_api::impl_runtime_apis;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, ConstBool, OpaqueMetadata};
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-use sp_runtime::{
-	create_runtime_str, impl_opaque_keys,
-	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		SignedExtension, StaticLookup,
-	},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
-};
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use sp_std::{
-	convert::{TryFrom, TryInto},
-	marker::PhantomData,
-	prelude::*,
-};
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-use static_assertions::const_assert;
-use xyk_runtime_api::RpcAssetMetadata;
-
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-mod weights;
-pub mod xcm_config;
+use pallet_grandpa::AuthorityId as GrandpaId;
+use sp_api::impl_runtime_apis;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{
+		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One, Verify,
+	},
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, MultiSignature,
+};
+use sp_std::prelude::*;
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
 
+// A few exports that help ease life for downstream crates.
+pub use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{
+		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
+		StorageInfo,
+	},
+	weights::{
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
+		},
+		IdentityFee, Weight,
+	},
+	StorageValue,
+};
+pub use frame_system::Call as SystemCall;
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_timestamp::Call as TimestampCall;
+use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
+
+/// Import the template pallet.
+pub use pallet_template;
+
+pub type TokenId = u32;
+pub type Balance = u128;
+pub type Amount = i128;
+
+/// An index to a block.
+pub type BlockNumber = u32;
+
+/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+pub type Signature = MultiSignature;
+
+/// Some way of identifying an account on the chain. We intentionally make it equivalent
+/// to the public key of our transaction signing scheme.
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+/// Index of a transaction in the chain.
+pub type Nonce = u32;
+
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
+
+/// The address format for describing accounts.
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
-pub type Header = runtime_types::Header;
+pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
-pub type Block = runtime_types::Block<Runtime, RuntimeCall>;
-/// A Block signed with a Justification
-pub type SignedBlock = runtime_types::SignedBlock<Runtime, RuntimeCall>;
-/// BlockId type as expected by this runtime.
-pub type BlockId = runtime_types::BlockId<Runtime, RuntimeCall>;
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = runtime_types::SignedExtra<Runtime>;
-/// The payload being signed in transactions.
-pub type SignedPayload = runtime_types::SignedPayload<Runtime, RuntimeCall>;
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, RuntimeCall>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
+pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
+);
 
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -77,10 +99,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	Migrations,
 >;
-
-type Migrations = ();
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -88,31 +107,65 @@ type Migrations = ();
 /// to even the core data structures.
 pub mod opaque {
 	use super::*;
-	/// Opaque block header type.
-	pub type Header = runtime_types::Header;
-	/// Opaque block type.
-	pub type Block = runtime_types::OpaqueBlock;
-	/// Opaque block identifier type.
-	pub type BlockId = runtime_types::OpaqueBlockId;
-}
+	use sp_runtime::{
+		generic,
+		traits::{BlakeTwo256, Hash as HashT},
+	};
 
-impl_opaque_keys! {
-	pub struct SessionKeys {
-		pub aura: Aura,
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+	/// Opaque block header type.
+	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block identifier type.
+	pub type BlockId = generic::BlockId<Block>;
+	/// Opaque block hash type.
+	pub type Hash = <BlakeTwo256 as HashT>::Output;
+
+	impl_opaque_keys! {
+		pub struct SessionKeys {
+			pub aura: Aura,
+			pub grandpa: Grandpa,
+		}
 	}
 }
 
+// To learn more about runtime versioning, see:
+// https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("mangata-parachain"),
-	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 15,
-	spec_version: 003400,
-	impl_version: 0,
+	spec_name: create_runtime_str!("rollup-chain"),
+	impl_name: create_runtime_str!("rollup-chain"),
+	authoring_version: 1,
+	// The version of the runtime specification. A full node will not attempt to use its native
+	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
+	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
+	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
+	//   the compatible custom types.
+	spec_version: 100,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003400,
-	state_version: 0,
+	transaction_version: 1,
+	state_version: 1,
 };
+
+/// This determines the average expected block time that we are targeting.
+/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
+/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
+/// up by `pallet_aura` to implement `fn slot_duration()`.
+///
+/// Change this to adjust the block time.
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+
+// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+//       Attempting to do so will brick block production.
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+// Time is measured by number of blocks.
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+pub const HOURS: BlockNumber = MINUTES * 60;
+pub const DAYS: BlockNumber = HOURS * 24;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -120,67 +173,109 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
+/// This is used to limit the maximal weight of a single extrinsic.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time, with maximum proof size.
+/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
+/// so there is room for new extrinsics in the next block
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND, u64::MAX);
+
 parameter_types! {
+	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
+	/// We allow for 2 seconds of compute with a 6 second average block time.
+	pub BlockWeights: frame_system::limits::BlockWeights = BlockWeights::builder()
+		.base_block(weights::VerBlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(consts::MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have some extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				consts::MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
+	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
+		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub const SS58Prefix: u8 = 42;
+}
+
+pub const RX_TOKEN_ID: TokenId = 0;
+
+parameter_types! {
+	pub const RxTokenId: TokenId = RX_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
-use common_runtime::config as cfg;
-
+mod runtime_config;
+use runtime_config as cfg;
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = frame_support::traits::Everything;
+	/// The block type for the runtime.
+	type Block = Block;
 	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = cfg::frame_system::RuntimeBlockWeights;
+	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
-	type BlockLength = cfg::frame_system::RuntimeBlockLength;
-	/// The ubiquitous origin type.
-	type RuntimeOrigin = RuntimeOrigin;
+	type BlockLength = BlockLength;
+	/// The identifier used to distinguish between accounts.
+	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
-	/// The index type for storing how many extrinsics an account has signed.
+	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
+	type Lookup = AccountIdLookup<AccountId, ()>;
+	/// The type for storing how many extrinsics an account has signed.
 	type Nonce = Nonce;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The block type.
-	type Block = Block;
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
+	/// The ubiquitous origin type.
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
-	/// Runtime version.
+	/// Version of the runtime.
 	type Version = Version;
-	/// Converts a module to an index of this module in the runtime.
+	/// Converts a module to the index of the module in `construct_runtime!`.
+	///
+	/// This type is being generated by `construct_runtime!`.
 	type PalletInfo = PalletInfo;
-	/// The data to be stored in an account.
-	type AccountData = ();
 	/// What to do if a new account is created.
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
+	/// The data to be stored in an account.
+	type AccountData = ();
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = cfg::frame_system::SS58Prefix;
-	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	/// The maximum number of consumers allowed on a single account.
-	type MaxConsumers = cfg::frame_system::MaxConsumers;
+	type SS58Prefix = SS58Prefix;
+	/// The set code logic, just the default since we're not a parachain.
+	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = cfg::pallet_timestamp::MinimumPeriod;
+	type OnTimestampSet = Aura;
+	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = weights::pallet_timestamp_weights::ModuleWeight<Runtime>;
 }
 
@@ -191,7 +286,7 @@ impl pallet_authorship::Config for Runtime {
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = cfg::pallet_treasury::TreasuryPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, RxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
@@ -303,6 +398,7 @@ impl pallet_utility_mangata::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
+
 
 use cfg::pallet_transaction_payment_mangata::{
 	FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
@@ -421,14 +517,11 @@ impl ExtendedCall for RuntimeCall {
 	}
 }
 
-pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
+
+pub type OnChargeTransactionHandler<T> = OneCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,
-	tokens::MgxTokenId,
-	tokens::RelayTokenId,
-	tokens::TurTokenId,
-	frame_support::traits::ConstU128<{ common_runtime::constants::fee::RELAY_MGX_SCALE_FACTOR }>,
-	frame_support::traits::ConstU128<{ common_runtime::constants::fee::TUR_MGR_SCALE_FACTOR }>,
+	tokens::RxTokenId,
 	Foo<T>,
 >;
 
@@ -460,23 +553,6 @@ impl pallet_fee_lock::Config for Runtime {
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
 
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = Maintenance;
-	type OnSystemEvent = ();
-	type SelfParaId = ParachainInfo;
-	type DmpMessageHandler = DmpQueue;
-	type ReservedDmpWeight = cfg::cumulus_pallet_parachain_system::ReservedDmpWeight;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = cfg::cumulus_pallet_parachain_system::ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
-}
-
-impl parachain_info::Config for Runtime {}
-
-impl cumulus_pallet_aura_ext::Config for Runtime {}
-
 impl pallet_session::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
@@ -496,6 +572,18 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+}
+
+impl pallet_grandpa::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = ();
+	type MaxAuthorities = MaxAuthorities;
+	type MaxNominators = ConstU32<0>;
+	type MaxSetIdSessionEntries = ConstU64<0>;
+
+	type KeyOwnerProof = sp_core::Void;
+	type EquivocationReportSystem = ();
 }
 
 impl pallet_sudo_mangata::Config for Runtime {
@@ -551,11 +639,12 @@ impl parachain_staking::Config for Runtime {
 	type MinCollatorStk = cfg::parachain_staking::MinCollatorStk;
 	type MinCandidateStk = cfg::parachain_staking::MinCandidateStk;
 	type MinDelegation = cfg::parachain_staking::MinDelegatorStk;
-	type NativeTokenId = tokens::MgxTokenId;
+	type NativeTokenId = RxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
+	type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -642,14 +731,6 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
 }
 
-impl orml_unknown_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
-
-impl orml_xcm::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type SovereignOrigin = EnsureRoot<AccountId>;
-}
 
 impl orml_asset_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -727,7 +808,6 @@ construct_runtime!(
 	{
 		// System support stuff.
 		System: frame_system = 0,
-		ParachainSystem: cumulus_pallet_parachain_system = 1,
 		Timestamp: pallet_timestamp = 2,
 		ParachainInfo: parachain_info = 3,
 		Utility: pallet_utility_mangata = 4,
@@ -765,18 +845,8 @@ construct_runtime!(
 		ParachainStaking: parachain_staking = 31,
 		Session: pallet_session = 32,
 		Aura: pallet_aura = 33,
-		AuraExt: cumulus_pallet_aura_ext = 34,
+		Grandpa: pallet_grandpa = 34,
 
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
-		PolkadotXcm: pallet_xcm = 41,
-		CumulusXcm: cumulus_pallet_xcm = 42,
-		DmpQueue: cumulus_pallet_dmp_queue = 43,
-
-		// ORML XCM
-		XTokens: orml_xtokens = 50,
-		UnknownTokens: orml_unknown_tokens = 51,
-		OrmlXcm: orml_xcm = 52,
 		AssetRegistry: orml_asset_registry = 53,
 
 		// Governance stuff
@@ -796,7 +866,7 @@ extern crate frame_benchmarking;
 mod benches {
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
-		[pallet_session, SessionBench::<Runtime>]
+		[pallet_session, Session]
 		[pallet_timestamp, Timestamp]
 		[orml_asset_registry, AssetRegistry]
 		[orml_tokens, Tokens]
@@ -814,12 +884,8 @@ mod benches {
 		[pallet_proof_of_stake, ProofOfStake]
 	);
 }
-use codec::alloc::string::ToString;
-
-use frame_support::dispatch::GetDispatchInfo;
 
 impl_runtime_apis! {
-
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
 		fn get_eip712_sign_data(call: Vec<u8>) -> String{
 			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
@@ -1156,23 +1222,13 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-		}
-
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().into_inner()
-		}
-	}
-
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
 		}
 
 		fn execute_block(block: Block) {
-			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
+			let key = Authorship::author(&block).expect("Block should have an author aura digest");
 			Executive::execute_block_ver_impl(block, key);
 		}
 
@@ -1232,15 +1288,55 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
+		fn slot_duration() -> sp_consensus_aura::SlotDuration {
+			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+		}
+
+		fn authorities() -> Vec<AuraId> {
+			Aura::authorities().into_inner()
+		}
+	}
+
 	impl sp_session::SessionKeys<Block> for Runtime {
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+			opaque::SessionKeys::generate(seed)
 		}
 
 		fn decode_session_keys(
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
+			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+		}
+	}
+
+	impl sp_consensus_grandpa::GrandpaApi<Block> for Runtime {
+		fn grandpa_authorities() -> sp_consensus_grandpa::AuthorityList {
+			Grandpa::grandpa_authorities()
+		}
+
+		fn current_set_id() -> sp_consensus_grandpa::SetId {
+			Grandpa::current_set_id()
+		}
+
+		fn submit_report_equivocation_unsigned_extrinsic(
+			_equivocation_proof: sp_consensus_grandpa::EquivocationProof<
+				<Block as BlockT>::Hash,
+				NumberFor<Block>,
+			>,
+			_key_owner_proof: sp_consensus_grandpa::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			None
+		}
+
+		fn generate_key_ownership_proof(
+			_set_id: sp_consensus_grandpa::SetId,
+			_authority_id: GrandpaId,
+		) -> Option<sp_consensus_grandpa::OpaqueKeyOwnershipProof> {
+			// NOTE: this is the only implementation possible since we've
+			// defined our key owner proof type as a bottom type (i.e. a type
+			// with no values).
+			None
 		}
 	}
 
@@ -1271,19 +1367,78 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info(header)
+	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
+		for Runtime
+	{
+		fn query_call_info(
+			call: RuntimeCall,
+			len: u32,
+		) -> pallet_transaction_payment_mangata::RuntimeDispatchInfo<Balance> {
+			TransactionPayment::query_call_info(call, len)
+		}
+		fn query_call_fee_details(
+			call: RuntimeCall,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_call_fee_details(call, len)
+		}
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+			list_benchmarks!(list, extra);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			(list, storage_info)
+		}
+
+		fn dispatch_benchmark(
+			config: frame_benchmarking::BenchmarkConfig
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+			use sp_storage::TrackedStorageKey;
+			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
+
+			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
+
+			use frame_support::traits::WhitelistedStorageKeys;
+			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
+
+			let mut batches = Vec::<BenchmarkBatch>::new();
+			let params = (&config, &whitelist);
+			add_benchmarks!(params, batches);
+
+			Ok(batches)
 		}
 	}
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade(_checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
+		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
+			// TODO: Maybe checks should be overridden with `frame_try_runtime::UpgradeCheckSelect::All`
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade(frame_try_runtime::UpgradeCheckSelect::All).unwrap();
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, cfg::frame_system::RuntimeBlockWeights::get().max_block)
 		}
 
@@ -1302,76 +1457,688 @@ impl_runtime_apis! {
 			);
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here.
-			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<frame_benchmarking::BenchmarkList>,
-			Vec<frame_support::traits::StorageInfo>,
-		) {
-			use frame_benchmarking::{Benchmarking, BenchmarkList};
-			use frame_support::traits::StorageInfoTrait;
-			use frame_system_benchmarking::Pallet as SystemBench;
-			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
-
-			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmarks!(list, extra);
-
-			let storage_info = AllPalletsWithSystem::storage_info();
-
-			return (list, storage_info)
-		}
-
-		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, BenchmarkError};
-			use sp_storage::TrackedStorageKey;
-
-			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {
-				fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
-					ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
-					Ok(())
-				}
-
-				fn verify_set_code() {
-					System::assert_last_event(cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into());
-				}
-			}
-
-			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
-			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
-
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
-
-			let mut batches = Vec::<BenchmarkBatch>::new();
-			let params = (&config, &whitelist);
-
-			add_benchmarks!(params, batches);
-
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-			Ok(batches)
+			Executive::try_execute_block(block, state_root_check, signature_check, select).expect("execute-block failed")
 		}
 	}
 }
 
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
+parameter_types! {
+	pub const OperationalFeeMultiplier: u8 = 5;
+	pub const TransactionByteFee: Balance = 5 * consts::MILLIUNIT;
+pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
+}
+
+pub type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+pub type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
+
+pub type ORMLCurrencyAdapterNegativeImbalance<Runtime> =
+	<::orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
+		<Runtime as ::frame_system::Config>::AccountId,
+	>>::NegativeImbalance;
+
+pub trait OnMultiTokenUnbalanced<
+	TokenIdType,
+	Imbalance: ::frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenIdType>,
+>
+{
+	/// Handler for some imbalances. The different imbalances might have different origins or
+	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
+	/// of them. Infallible.
+	fn on_unbalanceds<B>(token_id: TokenIdType, amounts: impl Iterator<Item = Imbalance>)
+	where
+		Imbalance: ::frame_support::traits::Imbalance<B>,
+	{
+		Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
+	}
+
+	/// Handler for some imbalance. Infallible.
+	fn on_unbalanced(amount: Imbalance) {
+		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+	}
+
+	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
+	/// `on_unbalanced`.
+	fn on_nonzero_unbalanced(amount: Imbalance) {
+		drop(amount);
+	}
+}
+
+pub struct ToAuthor<Runtime>(PhantomData<Runtime>);
+impl<T: ::orml_tokens::Config + ::pallet_authorship::Config>
+	OnMultiTokenUnbalanced<T::CurrencyId, ORMLCurrencyAdapterNegativeImbalance<T>> for ToAuthor<T>
+{
+	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance<T>) {
+		if let Some(author) = ::pallet_authorship::Pallet::<T>::author() {
+			<::orml_tokens::MultiTokenCurrencyAdapter<T> as MultiTokenCurrency<
+				<T as ::frame_system::Config>::AccountId,
+			>>::resolve_creating(amount.0, &author, amount);
+		}
+	}
+}
+
+#[derive(Encode, Decode, TypeInfo)]
+pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
+	Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
+	FeeLock,
+}
+
+pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
+impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
+where
+	T: pallet_transaction_payment_mangata::Config
+		+ pallet_xyk::Config<Currency = C>
+		+ pallet_fee_lock::Config<Tokens = C>,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+	>,
+	C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
+	OCA: OnChargeTransaction<
+		T,
+		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+		Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+	>,
+	OFLA: FeeLockTriggerTrait<
+		T::AccountId,
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
+	>,
+	// T: frame_system::Config<RuntimeCall = RuntimeCall>,
+	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+	sp_runtime::AccountId32: From<T::AccountId>,
+{
+	pub fn handle_sell_asset(
+		who: &T::AccountId,
+		fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+		sold_asset_id: TokenId,
+		sold_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		min_amount_out: Balance,
+	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+		if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
+			fee_lock_metadata.is_whitelisted(bought_asset_id)
+		{
+			let (_, _, _, _, _, bought_asset_amount) =
+				<pallet_xyk::Pallet<T> as PreValidateSwaps<
+					T::AccountId,
+					Balance,
+					TokenId,
+				>>::pre_validate_sell_asset(
+					&who.clone(),
+					sold_asset_id,
+					bought_asset_id,
+					sold_asset_amount,
+					min_amount_out,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					)
+				})?;
+			if Self::is_high_value_swap(
+				&fee_lock_metadata,
+				sold_asset_id,
+				sold_asset_amount,
+			) || Self::is_high_value_swap(
+				&fee_lock_metadata,
+				bought_asset_id,
+				bought_asset_amount,
+			) {
+				let _ = OFLA::unlock_fee(who);
+			} else {
+				OFLA::process_fee_lock(who).map_err(|_| {
+					TransactionValidityError::Invalid(
+						InvalidTransaction::ProcessFeeLock.into(),
+					)
+				})?;
+			}
+		} else {
+			OFLA::process_fee_lock(who).map_err(|_| {
+				TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+			})?;
+		}
+		Ok(Some(LiquidityInfoEnum::FeeLock))
+	}
+
+	pub fn is_high_value_swap(
+		fee_lock_metadata: &pallet_fee_lock::FeeLockMetadataInfo<T>,
+		asset_id: u32,
+		asset_amount: u128,
+	) -> bool {
+		if let (true, Some(valuation)) = (
+			fee_lock_metadata.is_whitelisted(asset_id),
+			OFLA::get_swap_valuation_for_token(asset_id, asset_amount),
+		) {
+			valuation >= fee_lock_metadata.swap_value_threshold
+		} else {
+			false
+		}
+	}
+
+	pub fn handle_buy_asset(
+		who: &T::AccountId,
+		fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+		sold_asset_id: TokenId,
+		bought_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		max_amount_in: Balance,
+	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+		if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
+			fee_lock_metadata.is_whitelisted(bought_asset_id)
+		{
+			let (_, _, _, _, _, sold_asset_amount) =
+				<pallet_xyk::Pallet<T> as PreValidateSwaps<
+					T::AccountId,
+					Balance,
+					TokenId,
+				>>::pre_validate_buy_asset(
+					&who.clone(),
+					sold_asset_id,
+					bought_asset_id,
+					bought_asset_amount,
+					max_amount_in,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					)
+				})?;
+			if Self::is_high_value_swap(
+				&fee_lock_metadata,
+				sold_asset_id,
+				sold_asset_amount,
+			) || Self::is_high_value_swap(
+				&fee_lock_metadata,
+				bought_asset_id,
+				bought_asset_amount,
+			) {
+				let _ = OFLA::unlock_fee(who);
+			} else {
+				OFLA::process_fee_lock(who).map_err(|_| {
+					TransactionValidityError::Invalid(
+						InvalidTransaction::ProcessFeeLock.into(),
+					)
+				})?;
+			}
+		} else {
+			// "swap on non-curated token" branch
+			OFLA::process_fee_lock(who).map_err(|_| {
+				TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+			})?;
+		}
+		Ok(Some(LiquidityInfoEnum::FeeLock))
+	}
+
+	pub fn handle_multiswap_buy_asset(
+		who: &T::AccountId,
+		_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+		swap_token_list: Vec<TokenId>,
+		bought_asset_amount: Balance,
+		max_amount_in: Balance,
+	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+		// ensure swap cannot fail
+		// This is to ensure that xyk swap fee is always charged
+		// We also ensure that the user has enough funds to transact
+		let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps<
+			T::AccountId,
+			Balance,
+			TokenId,
+		>>::pre_validate_multiswap_buy_asset(
+			&who.clone(),
+			swap_token_list,
+			bought_asset_amount,
+			max_amount_in,
+		)
+		.map_err(|_| {
+			TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
+		})?;
+
+		// This is the "low value swap on curated token" branch
+		OFLA::process_fee_lock(who).map_err(|_| {
+			TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+		})?;
+		Ok(Some(LiquidityInfoEnum::FeeLock))
+	}
+
+	pub fn handle_multiswap_sell_asset(
+		who: &<T>::AccountId,
+		_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Balance,
+		min_amount_out: Balance,
+	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+		// ensure swap cannot fail
+		// This is to ensure that xyk swap fee is always charged
+		// We also ensure that the user has enough funds to transact
+		let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps<
+			T::AccountId,
+			Balance,
+			TokenId,
+		>>::pre_validate_multiswap_sell_asset(
+			&who.clone(),
+			swap_token_list.clone(),
+			sold_asset_amount,
+			min_amount_out,
+		)
+		.map_err(|_| {
+			TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
+		})?;
+
+		// This is the "low value swap on curated token" branch
+		OFLA::process_fee_lock(who).map_err(|_| {
+			TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+		})?;
+		Ok(Some(LiquidityInfoEnum::FeeLock))
+	}
+}
+
+const SINGLE_HOP_MULTISWAP: usize = 2;
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
+
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
+where
+	T: pallet_transaction_payment_mangata::Config
+		+ pallet_xyk::Config<Currency = C>
+		+ pallet_fee_lock::Config<Tokens = C>,
+	<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+	>,
+	C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+	OCA: OnChargeTransaction<
+		T,
+		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+		Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+	>,
+	OFLA: FeeLockTriggerTrait<
+		T::AccountId,
+		<C as MultiTokenCurrency<T::AccountId>>::Balance,
+		<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
+	>,
+	// T: frame_system::Config<RuntimeCall = RuntimeCall>,
+	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+	Balance: From<<C as MultiTokenCurrency<T::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<T::AccountId>,
+{
+	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
+	type Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		call: &T::RuntimeCall,
+		info: &DispatchInfoOf<T::RuntimeCall>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		let call_type: crate::CallType = (*call).clone().into();
+
+		match call_type {
+			crate::CallType::MultiSell { .. } |
+			crate::CallType::MultiBuy { .. } |
+			crate::CallType::AtomicBuy { .. } |
+			crate::CallType::AtomicSell { .. } => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+			},
+			_ => {},
+		};
+
+		// call.is_unlock_fee();
+
+		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+		// Also ugly implementation to keep it maleable for now
+		match (call_type, pallet_fee_lock::FeeLockMetadata::<T>::get()) {
+			(
+				crate::CallType::AtomicSell {
+					sold_asset_id,
+					sold_asset_amount,
+					bought_asset_id,
+					min_amount_out,
+				},
+				Some(fee_lock_metadata),
+			) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
+				who,
+				fee_lock_metadata,
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
+			),
+			(
+				crate::CallType::AtomicBuy {
+					sold_asset_id,
+					bought_asset_amount,
+					bought_asset_id,
+					max_amount_in,
+				},
+				Some(fee_lock_metadata),
+			) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
+				who,
+				fee_lock_metadata,
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
+			),
+			(
+				crate::CallType::MultiBuy {
+					swap_token_list,
+					bought_asset_amount,
+					max_amount_in,
+				},
+				Some(fee_lock_metadata),
+			) if swap_token_list.len() == SINGLE_HOP_MULTISWAP => {
+				let sold_asset_id =
+					swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					))?;
+				let bought_asset_id =
+					swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					))?;
+				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
+					who,
+					fee_lock_metadata,
+					*sold_asset_id,
+					bought_asset_amount,
+					*bought_asset_id,
+					max_amount_in,
+				)
+			},
+			(
+				crate::CallType::MultiBuy {
+					swap_token_list,
+					bought_asset_amount,
+					max_amount_in,
+				},
+				Some(fee_lock_metadata),
+			) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_buy_asset(
+				who,
+				fee_lock_metadata,
+				swap_token_list.clone(),
+				bought_asset_amount,
+				max_amount_in,
+			),
+			(
+				crate::CallType::MultiSell {
+					swap_token_list,
+					sold_asset_amount,
+					min_amount_out,
+				},
+				Some(fee_lock_metadata),
+			) if swap_token_list.len() == SINGLE_HOP_MULTISWAP => {
+				let sold_asset_id =
+					swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					))?;
+				let bought_asset_id =
+					swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
+						InvalidTransaction::SwapPrevalidation.into(),
+					))?;
+				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
+					who,
+					fee_lock_metadata,
+					*sold_asset_id,
+					sold_asset_amount,
+					*bought_asset_id,
+					min_amount_out,
+				)
+			},
+			(
+				crate::CallType::MultiSell {
+					swap_token_list,
+					sold_asset_amount,
+					min_amount_out,
+				},
+				Some(fee_lock_metadata),
+			) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_sell_asset(
+				who,
+				fee_lock_metadata,
+				swap_token_list.clone(),
+				sold_asset_amount,
+				min_amount_out,
+			),
+			(crate::CallType::UnlockFee, _) => {
+				let imb = C::withdraw(
+					tokens::MgxTokenId::get().into(),
+					who,
+					tip,
+					WithdrawReasons::TIP,
+					ExistenceRequirement::KeepAlive,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+				})?;
+
+				OU::on_unbalanceds(tokens::MgxTokenId::get().into(), Some(imb).into_iter());
+				OFLA::can_unlock_fee(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
+				})?;
+				Ok(Some(LiquidityInfoEnum::FeeLock))
+			},
+			_ => OCA::withdraw_fee(who, call, info, fee, tip),
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	///
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+		post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		match already_withdrawn {
+			Some(LiquidityInfoEnum::Imbalance(_)) => OCA::correct_and_deposit_fee(
+				who,
+				dispatch_info,
+				post_info,
+				corrected_fee,
+				tip,
+				already_withdrawn,
+			),
+			Some(LiquidityInfoEnum::FeeLock) => Ok(()),
+			None => Ok(()),
+		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct OneCurrencyOnChargeAdapter<C, OU, T1, TE>(
+	PhantomData<(C, OU, T1, TE)>,
+);
+
+type NegativeImbalanceOf<C, T> =
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+pub trait TriggerEvent<AccountIdT> {
+	fn trigger(who: AccountIdT, fee: u128, tip: u128);
+}
+
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OU, T1, TE> OnChargeTransaction<T>
+for OneCurrencyOnChargeAdapter<C, OU, T1, TE>
+where
+T: pallet_transaction_payment_mangata::Config,
+// TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
+TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
+// <<T as pallet_transaction_payment_mangata::Config>::OnChargeTransaction as OnChargeTransaction<T>>::Balance : From<u128>,
+T::LengthToFee: frame_support::weights::WeightToFee<
+Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+>,
+C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+C::PositiveImbalance: Imbalance<
+<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+Opposite = C::NegativeImbalance,
+>,
+C::NegativeImbalance: Imbalance<
+<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+Opposite = C::PositiveImbalance,
+>,
+OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
+scale_info::TypeInfo,
+T1: Get<C::CurrencyId>,
+// Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+// Balance: From<TokenId>,
+// sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+{
+type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
+type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+/// Withdraw the predicted fee from the transaction origin.
+///
+/// Note: The `fee` already includes the `tip`.
+fn withdraw_fee(
+who: &T::AccountId,
+_call: &T::RuntimeCall,
+_info: &DispatchInfoOf<T::RuntimeCall>,
+fee: Self::Balance,
+tip: Self::Balance,
+) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+if fee.is_zero() {
+	return Ok(None)
+}
+
+let withdraw_reason = if tip.is_zero() {
+	WithdrawReasons::TRANSACTION_PAYMENT
+} else {
+	WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+};
+
+match C::withdraw(
+	T1::get(),
+	who,
+	fee,
+	withdraw_reason,
+	ExistenceRequirement::KeepAlive,
+) {
+	Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
+	// TODO make sure atleast 1 planck KSM is charged
+	Err(_) => Err(InvalidTransaction::Payment.into()),
+}
+}
+
+/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+/// Since the predicted fee might have been too high, parts of the fee may
+/// be refunded.
+///
+/// Note: The `corrected_fee` already includes the `tip`.
+fn correct_and_deposit_fee(
+who: &T::AccountId,
+_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+corrected_fee: Self::Balance,
+tip: Self::Balance,
+already_withdrawn: Self::LiquidityInfo,
+) -> Result<(), TransactionValidityError> {
+if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
+	// Calculate how much refund we should return
+	let refund_amount = paid.peek().saturating_sub(corrected_fee);
+	// refund to the the account that paid the fees. If this fails, the
+	// account might have dropped below the existential balance. In
+	// that case we don't refund anything.
+	let refund_imbalance = C::deposit_into_existing(token_id, &who, refund_amount)
+		.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id));
+	// merge the imbalance caused by paying the fees and refunding parts of it again.
+	let adjusted_paid = paid
+		.offset(refund_imbalance)
+		.same()
+		.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+	// Call someone else to handle the imbalance (fee and tip separately)
+	let (tip_imb, fee) = adjusted_paid.split(tip);
+	OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
+
+	TE::trigger(who.clone(), corrected_fee.into(), tip.into());
+}
+Ok(())
+}
+}
+
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		let p = base_tx_in_rx();
+		let q = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
+		smallvec![WeightToFeeCoefficient {
+			degree: 1,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
+	}
+}
+
+pub fn base_tx_in_rx() -> Balance {
+	UNIT
+}
+
+pub enum CallType {
+	AtomicSell {
+		sold_asset_id: TokenId,
+		sold_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		min_amount_out: Balance,
+	},
+	AtomicBuy {
+		sold_asset_id: TokenId,
+		bought_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		max_amount_in: Balance,
+	},
+	MultiSell {
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Balance,
+		min_amount_out: Balance,
+	},
+	MultiBuy {
+		swap_token_list: Vec<TokenId>,
+		bought_asset_amount: Balance,
+		max_amount_in: Balance,
+	},
+	CompoundRewards,
+	ProvideLiquidityWithConversion,
+	UnlockFee,
+	UtilityInnerCall,
+	Other,
 }

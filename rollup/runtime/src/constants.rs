@@ -1,5 +1,5 @@
 pub mod fee {
-	use crate::{consts::UNIT, weights::VerExtrinsicBaseWeight, Balance};
+	use crate::{runtime_config::consts::UNIT, weights::VerExtrinsicBaseWeight, Balance};
 	use frame_support::weights::{
 		constants::WEIGHT_REF_TIME_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,

@@ -6,34 +6,44 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::{alloc::string::String, Decode, Encode};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, impl_opaque_keys,
+	create_runtime_str, impl_opaque_keys, generic,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		SignedExtension, StaticLookup,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, NumberFor,
+		SignedExtension, StaticLookup, DispatchInfoOf
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
-	marker::PhantomData,
+	marker::PhantomData, cmp::Ordering,
 	prelude::*,
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+use frame_system::EnsureRoot;
+use mangata_support::traits::ProofOfStakeRewardsApi;
+pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
+pub use orml_tokens;
+pub use pallet_issuance::IssuanceInfo;
+pub use pallet_sudo_mangata;
+pub use pallet_sudo_origin;
+pub use pallet_xyk;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
-		StorageInfo,
+		StorageInfo, Everything, InstanceFilter
 	},
 	weights::{
 		constants::{
@@ -44,13 +54,13 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
-pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
+pub use runtime_config::*;
 
 mod weights;
 
@@ -133,6 +143,9 @@ pub fn native_version() -> NativeVersion {
 // Configure FRAME pallets to include in runtime.
 mod runtime_config;
 use runtime_config::config as cfg;
+pub use runtime_config::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
+
+mod constants;
 
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
@@ -160,11 +173,11 @@ impl frame_system::Config for Runtime {
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
-	type BlockHashCount = BlockHashCount;
+	type BlockHashCount = cfg::frame_system::BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// Runtime version.
-	type Version = Version;
+	type Version = cfg::frame_system::Version;
 	/// Converts a module to an index of this module in the runtime.
 	type PalletInfo = PalletInfo;
 	/// The data to be stored in an account.
@@ -178,7 +191,7 @@ impl frame_system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = cfg::frame_system::SS58Prefix;
 	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+	type OnSetCode = ();
 	/// The maximum number of consumers allowed on a single account.
 	type MaxConsumers = cfg::frame_system::MaxConsumers;
 }
@@ -198,7 +211,7 @@ impl pallet_authorship::Config for Runtime {
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = cfg::pallet_treasury::TreasuryPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
@@ -254,7 +267,7 @@ impl pallet_xyk::Config for Runtime {
 	type MaintenanceStatusProvider = Maintenance;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = tokens::MgxTokenId;
+	type NativeCurrencyId = tokens::RxTokenId;
 	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type BnbTreasurySubAccDerive = cfg::pallet_xyk::BnbTreasurySubAccDerive;
 	type PoolFeePercentage = cfg::pallet_xyk::PoolFeePercentage;
@@ -272,7 +285,7 @@ impl pallet_xyk::Config for Runtime {
 impl pallet_proof_of_stake::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
-	type NativeCurrencyId = tokens::MgxTokenId;
+	type NativeCurrencyId = tokens::RxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
@@ -312,7 +325,7 @@ impl pallet_utility_mangata::Config for Runtime {
 }
 
 use cfg::pallet_transaction_payment_mangata::{
-	FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
+	FeeHelpers, OnChargeHandler, OneCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
 };
 
 // TODO: renaming foo causes compiler error
@@ -428,14 +441,10 @@ impl ExtendedCall for RuntimeCall {
 	}
 }
 
-pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
+pub type OnChargeTransactionHandler<T> = OneCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,
-	tokens::MgxTokenId,
-	tokens::RelayTokenId,
-	tokens::TurTokenId,
-	frame_support::traits::ConstU128<{ common_runtime::constants::fee::RELAY_MGX_SCALE_FACTOR }>,
-	frame_support::traits::ConstU128<{ common_runtime::constants::fee::TUR_MGR_SCALE_FACTOR }>,
+	tokens::RxTokenId,
 	Foo<T>,
 >;
 
@@ -448,7 +457,7 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		FeeLock,
 	>;
 	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
-	type WeightToFee = common_runtime::constants::fee::WeightToFee;
+	type WeightToFee = constants::fee::WeightToFee;
 	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
 	type OperationalFeeMultiplier =
 		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
@@ -463,7 +472,7 @@ impl pallet_fee_lock::Config for Runtime {
 	type MaxCuratedTokens = cfg::pallet_fee_lock::MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type PoolReservesProvider = Xyk;
-	type NativeTokenId = tokens::MgxTokenId;
+	type NativeTokenId = tokens::RxTokenId;
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
 
@@ -556,7 +565,7 @@ impl parachain_staking::Config for Runtime {
 	type MinCollatorStk = cfg::parachain_staking::MinCollatorStk;
 	type MinCandidateStk = cfg::parachain_staking::MinCandidateStk;
 	type MinDelegation = cfg::parachain_staking::MinDelegatorStk;
-	type NativeTokenId = tokens::MgxTokenId;
+	type NativeTokenId = tokens::RxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
@@ -586,7 +595,7 @@ const_assert!(
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type NativeCurrencyId = tokens::MgxTokenId;
+	type NativeCurrencyId = tokens::RxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = cfg::parachain_staking::BlocksPerRound;
 	type HistoryLimit = cfg::pallet_issuance::HistoryLimit;
@@ -625,7 +634,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type MaxInitContributors = cfg::pallet_crowdloan_rewards::MaxInitContributorsBatchSizes;
 	type MinimumReward = cfg::pallet_crowdloan_rewards::MinimumReward;
 	type RewardAddressRelayVoteThreshold = cfg::pallet_crowdloan_rewards::RelaySignaturesThreshold;
-	type NativeTokenId = tokens::MgxTokenId;
+	type NativeTokenId = tokens::RxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
@@ -641,7 +650,7 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxRelocks = cfg::MaxLocksOf<Runtime>;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = tokens::MgxTokenId;
+	type NativeCurrencyId = tokens::RxTokenId;
 	type VestingProvider = Vesting;
 	type Xyk = Xyk;
 	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
@@ -685,7 +694,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 impl pallet_proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type ProxyType = cfg::pallet_proxy::ProxyType;
 	type ProxyDepositBase = cfg::pallet_proxy::ProxyDepositBase;
 	type ProxyDepositFactor = cfg::pallet_proxy::ProxyDepositFactor;
@@ -699,7 +708,7 @@ impl pallet_proxy::Config for Runtime {
 
 impl pallet_identity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type BasicDeposit = cfg::pallet_identity::BasicDeposit;
 	type FieldDeposit = cfg::pallet_identity::FieldDeposit;
 	type SubAccountDeposit = cfg::pallet_identity::SubAccountDeposit;
@@ -858,10 +867,7 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			System::read_events_no_consensus()
-				.any(|record|
-					matches!(record.event,
-						RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
+			Executive::runtime_upgraded_peek()
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1141,12 +1147,13 @@ impl_runtime_apis! {
 	}
 
 	impl sp_api::Core<Block> for Runtime {
+		use sp_runtime::sp_application_crypto::ByteArray;
 		fn version() -> RuntimeVersion {
 			VERSION
 		}
 
 		fn execute_block(block: Block) {
-			let key = Authorship::author(&block).expect("Block should have an author aura digest");
+			let key = Authorship::author().expect("Block should have an author aura digest").to_raw_vec();
 			Executive::execute_block_ver_impl(block, key);
 		}
 
@@ -1218,13 +1225,13 @@ impl_runtime_apis! {
 
 	impl sp_session::SessionKeys<Block> for Runtime {
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			opaque::SessionKeys::generate(seed)
+			SessionKeys::generate(seed)
 		}
 
 		fn decode_session_keys(
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 
@@ -1297,7 +1304,7 @@ impl_runtime_apis! {
 		fn query_call_fee_details(
 			call: RuntimeCall,
 			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
+		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
 			TransactionPayment::query_call_fee_details(call, len)
 		}
 		fn query_weight_to_fee(weight: Weight) -> Balance {

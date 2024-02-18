@@ -1804,23 +1804,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-primitives-core"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "polkadot-core-primitives",
- "polkadot-parachain-primitives",
- "polkadot-primitives",
- "scale-info",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "staging-xcm",
-]
-
-[[package]]
 name = "curve25519-dalek"
 version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2552,33 +2535,16 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "derive_more",
  "log",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "extrinsic-shuffler"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "derive_more",
- "log",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+ "ver-api",
 ]
 
 [[package]]
@@ -2743,7 +2709,6 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fork-tree"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -2766,66 +2731,39 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support-procedural 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-support-procedural",
+ "frame-system",
  "linregress",
  "log",
  "parity-scale-codec",
  "paste",
  "scale-info",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "static_assertions",
-]
-
-[[package]]
-name = "frame-benchmarking"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support-procedural 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "linregress",
- "log",
- "parity-scale-codec",
- "paste",
- "scale-info",
- "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-storage",
  "static_assertions",
 ]
 
 [[package]]
 name = "frame-benchmarking-cli"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "Inflector",
  "array-bytes",
  "chrono",
  "clap",
  "comfy-table",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "futures",
  "gethostname",
  "handlebars",
@@ -2847,46 +2785,45 @@ dependencies = [
  "sc-sysinfo",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-aura",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-database 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-database",
+ "sp-externalities",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-storage",
+ "sp-trie",
+ "sp-wasm-interface",
  "thiserror",
  "thousands",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "ver-api",
 ]
 
 [[package]]
 name = "frame-executive"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "aquamarine 0.1.12",
- "extrinsic-shuffler 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "extrinsic-shuffler",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "log",
  "merlin 2.0.1",
  "parity-scale-codec",
  "scale-info",
  "schnorrkel",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -2913,10 +2850,10 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
  "spinners",
  "substrate-rpc-client",
  "tokio",
@@ -2926,81 +2863,39 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "aquamarine 0.3.2",
  "bitflags 1.3.2",
  "docify",
  "environmental",
  "frame-metadata",
- "frame-support-procedural 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support-procedural",
  "impl-trait-for-tuples",
  "k256",
  "log",
  "macro_magic",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "parity-scale-codec",
  "paste",
  "scale-info",
  "serde",
  "serde_json",
  "smallvec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core-hashing-proc-macro 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-genesis-builder 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-metadata-ir 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "static_assertions",
- "tt-call",
-]
-
-[[package]]
-name = "frame-support"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "aquamarine 0.3.2",
- "bitflags 1.3.2",
- "docify",
- "environmental",
- "frame-metadata",
- "frame-support-procedural 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "impl-trait-for-tuples",
- "k256",
- "log",
- "macro_magic",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "parity-scale-codec",
- "paste",
- "scale-info",
- "serde",
- "serde_json",
- "smallvec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core-hashing-proc-macro 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-genesis-builder 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-metadata-ir 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-core-hashing-proc-macro",
+ "sp-debug-derive",
+ "sp-genesis-builder",
+ "sp-inherents",
+ "sp-io",
+ "sp-metadata-ir",
+ "sp-runtime",
+ "sp-staking",
+ "sp-state-machine",
+ "sp-std",
+ "sp-tracing",
+ "sp-weights",
  "static_assertions",
  "tt-call",
 ]
@@ -3008,31 +2903,12 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "Inflector",
  "cfg-expr",
  "derive-syn-parse",
  "expander",
- "frame-support-procedural-tools 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "itertools 0.10.5",
- "macro_magic",
- "proc-macro-warning",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "frame-support-procedural"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "Inflector",
- "cfg-expr",
- "derive-syn-parse",
- "expander",
- "frame-support-procedural-tools 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support-procedural-tools",
  "itertools 0.10.5",
  "macro_magic",
  "proc-macro-warning",
@@ -3044,21 +2920,8 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support-procedural-tools-derive 3.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "frame-support-procedural-tools"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "frame-support-procedural-tools-derive 3.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support-procedural-tools-derive",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
@@ -3068,17 +2931,6 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "frame-support-procedural-tools-derive"
-version = "3.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3088,79 +2940,54 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "cfg-if",
- "extrinsic-shuffler 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "extrinsic-shuffler",
+ "frame-support",
  "log",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "frame-system"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "cfg-if",
- "extrinsic-shuffler 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+ "sp-version",
+ "sp-weights",
 ]
 
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
 ]
 
 [[package]]
 name = "frame-try-runtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
  "parity-scale-codec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4999,49 +4826,35 @@ dependencies = [
  "sc-client-api",
  "sc-rpc-api",
  "sc-transaction-pool-api",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "ver-api",
 ]
 
 [[package]]
 name = "mangata-support"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "mangata-types",
  "parity-scale-codec",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "mangata-types"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5181,32 +4994,32 @@ version = "2.0.0"
 dependencies = [
  "array-bytes",
  "jsonrpsee",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "metamask-signature-runtime-api",
  "parity-scale-codec",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "metamask-signature-runtime-api"
 version = "2.0.0"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5624,18 +5437,18 @@ name = "orml-asset-registry"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "orml-traits",
  "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -5646,18 +5459,18 @@ name = "orml-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "orml-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5665,7 +5478,7 @@ name = "orml-traits"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
  "orml-utilities",
@@ -5673,24 +5486,10 @@ dependencies = [
  "paste",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "staging-xcm",
-]
-
-[[package]]
-name = "orml-unknown-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
-dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "orml-xcm-support",
- "parity-scale-codec",
- "scale-info",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "staging-xcm",
 ]
 
@@ -5699,63 +5498,14 @@ name = "orml-utilities"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
-]
-
-[[package]]
-name = "orml-xcm"
-version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
-dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "pallet-xcm",
- "parity-scale-codec",
- "scale-info",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "staging-xcm",
-]
-
-[[package]]
-name = "orml-xcm-support"
-version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
-dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "orml-traits",
- "parity-scale-codec",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "staging-xcm",
- "staging-xcm-executor",
-]
-
-[[package]]
-name = "orml-xtokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "log",
- "orml-traits",
- "orml-xcm-support",
- "pallet-xcm",
- "parity-scale-codec",
- "scale-info",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "staging-xcm",
- "staging-xcm-executor",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5783,96 +5533,92 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-application-crypto",
  "sp-consensus-aura",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-authorship"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-bootstrap"
 version = "0.1.0"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "lazy_static",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "mockall",
  "orml-tokens",
  "orml-traits",
  "pallet-issuance",
  "pallet-proof-of-stake",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "pallet-xyk",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "serial_test",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "test-case",
 ]
 
 [[package]]
 name = "pallet-collective-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5881,22 +5627,22 @@ version = "0.6.0"
 source = "git+https://github.com/mangata-finance/crowdloan-rewards?branch=develop#35b019518304088eebe1ff72e92130347612fb08"
 dependencies = [
  "ed25519-dalek 1.0.1",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "mangata-types",
  "orml-tokens",
  "pallet-utility",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "pallet-vesting-mangata",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -5904,14 +5650,14 @@ name = "pallet-fee-lock"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "hex-literal 0.3.4",
  "lazy_static",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
  "pallet-xyk",
@@ -5920,51 +5666,49 @@ dependencies = [
  "scale-info",
  "serde",
  "serial_test",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "test-case",
 ]
 
 [[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-application-crypto",
  "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-session",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "enumflags2",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5972,25 +5716,25 @@ name = "pallet-issuance"
 version = "2.0.0"
 dependencies = [
  "cfg-if",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "lazy_static",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -5998,14 +5742,14 @@ name = "pallet-maintenance"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "hex-literal 0.3.4",
  "lazy_static",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
@@ -6013,10 +5757,10 @@ dependencies = [
  "scale-info",
  "serde",
  "serial_test",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6024,29 +5768,29 @@ name = "pallet-multipurpose-liquidity"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "hex-literal 0.3.4",
  "lazy_static",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "parachain-staking",
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",
  "serde",
  "serial_test",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6054,23 +5798,23 @@ name = "pallet-proof-of-stake"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "hex-literal 0.3.4",
  "lazy_static",
  "libm 0.2.1",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "mockall",
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
  "pallet-issuance",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "pallet-xyk",
  "parity-scale-codec",
  "rustc-hex",
@@ -6078,65 +5822,62 @@ dependencies = [
  "serde",
  "serial_test",
  "similar-asserts",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "test-case",
 ]
 
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "impl-trait-for-tuples",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-session",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-staking",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
 name = "pallet-sudo-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6144,193 +5885,168 @@ name = "pallet-sudo-origin"
 version = "4.0.0-dev"
 dependencies = [
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
+ "sp-timestamp",
 ]
 
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-transaction-payment-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-transaction-payment-mangata-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment-mangata-rpc-runtime-api",
  "parity-scale-codec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-weights",
 ]
 
 [[package]]
 name = "pallet-transaction-payment-mangata-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "pallet-transaction-payment-mangata",
  "parity-scale-codec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-runtime",
+ "sp-weights",
 ]
 
 [[package]]
 name = "pallet-treasury"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "impl-trait-for-tuples",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-utility-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-vesting-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "pallet-vesting-mangata"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "pallet-xcm"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "bounded-collections",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "staging-xcm",
  "staging-xcm-executor",
 ]
@@ -6340,34 +6056,34 @@ name = "pallet-xyk"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-try-runtime",
  "hex-literal 0.3.4",
  "lazy_static",
  "libm 0.2.1",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-proof-of-stake",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",
  "serde",
  "serial_test",
  "similar-asserts",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "test-case",
 ]
 
@@ -6376,30 +6092,30 @@ name = "parachain-staking"
 version = "3.0.0"
 dependencies = [
  "aquamarine 0.1.12",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "itertools 0.10.5",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
  "pallet-authorship",
  "pallet-collective-mangata",
  "pallet-issuance",
  "pallet-session",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "similar-asserts",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]
@@ -6728,55 +6444,28 @@ checksum = "14e6ab3f592e6fb464fc9712d8d6e6912de6473954635fd76a589d832cffcbb0"
 [[package]]
 name = "polkadot-core-primitives"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "polkadot-parachain-primitives"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "bounded-collections",
  "derive_more",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support",
  "parity-scale-codec",
  "polkadot-core-primitives",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
-]
-
-[[package]]
-name = "polkadot-primitives"
-version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "bitvec",
- "hex-literal 0.4.1",
- "parity-scale-codec",
- "polkadot-core-primitives",
- "polkadot-parachain-primitives",
- "scale-info",
- "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-authority-discovery",
- "sp-consensus-slots 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7005,31 +6694,31 @@ name = "proof-of-stake-rpc"
 version = "2.0.0"
 dependencies = [
  "jsonrpsee",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "parity-scale-codec",
  "proof-of-stake-runtime-api",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "proof-of-stake-runtime-api"
 version = "2.0.0"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7542,9 +7231,9 @@ version = "1.0.0"
 dependencies = [
  "clap",
  "color-print",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-benchmarking-cli",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-system",
  "futures",
  "hex",
  "jsonrpsee",
@@ -7577,28 +7266,28 @@ dependencies = [
  "sc-transaction-pool-api",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
  "sp-keyring",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-keystore",
  "sp-offchain",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
  "sp-session",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-timestamp",
  "sp-transaction-pool",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-ver",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "tempfile",
  "try-runtime-cli",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "ver-api",
  "xyk-rpc",
  "xyk-runtime-api",
 ]
@@ -7607,25 +7296,21 @@ dependencies = [
 name = "rollup-runtime"
 version = "1.0.0"
 dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-benchmarking",
  "frame-executive",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
  "log",
  "mangata-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "mangata-types",
  "metamask-signature-runtime-api",
  "orml-asset-registry",
  "orml-tokens",
  "orml-traits",
- "orml-unknown-tokens",
- "orml-xcm",
- "orml-xcm-support",
- "orml-xtokens",
  "pallet-aura",
  "pallet-authorship",
  "pallet-bootstrap",
@@ -7647,7 +7332,7 @@ dependencies = [
  "pallet-transaction-payment-mangata-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility-mangata",
- "pallet-vesting-mangata 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "pallet-vesting-mangata",
  "pallet-xyk",
  "parachain-staking",
  "parity-scale-codec",
@@ -7656,25 +7341,25 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
  "sp-offchain",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
  "sp-session",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-std",
+ "sp-storage",
  "sp-transaction-pool",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-ver",
+ "sp-version",
+ "sp-weights",
  "static_assertions",
  "substrate-wasm-builder",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "ver-api",
  "xyk-runtime-api",
 ]
 
@@ -7965,18 +7650,16 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "4.1.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "log",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-wasm-interface",
  "thiserror",
 ]
 
 [[package]]
 name = "sc-basic-authorship-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "aquamarine 0.3.2",
  "futures",
@@ -7988,56 +7671,53 @@ dependencies = [
  "sc-proposer-metrics",
  "sc-telemetry",
  "sc-transaction-pool-api",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-ver",
  "substrate-prometheus-endpoint",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "ver-api",
 ]
 
 [[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "sc-block-builder-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "aquamarine 0.1.12",
- "extrinsic-shuffler 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "extrinsic-shuffler",
  "log",
  "parity-scale-codec",
  "sc-client-api",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-ver",
+ "ver-api",
 ]
 
 [[package]]
 name = "sc-chain-spec"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "memmap2",
  "sc-chain-spec-derive",
@@ -8047,16 +7727,15 @@ dependencies = [
  "sc-telemetry",
  "serde",
  "serde_json",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
 ]
 
 [[package]]
 name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -8067,7 +7746,6 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "chrono",
@@ -8091,13 +7769,13 @@ dependencies = [
  "sc-utils",
  "serde",
  "serde_json",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-core",
  "sp-keyring",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-panic-handler 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-keystore",
+ "sp-panic-handler",
+ "sp-runtime",
+ "sp-version",
  "thiserror",
  "tiny-bip39",
  "tokio",
@@ -8106,7 +7784,6 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "fnv",
  "futures",
@@ -8116,23 +7793,22 @@ dependencies = [
  "sc-executor",
  "sc-transaction-pool-api",
  "sc-utils",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-database 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-database",
+ "sp-externalities",
+ "sp-runtime",
+ "sp-state-machine",
  "sp-statement-store",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-storage",
  "substrate-prometheus-endpoint",
 ]
 
 [[package]]
 name = "sc-client-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -8146,19 +7822,18 @@ dependencies = [
  "sc-client-api",
  "sc-state-db",
  "schnellru",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-database 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-trie",
 ]
 
 [[package]]
 name = "sc-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
@@ -8170,12 +7845,12 @@ dependencies = [
  "sc-client-api",
  "sc-utils",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -8183,7 +7858,6 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
@@ -8194,17 +7868,17 @@ dependencies = [
  "sc-consensus",
  "sc-consensus-slots",
  "sc-telemetry",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-aura",
- "sp-consensus-slots 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -8212,7 +7886,6 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ahash 0.8.6",
  "array-bytes",
@@ -8237,15 +7910,15 @@ dependencies = [
  "sc-transaction-pool-api",
  "sc-utils",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -8253,7 +7926,6 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
@@ -8263,48 +7935,46 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sc-telemetry",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus-slots 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-ver",
 ]
 
 [[package]]
 name = "sc-executor"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-executor-common",
  "sc-executor-wasmtime",
  "schnellru",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-panic-handler 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-panic-handler",
+ "sp-runtime-interface",
+ "sp-trie",
+ "sp-version",
+ "sp-wasm-interface",
  "tracing",
 ]
 
 [[package]]
 name = "sc-executor-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "sc-allocator",
  "sp-maybe-compressed-blob",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-wasm-interface",
  "thiserror",
  "wasm-instrument",
 ]
@@ -8312,7 +7982,6 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -8321,15 +7990,14 @@ dependencies = [
  "rustix 0.36.17",
  "sc-allocator",
  "sc-executor-common",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime-interface",
+ "sp-wasm-interface",
  "wasmtime",
 ]
 
 [[package]]
 name = "sc-informant"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ansi_term",
  "futures",
@@ -8338,28 +8006,26 @@ dependencies = [
  "sc-client-api",
  "sc-network",
  "sc-network-common",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "sc-keystore"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "parking_lot 0.12.1",
  "serde_json",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
  "thiserror",
 ]
 
 [[package]]
 name = "sc-network"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "async-channel",
@@ -8386,10 +8052,10 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
  "unsigned-varint",
@@ -8400,7 +8066,6 @@ dependencies = [
 [[package]]
 name = "sc-network-bitswap"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-channel",
  "cid",
@@ -8411,8 +8076,8 @@ dependencies = [
  "prost-build",
  "sc-client-api",
  "sc-network",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-runtime",
  "thiserror",
  "unsigned-varint",
 ]
@@ -8420,7 +8085,6 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -8429,15 +8093,14 @@ dependencies = [
  "parity-scale-codec",
  "prost-build",
  "sc-consensus",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-consensus",
  "sp-consensus-grandpa",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "sc-network-gossip"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ahash 0.8.6",
  "futures",
@@ -8447,7 +8110,7 @@ dependencies = [
  "sc-network",
  "sc-network-common",
  "schnellru",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "tracing",
 ]
@@ -8455,7 +8118,6 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "async-channel",
@@ -8467,16 +8129,15 @@ dependencies = [
  "prost-build",
  "sc-client-api",
  "sc-network",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
  "thiserror",
 ]
 
 [[package]]
 name = "sc-network-sync"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "async-channel",
@@ -8497,12 +8158,12 @@ dependencies = [
  "sc-utils",
  "schnellru",
  "smallvec",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-grandpa",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -8510,7 +8171,6 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "futures",
@@ -8520,15 +8180,14 @@ dependencies = [
  "sc-network",
  "sc-network-common",
  "sc-utils",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-consensus",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
 ]
 
 [[package]]
 name = "sc-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "bytes",
@@ -8549,12 +8208,12 @@ dependencies = [
  "sc-network-common",
  "sc-transaction-pool-api",
  "sc-utils",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-externalities",
+ "sp-keystore",
  "sp-offchain",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
  "threadpool",
  "tracing",
 ]
@@ -8562,7 +8221,6 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -8571,7 +8229,6 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -8586,23 +8243,22 @@ dependencies = [
  "sc-transaction-pool-api",
  "sc-utils",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-keystore",
  "sp-offchain",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
  "sp-session",
  "sp-statement-store",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-version",
  "tokio",
 ]
 
 [[package]]
 name = "sc-rpc-api"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -8611,17 +8267,16 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-version",
  "thiserror",
 ]
 
 [[package]]
 name = "sc-rpc-server"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "http",
  "jsonrpsee",
@@ -8636,7 +8291,6 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "futures",
@@ -8651,11 +8305,11 @@ dependencies = [
  "sc-transaction-pool-api",
  "sc-utils",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-version",
  "thiserror",
  "tokio",
  "tokio-stream",
@@ -8664,7 +8318,6 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "directories",
@@ -8703,20 +8356,20 @@ dependencies = [
  "sc-utils",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-externalities",
+ "sp-keystore",
+ "sp-runtime",
  "sp-session",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-state-machine",
+ "sp-storage",
  "sp-transaction-pool",
  "sp-transaction-storage-proof",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-trie",
+ "sp-version",
  "static_init",
  "substrate-prometheus-endpoint",
  "tempfile",
@@ -8724,24 +8377,22 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-futures",
- "ver-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "ver-api",
 ]
 
 [[package]]
 name = "sc-state-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
 ]
 
 [[package]]
 name = "sc-sysinfo"
 version = "6.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "futures",
  "libc",
@@ -8752,15 +8403,14 @@ dependencies = [
  "sc-telemetry",
  "serde",
  "serde_json",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
 name = "sc-telemetry"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "chrono",
  "futures",
@@ -8779,7 +8429,6 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ansi_term",
  "atty",
@@ -8793,12 +8442,12 @@ dependencies = [
  "sc-client-api",
  "sc-tracing-proc-macro",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-tracing",
  "thiserror",
  "tracing",
  "tracing-log",
@@ -8808,7 +8457,6 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -8819,7 +8467,6 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
@@ -8832,11 +8479,11 @@ dependencies = [
  "sc-transaction-pool-api",
  "sc-utils",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-tracing",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
  "thiserror",
@@ -8845,23 +8492,21 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
  "log",
  "parity-scale-codec",
  "serde",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
  "thiserror",
 ]
 
 [[package]]
 name = "sc-utils"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-channel",
  "futures",
@@ -8870,7 +8515,7 @@ dependencies = [
  "log",
  "parking_lot 0.12.1",
  "prometheus",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-arithmetic",
 ]
 
 [[package]]
@@ -9430,63 +9075,26 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "hash-db",
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-api-proc-macro 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-metadata-ir 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-api"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "hash-db",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-api-proc-macro 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-metadata-ir 0.1.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api-proc-macro",
+ "sp-core",
+ "sp-externalities",
+ "sp-metadata-ir",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+ "sp-version",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "Inflector",
- "blake2",
- "expander",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "sp-api-proc-macro"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "Inflector",
  "blake2",
@@ -9500,173 +9108,83 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "23.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-application-crypto"
-version = "23.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-arithmetic"
 version = "16.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "integer-sqrt",
  "num-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-std",
  "static_assertions",
-]
-
-[[package]]
-name = "sp-arithmetic"
-version = "16.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "integer-sqrt",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "static_assertions",
-]
-
-[[package]]
-name = "sp-authority-discovery"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
 ]
 
 [[package]]
 name = "sp-block-builder"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-block-builder"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-blockchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "futures",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "schnellru",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-database 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-blockchain"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "futures",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "schnellru",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-consensus 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-database 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-consensus",
+ "sp-database",
+ "sp-runtime",
+ "sp-state-machine",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "futures",
  "log",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-consensus"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "async-trait",
- "futures",
- "log",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
  "scale-info",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus-slots 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-consensus-slots",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
@@ -9678,62 +9196,47 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-consensus-slots 0.10.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
 name = "sp-consensus-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "finality-grandpa",
  "log",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-consensus-slots"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
 name = "sp-core"
 version = "21.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "array-bytes",
  "arrayvec 0.7.4",
@@ -9764,59 +9267,12 @@ dependencies = [
  "secrecy",
  "serde",
  "sha3 0.9.1",
- "sp-core-hashing 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "ss58-registry",
- "substrate-bip39",
- "thiserror",
- "tiny-bip39",
- "tracing",
- "zeroize",
-]
-
-[[package]]
-name = "sp-core"
-version = "21.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "array-bytes",
- "arrayvec 0.7.4",
- "bandersnatch_vrfs",
- "bitflags 1.3.2",
- "blake2",
- "bounded-collections",
- "bs58 0.5.0",
- "dyn-clonable",
- "ed25519-zebra",
- "futures",
- "hash-db",
- "hash256-std-hasher",
- "impl-serde",
- "lazy_static",
- "libsecp256k1",
- "log",
- "merlin 2.0.1",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "paste",
- "primitive-types",
- "rand 0.8.5",
- "regex",
- "scale-info",
- "schnorrkel",
- "secp256k1",
- "secrecy",
- "serde",
- "sp-core-hashing 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core-hashing",
+ "sp-debug-derive",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-storage",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
@@ -9828,20 +9284,6 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing"
 version = "9.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "blake2b_simd",
- "byteorder",
- "digest 0.10.7",
- "sha2 0.10.8",
- "sha3 0.10.8",
- "twox-hash",
-]
-
-[[package]]
-name = "sp-core-hashing"
-version = "9.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -9854,36 +9296,15 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing-proc-macro"
 version = "9.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "quote",
- "sp-core-hashing 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "sp-core-hashing-proc-macro"
-version = "9.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "quote",
- "sp-core-hashing 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core-hashing",
  "syn 2.0.39",
 ]
 
 [[package]]
 name = "sp-database"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "kvdb",
- "parking_lot 0.12.1",
-]
-
-[[package]]
-name = "sp-database"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.1",
@@ -9892,17 +9313,6 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "sp-debug-derive"
-version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9912,79 +9322,39 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.19.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-externalities"
-version = "0.19.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "environmental",
- "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]
 name = "sp-genesis-builder"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-genesis-builder"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-inherents"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-inherents"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "async-trait",
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-runtime",
+ "sp-std",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-io"
 version = "23.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "bytes",
  "ed25519-dalek 2.1.0",
@@ -9993,38 +9363,14 @@ dependencies = [
  "parity-scale-codec",
  "rustversion",
  "secp256k1",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "tracing",
- "tracing-core",
-]
-
-[[package]]
-name = "sp-io"
-version = "23.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "bytes",
- "ed25519-dalek 2.1.0",
- "libsecp256k1",
- "log",
- "parity-scale-codec",
- "rustversion",
- "secp256k1",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-externalities",
+ "sp-keystore",
+ "sp-runtime-interface",
+ "sp-state-machine",
+ "sp-std",
+ "sp-tracing",
+ "sp-trie",
  "tracing",
  "tracing-core",
 ]
@@ -10032,42 +9378,27 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "24.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "lazy_static",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-runtime",
  "strum 0.24.1",
 ]
 
 [[package]]
 name = "sp-keystore"
 version = "0.27.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-keystore"
-version = "0.27.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-externalities",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "4.1.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "thiserror",
  "zstd 0.12.4",
@@ -10076,49 +9407,25 @@ dependencies = [
 [[package]]
 name = "sp-metadata-ir"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-metadata-ir"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "frame-metadata",
- "parity-scale-codec",
- "scale-info",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "sp-panic-handler"
 version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "backtrace",
- "lazy_static",
- "regex",
-]
-
-[[package]]
-name = "sp-panic-handler"
-version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -10128,17 +9435,15 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "6.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "rustc-hash",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
 ]
 
 [[package]]
 name = "sp-runtime"
 version = "24.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -10152,89 +9457,34 @@ dependencies = [
  "rand 0.8.5",
  "scale-info",
  "serde",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-runtime"
-version = "24.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "either",
- "hash256-std-hasher",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "parity-util-mem",
- "paste",
- "rand 0.8.5",
- "scale-info",
- "serde",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+ "sp-weights",
 ]
 
 [[package]]
 name = "sp-runtime-interface"
 version = "17.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface-proc-macro 11.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "static_assertions",
-]
-
-[[package]]
-name = "sp-runtime-interface"
-version = "17.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "bytes",
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "primitive-types",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime-interface-proc-macro 11.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-storage 13.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-tracing 10.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-externalities",
+ "sp-runtime-interface-proc-macro",
+ "sp-std",
+ "sp-storage",
+ "sp-tracing",
+ "sp-wasm-interface",
  "static_assertions",
 ]
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "11.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "Inflector",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "sp-runtime-interface-proc-macro"
-version = "11.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -10246,50 +9496,33 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-staking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-staking"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-state-machine"
 version = "0.28.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "hash-db",
  "log",
@@ -10297,32 +9530,11 @@ dependencies = [
  "parking_lot 0.12.1",
  "rand 0.8.5",
  "smallvec",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-panic-handler 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
- "tracing",
- "trie-db",
-]
-
-[[package]]
-name = "sp-state-machine"
-version = "0.28.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "hash-db",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "rand 0.8.5",
- "smallvec",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-panic-handler 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-externalities",
+ "sp-panic-handler",
+ "sp-std",
+ "sp-trie",
  "thiserror",
  "tracing",
  "trie-db",
@@ -10331,7 +9543,6 @@ dependencies = [
 [[package]]
 name = "sp-statement-store"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "aes-gcm 0.10.3",
  "curve25519-dalek 4.1.1",
@@ -10341,13 +9552,13 @@ dependencies = [
  "rand 0.8.5",
  "scale-info",
  "sha2 0.10.8",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-application-crypto 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-externalities",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-std",
  "thiserror",
  "x25519-dalek 2.0.0",
 ]
@@ -10355,82 +9566,37 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-
-[[package]]
-name = "sp-std"
-version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 
 [[package]]
 name = "sp-storage"
 version = "13.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-storage"
-version = "13.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "impl-serde",
- "parity-scale-codec",
- "ref-cast",
- "serde",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-debug-derive",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
  "thiserror",
 ]
 
 [[package]]
-name = "sp-timestamp"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
-]
-
-[[package]]
 name = "sp-tracing"
 version = "10.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "tracing",
- "tracing-core",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "sp-tracing"
-version = "10.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-std",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -10439,31 +9605,28 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
  "scale-info",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-trie 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
 name = "sp-trie"
 version = "22.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ahash 0.8.6",
  "hash-db",
@@ -10475,31 +9638,8 @@ dependencies = [
  "parking_lot 0.12.1",
  "scale-info",
  "schnellru",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
- "tracing",
- "trie-db",
- "trie-root",
-]
-
-[[package]]
-name = "sp-trie"
-version = "22.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "ahash 0.8.6",
- "hash-db",
- "hashbrown 0.13.2",
- "lazy_static",
- "memory-db",
- "nohash-hasher",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "scale-info",
- "schnellru",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-std",
  "thiserror",
  "tracing",
  "trie-db",
@@ -10509,86 +9649,38 @@ dependencies = [
 [[package]]
 name = "sp-ver"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
  "scale-info",
  "schnorrkel",
  "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-ver"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "scale-info",
- "schnorrkel",
- "serde",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
 name = "sp-version"
 version = "22.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
  "parity-wasm",
  "scale-info",
  "serde",
- "sp-core-hashing-proc-macro 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-version-proc-macro 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "thiserror",
-]
-
-[[package]]
-name = "sp-version"
-version = "22.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "impl-serde",
- "parity-scale-codec",
- "parity-wasm",
- "scale-info",
- "serde",
- "sp-core-hashing-proc-macro 9.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-version-proc-macro 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-core-hashing-proc-macro",
+ "sp-runtime",
+ "sp-std",
+ "sp-version-proc-macro",
  "thiserror",
 ]
 
 [[package]]
 name = "sp-version-proc-macro"
 version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
-dependencies = [
- "parity-scale-codec",
- "proc-macro2",
- "quote",
- "syn 2.0.39",
-]
-
-[[package]]
-name = "sp-version-proc-macro"
-version = "8.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -10599,57 +9691,27 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "14.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "wasmtime",
-]
-
-[[package]]
-name = "sp-wasm-interface"
-version = "14.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "anyhow",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-std",
  "wasmtime",
 ]
 
 [[package]]
 name = "sp-weights"
 version = "20.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
  "smallvec",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "sp-weights"
-version = "20.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "smallvec",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-debug-derive",
+ "sp-std",
 ]
 
 [[package]]
@@ -10719,7 +9781,6 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "staging-xcm"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "bounded-collections",
  "derivative",
@@ -10729,28 +9790,27 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-weights",
  "xcm-procedural",
 ]
 
 [[package]]
 name = "staging-xcm-builder"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-support",
+ "frame-system",
  "impl-trait-for-tuples",
  "log",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "polkadot-parachain-primitives",
  "scale-info",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-arithmetic",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
  "staging-xcm",
  "staging-xcm-executor",
 ]
@@ -10758,20 +9818,19 @@ dependencies = [
 [[package]]
 name = "staging-xcm-executor"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "environmental",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "frame-benchmarking",
+ "frame-support",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-arithmetic 16.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
  "staging-xcm",
 ]
 
@@ -10891,12 +9950,10 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures",
@@ -10905,17 +9962,16 @@ dependencies = [
  "parity-scale-codec",
  "sc-rpc-api",
  "sc-transaction-pool-api",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-block-builder 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "hyper",
  "log",
@@ -10934,13 +9990,12 @@ dependencies = [
  "log",
  "sc-rpc-api",
  "serde",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
 ]
 
 [[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "ansi_term",
  "build-helper",
@@ -11575,22 +10630,22 @@ dependencies = [
  "sc-executor",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
  "sp-consensus-aura",
  "sp-consensus-babe",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-debug-derive 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-externalities 0.19.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-inherents 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-io 23.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-keystore 0.27.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-core",
+ "sp-debug-derive",
+ "sp-externalities",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-state-machine 0.28.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-timestamp 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-timestamp",
  "sp-transaction-storage-proof",
- "sp-version 22.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-version",
+ "sp-weights",
  "substrate-rpc-client",
  "zstd 0.12.4",
 ]
@@ -11786,39 +10841,20 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 [[package]]
 name = "ver-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=develop#bcdfff78b9737d3bb1f9741780e7da68a4e531ec"
 dependencies = [
  "derive_more",
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
  "futures",
  "log",
  "parity-scale-codec",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-weights 20.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
-]
-
-[[package]]
-name = "ver-api"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
-dependencies = [
- "derive_more",
- "futures",
- "log",
- "parity-scale-codec",
- "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
- "sp-ver 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+ "sp-weights",
 ]
 
 [[package]]
@@ -12837,7 +11873,6 @@ dependencies = [
 [[package]]
 name = "xcm-procedural"
 version = "1.0.0"
-source = "git+https://github.com/mangata-finance/polkadot-sdk?branch=release-mangata-v1.1.0#05d23be98f01d78d97d15dd941f98d23e764410a"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -12852,12 +11887,12 @@ dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
  "serde",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-blockchain 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-runtime",
+ "sp-std",
  "xyk-runtime-api",
 ]
 
@@ -12865,16 +11900,16 @@ dependencies = [
 name = "xyk-runtime-api"
 version = "2.0.0"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "frame-system 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "serde_json",
- "sp-api 4.0.0-dev (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-core 21.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-runtime 24.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
- "sp-std 8.0.0 (git+https://github.com/mangata-finance/polkadot-sdk?branch=develop)",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -12987,3 +12022,35 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "orml-unknown-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
+
+[[patch.unused]]
+name = "orml-xcm"
+version = "0.4.1-dev"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
+
+[[patch.unused]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
+
+[[patch.unused]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
+
+[[patch.unused]]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "polkadot-primitives"
+version = "1.0.0"
+
+[[patch.unused]]
+name = "sp-authority-discovery"
+version = "4.0.0-dev"

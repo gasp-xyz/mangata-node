@@ -1,13 +1,9 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
-
-use codec::{Decode, Encode, MaxEncodedLen};
-pub use constants::{fee::*, parachains::*};
+pub use codec::{Decode, Encode, MaxEncodedLen};
+pub use crate::constants::{fee::*};
 pub use currency::*;
 #[cfg(feature = "runtime-benchmarks")]
-use frame_support::traits::OriginTrait;
-use frame_support::{
+pub use frame_support::traits::OriginTrait;
+pub use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
@@ -21,26 +17,25 @@ use frame_support::{
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
-use frame_system::{
+pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
+pub use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;
-use orml_tokens::MultiTokenCurrencyExtended;
-use orml_traits::{
+pub use orml_tokens::MultiTokenCurrencyExtended;
+pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
-use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+pub use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 pub use pallet_xyk;
 use pallet_xyk::AssetMetadataMutationTrait;
-pub use polkadot_runtime_common::BlockHashCount;
-use scale_info::TypeInfo;
+pub use scale_info::TypeInfo;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -54,12 +49,10 @@ pub use sp_runtime::{
 	BoundedVec, DispatchError, FixedPointNumber, MultiAddress, MultiSignature, OpaqueExtrinsic,
 	Perbill, Percent, Permill, RuntimeDebug,
 };
-use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
+pub use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use types::*;
 
-pub mod constants;
-mod weights;
-pub mod xcm_config;
+use crate::weights;
 
 pub mod currency {
 	use super::Balance;
@@ -105,7 +98,7 @@ pub mod tokens {
 	pub const RX_TOKEN_ID: TokenId = 0;
 
 	parameter_types! {
-		pub const MgxTokenId: TokenId = RX_TOKEN_ID;
+		pub const RxTokenId: TokenId = RX_TOKEN_ID;
 	}
 }
 
@@ -135,7 +128,6 @@ pub mod runtime_types {
 	use super::*;
 
 	pub type SignedExtra<Runtime> = (
-		frame_system::CheckNonZeroSender<Runtime>,
 		frame_system::CheckSpecVersion<Runtime>,
 		frame_system::CheckTxVersion<Runtime>,
 		frame_system::CheckGenesis<Runtime>,
@@ -143,6 +135,7 @@ pub mod runtime_types {
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
+		frame_system::CheckNonZeroSender<Runtime>,
 	);
 
 	pub type SignedPayload<Runtime, RuntimeCall> =
@@ -250,7 +243,8 @@ pub mod config {
 		pub type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 		parameter_types! {
-
+			pub const BlockHashCount: BlockNumber = 2400;
+			pub const Version: sp_version::RuntimeVersion = crate::VERSION;
 			// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 			//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 			// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
@@ -917,7 +911,7 @@ pub mod config {
 					),
 					(crate::CallType::UnlockFee, _) => {
 						let imb = C::withdraw(
-							tokens::MgxTokenId::get().into(),
+							tokens::RxTokenId::get().into(),
 							who,
 							tip,
 							WithdrawReasons::TIP,
@@ -927,7 +921,7 @@ pub mod config {
 							TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
 						})?;
 
-						OU::on_unbalanceds(tokens::MgxTokenId::get().into(), Some(imb).into_iter());
+						OU::on_unbalanceds(tokens::RxTokenId::get().into(), Some(imb).into_iter());
 						OFLA::can_unlock_fee(who).map_err(|_| {
 							TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
 						})?;

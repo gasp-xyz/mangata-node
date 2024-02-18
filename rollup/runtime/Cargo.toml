@@ -89,10 +89,6 @@ pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sd
 orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 orml-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 orml-traits = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-unknown-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-xcm = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-xcm-support = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-xtokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 
 # Crowdloan dependencies
 pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "develop", default-features = false }
@@ -207,7 +203,6 @@ runtime-benchmarks = [
 	"mangata-support/runtime-benchmarks",
 	"orml-asset-registry/runtime-benchmarks",
 	"orml-tokens/runtime-benchmarks",
-	"orml-xtokens/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-collective-mangata/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",

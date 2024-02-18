@@ -293,6 +293,5 @@ fn rollup_genesis(
 				.collect(),
 		},
 		vesting: Default::default(),
-		rolldown: Default::default(),
 	}
 }

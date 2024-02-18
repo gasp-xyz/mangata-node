@@ -26,11 +26,9 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
 
 # Local
-rollup-runtime = { path = "../runtime/mangata-kusama" }
+rollup-runtime = { path = "../runtime/" }
 xyk-rpc = { path = "../../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
-rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api" }
-rolldown-rpc = { path = "../../pallets/rolldown/rpc" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
@@ -81,6 +79,7 @@ sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "de
 substrate-frame-rpc-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", optional = true}
 
 color-print = "0.3.4"
 
@@ -94,7 +93,6 @@ substrate-build-script-utils = { git = "https://github.com/mangata-finance/polka
 default = [
 	"rollup-runtime/std",
 	"xyk-rpc/std",
-	"rolldown-rpc/std"
 ]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
@@ -110,7 +108,7 @@ runtime-benchmarks = [
 try-runtime = [
 	"frame-system/try-runtime",
 	"rollup-runtime/try-runtime",
-	"pallet-transaction-payment/try-runtime",
+	"pallet-transaction-payment-mangata/try-runtime",
 	"sp-runtime/try-runtime",
 	"try-runtime-cli/try-runtime",
 ]

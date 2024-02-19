@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 pub use codec::{Decode, Encode, MaxEncodedLen};
 pub use crate::constants::{fee::*};
 pub use currency::*;

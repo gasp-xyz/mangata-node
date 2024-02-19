@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 pub mod fee {
 	use crate::{runtime_config::consts::UNIT, weights::VerExtrinsicBaseWeight, Balance};
 	use frame_support::weights::{

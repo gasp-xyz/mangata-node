@@ -61,6 +61,7 @@ pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
 pub use runtime_config::*;
+use sp_application_crypto::ByteArray;
 
 mod weights;
 
@@ -1147,7 +1148,6 @@ impl_runtime_apis! {
 	}
 
 	impl sp_api::Core<Block> for Runtime {
-		use sp_runtime::sp_application_crypto::ByteArray;
 		fn version() -> RuntimeVersion {
 			VERSION
 		}

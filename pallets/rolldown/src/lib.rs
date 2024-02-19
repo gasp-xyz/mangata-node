@@ -6,8 +6,9 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{PendingRequestType, UpdateType};
+use messages::{PendingRequestType, UpdateType, to_eth_u256};
 use sp_runtime::traits::SaturatedConversion;
+use sp_core::hexdisplay::HexDisplay;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -701,18 +702,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
-		let mut bytes = [0u8; 32];
-		value.to_big_endian(&mut bytes);
-		alloy_primitives::U256::from_be_bytes(bytes)
-	}
-
 	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
 			updater: cancel.updater.encode(),
 			canceler: cancel.canceler.encode(),
-			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
-			lastAcceptedRequestOnL1: Self::to_eth_u256(cancel.lastAcceptedRequestOnL1),
+			lastProccessedRequestOnL1: to_eth_u256(cancel.lastProccessedRequestOnL1),
+			lastAcceptedRequestOnL1: to_eth_u256(cancel.lastAcceptedRequestOnL1),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
 		}
 	}
@@ -730,7 +725,7 @@ impl<T: Config> Pallet<T> {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: Self::to_eth_u256(request_id),
+						requestId: to_eth_u256(request_id),
 						updateType: request_type,
 						status,
 					}),

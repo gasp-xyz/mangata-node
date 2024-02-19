@@ -90,10 +90,11 @@ tempfile = "3.8.0"
 substrate-build-script-utils = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 
 [features]
-default = [
-	# "rollup-runtime/std",
-	# "xyk-rpc/std",
+default = [ "std"
 ]
+std = [
+	"rollup-runtime/std",
+	"xyk-rpc/std",]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",

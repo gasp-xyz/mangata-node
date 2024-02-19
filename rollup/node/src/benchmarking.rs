@@ -2,20 +2,33 @@
 //!
 //! Should only be used for benchmarking as it may break in other contexts.
 
-use crate::service::FullClient;
-
 use rollup_runtime as runtime;
-use runtime::{AccountId, Balance, BalancesCall, SystemCall};
+use runtime::{AccountId, Balance, SystemCall, TokensCall, TokenId, RuntimeApi};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
-use sp_core::{Encode, Pair};
+use sp_core::{crypto::key_types::AURA, Pair, Encode};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
-use sp_runtime::{OpaqueExtrinsic, SaturatedConversion};
+use sp_runtime::{OpaqueExtrinsic, SaturatedConversion, traits::Zero};
+use rollup_runtime::config::frame_system::BlockHashCount;
+use sp_keystore::Keystore;
+use std::{sync::Arc, time::Duration, sync::Mutex};
+use sp_api::ProvideRuntimeApi;
+use substrate_frame_rpc_system::AccountNonceApi;
+use crate::service::Block;
+use sc_executor::WasmExecutor;
 
-use std::{sync::Arc, time::Duration};
 
-pub fn fetch_nonce(client: &Client, account: sp_core::sr25519::Pair) -> u32 {
+#[cfg(not(feature = "runtime-benchmarks"))]
+type HostFunctions = sp_io::SubstrateHostFunctions;
+
+#[cfg(feature = "runtime-benchmarks")]
+type HostFunctions =
+	(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions);
+
+type WasmFullClient = sc_service::TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
+
+pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::sr25519::Pair) -> u32 {
 	let best_hash = client.chain_info().best_hash;
 	client
 		.runtime_api()
@@ -27,7 +40,7 @@ pub fn fetch_nonce(client: &Client, account: sp_core::sr25519::Pair) -> u32 {
 ///
 /// Note: Should only be used for benchmarking.
 pub fn create_benchmark_extrinsic(
-	client: &FullClient,
+	client: &WasmFullClient,
 	sender: sp_core::sr25519::Pair,
 	call: runtime::RuntimeCall,
 	nonce: Option<u32>,
@@ -37,12 +50,11 @@ pub fn create_benchmark_extrinsic(
 	let best_block = client.chain_info().best_number;
 	let nonce = nonce.unwrap_or_else(|| fetch_nonce(client, sender.clone()));
 
-	let period = runtime::BlockHashCount::get()
+	let period = BlockHashCount::get()
 		.checked_next_power_of_two()
 		.map(|c| c / 2)
 		.unwrap_or(2) as u64;
 	let extra: runtime::SignedExtra = (
-		frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
 		frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
 		frame_system::CheckTxVersion::<runtime::Runtime>::new(),
 		frame_system::CheckGenesis::<runtime::Runtime>::new(),
@@ -53,17 +65,18 @@ pub fn create_benchmark_extrinsic(
 		frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<runtime::Runtime>::new(),
 		pallet_transaction_payment_mangata::ChargeTransactionPayment::<runtime::Runtime>::from(0),
+		frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
 	);
 
 	let raw_payload = runtime::SignedPayload::from_raw(
 		call.clone(),
 		extra.clone(),
 		(
-			(),
 			runtime::VERSION.spec_version,
 			runtime::VERSION.transaction_version,
 			genesis_hash,
 			best_hash,
+			(),
 			(),
 			(),
 			(),
@@ -118,12 +131,12 @@ pub async fn inherent_benchmark_data(
 ///
 /// Note: Should only be used for benchmarking.
 pub struct RemarkBuilder {
-	client: Arc<FullClient>,
+	client: Arc<Mutex<WasmFullClient>>,
 }
 
 impl RemarkBuilder {
 	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Arc<FullClient>) -> Self {
+	pub fn new(client: Arc<Mutex<WasmFullClient>>) -> Self {
 		Self { client }
 	}
 }
@@ -140,10 +153,10 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
 		let acc = Sr25519Keyring::Bob.pair();
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
-			self.client.as_ref(),
+			&*self.client.lock().unwrap(),
 			acc,
 			SystemCall::remark { remark: vec![] }.into(),
-			nonce,
+			Some(nonce),
 		)
 		.into();
 
@@ -155,14 +168,14 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 ///
 /// Note: Should only be used for benchmarking.
 pub struct TransferKeepAliveBuilder {
-	client: Arc<FullClient>,
+	client: Arc<Mutex<WasmFullClient>>,
 	dest: AccountId,
 	value: Balance,
 }
 
 impl TransferKeepAliveBuilder {
 	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Arc<FullClient>, dest: AccountId, value: Balance) -> Self {
+	pub fn new(client: Arc<Mutex<WasmFullClient>>, dest: AccountId, value: Balance) -> Self {
 		Self { client, dest, value }
 	}
 }
@@ -179,11 +192,11 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
 		let acc = Sr25519Keyring::Bob.pair();
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
-			self.client.as_ref(),
+			&*self.client.lock().unwrap(),
 			acc,
-			BalancesCall::transfer_keep_alive { dest: self.dest.clone().into(), value: self.value }
+			TokensCall::transfer_keep_alive { dest: self.dest.clone().into(), currency_id: TokenId::zero(), amount: self.value }
 				.into(),
-			nonce,
+			Some(nonce),
 		)
 		.into();
 

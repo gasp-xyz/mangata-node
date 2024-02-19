@@ -1,14 +1,13 @@
 use rollup_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
+	AccountId, AuraConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf,
-	tokens::{RXL_TOKEN_ID,},
-	AccountId, AuraId, CustomMetadata, XcmMetadata,
+	tokens::{RX_TOKEN_ID,},
+	AuraId, CustomMetadata, XcmMetadata,
 };
 use sc_service::ChainType;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public, ByteArray, Encode};
 use sp_runtime::traits::{IdentifyAccount, Verify};
@@ -46,7 +45,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
 pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::SessionKeys {
-	rollup_runtime::SessionKeys { aura: keys, grandpa: grandpa }
+	rollup_runtime::SessionKeys { aura: aura, grandpa: grandpa }
 }
 
 
@@ -137,7 +136,7 @@ pub fn rollup_local_config() -> ChainSpec {
 				],
 				vec![
 					(
-						MGX_TOKEN_ID,
+						RX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
 							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
@@ -178,7 +177,7 @@ pub fn rollup_local_config() -> ChainSpec {
 
 /// Configure initial storage state for FRAME modules.
 fn rollup_genesis(
-	initial_authorities: Vec<(AccountId, AuraId, GrandpaId)>,
+	initial_authorities: Vec<(AccountId, (AuraId, GrandpaId))>,
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
@@ -234,7 +233,7 @@ fn rollup_genesis(
 		session: rollup_runtime::SessionConfig {
 			keys: initial_authorities
 				.into_iter()
-				.map(|(acc, aura, grandpa)| {
+				.map(|(acc, (aura, grandpa))| {
 					(
 						acc.clone(),                // account id
 						acc,                        // validator id
@@ -246,6 +245,7 @@ fn rollup_genesis(
 		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
 		// of this.
 		aura: Default::default(),
+		grandpa: Default::default(),
 		xyk: rollup_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
 				.iter()

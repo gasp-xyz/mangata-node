@@ -9,7 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use codec::{alloc::string::String, Decode, Encode};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
 	create_runtime_str, impl_opaque_keys, generic,
 	traits::{
@@ -54,6 +54,7 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
+pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -142,7 +143,7 @@ pub fn native_version() -> NativeVersion {
 }
 
 // Configure FRAME pallets to include in runtime.
-mod runtime_config;
+pub mod runtime_config;
 use runtime_config::config as cfg;
 pub use runtime_config::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
 

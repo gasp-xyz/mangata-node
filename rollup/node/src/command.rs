@@ -2,13 +2,19 @@ use crate::{
 	benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder},
 	chain_spec,
 	cli::{Cli, Subcommand},
-	service,
+	service::Block, service
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
-use node_template_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sc_cli::SubstrateCli;
 use sc_service::PartialComponents;
 use sp_keyring::Sr25519Keyring;
+use std::{
+	sync::{Mutex, Arc}, time::Duration
+};
+use futures::executor::block_on;
+use std::convert::TryInto;
+use sc_service::Deref;
+use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -37,7 +43,7 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"" | "rollup-local" => Box::new(chain_spec::rollup_local_config()?),
+			"" | "rollup-local" => Box::new(chain_spec::rollup_local_config()),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		})
@@ -137,7 +143,21 @@ pub fn run() -> sc_cli::Result<()> {
 						cmd.run(config, client, db, storage)
 					},
 					BenchmarkCmd::Overhead(cmd) => {
-						let PartialComponents { client, .. } = service::new_partial(&config)?;
+						let executor = WasmExecutor::builder()
+								.with_execution_method(config.wasm_method)
+								.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_max_runtime_instances(config.max_runtime_instances)
+								.with_runtime_cache_size(config.runtime_cache_size)
+								.build();
+
+						let (c, _, _, _) = sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
+								&config,
+								None,
+								executor,
+						)?;
+
+						let client = Arc::new(Mutex::new(c));
 						let ext_builder = RemarkBuilder::new(client.clone());
 
 						let first_block_inherent =
@@ -160,14 +180,28 @@ pub fn run() -> sc_cli::Result<()> {
 						cmd.run_ver(config, client, (first_block_inherent, second_block_inherent), &ext_builder)
 					},
 					BenchmarkCmd::Extrinsic(cmd) => {
-						let PartialComponents { client, .. } = service::new_partial(&config)?;
+						let executor = WasmExecutor::builder()
+								.with_execution_method(config.wasm_method)
+								.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_max_runtime_instances(config.max_runtime_instances)
+								.with_runtime_cache_size(config.runtime_cache_size)
+								.build();
+
+						let (c, _, _, _) = sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
+								&config,
+								None,
+								executor,
+						)?;
+
+						let client = Arc::new(Mutex::new(c));
 						// Register the *Remark* and *TKA* builders.
 						let ext_factory = ExtrinsicFactory(vec![
 							Box::new(RemarkBuilder::new(client.clone())),
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
 								Sr25519Keyring::Alice.to_account_id(),
-								EXISTENTIAL_DEPOSIT,
+								Default::default(),
 							)),
 						]);
 

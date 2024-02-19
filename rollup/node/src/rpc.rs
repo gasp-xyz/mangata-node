@@ -8,13 +8,12 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use node_template_runtime::{opaque::Block, AccountId, Balance, Nonce};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
-use rollup_runtime::config::{
+use rollup_runtime::runtime_config::{
 	opaque::Block,
 	types::{AccountId, Balance, Nonce, TokenId},
 };
@@ -61,7 +60,7 @@ where
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-	module.merge(TransactionPayment::new(client).into_rpc())?;
+	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(Xyk::new(client.clone()).into_rpc())?;
 	module.merge(ProofOfStake::new(client.clone()).into_rpc())?;
 	module.merge(MetamaskSignature::new(client).into_rpc())?;

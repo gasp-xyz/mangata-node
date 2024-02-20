@@ -37,13 +37,14 @@ pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_api::HeaderT;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
-		StorageInfo, Everything, InstanceFilter
+		StorageInfo, Everything, InstanceFilter, FindAuthor
 	},
 	weights::{
 		constants::{
@@ -65,7 +66,11 @@ pub use runtime_config::*;
 use sp_application_crypto::ByteArray;
 
 mod weights;
+pub mod runtime_config;
+use runtime_config::config as cfg;
+pub use runtime_config::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
 
+pub mod constants;
 
 /// Block header type as expected by this runtime.
 pub type Header = runtime_types::Header;
@@ -143,12 +148,6 @@ pub fn native_version() -> NativeVersion {
 }
 
 // Configure FRAME pallets to include in runtime.
-pub mod runtime_config;
-use runtime_config::config as cfg;
-pub use runtime_config::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
-
-mod constants;
-
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = Everything;
@@ -1154,8 +1153,12 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			let key = Authorship::author().expect("Block should have an author aura digest").to_raw_vec();
-			Executive::execute_block_ver_impl(block, key);
+			let header = block.header();
+			let author = 
+				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
+					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
+				).expect("Could not find AuRa author index!").to_raw_vec();
+			Executive::execute_block_ver_impl(block, author);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

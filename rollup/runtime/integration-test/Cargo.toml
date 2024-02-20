@@ -1,0 +1,42 @@
+[package]
+name = "runtime-integration-test"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+env_logger = "0.9.1"
+log = "0.4.17"
+
+# Substrate
+frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-balances = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-identity = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-storage = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+hex-literal = { version = "0.3.4" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+
+# Open-Runtime-Module-Library Dependencies
+orml-asset-registry = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
+orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
+orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
+
+# Local
+rollup-runtime = { path = "../" }
+pallet-bootstrap = { path = "../../../pallets/bootstrap" }
+pallet-issuance = { path = "../../../pallets/issuance" }
+pallet-multipurpose-liquidity = { path = "../../../pallets/multipurpose-liquidity" }
+pallet-proof-of-stake = { path = "../../../pallets/proof-of-stake" }
+pallet-sudo-origin = { path = "../../../pallets/sudo-origin" }
+pallet-xyk = { path = "../../../pallets/xyk" }
+parachain-staking = { path = "../../../pallets/parachain-staking" }
+xyk-runtime-api = { path = "../../../pallets/xyk/runtime-api" }
+
+[features]
+default = []

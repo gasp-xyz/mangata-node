@@ -15,7 +15,7 @@ fn forward_to_block(n: u32) {
 		pallet_session::Pallet::<Runtime>::on_initialize(i);
 
 		pallet_session::Pallet::<Runtime>::on_finalize(i);
-		parachain_staking::Pallet::<Runtime>::on_initialize(i);
+		parachain_staking::Pallet::<Runtime>::on_finalize(i);
 		frame_system::Pallet::<Runtime>::on_finalize(i);
 	}
 }

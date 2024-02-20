@@ -20,6 +20,7 @@ members = [
 	# 'node',
 	'rollup/node',
 	'rollup/runtime',
+	'rollup/runtime/integration-test',
 	'pallets/*',
 	'rpc/nonce',
 	# 'runtime/common',

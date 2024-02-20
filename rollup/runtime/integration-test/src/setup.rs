@@ -7,27 +7,19 @@ pub use frame_support::{
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
 pub use sp_runtime::{codec::Encode, BoundedVec, BuildStorage, MultiAddress, Permill};
-pub use xcm::latest::prelude::*;
 
-#[cfg(feature = "with-kusama-runtime")]
-pub use kusama_imports::*;
+pub use rollup_imports::*;
 
-#[cfg(feature = "with-kusama-runtime")]
-mod kusama_imports {
-	pub use common_runtime::{
-		config::{orml_asset_registry::AssetMetadataOf, pallet_proxy::ProxyType},
+mod rollup_imports {
+	pub use rollup_runtime::{
+		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
+		ProofOfStake, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId,
+		Tokens, UncheckedExtrinsic, Xyk, XykMetadata,
 		consts::UNIT,
-		mgx_per_second,
-		xcm_config::general_key,
+		runtime_config::config::{orml_asset_registry::AssetMetadataOf, pallet_proxy::ProxyType}
 	};
-	pub use mangata_kusama_runtime::{
-		xcm_config::*, AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
-		PolkadotXcm, ProofOfStake, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId,
-		Tokens, UncheckedExtrinsic, XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
-	};
-	pub use xcm::{latest::Weight as XcmWeight, VersionedMultiLocation};
 
-	pub const NATIVE_ASSET_ID: TokenId = common_runtime::tokens::MGX_TOKEN_ID;
+	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;
 }
 
 /// Accounts
@@ -108,21 +100,6 @@ impl ExtBuilder {
 		orml_asset_registry::GenesisConfig::<Runtime> { assets: encoded }
 			.assimilate_storage(&mut t)
 			.unwrap();
-
-		<parachain_info::GenesisConfig<Runtime>>::assimilate_storage(
-			&parachain_info::GenesisConfig {
-				parachain_id: self.parachain_id.into(),
-				..Default::default()
-			},
-			&mut t,
-		)
-		.unwrap();
-
-		<pallet_xcm::GenesisConfig<Runtime>>::assimilate_storage(
-			&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3), ..Default::default() },
-			&mut t,
-		)
-		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

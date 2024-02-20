@@ -7454,6 +7454,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e666a5496a0b2186dbcd0ff6106e29e093c15591bde62c20d3842007c6978a09"
 
 [[package]]
+name = "runtime-integration-test"
+version = "0.1.0"
+dependencies = [
+ "env_logger 0.9.3",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.3.4",
+ "log",
+ "mangata-support",
+ "mangata-types",
+ "orml-asset-registry",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-bootstrap",
+ "pallet-identity",
+ "pallet-issuance",
+ "pallet-multipurpose-liquidity",
+ "pallet-proof-of-stake",
+ "pallet-proxy",
+ "pallet-session",
+ "pallet-sudo-origin",
+ "pallet-xyk",
+ "parachain-staking",
+ "parity-scale-codec",
+ "rollup-runtime",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "xyk-runtime-api",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12023,18 +12056,6 @@ dependencies = [
 ]
 
 [[patch.unused]]
-name = "cumulus-primitives-core"
-version = "0.1.0"
-
-[[patch.unused]]
-name = "polkadot-primitives"
-version = "1.0.0"
-
-[[patch.unused]]
-name = "sp-authority-discovery"
-version = "4.0.0-dev"
-
-[[patch.unused]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
@@ -12053,3 +12074,15 @@ source = "git+https://github.com/mangata-finance//open-runtime-module-library?br
 name = "orml-xtokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
+
+[[patch.unused]]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "polkadot-primitives"
+version = "1.0.0"
+
+[[patch.unused]]
+name = "sp-authority-discovery"
+version = "4.0.0-dev"

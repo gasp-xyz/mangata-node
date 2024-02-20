@@ -2,22 +2,24 @@
 //!
 //! Should only be used for benchmarking as it may break in other contexts.
 
+use crate::service::Block;
 use rollup_runtime as runtime;
-use runtime::{AccountId, Balance, SystemCall, TokensCall, TokenId, RuntimeApi};
+use rollup_runtime::config::frame_system::BlockHashCount;
+use runtime::{AccountId, Balance, RuntimeApi, SystemCall, TokenId, TokensCall};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
-use sp_core::{crypto::key_types::AURA, Pair, Encode};
+use sc_executor::WasmExecutor;
+use sp_api::ProvideRuntimeApi;
+use sp_core::{crypto::key_types::AURA, Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
-use sp_runtime::{OpaqueExtrinsic, SaturatedConversion, traits::Zero};
-use rollup_runtime::config::frame_system::BlockHashCount;
 use sp_keystore::Keystore;
-use std::{sync::Arc, time::Duration, sync::Mutex};
-use sp_api::ProvideRuntimeApi;
+use sp_runtime::{traits::Zero, OpaqueExtrinsic, SaturatedConversion};
+use std::{
+	sync::{Arc, Mutex},
+	time::Duration,
+};
 use substrate_frame_rpc_system::AccountNonceApi;
-use crate::service::Block;
-use sc_executor::WasmExecutor;
-
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 type HostFunctions = sp_io::SubstrateHostFunctions;
@@ -50,10 +52,8 @@ pub fn create_benchmark_extrinsic(
 	let best_block = client.chain_info().best_number;
 	let nonce = nonce.unwrap_or_else(|| fetch_nonce(client, sender.clone()));
 
-	let period = BlockHashCount::get()
-		.checked_next_power_of_two()
-		.map(|c| c / 2)
-		.unwrap_or(2) as u64;
+	let period =
+		BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
 	let extra: runtime::SignedExtra = (
 		frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
 		frame_system::CheckTxVersion::<runtime::Runtime>::new(),
@@ -126,7 +126,6 @@ pub async fn inherent_benchmark_data(
 	Ok(inherent_data)
 }
 
-
 /// Generates extrinsics for the `benchmark overhead` command.
 ///
 /// Note: Should only be used for benchmarking.
@@ -194,8 +193,12 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,
-			TokensCall::transfer_keep_alive { dest: self.dest.clone().into(), currency_id: TokenId::zero(), amount: self.value }
-				.into(),
+			TokensCall::transfer_keep_alive {
+				dest: self.dest.clone().into(),
+				currency_id: TokenId::zero(),
+				amount: self.value,
+			}
+			.into(),
 			Some(nonce),
 		)
 		.into();

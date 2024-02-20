@@ -1,17 +1,15 @@
 use rollup_runtime::{
-	AccountId, AuraConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
-	SudoConfig, SystemConfig, WASM_BINARY,
-};
-use rollup_runtime::{
-	config::orml_asset_registry::AssetMetadataOf,
-	tokens::{RX_TOKEN_ID,},
-	AuraId, CustomMetadata, XcmMetadata,
+	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
+	AuraId, CustomMetadata, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
+	SystemConfig, XcmMetadata, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::{sr25519, Pair, Public, ByteArray, Encode};
-use sp_runtime::traits::{IdentifyAccount, Verify};
-use sp_runtime::BoundedVec;
+use sp_core::{sr25519, ByteArray, Encode, Pair, Public};
+use sp_runtime::{
+	traits::{IdentifyAccount, Verify},
+	BoundedVec,
+};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -45,9 +43,8 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
 pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::SessionKeys {
-	rollup_runtime::SessionKeys { aura: aura, grandpa: grandpa }
+	rollup_runtime::SessionKeys { aura, grandpa }
 }
-
 
 pub fn rollup_local_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
@@ -171,7 +168,7 @@ pub fn rollup_local_config() -> ChainSpec {
 		// Properties
 		Some(properties),
 		// Extensions
-		None
+		None,
 	)
 }
 
@@ -235,8 +232,8 @@ fn rollup_genesis(
 				.into_iter()
 				.map(|(acc, (aura, grandpa))| {
 					(
-						acc.clone(),                // account id
-						acc,                        // validator id
+						acc.clone(),                        // account id
+						acc,                                // validator id
 						rollup_session_keys(aura, grandpa), // session keys
 					)
 				})

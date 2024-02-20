@@ -50,10 +50,10 @@ where
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 {
-	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use metamask_signature_rpc::MetamaskSignature;
 	use pallet_transaction_payment_mangata_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
+	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use xyk_rpc::{Xyk, XykApiServer};
 
 	let mut module = RpcModule::new(());

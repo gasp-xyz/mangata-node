@@ -2,19 +2,20 @@ use crate::{
 	benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder},
 	chain_spec,
 	cli::{Cli, Subcommand},
-	service::Block, service
+	service,
+	service::Block,
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
+use futures::executor::block_on;
 use sc_cli::SubstrateCli;
-use sc_service::PartialComponents;
+use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
+use sc_service::{Deref, PartialComponents};
 use sp_keyring::Sr25519Keyring;
 use std::{
-	sync::{Mutex, Arc}, time::Duration
+	convert::TryInto,
+	sync::{Arc, Mutex},
+	time::Duration,
 };
-use futures::executor::block_on;
-use std::convert::TryInto;
-use sc_service::Deref;
-use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -144,32 +145,31 @@ pub fn run() -> sc_cli::Result<()> {
 					},
 					BenchmarkCmd::Overhead(cmd) => {
 						let executor = WasmExecutor::builder()
-								.with_execution_method(config.wasm_method)
-								.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
-								.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
-								.with_max_runtime_instances(config.max_runtime_instances)
-								.with_runtime_cache_size(config.runtime_cache_size)
-								.build();
+							.with_execution_method(config.wasm_method)
+							.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+							.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+							.with_max_runtime_instances(config.max_runtime_instances)
+							.with_runtime_cache_size(config.runtime_cache_size)
+							.build();
 
-						let (c, _, _, _) = sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
-								&config,
-								None,
-								executor,
-						)?;
+						let (c, _, _, _) =
+							sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
+								&config, None, executor,
+							)?;
 
 						let client = Arc::new(Mutex::new(c));
 						let ext_builder = RemarkBuilder::new(client.clone());
 
 						let first_block_inherent =
 							block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))
-							.unwrap();
+								.unwrap();
 
 						let first_block_seed = sp_ver::extract_inherent_data(&first_block_inherent)
 							.map_err(|_| {
 								sp_blockchain::Error::Backend(String::from(
 									"cannot read random seed from inherents data",
 								))
-						})?;
+							})?;
 
 						let second_block_inherent = block_on(inherent_benchmark_data(
 							first_block_seed.seed.as_bytes().try_into().unwrap(),
@@ -177,22 +177,26 @@ pub fn run() -> sc_cli::Result<()> {
 						))
 						.unwrap();
 
-						cmd.run_ver(config, client, (first_block_inherent, second_block_inherent), &ext_builder)
+						cmd.run_ver(
+							config,
+							client,
+							(first_block_inherent, second_block_inherent),
+							&ext_builder,
+						)
 					},
 					BenchmarkCmd::Extrinsic(cmd) => {
 						let executor = WasmExecutor::builder()
-								.with_execution_method(config.wasm_method)
-								.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
-								.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
-								.with_max_runtime_instances(config.max_runtime_instances)
-								.with_runtime_cache_size(config.runtime_cache_size)
-								.build();
+							.with_execution_method(config.wasm_method)
+							.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+							.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+							.with_max_runtime_instances(config.max_runtime_instances)
+							.with_runtime_cache_size(config.runtime_cache_size)
+							.build();
 
-						let (c, _, _, _) = sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
-								&config,
-								None,
-								executor,
-						)?;
+						let (c, _, _, _) =
+							sc_service::new_full_parts::<Block, rollup_runtime::RuntimeApi, _>(
+								&config, None, executor,
+							)?;
 
 						let client = Arc::new(Mutex::new(c));
 						// Register the *Remark* and *TKA* builders.
@@ -207,14 +211,14 @@ pub fn run() -> sc_cli::Result<()> {
 
 						let first_block_inherent =
 							block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))
-							.unwrap();
+								.unwrap();
 
 						let first_block_seed = sp_ver::extract_inherent_data(&first_block_inherent)
 							.map_err(|_| {
 								sp_blockchain::Error::Backend(String::from(
 									"cannot read random seed from inherents data",
 								))
-						})?;
+							})?;
 
 						let second_block_inherent = block_on(inherent_benchmark_data(
 							first_block_seed.seed.as_bytes().try_into().unwrap(),
@@ -222,7 +226,12 @@ pub fn run() -> sc_cli::Result<()> {
 						))
 						.unwrap();
 
-						cmd.run_ver(client, (first_block_inherent, second_block_inherent), Vec::new(), &ext_factory)
+						cmd.run_ver(
+							client,
+							(first_block_inherent, second_block_inherent),
+							Vec::new(),
+							&ext_factory,
+						)
 					},
 					BenchmarkCmd::Machine(cmd) =>
 						cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),

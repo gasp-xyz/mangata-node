@@ -126,9 +126,8 @@ pub mod consts {
 	/// We allow for 2 seconds of compute with a 6 second average block time, with maximum proof size.
 	/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 	/// so there is room for new extrinsics in the next block
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = 
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight =
 		Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND, u64::MAX);
-
 }
 
 pub enum CallType {
@@ -908,9 +907,7 @@ pub mod config {
 		}
 
 		#[derive(Encode, Decode, Clone, TypeInfo)]
-		pub struct OneCurrencyOnChargeAdapter<C, OU, T1, TE>(
-			PhantomData<(C, OU, T1, TE)>,
-		);
+		pub struct OneCurrencyOnChargeAdapter<C, OU, T1, TE>(PhantomData<(C, OU, T1, TE)>);
 
 		type NegativeImbalanceOf<C, T> =
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -1021,7 +1018,6 @@ pub mod config {
 			}
 		}
 	}
-	
 
 	pub mod pallet_fee_lock {
 		use crate::*;

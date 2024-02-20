@@ -11,66 +11,67 @@ use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
-	create_runtime_str, impl_opaque_keys, generic,
+	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, NumberFor,
-		SignedExtension, StaticLookup, DispatchInfoOf, IdentifyAccount, PostDispatchInfoOf,
-		Saturating, Verify, Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		DispatchInfoOf, IdentifyAccount, NumberFor, PostDispatchInfoOf, Saturating,
+		SignedExtension, StaticLookup, Verify, Zero,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity, InvalidTransaction},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress, MultiSignature, OpaqueExtrinsic,
-	Perbill, Percent, Permill, RuntimeDebug,
+	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
+	MultiSignature, OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
+	cmp::Ordering,
 	convert::{TryFrom, TryInto},
-	marker::PhantomData, cmp::Ordering,
+	marker::PhantomData,
 	prelude::*,
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-pub use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi};
+pub use mangata_support::traits::{
+	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+};
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_api::HeaderT;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 
 // A few exports that help ease life for downstream crates.
+#[cfg(feature = "runtime-benchmarks")]
+pub use frame_support::traits::OriginTrait;
 pub use frame_support::{
-	construct_runtime, parameter_types, ensure,
+	construct_runtime,
+	dispatch::{DispatchClass, DispatchResult},
+	ensure, parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
-		StorageInfo, Everything, InstanceFilter, FindAuthor,
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
-		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get, Imbalance,
-		WithdrawReasons,
+		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin,
+		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
+		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
 	},
+	unsigned::TransactionValidityError,
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 		},
-		IdentityFee, Weight, ConstantMultiplier
+		ConstantMultiplier, IdentityFee, Weight,
 	},
-	dispatch::{DispatchClass, DispatchResult},
-	unsigned::TransactionValidityError,
-	StorageValue, PalletId
+	PalletId, StorageValue,
 };
-pub use frame_system::Call as SystemCall;
-pub use orml_tokens::Call as TokensCall;
-pub use pallet_timestamp::Call as TimestampCall;
-use static_assertions::const_assert;
-use xyk_runtime_api::RpcAssetMetadata;
-pub use runtime_config::*;
-use sp_application_crypto::ByteArray;
-#[cfg(feature = "runtime-benchmarks")]
-pub use frame_support::traits::OriginTrait;
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	Call as SystemCall, EnsureRoot,
 };
+pub use orml_tokens::Call as TokensCall;
+pub use pallet_timestamp::Call as TimestampCall;
+pub use runtime_config::*;
+use sp_application_crypto::ByteArray;
+use static_assertions::const_assert;
+use xyk_runtime_api::RpcAssetMetadata;
 
-pub use orml_tokens;
-pub use orml_tokens::MultiTokenCurrencyExtended;
+pub use orml_tokens::{self, MultiTokenCurrencyExtended};
 pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
@@ -79,14 +80,13 @@ pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
 pub use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
-pub use pallet_xyk;
-pub use pallet_xyk::AssetMetadataMutationTrait;
+pub use pallet_xyk::{self, AssetMetadataMutationTrait};
 pub use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
-pub mod weights;
 pub mod runtime_config;
+pub mod weights;
 use runtime_config::config as cfg;
 pub use runtime_config::{currency::*, runtime_types, tokens, types::*, CallType};
 
@@ -747,7 +747,6 @@ impl pallet_maintenance::Config for Runtime {
 	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 }
 
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -1174,7 +1173,7 @@ impl_runtime_apis! {
 
 		fn execute_block(block: Block) {
 			let header = block.header();
-			let author = 
+			let author =
 				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
 					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
 				).expect("Could not find AuRa author index!").to_raw_vec();

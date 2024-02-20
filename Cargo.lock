@@ -12056,6 +12056,18 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "polkadot-primitives"
+version = "1.0.0"
+
+[[patch.unused]]
+name = "sp-authority-discovery"
+version = "4.0.0-dev"
+
+[[patch.unused]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
@@ -12074,15 +12086,3 @@ source = "git+https://github.com/mangata-finance//open-runtime-module-library?br
 name = "orml-xtokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=develop#bc3920b659f73fbdd388bb1d4182cac9e78ab7a9"
-
-[[patch.unused]]
-name = "cumulus-primitives-core"
-version = "0.1.0"
-
-[[patch.unused]]
-name = "polkadot-primitives"
-version = "1.0.0"
-
-[[patch.unused]]
-name = "sp-authority-discovery"
-version = "4.0.0-dev"

@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::{alloc::string::String, Decode, Encode};
+use codec::{alloc::string::String, Decode, Encode, MaxEncodedLen};
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -14,10 +14,12 @@ use sp_runtime::{
 	create_runtime_str, impl_opaque_keys, generic,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, NumberFor,
-		SignedExtension, StaticLookup, DispatchInfoOf
+		SignedExtension, StaticLookup, DispatchInfoOf, IdentifyAccount, PostDispatchInfoOf,
+		Saturating, Verify, Zero,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	transaction_validity::{TransactionSource, TransactionValidity, InvalidTransaction},
+	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress, MultiSignature, OpaqueExtrinsic,
+	Perbill, Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -28,47 +30,65 @@ use sp_std::{
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-use frame_system::EnsureRoot;
-use mangata_support::traits::ProofOfStakeRewardsApi;
+pub use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi};
 pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
-pub use orml_tokens;
-pub use pallet_issuance::IssuanceInfo;
-pub use pallet_sudo_mangata;
-pub use pallet_sudo_origin;
-pub use pallet_xyk;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_api::HeaderT;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, parameter_types, ensure,
 	traits::{
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
-		StorageInfo, Everything, InstanceFilter, FindAuthor
+		StorageInfo, Everything, InstanceFilter, FindAuthor,
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get, Imbalance,
+		WithdrawReasons,
 	},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 		},
-		IdentityFee, Weight,
+		IdentityFee, Weight, ConstantMultiplier
 	},
-	StorageValue,
+	dispatch::{DispatchClass, DispatchResult},
+	unsigned::TransactionValidityError,
+	StorageValue, PalletId
 };
 pub use frame_system::Call as SystemCall;
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
 pub use runtime_config::*;
 use sp_application_crypto::ByteArray;
+#[cfg(feature = "runtime-benchmarks")]
+pub use frame_support::traits::OriginTrait;
+pub use frame_system::{
+	limits::{BlockLength, BlockWeights},
+	EnsureRoot,
+};
 
-mod weights;
+pub use orml_tokens;
+pub use orml_tokens::MultiTokenCurrencyExtended;
+pub use orml_traits::{
+	asset_registry::{AssetMetadata, AssetProcessor},
+	parameter_type_with_key,
+};
+pub use pallet_issuance::IssuanceInfo;
+pub use pallet_sudo_mangata;
+pub use pallet_sudo_origin;
+pub use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+pub use pallet_xyk;
+pub use pallet_xyk::AssetMetadataMutationTrait;
+pub use scale_info::TypeInfo;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+
+pub mod weights;
 pub mod runtime_config;
 use runtime_config::config as cfg;
-pub use runtime_config::{currency::*, deposit, runtime_types, tokens, types::*, CallType};
+pub use runtime_config::{currency::*, runtime_types, tokens, types::*, CallType};
 
 pub mod constants;
 

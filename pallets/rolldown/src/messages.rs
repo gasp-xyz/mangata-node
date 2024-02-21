@@ -221,6 +221,7 @@ pub mod eth_abi {
 		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
 
 		// L2 to L1
+		#[derive(Debug, PartialEq)]
 		struct RequestResult {
 			uint256 requestId;
 			UpdateType updateType;
@@ -228,6 +229,7 @@ pub mod eth_abi {
 		}
 
 
+		#[derive(Debug, PartialEq)]
 		struct Cancel {
 			bytes updater;
 			bytes canceler;
@@ -236,6 +238,7 @@ pub mod eth_abi {
 			bytes32 hash;
 		}
 
+		#[derive(Debug, PartialEq)]
 		struct L2Update {
 			Cancel[] cancles;
 			RequestResult[] results;

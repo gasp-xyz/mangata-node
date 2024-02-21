@@ -336,6 +336,53 @@ fn test_cancel_removes_pending_update() {
 		});
 }
 
+#[test]
+#[serial]
+fn test_cancel_produce_update_with_correct_hash() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let withdraw_update =
+				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})]);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			let req : messages::eth_abi::L1Update = pending_requests::<Test>::get(U256::from(15u128)).unwrap().1.into();
+
+			assert_eq!(Rolldown::get_l2_update(),
+				messages::eth_abi::L2Update{
+				cancles: vec![],
+				results: vec![]
+			});
+
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+			assert_eq!(Rolldown::get_l2_update(),
+				messages::eth_abi::L2Update{
+				cancles: vec![
+					messages::eth_abi::Cancel {
+						updater: ALICE.encode(),
+						canceler: BOB.encode(),
+						lastProccessedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
+						lastAcceptedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
+						hash: alloy_primitives::FixedBytes::<32>::from_slice(Keccak256::digest(&req.abi_encode()[..]).as_ref()),
+					}
+				],
+				results: vec![]
+			});
+
+		});
+}
+
 
 #[test]
 #[serial]

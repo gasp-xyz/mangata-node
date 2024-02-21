@@ -355,29 +355,30 @@ fn test_cancel_produce_update_with_correct_hash() {
 
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
-			let req : messages::eth_abi::L1Update = pending_requests::<Test>::get(U256::from(15u128)).unwrap().1.into();
+			let req: messages::eth_abi::L1Update =
+				pending_requests::<Test>::get(U256::from(15u128)).unwrap().1.into();
 
-			assert_eq!(Rolldown::get_l2_update(),
-				messages::eth_abi::L2Update{
-				cancles: vec![],
-				results: vec![]
-			});
+			assert_eq!(
+				Rolldown::get_l2_update(),
+				messages::eth_abi::L2Update { cancles: vec![], results: vec![] }
+			);
 
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-			assert_eq!(Rolldown::get_l2_update(),
-				messages::eth_abi::L2Update{
-				cancles: vec![
-					messages::eth_abi::Cancel {
+			assert_eq!(
+				Rolldown::get_l2_update(),
+				messages::eth_abi::L2Update {
+					cancles: vec![messages::eth_abi::Cancel {
 						updater: ALICE.encode(),
 						canceler: BOB.encode(),
 						lastProccessedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
 						lastAcceptedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
-						hash: alloy_primitives::FixedBytes::<32>::from_slice(Keccak256::digest(&req.abi_encode()[..]).as_ref()),
-					}
-				],
-				results: vec![]
-			});
-
+						hash: alloy_primitives::FixedBytes::<32>::from_slice(
+							Keccak256::digest(&req.abi_encode()[..]).as_ref()
+						),
+					}],
+					results: vec![]
+				}
+			);
 		});
 }
 
@@ -461,7 +462,6 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 		})
 }
 
-
 #[test]
 #[serial]
 fn test_cancel_unexisting_request_fails() {
@@ -473,11 +473,8 @@ fn test_cancel_unexisting_request_fails() {
 				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
 				Error::<Test>::RequestDoesNotExist
 			);
-
 		});
 }
-
-
 
 #[test]
 #[serial]
@@ -516,7 +513,6 @@ fn test_cancel_removes_cancel_right() {
 			);
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
-
 
 			assert_eq!(
 				sequencer_rights::<Test>::get(ALICE).unwrap(),
@@ -562,11 +558,14 @@ fn test_cancel_removes_cancel_right() {
 // this test ensures that the hash calculated on rust side matches hash calculated in contract
 fn test_l1_update_hash_compare_with_solidty() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		let update = create_l1_update_with_offset(vec![L1UpdateRequest::Deposit(messages::Deposit {
-			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-			tokenAddress: ETH_TOKEN_ADDRESS,
-			amount: sp_core::U256::from(MILLION),
-		})], sp_core::U256::from(1u128));
+		let update = create_l1_update_with_offset(
+			vec![L1UpdateRequest::Deposit(messages::Deposit {
+				depositRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			})],
+			sp_core::U256::from(1u128),
+		);
 		let hash = Rolldown::calculate_hash_of_pending_requests(update.clone());
 		assert_eq!(
 			hash,

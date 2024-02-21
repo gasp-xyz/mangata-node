@@ -6,9 +6,9 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{PendingRequestType, UpdateType, to_eth_u256};
-use sp_runtime::traits::SaturatedConversion;
+use messages::{to_eth_u256, PendingRequestType, UpdateType};
 use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -201,7 +201,7 @@ pub mod pallet {
 					},
 				);
 			}
-			l2_origin_updates_counter::<T>::put(u128::MAX/2);
+			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
 		}
 	}
 

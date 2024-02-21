@@ -12,7 +12,7 @@ pub struct Deposit {
 	pub amount: sp_core::U256,
 }
 
-impl Into<eth_abi::Deposit> for Deposit{
+impl Into<eth_abi::Deposit> for Deposit {
 	fn into(self) -> eth_abi::Deposit {
 		eth_abi::Deposit {
 			depositRecipient: self.depositRecipient.into(),
@@ -30,12 +30,12 @@ pub struct Withdraw {
 	pub amount: sp_core::U256,
 }
 
-impl Into<eth_abi::Withdraw> for Withdraw{
+impl Into<eth_abi::Withdraw> for Withdraw {
 	fn into(self) -> eth_abi::Withdraw {
 		eth_abi::Withdraw {
 			withdrawRecipient: self.depositRecipient.into(),
 			tokenAddress: self.tokenAddress.into(),
-			amount: to_eth_u256(self.amount) ,
+			amount: to_eth_u256(self.amount),
 		}
 	}
 }
@@ -45,11 +45,14 @@ pub struct L2UpdatesToRemove {
 	pub l2UpdatesToRemove: Vec<sp_core::U256>,
 }
 
-
-impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove{
+impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	fn into(self) -> eth_abi::L2UpdatesToRemove {
 		eth_abi::L2UpdatesToRemove {
-			l2UpdatesToRemove: self.l2UpdatesToRemove.into_iter().map(|req_id| to_eth_u256(req_id)).collect()
+			l2UpdatesToRemove: self
+				.l2UpdatesToRemove
+				.into_iter()
+				.map(|req_id| to_eth_u256(req_id))
+				.collect(),
 		}
 	}
 }
@@ -60,7 +63,7 @@ pub struct CancelResolution {
 	pub cancelJustified: bool,
 }
 
-impl Into<eth_abi::CancelResolution> for CancelResolution{
+impl Into<eth_abi::CancelResolution> for CancelResolution {
 	fn into(self) -> eth_abi::CancelResolution {
 		eth_abi::CancelResolution {
 			l2RequestId: to_eth_u256(self.l2RequestId),
@@ -104,7 +107,8 @@ impl Into<eth_abi::PendingRequestType> for PendingRequestType {
 			PendingRequestType::DEPOSIT => eth_abi::PendingRequestType::DEPOSIT,
 			PendingRequestType::WITHDRAWAL => eth_abi::PendingRequestType::WITHDRAWAL,
 			PendingRequestType::CANCEL_RESOLUTION => eth_abi::PendingRequestType::CANCEL_RESOLUTION,
-			PendingRequestType::L2_UPDATES_TO_REMOVE => eth_abi::PendingRequestType::L2_UPDATES_TO_REMOVE,
+			PendingRequestType::L2_UPDATES_TO_REMOVE =>
+				eth_abi::PendingRequestType::L2_UPDATES_TO_REMOVE,
 		}
 	}
 }
@@ -158,12 +162,19 @@ impl Into<eth_abi::L1Update> for L1Update {
 			order: self.order.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingWithdraws: self.pendingWithdraws.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
-			pendingCancelResultions: self.pendingCancelResultions.into_iter().map(Into::into).collect::<Vec<_>>(),
-			pendingL2UpdatesToRemove: self.pendingL2UpdatesToRemove.into_iter().map(Into::into).collect::<Vec<_>>(),
+			pendingCancelResultions: self
+				.pendingCancelResultions
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
+			pendingL2UpdatesToRemove: self
+				.pendingL2UpdatesToRemove
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
 		}
 	}
 }
-
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Cancel<AccountId> {

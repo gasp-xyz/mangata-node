@@ -76,7 +76,7 @@ sp-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk",
 sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", features = [
 	"helpers",
 ] }
-substrate-frame-rpc-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../../rpc/nonce" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 try-runtime-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", optional = true}

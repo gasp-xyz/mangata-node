@@ -201,7 +201,7 @@ pub mod pallet {
 					},
 				);
 			}
-			// l2_origin_updates_counter::<T>::put(u128::MAX/2);
+			l2_origin_updates_counter::<T>::put(u128::MAX/2);
 		}
 	}
 

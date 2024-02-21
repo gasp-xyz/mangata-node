@@ -1,5 +1,6 @@
 use frame_support::assert_err;
 
+use mockall::predicate::eq;
 use sp_io::storage::rollback_transaction;
 use sp_runtime::traits::ConvertBack;
 
@@ -345,9 +346,6 @@ fn test_cancel_produce_update_with_correct_hash() {
 			forward_to_block::<Test>(10);
 
 			// Arrange
-			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-			slash_sequencer_mock.expect().return_const(Ok(().into()));
-
 			let withdraw_update =
 				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
@@ -383,6 +381,103 @@ fn test_cancel_produce_update_with_correct_hash() {
 		});
 }
 
+#[test]
+#[serial]
+fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_read() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+
+			let withdraw_update =
+				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})]);
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
+			let cancel_resolution = create_l1_update_with_offset(
+				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					l2RequestId: U256::from(l2_request_id),
+					cancelJustified: true,
+				})],
+				sp_core::U256::from(1u128),
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+			forward_to_block::<Test>(12);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			forward_to_block::<Test>(16);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().with(eq(ALICE)).return_const(Ok(().into()));
+			forward_to_block::<Test>(17);
+		})
+}
+
+#[test]
+#[serial]
+fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+
+			let withdraw_update =
+				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})]);
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
+			let cancel_resolution = create_l1_update_with_offset(
+				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					l2RequestId: U256::from(l2_request_id),
+					cancelJustified: false,
+				})],
+				sp_core::U256::from(1u128),
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+			forward_to_block::<Test>(12);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			forward_to_block::<Test>(16);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().with(eq(BOB)).return_const(Ok(().into()));
+			forward_to_block::<Test>(17);
+		})
+}
+
+
+#[test]
+#[serial]
+fn test_cancel_unexisting_request_fails() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::RequestDoesNotExist
+			);
+
+		});
+}
+
+
 
 #[test]
 #[serial]
@@ -395,6 +490,7 @@ fn test_cancel_removes_cancel_right() {
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock.expect().return_const(Ok(().into()));
 
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
 			let withdraw_update =
 				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
@@ -404,10 +500,10 @@ fn test_cancel_removes_cancel_right() {
 
 			let cancel_resolution = create_l1_update_with_offset(
 				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-					l2RequestId: U256::from(1u128),
+					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: true,
 				})],
-				sp_core::U256::from(0u128),
+				sp_core::U256::from(1u128),
 			);
 
 			assert_eq!(

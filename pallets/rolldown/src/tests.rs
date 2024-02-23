@@ -363,13 +363,14 @@ fn test_cancel_produce_update_with_correct_hash() {
 				messages::eth_abi::L2Update { cancles: vec![], results: vec![] }
 			);
 
+			let update_id = Rolldown::get_l2_origin_updates_counter();
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
 			assert_eq!(
 				Rolldown::get_l2_update(),
 				messages::eth_abi::L2Update {
 					cancles: vec![messages::eth_abi::Cancel {
-						updater: ALICE.encode(),
-						canceler: BOB.encode(),
+						l2RequestId: messages::to_eth_u256(U256::from(update_id)),
 						lastProccessedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
 						lastAcceptedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
 						hash: alloy_primitives::FixedBytes::<32>::from_slice(
@@ -487,7 +488,7 @@ fn test_cancel_removes_cancel_right() {
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock.expect().return_const(Ok(().into()));
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter();
 			let withdraw_update =
 				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,

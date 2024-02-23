@@ -325,8 +325,8 @@ pub mod pallet {
 			};
 
 			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			let update_id = Self::get_l2_origin_updates_counter();
+			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
 				U256::from(update_id),
@@ -702,10 +702,9 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+	fn to_eth_cancel(request_id: U256, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
-			updater: cancel.updater.encode(),
-			canceler: cancel.canceler.encode(),
+			l2RequestId: to_eth_u256(request_id),
 			lastProccessedRequestOnL1: to_eth_u256(cancel.lastProccessedRequestOnL1),
 			lastAcceptedRequestOnL1: to_eth_u256(cancel.lastAcceptedRequestOnL1),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
@@ -730,7 +729,7 @@ impl<T: Config> Pallet<T> {
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancles.push(Self::to_eth_cancel(cancel));
+					update.cancles.push(Self::to_eth_cancel(request_id, cancel));
 				},
 			};
 		}

@@ -239,11 +239,9 @@ pub mod eth_abi {
 			bool status;
 		}
 
-
 		#[derive(Debug, PartialEq)]
 		struct Cancel {
-			bytes updater;
-			bytes canceler;
+			uint256 l2RequestId;
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			bytes32 hash;

@@ -1,0 +1,115 @@
+[package]
+name = "rollup-node"
+version = "1.0.0"
+description = "Mangata rollup node"
+authors = ["Mangata Team"]
+edition.workspace = true
+license = "MIT-0"
+publish = false
+repository.workspace = true
+build = "build.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "rollup-node"
+
+[dependencies]
+clap = { version = "4.4.2", features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+futures = "0.3.28"
+hex = "0.4.0"
+jsonrpsee = { version = "0.16.2", features = ["server"] }
+log = "0.4.20"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
+
+# Local
+rollup-runtime = { path = "../runtime/" }
+xyk-rpc = { path = "../../pallets/xyk/rpc" }
+xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
+proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
+proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
+metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
+
+# Substrate
+frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+frame-benchmarking-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-chain-spec = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-client-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-executor = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-network = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-network-sync = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-rpc-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-service = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-sysinfo = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-telemetry = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-tracing = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-transaction-pool-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-block-builder = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-consensus = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sc-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-inherents = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-keyring = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-keystore = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-timestamp = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", features = [
+	"helpers",
+] }
+substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../../rpc/nonce" }
+substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", optional = true}
+
+color-print = "0.3.4"
+
+[dev-dependencies]
+tempfile = "3.8.0"
+
+[build-dependencies]
+substrate-build-script-utils = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+
+[features]
+default = [ "std"
+]
+std = [
+	"rollup-runtime/std",
+	"xyk-rpc/std",]
+# Dependencies that are only required if runtime benchmarking should be build.
+runtime-benchmarks = [
+	"frame-benchmarking-cli/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"rollup-runtime/runtime-benchmarks",
+	"sc-service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+# Enable features that allow the runtime to be tried and debugged. Name might be subject to change
+# in the near future.
+try-runtime = [
+	"frame-system/try-runtime",
+	"rollup-runtime/try-runtime",
+	"pallet-transaction-payment-mangata/try-runtime",
+	"sp-runtime/try-runtime",
+	"try-runtime-cli/try-runtime",
+]

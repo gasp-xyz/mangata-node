@@ -155,7 +155,7 @@ jobs:
 
       - name: Current branch name for generating types
         run: |
-          echo "MANGATA_TYPES_VERSION=${{ steps.branch-name.outputs.current_branch }}" | sed -E 's@[/\.]@-@g' >> $GITHUB_ENV
+          echo "MANGATA_TYPES_VERSION=${{ steps.branch-name.outputs.current_branch }}" | sed -E 's@[/\.]@-@g; s@_@-@g' >> $GITHUB_ENV
 
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |

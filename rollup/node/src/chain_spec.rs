@@ -46,7 +46,7 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 	rollup_runtime::SessionKeys { aura, grandpa }
 }
 
-pub fn rollup_local_config() -> ChainSpec {
+pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "RXL".into());
@@ -155,6 +155,7 @@ pub fn rollup_local_config() -> ChainSpec {
 						},
 					),
 				],
+				initial_collators_as_sequencers,
 			)
 		},
 		// Bootnodes
@@ -179,6 +180,7 @@ fn rollup_genesis(
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	register_assets: Vec<(u32, AssetMetadataOf)>,
+	initial_collators_as_sequencers: bool,
 ) -> rollup_runtime::RuntimeGenesisConfig {
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
@@ -229,6 +231,7 @@ fn rollup_genesis(
 		},
 		session: rollup_runtime::SessionConfig {
 			keys: initial_authorities
+				.clone()
 				.into_iter()
 				.map(|(acc, (aura, grandpa))| {
 					(
@@ -290,5 +293,12 @@ fn rollup_genesis(
 				.collect(),
 		},
 		vesting: Default::default(),
+		rolldown: rollup_runtime::RolldownConfig {
+			sequencers: if initial_collators_as_sequencers {
+				initial_authorities.iter().map(|(acc, _)| acc.clone()).collect()
+			} else {
+				Default::default()
+			},
+		},
 	}
 }

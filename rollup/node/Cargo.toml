@@ -29,6 +29,8 @@ serde_json = "1.0.105"
 rollup-runtime = { path = "../runtime/" }
 xyk-rpc = { path = "../../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
+rolldown-rpc = { path = "../../pallets/rolldown/rpc" }
+rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
@@ -94,7 +96,9 @@ default = [ "std"
 ]
 std = [
 	"rollup-runtime/std",
-	"xyk-rpc/std",]
+	"xyk-rpc/std",
+	"rolldown-rpc/std",
+	]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",

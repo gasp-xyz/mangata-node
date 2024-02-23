@@ -15,7 +15,7 @@ use sp_runtime::{
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
 		DispatchInfoOf, IdentifyAccount, NumberFor, PostDispatchInfoOf, Saturating,
-		SignedExtension, StaticLookup, Verify, Zero,
+		SignedExtension, StaticLookup, Verify, Zero, Keccak256
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
@@ -32,9 +32,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 pub use mangata_support::traits::{
-	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
 };
-pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
+pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 
@@ -46,7 +46,7 @@ pub use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
-		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		EitherOfDiverse, tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin,
 		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
 		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
@@ -62,7 +62,7 @@ pub use frame_support::{
 };
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	Call as SystemCall, EnsureRoot,
+	Call as SystemCall, EnsureRoot, ConsumedWeight
 };
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -591,6 +591,7 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
+	type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -686,6 +687,12 @@ impl orml_asset_registry::Config for Runtime {
 	type Balance = Balance;
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 	type StringLimit = cfg::orml_asset_registry::StringLimit;
+	type Hash = Hash;
+	type Hashing = Keccak256;
+	type L1AssetAuthority = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		pallet_sequencer_staking::EnsureActiveSequencer<Runtime>,
+	>;
 }
 
 use cfg::pallet_proxy::ProxyType;
@@ -747,6 +754,22 @@ impl pallet_maintenance::Config for Runtime {
 	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 }
 
+impl pallet_rolldown::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddressConverter = pallet_rolldown::EthereumAddressConverter<AccountId>;
+	type SequencerStakingProvider = SequencerStaking;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
+}
+
+impl pallet_sequencer_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
+	type MinimumSequencers = frame_support::traits::ConstU32<2>;
+	type RolldownProvider = Rolldown;
+}
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -756,6 +779,7 @@ construct_runtime!(
 		Utility: pallet_utility_mangata = 4,
 		Proxy: pallet_proxy = 5,
 		Maintenance: pallet_maintenance = 6,
+		Rolldown: pallet_rolldown = 7,
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,
@@ -783,9 +807,10 @@ construct_runtime!(
 		// Bootstrap
 		Bootstrap: pallet_bootstrap = 21,
 
-		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship = 30,
-		ParachainStaking: parachain_staking = 31,
+		// Collator support. The order of these 6 are important and shall not change.
+		Authorship: pallet_authorship = 29,
+		ParachainStaking: parachain_staking = 30,
+		SequencerStaking: pallet_sequencer_staking = 31,
 		Session: pallet_session = 32,
 		Aura: pallet_aura = 33,
 		Grandpa: pallet_grandpa = 34,
@@ -844,6 +869,15 @@ impl_runtime_apis! {
 			}else{
 				Default::default()
 			}
+		}
+	}
+
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
+		fn get_pending_updates_hash() -> sp_core::H256 {
+			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+		}
+		fn get_pending_updates() -> Vec<u8> {
+			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 	}
 

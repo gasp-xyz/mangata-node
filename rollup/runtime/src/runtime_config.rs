@@ -1242,6 +1242,28 @@ pub mod config {
 				Ok(T::RuntimeOrigin::root())
 			}
 		}
+
+		pub struct AssetRegistryProvider<T>(PhantomData<T>);
+		impl<T: orml_asset_registry::Config<CustomMetadata = CustomMetadata>>
+			AssetRegistryProviderTrait<T::AssetId> for AssetRegistryProvider<T>
+		{
+			fn get_l1_asset_id(l1_asset: L1Asset) -> Option<T::AssetId> {
+				orml_asset_registry::L1AssetToId::<T>::get(l1_asset)
+			}
+
+			fn create_l1_asset(l1_asset: L1Asset) -> Result<T::AssetId, DispatchError> {
+				let metadata = AssetMetadata {
+					decimals: 18_u32,
+					name: b"L1Asset".to_vec().try_into().unwrap(),
+					symbol: b"L1Asset".to_vec().try_into().unwrap(),
+					existential_deposit: Zero::zero(),
+					location: None,
+					additional: CustomMetadata { xcm: None, xyk: None },
+				};
+
+				orml_asset_registry::Pallet::<T>::do_register_l1_asset(metadata, None, l1_asset)
+			}
+		}
 	}
 
 	pub mod pallet_identity {

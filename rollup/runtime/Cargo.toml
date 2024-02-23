@@ -33,7 +33,10 @@ pallet-sudo-origin = { path = "../../pallets/sudo-origin", default-features = fa
 pallet-xyk = { path = "../../pallets/xyk", default-features = false, version = "0.1.0" }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api", default-features = false, version = "2.0.0" }
+rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api", default-features = false, version = "2.0.0" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false }
+pallet-rolldown = { path = "../../pallets/rolldown", default-features = false }
+pallet-sequencer-staking = { path = "../../pallets/sequencer-staking", default-features = false }
 metamask-signature-runtime-api = { path = '../../pallets/metamask-signature-runtime-api', default-features = false }
 
 # Substrate Dependencies
@@ -155,6 +158,9 @@ std = [
 	"sp-consensus-grandpa/std",
 	"pallet-grandpa/std",
 	"sp-application-crypto/std",
+	"rolldown-runtime-api/std",
+	"pallet-rolldown/std",
+	"pallet-sequencer-staking/std",
 ]
 
 try-runtime = [
@@ -188,6 +194,8 @@ try-runtime = [
 	"parachain-staking/try-runtime",
 	"sp-runtime/try-runtime",
 	"pallet-grandpa/try-runtime",
+	"pallet-rolldown/try-runtime",
+	"pallet-sequencer-staking/try-runtime",
 ]
 
 fast-runtime = []
@@ -220,4 +228,6 @@ runtime-benchmarks = [
 	"parachain-staking/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
+	"pallet-rolldown/runtime-benchmarks",
+	"pallet-sequencer-staking/runtime-benchmarks",
 ]

@@ -32,7 +32,7 @@ use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use std::{
-	cell::RefCell, convert::TryInto, net::SocketAddr, path::PathBuf, rc::Rc, time::Duration,
+	cell::RefCell, convert::TryInto, net::SocketAddr, path::PathBuf, rc::Rc, time::Duration, sync::{Arc, Mutex}
 };
 
 /// Helper enum that is used for better distinction of different parachain/runtime configuration
@@ -366,7 +366,7 @@ pub fn run() -> Result<()> {
 									None,
 									executor,
 							)?;
-							let client = Rc::new(RefCell::new(c));
+							let client = Arc::new(Mutex::new(c));
 							let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
 
 							let first_block_inherent =

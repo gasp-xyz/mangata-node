@@ -8,7 +8,7 @@ use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::Keystore;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::{cell::RefCell, rc::Rc, time::Duration, sync::{Arc, Mutex}};
 use substrate_frame_rpc_system::AccountNonceApi;
 
 type Runtime = mangata_kusama_runtime::RuntimeApi;
@@ -78,12 +78,12 @@ pub fn create_extrinsic(
 }
 
 pub struct BenchmarkExtrinsicBuilder {
-	client: Rc<RefCell<Client>>,
+	client: Arc<Mutex<Client>>,
 }
 
 impl BenchmarkExtrinsicBuilder {
 	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Rc<RefCell<Client>>) -> Self {
+	pub fn new(client: Arc<Mutex<Client>>) -> Self {
 		Self { client }
 	}
 }
@@ -100,7 +100,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
 		let acc = Sr25519Keyring::Bob.pair();
 		let extrinsic: OpaqueExtrinsic = create_extrinsic(
-			&*self.client.borrow(),
+			&*self.client.lock().unwrap(),
 			acc,
 			frame_system::Call::remark { remark: vec![] },
 			Some(nonce),

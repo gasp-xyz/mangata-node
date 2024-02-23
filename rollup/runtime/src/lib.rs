@@ -1174,19 +1174,16 @@ impl_runtime_apis! {
 		fn execute_block(block: Block) {
 			let header = block.header();
 			let author =
-				// If author_peek is None that means authorship was not on_initialize
+				// since execute_block_ver_impl is called at the end here
+				// and execute_block_ver_impl initializes the block
+				// That means that at this point the block is not initialized
 				// That means session was not on_initialize
 				// That means we can use session validator set
-				// as they have not been overwritten yet
-				// If author_peek is some then we can just use it 
-				Authorship::author_peek().unwrap_or_else(
-					|| 
-					{
-						pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
-							header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
-						).expect("Could not find AuRa author index!")
-					}
-				)
+				// as they have not been overwritten yet 
+				
+				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
+					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
+				).expect("Could not find AuRa author index!")
 				.to_raw_vec();
 			Executive::execute_block_ver_impl(block, author);
 		}

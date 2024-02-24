@@ -6,7 +6,8 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{PendingRequestType, UpdateType};
+use messages::{to_eth_u256, PendingRequestType, UpdateType};
+use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
@@ -200,7 +201,7 @@ pub mod pallet {
 					},
 				);
 			}
-			// l2_origin_updates_counter::<T>::put(u128::MAX/2);
+			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
 		}
 	}
 
@@ -324,8 +325,8 @@ pub mod pallet {
 			};
 
 			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			let update_id = Self::get_l2_origin_updates_counter();
+			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
 				U256::from(update_id),
@@ -701,18 +702,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
-		let mut bytes = [0u8; 32];
-		value.to_big_endian(&mut bytes);
-		alloy_primitives::U256::from_be_bytes(bytes)
-	}
-
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+	fn to_eth_cancel(request_id: U256, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
-			updater: cancel.updater.encode(),
-			canceler: cancel.canceler.encode(),
-			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
-			lastAcceptedRequestOnL1: Self::to_eth_u256(cancel.lastAcceptedRequestOnL1),
+			l2RequestId: to_eth_u256(request_id),
+			lastProccessedRequestOnL1: to_eth_u256(cancel.lastProccessedRequestOnL1),
+			lastAcceptedRequestOnL1: to_eth_u256(cancel.lastAcceptedRequestOnL1),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
 		}
 	}
@@ -730,12 +724,12 @@ impl<T: Config> Pallet<T> {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: Self::to_eth_u256(request_id),
+						requestId: to_eth_u256(request_id),
 						updateType: request_type,
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancles.push(Self::to_eth_cancel(cancel));
+					update.cancles.push(Self::to_eth_cancel(request_id, cancel));
 				},
 			};
 		}

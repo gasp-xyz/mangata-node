@@ -195,6 +195,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 					),
 				],
 				parachains::mangata::ID.into(),
+				false,
 			)
 		},
 		Vec::new(),
@@ -212,7 +213,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 	)
 }
 
-pub fn mangata_rococo_local_config() -> ChainSpec {
+pub fn mangata_rococo_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGRL".into());
@@ -397,6 +398,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 					),
 				],
 				parachains::mangata::ID.into(),
+				initial_collators_as_sequencers,
 			)
 		},
 		// Bootnodes
@@ -425,6 +427,7 @@ pub(crate) fn mangata_genesis(
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	register_assets: Vec<(u32, AssetMetadataOf)>,
 	id: ParaId,
+	initial_collators_as_sequencers: bool,
 ) -> mangata_rococo_runtime::RuntimeGenesisConfig {
 	mangata_rococo_runtime::RuntimeGenesisConfig {
 		system: mangata_rococo_runtime::SystemConfig {
@@ -547,7 +550,11 @@ pub(crate) fn mangata_genesis(
 		},
 		vesting: Default::default(),
 		rolldown: mangata_rococo_runtime::RolldownConfig {
-			sequencers: initial_authorities.iter().map(|(acc, _)| acc.clone()).collect(),
+			sequencers: if initial_collators_as_sequencers {
+				initial_authorities.iter().map(|(acc, _)| acc.clone()).collect()
+			} else {
+				Default::default()
+			},
 		},
 	}
 }

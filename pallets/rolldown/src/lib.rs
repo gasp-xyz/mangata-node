@@ -6,7 +6,8 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::UpdateType;
+use messages::{to_eth_u256, PendingRequestType, UpdateType};
+use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
@@ -97,7 +98,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
-		pub requestId: U256,
+		pub l2RequestId: U256,
 		pub updater: AccountId,
 		pub canceler: AccountId,
 		pub lastProccessedRequestOnL1: U256,
@@ -107,7 +108,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Withdraw {
-		pub requestId: U256,
+		pub l2RequestId: U256,
 		pub withdrawRecipient: [u8; 20],
 		pub tokenAddress: [u8; 20],
 		pub amount: U256,
@@ -172,6 +173,8 @@ pub mod pallet {
 		BalanceOverflow,
 		L1AssetCreationFailed,
 		MathOverflow,
+		TooManyRequests,
+		InvalidUpdate,
 	}
 
 	#[pallet::config]
@@ -229,6 +232,33 @@ pub mod pallet {
 			let sequencer = ensure_signed(origin)?;
 
 			ensure!(!requests.order.is_empty(), Error::<T>::EmptyUpdate);
+			ensure!(requests.order.len() <= 10, Error::<T>::TooManyRequests);
+
+			let deposits_count = requests.pendingDeposits.len();
+			let cancels_count = requests.pendingCancelResultions.len();
+			let l2_updates_count = requests.pendingL2UpdatesToRemove.len();
+
+			ensure!(
+				requests.order.iter().filter(|e| **e == PendingRequestType::DEPOSIT).count() ==
+					deposits_count,
+				Error::<T>::InvalidUpdate
+			);
+			ensure!(
+				requests
+					.order
+					.iter()
+					.filter(|e| **e == PendingRequestType::CANCEL_RESOLUTION)
+					.count() == cancels_count,
+				Error::<T>::InvalidUpdate
+			);
+			ensure!(
+				requests
+					.order
+					.iter()
+					.filter(|e| **e == PendingRequestType::L2_UPDATES_TO_REMOVE)
+					.count() == l2_updates_count,
+				Error::<T>::InvalidUpdate
+			);
 
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
 			let current_block_number =
@@ -294,22 +324,20 @@ pub mod pallet {
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
 			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
-			let requestId = U256::from(Self::get_l2_origin_updates_counter());
+			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
 			// create cancel request
 			let cancel_request = Cancel {
-				requestId,
+				l2RequestId,
 				updater: submitter,
 				canceler,
 				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
 				lastAcceptedRequestOnL1: request.lastAcceptedRequestOnL1,
 				hash: hash_of_pending_request,
 			};
-
-			// increase counter for updates originating on l2
 			
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
-				requestId,
+				l2RequestId,
 				PendingUpdate::Cancel(cancel_request),
 			);
 			// remove whole l1l2 update (read) from pending requests
@@ -364,12 +392,12 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathOverflow)?;		
 			// increase counter for updates originating on l2
 			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
-			let requestId = U256::from(Self::get_l2_origin_updates_counter());
+			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
 			let withdraw_update =
-				Withdraw {requestId, withdrawRecipient, tokenAddress, amount: U256::from(amount) };
+				Withdraw {l2RequestId, withdrawRecipient, tokenAddress, amount: U256::from(amount) };
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
-				requestId,
+				l2RequestId,
 				PendingUpdate::Withdraw(withdraw_update),
 			);
 
@@ -534,6 +562,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_requests(_sequencer: &T::AccountId, update: messages::L1Update) {
+		// TODO: make sure not missing any request, 1st reqid in "read" == last_processed_request_on_l2 + 1
 		// TODO: check if not missing any request, not processing requests. This is double check, first should be done by sequencers and requests with missing request should be canceled
 		// for key in (requests.lastProccessedRequestOnL1 + 1_u128)..=requests.lastAcceptedRequestOnL1
 		// {
@@ -545,6 +574,8 @@ impl<T: Config> Pallet<T> {
 		// 		return
 		// 	}
 		// }
+
+
 
 		for (request_id, request_details) in update.into_requests() {
 			if pending_updates::<T>::contains_key(request_id) {
@@ -608,38 +639,6 @@ impl<T: Config> Pallet<T> {
 		)?;
 		Ok(())
 	}
-
-	// fn process_withdraw(withdraw_request_details: &messages::Withdraw) -> Result<(), &'static str> {
-	// 	// fail will occur if user has not enough balance
-	// 	let amount: u128 = withdraw_request_details
-	// 		.amount
-	// 		.try_into()
-	// 		.or(Err(Error::<T>::BalanceOverflow))?;
-	// 	let account: T::AccountId =
-	// 		T::AddressConverter::convert(withdraw_request_details.depositRecipient);
-
-	// 	let eth_asset = L1Asset::Ethereum(withdraw_request_details.tokenAddress);
-	// 	let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
-	// 		.ok_or("L1AssetNotFound")?;
-
-	// 	T::Tokens::ensure_can_withdraw(
-	// 		asset_id.into(),
-	// 		&account,
-	// 		amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
-	// 		WithdrawReasons::all(),
-	// 		Default::default(),
-	// 	)
-	// 	.or(Err(Error::<T>::NotEnoughAssets))?;
-
-	// 	// burn tokes for user
-	// 	T::Tokens::burn_and_settle(
-	// 		asset_id,
-	// 		&account,
-	// 		amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
-	// 	)?;
-
-	// 	Ok(())
-	// }
 
 	fn process_cancel_resolution(
 		cancel_resolution: &messages::CancelResolution,
@@ -725,29 +724,21 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
-		let mut bytes = [0u8; 32];
-		value.to_big_endian(&mut bytes);
-		alloy_primitives::U256::from_be_bytes(bytes)
-	}
-
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+	fn to_eth_cancel(request_id: U256, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
-			requestId:Self::to_eth_u256(cancel.requestId),
-			updater: cancel.updater.encode(),
-			canceler: cancel.canceler.encode(),
-			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
-			lastAcceptedRequestOnL1: Self::to_eth_u256(cancel.lastAcceptedRequestOnL1),
+			l2RequestId: to_eth_u256(request_id),
+			lastProccessedRequestOnL1: to_eth_u256(cancel.lastProccessedRequestOnL1),
+			lastAcceptedRequestOnL1: to_eth_u256(cancel.lastAcceptedRequestOnL1),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
 		}
 	}
 
-	fn to_eth_withdraw(withdraw: Withdraw) -> messages::eth_abi::Withdraw {
+	fn to_eth_withdraw(l2RequestId: U256, withdraw: Withdraw) -> messages::eth_abi::Withdraw {
 		messages::eth_abi::Withdraw {
-			requestId:Self::to_eth_u256(withdraw.requestId),
-			withdrawRecipient: withdraw.withdrawRecipient,
-			tokenAddress: withdraw.tokenAddress,
-			amount: Self::to_eth_u256(withdraw.amount),
+			l2RequestId:to_eth_u256(l2RequestId),
+			withdrawRecipient: withdraw.withdrawRecipient.into(),
+			tokenAddress: withdraw.tokenAddress.into(),
+			amount: to_eth_u256(withdraw.amount),
 		}
 	}
 
@@ -768,15 +759,15 @@ impl<T: Config> Pallet<T> {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: Self::to_eth_u256(request_id),
+						requestId: to_eth_u256(request_id),
 						updateType: request_type,
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancels.push(Self::to_eth_cancel(cancel));
+					update.cancels.push(Self::to_eth_cancel(request_id, cancel));
 				},
 				PendingUpdate::Withdraw(withdraw) => {
-					update.withdraws.push(Self::to_eth_withdraw(withdraw));
+					update.withdraws.push(Self::to_eth_withdraw(request_id, withdraw));
 				},
 			};
 		}

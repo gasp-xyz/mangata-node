@@ -90,7 +90,9 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
 		// - Rococo based
 		"mangata-rococo-local" =>
-			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config(false)),
+		"mangata-rococo-local-seq" =>
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config(true)),
 		"mangata-rococo" => Box::new(chain_spec::mangata_rococo::mangata_rococo_prod_config()),
 		// - Kusama based
 		"mangata-kusama-local" =>
@@ -100,7 +102,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 		// -- Fallback (generic chainspec)
 		"" => {
 			log::warn!("No ChainSpec.id specified, so using default one, based on rococo-parachain runtime");
-			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config())
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config(false))
 		},
 
 		// -- Loading a specific spec from disk
@@ -646,6 +648,7 @@ mod tests {
 					vec![],
 					vec![],
 					1000.into(),
+					false,
 				)
 			},
 			Vec::new(),

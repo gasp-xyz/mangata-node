@@ -12,6 +12,16 @@ pub struct Deposit {
 	pub amount: sp_core::U256,
 }
 
+impl Into<eth_abi::Deposit> for Deposit {
+	fn into(self) -> eth_abi::Deposit {
+		eth_abi::Deposit {
+			depositRecipient: self.depositRecipient.into(),
+			tokenAddress: self.tokenAddress.into(),
+			amount: to_eth_u256(self.amount),
+		}
+	}
+}
+
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 #[allow(non_snake_case)]
 pub struct Withdraw {
@@ -20,15 +30,47 @@ pub struct Withdraw {
 	pub amount: sp_core::U256,
 }
 
+// impl Into<eth_abi::Withdraw> for Withdraw {
+// 	fn into(self) -> eth_abi::Withdraw {
+// 		eth_abi::Withdraw {
+// 			l2RequestId: to_eth_u256(self.l2RequestId),
+// 			withdrawRecipient: self.depositRecipient.into(),
+// 			tokenAddress: self.tokenAddress.into(),
+// 			amount: to_eth_u256(self.amount),
+// 		}
+// 	}
+// }
+
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub l2UpdatesToRemove: Vec<sp_core::U256>,
+}
+
+impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
+	fn into(self) -> eth_abi::L2UpdatesToRemove {
+		eth_abi::L2UpdatesToRemove {
+			l2UpdatesToRemove: self
+				.l2UpdatesToRemove
+				.into_iter()
+				.map(|req_id| to_eth_u256(req_id))
+				.collect(),
+		}
+	}
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct CancelResolution {
 	pub l2RequestId: sp_core::U256,
 	pub cancelJustified: bool,
+}
+
+impl Into<eth_abi::CancelResolution> for CancelResolution {
+	fn into(self) -> eth_abi::CancelResolution {
+		eth_abi::CancelResolution {
+			l2RequestId: to_eth_u256(self.l2RequestId),
+			cancelJustified: self.cancelJustified.into(),
+		}
+	}
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
@@ -50,10 +92,22 @@ pub struct L1Update {
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
 	Deposit(Deposit),
 	Cancel(CancelResolution),
 	Remove(L2UpdatesToRemove),
+}
+
+impl Into<eth_abi::PendingRequestType> for PendingRequestType {
+	fn into(self) -> eth_abi::PendingRequestType {
+		match self {
+			PendingRequestType::DEPOSIT => eth_abi::PendingRequestType::DEPOSIT,
+			PendingRequestType::CANCEL_RESOLUTION => eth_abi::PendingRequestType::CANCEL_RESOLUTION,
+			PendingRequestType::L2_UPDATES_TO_REMOVE =>
+				eth_abi::PendingRequestType::L2_UPDATES_TO_REMOVE,
+		}
+	}
 }
 
 impl L1Update {
@@ -87,16 +141,30 @@ impl L1Update {
 	}
 }
 
+pub fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
+	let mut bytes = [0u8; 32];
+	value.to_big_endian(&mut bytes);
+	alloy_primitives::U256::from_be_bytes(bytes)
+}
+
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
-			lastProccessedRequestOnL1: Default::default(),
-			lastAcceptedRequestOnL1: Default::default(),
-			offset: Default::default(),
-			order: Default::default(),
-			pendingDeposits: Default::default(),
-			pendingCancelResultions: Default::default(),
-			pendingL2UpdatesToRemove: Default::default(),
+			lastProccessedRequestOnL1: to_eth_u256(self.lastProccessedRequestOnL1),
+			lastAcceptedRequestOnL1: to_eth_u256(self.lastAcceptedRequestOnL1),
+			offset: to_eth_u256(self.offset),
+			order: self.order.into_iter().map(Into::into).collect::<Vec<_>>(),
+			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
+			pendingCancelResultions: self
+				.pendingCancelResultions
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
+			pendingL2UpdatesToRemove: self
+				.pendingL2UpdatesToRemove
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
 		}
 	}
 }
@@ -150,28 +218,30 @@ pub mod eth_abi {
 		enum UpdateType{ DEPOSIT, WITHDRAW, INDEX_UPDATE, CANCEL_RESOLUTION}
 
 		// L2 to L1
+		#[derive(Debug, PartialEq)]
 		struct RequestResult {
 			uint256 requestId;
 			UpdateType updateType;
 			bool status;
 		}
 
+		#[derive(Debug, PartialEq)]
 		struct Withdraw {
-			uint256 requestId;
+			uint256 l2RequestId;
 			address withdrawRecipient;
 			address tokenAddress;
 			uint256 amount;
 		}
 
+		#[derive(Debug, PartialEq)]
 		struct Cancel {
-			uint256 requestId;
-			bytes updater;
-			bytes canceler;
+			uint256 l2RequestId;
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			bytes32 hash;
 		}
 
+		#[derive(Debug, PartialEq)]
 		struct L2Update {
 			Withdraw[] withdraws;
 			Cancel[] cancels;

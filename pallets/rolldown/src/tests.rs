@@ -318,6 +318,7 @@ fn withdraw() {
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: U256::from(1_000_000u128),
 			};
+			// check iftokens were burned
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
 			assert_eq!(
 				pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)),

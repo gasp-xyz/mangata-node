@@ -157,12 +157,14 @@ pub mod eth_abi {
 		}
 
 		struct Withdraw {
-			bytes withdrawRecipient;
-			bytes tokenAddress;
+			uint256 requestId;
+			address withdrawRecipient;
+			address tokenAddress;
 			uint256 amount;
 		}
 
 		struct Cancel {
+			uint256 requestId;
 			bytes updater;
 			bytes canceler;
 			uint256 lastProccessedRequestOnL1;

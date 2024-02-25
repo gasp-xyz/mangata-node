@@ -97,6 +97,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
+		pub requestId: U256,
 		pub updater: AccountId,
 		pub canceler: AccountId,
 		pub lastProccessedRequestOnL1: U256,
@@ -106,6 +107,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Withdraw {
+		pub requestId: U256,
 		pub withdrawRecipient: [u8; 20],
 		pub tokenAddress: [u8; 20],
 		pub amount: U256,
@@ -169,6 +171,7 @@ pub mod pallet {
 		NotEnoughAssets,
 		BalanceOverflow,
 		L1AssetCreationFailed,
+		MathOverflow,
 	}
 
 	#[pallet::config]
@@ -290,8 +293,11 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
+			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
+			let requestId = U256::from(Self::get_l2_origin_updates_counter());
 			// create cancel request
 			let cancel_request = Cancel {
+				requestId,
 				updater: submitter,
 				canceler,
 				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
@@ -300,11 +306,10 @@ pub mod pallet {
 			};
 
 			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
-			let update_id = Self::get_l2_origin_updates_counter();
+			
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
-				U256::from(update_id),
+				requestId,
 				PendingUpdate::Cancel(cancel_request),
 			);
 			// remove whole l1l2 update (read) from pending requests
@@ -353,15 +358,18 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let withdraw_update =
-				Withdraw { withdrawRecipient, tokenAddress, amount: U256::from(amount) };
+			
 
+			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter().checked_add(1)
+				.ok_or(Error::<T>::MathOverflow)?;		
 			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
-			let update_id = Self::get_l2_origin_updates_counter();
+			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
+			let requestId = U256::from(Self::get_l2_origin_updates_counter());
+			let withdraw_update =
+				Withdraw {requestId, withdrawRecipient, tokenAddress, amount: U256::from(amount) };
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
-				U256::from(update_id),
+				requestId,
 				PendingUpdate::Withdraw(withdraw_update),
 			);
 
@@ -725,6 +733,7 @@ impl<T: Config> Pallet<T> {
 
 	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
+			requestId:Self::to_eth_u256(cancel.requestId),
 			updater: cancel.updater.encode(),
 			canceler: cancel.canceler.encode(),
 			lastProccessedRequestOnL1: Self::to_eth_u256(cancel.lastProccessedRequestOnL1),
@@ -735,8 +744,9 @@ impl<T: Config> Pallet<T> {
 
 	fn to_eth_withdraw(withdraw: Withdraw) -> messages::eth_abi::Withdraw {
 		messages::eth_abi::Withdraw {
-			withdrawRecipient: withdraw.withdrawRecipient.encode(),
-			tokenAddress: withdraw.tokenAddress.encode(),
+			requestId:Self::to_eth_u256(withdraw.requestId),
+			withdrawRecipient: withdraw.withdrawRecipient,
+			tokenAddress: withdraw.tokenAddress,
 			amount: Self::to_eth_u256(withdraw.amount),
 		}
 	}

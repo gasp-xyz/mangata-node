@@ -14,8 +14,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		DispatchInfoOf, IdentifyAccount, NumberFor, PostDispatchInfoOf, Saturating,
-		SignedExtension, StaticLookup, Verify, Zero, Keccak256
+		DispatchInfoOf, IdentifyAccount, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
+		SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
@@ -32,7 +32,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 pub use mangata_support::traits::{
-	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps,
+	ProofOfStakeRewardsApi,
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
@@ -46,8 +47,8 @@ pub use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
-		EitherOfDiverse, tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
-		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin,
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, EnsureOrigin,
 		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
 		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
 	},
@@ -62,7 +63,7 @@ pub use frame_support::{
 };
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	Call as SystemCall, EnsureRoot, ConsumedWeight
+	Call as SystemCall, ConsumedWeight, EnsureRoot,
 };
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -769,7 +770,6 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type RolldownProvider = Rolldown;
 }
 
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -1213,8 +1213,8 @@ impl_runtime_apis! {
 				// That means that at this point the block is not initialized
 				// That means session was not on_initialize
 				// That means we can use session validator set
-				// as they have not been overwritten yet 
-				
+				// as they have not been overwritten yet
+
 				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
 					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
 				).expect("Could not find AuRa author index!")

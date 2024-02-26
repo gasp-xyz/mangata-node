@@ -8,7 +8,12 @@ use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::Keystore;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
-use std::{cell::RefCell, rc::Rc, time::Duration, sync::{Arc, Mutex}};
+use std::{
+	cell::RefCell,
+	rc::Rc,
+	sync::{Arc, Mutex},
+	time::Duration,
+};
 use substrate_frame_rpc_system::AccountNonceApi;
 
 type Runtime = mangata_kusama_runtime::RuntimeApi;

@@ -735,6 +735,7 @@ impl pallet_rolldown::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
+	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {

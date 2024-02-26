@@ -136,6 +136,7 @@ impl rolldown::Config for Test {
 	type AssetRegistryProvider = MockAssetRegistryProviderApi;
 	type AddressConverter = DummyAddressConverter;
 	type DisputePeriodLength = ConstU128<5>;
+	type RequestsPerBlock = ConstU128<10>;
 }
 
 pub struct ExtBuilder {

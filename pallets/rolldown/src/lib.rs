@@ -162,6 +162,7 @@ pub mod pallet {
 		RequestDoesNotExist,
 		TooManyRequests,
 		InvalidUpdate,
+		WrongRequestId,
 	}
 
 	#[pallet::config]
@@ -179,6 +180,8 @@ pub mod pallet {
 		type AssetRegistryProvider: AssetRegistryProviderTrait<CurrencyIdOf<Self>>;
 		#[pallet::constant]
 		type DisputePeriodLength: Get<u128>;
+		#[pallet::constant]
+		type RequestsPerBlock: Get<u128>;
 	}
 
 	#[pallet::genesis_config]
@@ -352,6 +355,11 @@ impl<T: Config> Pallet<T> {
 	fn get_dispute_period() -> u128 {
 		T::DisputePeriodLength::get()
 	}
+
+	fn get_max_requests_per_block() -> u128 {
+		T::RequestsPerBlock::get()
+	}
+
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
 		if let Some(pending_requests_to_process) = pending_requests::<T>::get(U256::from(
@@ -643,7 +651,23 @@ impl<T: Config> Pallet<T> {
 
 	pub fn validate_l1_update(update: &messages::L1Update) -> DispatchResult {
 		ensure!(!update.order.is_empty(), Error::<T>::EmptyUpdate);
-		ensure!(update.order.len() <= 10, Error::<T>::TooManyRequests);
+		ensure!(
+			update.order.len() as u128 <= Self::get_max_requests_per_block(),
+			Error::<T>::TooManyRequests
+		);
+		ensure!(
+			update.lastProccessedRequestOnL1 == last_processed_request_on_l2::<T>::get().into(),
+			Error::<T>::InvalidUpdate
+		);
+		// if there are no requests on l1 there is no need for update
+		ensure!(update.lastAcceptedRequestOnL1 > 0u128.into(), Error::<T>::EmptyUpdate);
+		ensure!(
+			update.lastAcceptedRequestOnL1 > update.lastProccessedRequestOnL1,
+			Error::<T>::InvalidUpdate
+		);
+		ensure!(update.offset > update.lastProccessedRequestOnL1, Error::<T>::WrongRequestId);
+		ensure!(update.offset <= update.lastAcceptedRequestOnL1, Error::<T>::WrongRequestId);
+
 		let withdraws_count = update.pendingWithdraws.len();
 		let deposits_count = update.pendingDeposits.len();
 		let cancels_count = update.pendingCancelResultions.len();

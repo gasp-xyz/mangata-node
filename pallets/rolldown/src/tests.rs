@@ -409,8 +409,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 			forward_to_block::<Test>(10);
 
 			// Arrange
-			let withdraw_update =
-				L1UpdateBuilder::new()
+			let withdraw_update = L1UpdateBuilder::new()
 				.with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
@@ -458,16 +457,17 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 
 			// Arrange
 
-			let withdraw_update =
-				L1UpdateBuilder::new().with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			let withdraw_update = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
-				})]).build();
+				})])
+				.build();
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
-			let cancel_resolution = L1UpdateBuilder::new().with_requests(
-				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+			let cancel_resolution = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: true,
 				})])
@@ -498,17 +498,17 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 
 			// Arrange
 
-			let withdraw_update =
-				L1UpdateBuilder::new().with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			let withdraw_update = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
-				})]).build();
+				})])
+				.build();
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter() + 1;
 			let cancel_resolution = L1UpdateBuilder::new()
-				.with_requests(
-				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: false,
 				})])
@@ -555,15 +555,16 @@ fn test_cancel_removes_cancel_right() {
 			slash_sequencer_mock.expect().return_const(Ok(().into()));
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter();
-			let withdraw_update =
-				L1UpdateBuilder::new().with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+			let withdraw_update = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
-				})]).build();
+				})])
+				.build();
 
-			let cancel_resolution = L1UpdateBuilder::new().with_requests(
-				vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+			let cancel_resolution = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: true,
 				})])
@@ -627,8 +628,7 @@ fn test_cancel_removes_cancel_right() {
 fn test_l1_update_hash_compare_with_solidty() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let update = L1UpdateBuilder::new()
-			.with_requests(
-			vec![L1UpdateRequest::Deposit(messages::Deposit {
+			.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),

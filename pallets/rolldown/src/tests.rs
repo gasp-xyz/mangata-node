@@ -68,11 +68,17 @@ fn error_on_empty_update() {
 fn process_single_deposit() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		forward_to_block::<Test>(36);
+		let current_block_number =
+			<frame_system::Pallet<Test>>::block_number().saturated_into::<u128>();
+		let dispute_period: u128 = Rolldown::get_dispute_period();
 		let update = create_l1_update(vec![L1UpdateRequest::Deposit(Default::default())]);
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 
 		assert_event_emitted!(Event::PendingRequestStored((
 			ALICE,
+			current_block_number + dispute_period,
+			sp_core::U256::from(0u128),
+			sp_core::U256::from(0u128),
 			H256::from(hex!("2a48bbdcd86e4e5571feef2579e2c4098c95b5aecc82a603c873429bf72651c3"))
 		)));
 	});
@@ -172,6 +178,27 @@ fn deposit_executed_after_dispute_period() {
 				pending_updates::<Test>::get(sp_core::U256::from(0u128)),
 				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
 			);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+		});
+}
+
+#[test]
+#[serial]
+fn l1_upate_executed_immaidately_if_force_submitted() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = create_l1_update(vec![L1UpdateRequest::Deposit(messages::Deposit {
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			})]);
+
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+			assert!(!pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
+			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), update).unwrap();
+			assert!(pending_updates::<Test>::contains_key(sp_core::U256::from(0u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
 }
@@ -360,6 +387,42 @@ fn cancel_request() {
 			);
 			assert_eq!(
 				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn cancel_request_as_council_executed_immadiately() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let withdraw_update =
+				create_l1_update(vec![L1UpdateRequest::Withdraw(messages::Withdraw {
+					depositRecipient: ETH_RECIPIENT_ACCOUNT,
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})]);
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
+			);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update).unwrap();
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 1u128 }
+			);
+
+			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), 15u128.into()).unwrap();
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
 			);
 		});

@@ -6,6 +6,7 @@ use crate as rolldown;
 use core::convert::TryFrom;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
+use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
@@ -134,6 +135,7 @@ impl rolldown::Config for Test {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type AssetRegistryProvider = MockAssetRegistryProviderApi;
 	type AddressConverter = DummyAddressConverter;
+	type DisputePeriodLength = ConstU128<5>;
 }
 
 pub struct ExtBuilder {

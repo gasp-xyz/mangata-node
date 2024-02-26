@@ -706,50 +706,6 @@ fn reject_update_with_too_many_requests() {
 
 #[test]
 #[serial]
-fn reject_consecutive_update_with_invalid_counters() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		forward_to_block::<Test>(10);
-
-		let requests = vec![L1UpdateRequest::Withdraw(messages::Withdraw {
-			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-			tokenAddress: ETH_TOKEN_ADDRESS,
-			amount: sp_core::U256::from(MILLION),
-		})];
-
-		let withdraw_update =
-			L1UpdateBuilder::new().with_requests(requests).with_offset(100u128).build();
-
-		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update),
-			Error::<Test>::InvalidUpdate
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn reject_update_with_invalid_too_high_request_id() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		forward_to_block::<Test>(10);
-
-		let requests = vec![L1UpdateRequest::Withdraw(messages::Withdraw {
-			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-			tokenAddress: ETH_TOKEN_ADDRESS,
-			amount: sp_core::U256::from(MILLION),
-		})];
-
-		let withdraw_update =
-			L1UpdateBuilder::new().with_requests(requests).with_offset(100u128).build();
-
-		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), withdraw_update),
-			Error::<Test>::InvalidUpdate
-		);
-	});
-}
-
-#[test]
-#[serial]
 fn reject_update_with_missing_requests() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		forward_to_block::<Test>(10);

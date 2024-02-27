@@ -15,9 +15,9 @@ on:
         required: false
         default: "main"
       nodeDockerImage:
-        description: "Name of the parachain docker reference"
+        description: "Name of the node docker image reference"
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/rollup-node:latest"
 
 permissions:
   contents: write

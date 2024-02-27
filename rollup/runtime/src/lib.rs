@@ -836,7 +836,7 @@ mod benches {
 	define_benchmarks!(
 		[frame_benchmarking, BaselineBench::<Runtime>]
 		[frame_system, SystemBench::<Runtime>]
-		[pallet_session, SessionBench::<Runtime>]
+		[pallet_session, Session]
 		[pallet_timestamp, Timestamp]
 		[orml_asset_registry, AssetRegistry]
 		[orml_tokens, Tokens]

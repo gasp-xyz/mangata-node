@@ -230,4 +230,5 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-rolldown/runtime-benchmarks",
 	"pallet-sequencer-staking/runtime-benchmarks",
+	"pallet-session/runtime-benchmarks"
 ]

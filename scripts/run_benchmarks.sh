@@ -19,7 +19,6 @@ benchmarks=(
     "pallet_issuance"
     "pallet_bootstrap"
     "pallet_multipurpose_liquidity"
-    "pallet_sudo_origin"
     "pallet_fee_lock"
     "pallet_proof_of_stake"
 )

@@ -33,6 +33,7 @@ sp-arithmetic = { git = "https://github.com/mangata-finance/polkadot-sdk", branc
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-debug-derive = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, features = ["force-debug"] }
 
 orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }

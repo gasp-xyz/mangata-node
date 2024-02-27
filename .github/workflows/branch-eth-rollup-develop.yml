@@ -108,7 +108,7 @@ jobs:
     secrets: inherit
     with:
       branch: ${{ needs.init.outputs.GIT_BRANCH_UNFORMATTED }}
-      nodeDockerImage: ${{ github.event.inputs.nodeDockerImage }}
+      parachainDocker: ${{ github.event.inputs.nodeDockerImage }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   run-e2e-test:

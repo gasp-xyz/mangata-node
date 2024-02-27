@@ -1,0 +1,20 @@
+[settings]
+provider = "native"
+timeout = 1000
+
+[relaychain]
+default_command = "./target/release/rollup-node"
+default_args = []
+chain = "rollup-local"
+
+    [[relaychain.nodes]]
+    name = "alice"
+    command = "./target/release/mangata-node"
+	validator = true
+    ws_port = 9944
+
+    [[relaychain.nodes]]
+    name = "bob"
+    command = "./target/release/mangata-node"
+	validator = true
+    ws_port = 9945

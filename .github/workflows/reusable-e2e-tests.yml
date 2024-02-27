@@ -8,11 +8,11 @@ on:
         type: string
         required: false
         default: "main"
-      parachainDocker:
+      rollupchainDocker:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/rollup-node:latest"
       skipBuild:
         description: "Skip build phase"
         type: string
@@ -34,11 +34,11 @@ on:
         type: string
         required: false
         default: "main"
-      parachainDocker:
+      rollupchainDocker:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/rollup-node:latest"
       skipBuild:
         description: "Skip build phase"
         type: string
@@ -137,17 +137,17 @@ jobs:
       TEST_SUDO_NAME: "//Alice"
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
-      PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
+      ROLLUPCHAIN_DOCKER_IMAGE: ${{ inputs.rollupchainDocker || format('mangatasolutions/rollup-node:{0}', inputs.globalVersion) }}
     steps:
       - uses: actions/checkout@v4
       - name: Adapt if fast runtime
-        if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
-        run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
+        if:  ${{  !contains(env.ROLLUPCHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
+        run: echo "ROLLUPCHAIN_DOCKER_IMAGE=${{ env.ROLLUPCHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
 
 
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
-        run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
+        run: docker pull ${{ env.ROLLUPCHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name
         id: branch-name
@@ -318,5 +318,5 @@ jobs:
           SLACK_INCOMING_WEBHOOK: ${{ secrets.BNB_E2E_NOTIFICATION_WEBHOOK }}
           SLACK_TITLE: 'bnb e2e test execution - NOOK'
           SLACK_COLOR: "#ff0011"
-          SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.PARACHAIN_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
+          SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.ROLLUPCHAIN_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
           GITHUB_REF: 'https://mangata-finance.github.io/mangata-node/${{ github.run_number }}'

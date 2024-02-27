@@ -14,7 +14,7 @@ on:
         description: "Name of the e2e target branch"
         required: false
         default: "main"
-      parachainDocker:
+      rollupchainDocker:
         description: "Name of the parachain docker reference"
         required: false
         default: "mangatasolutions/mangata-node:latest"
@@ -108,7 +108,7 @@ jobs:
     secrets: inherit
     with:
       branch: ${{ needs.init.outputs.GIT_BRANCH_UNFORMATTED }}
-      parachainDocker: ${{ github.event.inputs.parachainDocker }}
+      rollupchainDocker: ${{ github.event.inputs.rollupchainDocker }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   run-e2e-test:
@@ -123,7 +123,7 @@ jobs:
       checks: write
     with:
       e2eBranch: ${{ github.event.inputs.e2eBranch }}
-      parachainDocker: ${{ github.event.inputs.parachainDocker }}
+      rollupchainDocker: ${{ github.event.inputs.rollupchainDocker }}
       skipBuild: 'false'
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 

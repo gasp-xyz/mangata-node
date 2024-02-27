@@ -57,17 +57,16 @@ jobs:
           key: node-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Compile mangata-node code
-        run: cargo build --locked --release --no-default-features --features=mangata-rococo,mangata-kusama
+        run: cargo build --locked --release --no-default-features
 
       - name: Rename wasms
         run: |
-          cp target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm ./mangata_kusama_runtime-${{ inputs.version }}.compact.compressed.wasm
-          cp target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
+          cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
 
       - name: Build and push Docker image
         run: |
           # This is needed to fix an issue when running on self-hosted runners in GKE
-          git config --global --add safe.directory /__w/mangata-node/mangata-node
+          git config --global --add safe.directory /__w/rollup-node/rollup-node
 
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker build -f devops/dockerfiles/node/Dockerfile \
@@ -75,19 +74,18 @@ jobs:
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=production" \
-          -t mangatasolutions/mangata-node:${{ inputs.version }} \
-          -t mangatasolutions/mangata-node:${{ inputs.branch }} .
-          docker push mangatasolutions/mangata-node:${{ inputs.version }}
-          docker push mangatasolutions/mangata-node:${{ inputs.branch }}
+          -t mangatasolutions/rollup-node:${{ inputs.version }} \
+          -t mangatasolutions/rollup-node:${{ inputs.branch }} .
+          docker push mangatasolutions/rollup-node:${{ inputs.version }}
+          docker push mangatasolutions/rollup-node:${{ inputs.branch }}
 
-      - name: Compile mangata-node code with fast runtime
-        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,fast-runtime
+      - name: Compile rollup-node code with fast runtime
+        run: cargo build --release --no-default-features --features=fast-runtime
 
       - name: Rename wasms with fast runtime
         run: |
-          cp target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-          cp target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-
+          cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+          
       - name: Build and push Docker image with fast runtime
         run: |
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
@@ -96,19 +94,17 @@ jobs:
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=fast" \
-          -t mangatasolutions/mangata-node:${{ inputs.version }}-fast \
-          -t mangatasolutions/mangata-node:${{ inputs.branch }}-fast .
-          docker push mangatasolutions/mangata-node:${{ inputs.version }}-fast
-          docker push mangatasolutions/mangata-node:${{ inputs.branch }}-fast
+          -t mangatasolutions/rollup-node:${{ inputs.version }}-fast \
+          -t mangatasolutions/rollup-node:${{ inputs.branch }}-fast .
+          docker push mangatasolutions/rollup-node:${{ inputs.version }}-fast
+          docker push mangatasolutions/rollup-node:${{ inputs.branch }}-fast
 
       - uses: actions/upload-artifact@v3
         with:
           name: wasms-${{ inputs.version }}
           path: |
-            ./mangata_kusama_runtime-${{ inputs.version }}.compact.compressed.wasm
-            ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
-            ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-            ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+            ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
+            ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
       
       - name: Fix permissions on self-hosted runner
         if: always()
@@ -201,7 +197,7 @@ jobs:
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin@0.26.1
       - name: Generate coverage report with cargo-tarpaulin
-        run: cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Xml
+        run: cargo tarpaulin --timeout 120 --workspace -e rollup-runtime-integration-test rollup-node rollup-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
         with:
@@ -241,41 +237,39 @@ jobs:
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake
 
-  build-and-run-try-runtime:
-    name: Run try-runtime checks
-    runs-on: [compile-gke]
-    container:
-      image: ${{ inputs.builder_image }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-            ~/.cache/sccache
-          key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+  # Disabled since we have no live testnet running
+  # build-and-run-try-runtime:
+  #   name: Run try-runtime checks
+  #   runs-on: [compile-gke]
+  #   container:
+  #     image: ${{ inputs.builder_image }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@v1
+  #       with:
+  #         workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+  #         service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+  #     - name: Cache the Cargo dependencies
+  #       uses: mansagroup/gcs-cache-action@v1.0.3
+  #       with:
+  #         bucket: mangata-node-ci-cache
+  #         path: |
+  #           ${{ github.workspace }}/target
+  #           /usr/local/cargo/git
+  #           /usr/local/cargo/registry
+  #           ~/.cache/sccache
+  #         key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Build try-runtime Rococo & Kusama node
-        run: cargo build --release --features=try-runtime,mangata-rococo,mangata-kusama
+  #     - name: Build try-runtime Rococo & Kusama node
+  #       run: cargo build --release --features=try-runtime
 
-      - name: Run try-runtime Rococo testnet
-        run: try-runtime --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
+  #     - name: Run try-runtime Kusama Mainnet
+  #       run: try-runtime --runtime=target/release/wbuild/rollup-runtime/rollup_runtime.wasm on-runtime-upgrade live --uri wss://rollup-rpc.mangata.online:443
 
-      - name: Run try-runtime Kusama Mainnet
-        run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
-
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+  #     - name: Fix permissions on self-hosted runner
+  #       if: always()
+  #       run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -306,7 +300,7 @@ jobs:
           key: runtime-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Compile mangata-node code
-        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,runtime-benchmarks
+        run: cargo build --release --no-default-features --features=runtime-benchmarks
 
       - name: Set full benchmark params
         if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
@@ -316,9 +310,9 @@ jobs:
 
       - name: Run pallet benchmarks
         run: |
-          mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
+          mkdir ./benchmarks && target/release/rollup-node benchmark pallet \
           -l=info,runtime::collective=warn,xyk=warn \
-          --chain mangata-kusama \
+          --chain rollup-local \
           --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \
@@ -330,7 +324,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/mangata-node benchmark overhead --execution native --chain mangata-kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/rollup-node benchmark overhead --execution wasm --chain rollup-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Upload logs and docker images to GitHub
@@ -344,47 +338,3 @@ jobs:
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
-  build-wasms:
-    name: Export wasm artifacts
-    runs-on: [compile-gke]
-    env:
-      STEPS: 2
-      REPEATS: 1
-    container:
-      image: ${{ inputs.builder_image }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-            ~/.cache/sccache
-          key: build-wasms-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
-
-      - name: Compile mangata-node code
-        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,runtime-benchmarks
-
-      - name: Export wasms
-        run: |
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
-      
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE

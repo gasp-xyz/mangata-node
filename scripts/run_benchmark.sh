@@ -3,8 +3,8 @@ REPO_ROOT=$(dirname $(readlink -f $0))/../
 
 mkdir ./benchmarks
 
-${REPO_ROOT}/target/release/mangata-node benchmark pallet \
-    --chain mangata-kusama-local \
+${REPO_ROOT}/target/release/rollup-node benchmark pallet \
+    --chain rollup-local \
     --execution wasm \
     --wasm-execution compiled \
     --pallet $1 \

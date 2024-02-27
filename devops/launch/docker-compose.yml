@@ -1,0 +1,27 @@
+version: '3.8'
+
+services: 
+  alice-node:
+    # container-name: rollup-alice-node
+    image: mangatasolutions/rollup-node:dev
+    command: --alice --force-authoring --validator --base-path=./db/ --unsafe-rpc-external --rpc-port=9944 --rpc-cors=all
+    ports:
+      - "9944:9944"
+    volumes: 
+      - type: bind
+        source: ./volumes/alice
+        target: /rollup/db
+        bind:
+          create_host_path: true
+  bob-node:
+    # container-name: rollup-bob-node
+    image: mangatasolutions/rollup-node:dev
+    command: --bob --validator --base-path=./db/ --unsafe-rpc-external --rpc-port=9944 --rpc-cors=all
+    ports:
+      - "9945:9944"
+    volumes: 
+      - type: bind
+        source: ./volumes/bob
+        target: /rollup/db
+        bind:
+          create_host_path: true

@@ -316,7 +316,6 @@ jobs:
           mkdir ./benchmarks && target/release/rollup-node benchmark pallet \
           -l=info,runtime::collective=warn,xyk=warn \
           --chain rollup-local \
-          --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \
           --extrinsic '*' \
@@ -327,7 +326,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/rollup-node benchmark overhead --execution wasm --chain rollup-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/rollup-node benchmark overhead --chain rollup-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Upload logs and docker images to GitHub

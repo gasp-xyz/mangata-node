@@ -17,7 +17,7 @@ relaychain:
     - name: bob
 
 parachains:
-  - image: mangatasolutions/mangata-node:matamask
+  - image: mangatasolutions/mangata-node:rollup
     chain:
       base: mangata-rococo-local
       collators:

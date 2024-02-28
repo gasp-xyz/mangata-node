@@ -215,7 +215,7 @@ pub mod eth_abi {
 
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
-		enum UpdateType{ DEPOSIT, WITHDRAW, INDEX_UPDATE, CANCEL_RESOLUTION}
+		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
 
 		// L2 to L1
 		#[derive(Debug, PartialEq)]
@@ -226,9 +226,9 @@ pub mod eth_abi {
 		}
 
 		#[derive(Debug, PartialEq)]
-		struct Withdraw {
+		struct Withdrawal {
 			uint256 l2RequestId;
-			address withdrawRecipient;
+			address withdrawalRecipient;
 			address tokenAddress;
 			uint256 amount;
 		}
@@ -243,7 +243,7 @@ pub mod eth_abi {
 
 		#[derive(Debug, PartialEq)]
 		struct L2Update {
-			Withdraw[] withdraws;
+			Withdrawal[] withdrawals;
 			Cancel[] cancels;
 			RequestResult[] results;
 		}

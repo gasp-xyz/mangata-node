@@ -222,11 +222,13 @@ pub mod config {
 		pub struct MaintenanceGatedSetCode<T, E>(PhantomData<T>, PhantomData<E>);
 
 		impl<T, E> SetCode<T> for MaintenanceGatedSetCode<T, E>
-		where T: ::pallet_maintenance::Config, E: SetCode<T>
+		where
+			T: ::pallet_maintenance::Config,
+			E: SetCode<T>,
 		{
 			fn set_code(code: Vec<u8>) -> DispatchResult {
-				if !::pallet_maintenance::Pallet::<T>::is_upgradable(){
-					return Err(::pallet_maintenance::Error::<T>::UpgradeBlockedByMaintenance.into());
+				if !::pallet_maintenance::Pallet::<T>::is_upgradable() {
+					return Err(::pallet_maintenance::Error::<T>::UpgradeBlockedByMaintenance.into())
 				}
 				E::set_code(code)
 			}

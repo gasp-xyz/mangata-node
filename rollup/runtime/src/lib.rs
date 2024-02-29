@@ -32,8 +32,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 pub use mangata_support::traits::{
-	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps,
-	ProofOfStakeRewardsApi, GetMaintenanceStatusTrait
+	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, GetMaintenanceStatusTrait,
+	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
@@ -61,9 +61,9 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
-pub use frame_system::{ SetCode,
+pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	Call as SystemCall, ConsumedWeight, EnsureRoot,
+	Call as SystemCall, ConsumedWeight, EnsureRoot, SetCode,
 };
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;

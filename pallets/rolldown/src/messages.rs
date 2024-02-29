@@ -30,17 +30,6 @@ pub struct Withdraw {
 	pub amount: sp_core::U256,
 }
 
-// impl Into<eth_abi::Withdraw> for Withdraw {
-// 	fn into(self) -> eth_abi::Withdraw {
-// 		eth_abi::Withdraw {
-// 			l2RequestId: to_eth_u256(self.l2RequestId),
-// 			withdrawRecipient: self.depositRecipient.into(),
-// 			tokenAddress: self.tokenAddress.into(),
-// 			amount: to_eth_u256(self.amount),
-// 		}
-// 	}
-// }
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub l2UpdatesToRemove: Vec<sp_core::U256>,
@@ -243,8 +232,8 @@ pub mod eth_abi {
 
 		#[derive(Debug, PartialEq)]
 		struct L2Update {
-			Withdrawal[] withdrawals;
 			Cancel[] cancels;
+			Withdrawal[] withdrawals;
 			RequestResult[] results;
 		}
 	}

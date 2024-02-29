@@ -98,6 +98,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
+		pub l2RequestId: U256,
 		pub updater: AccountId,
 		pub canceler: AccountId,
 		pub lastProccessedRequestOnL1: U256,
@@ -105,10 +106,19 @@ pub mod pallet {
 		pub hash: H256,
 	}
 
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+	pub struct Withdrawal {
+		pub l2RequestId: U256,
+		pub withdrawalRecipient: [u8; 20],
+		pub tokenAddress: [u8; 20],
+		pub amount: U256,
+	}
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
 		RequestResult((bool, UpdateType)),
 		Cancel(Cancel<AccountId>),
+		Withdrawal(Withdrawal),
 	}
 
 	#[pallet::storage]
@@ -160,8 +170,13 @@ pub mod pallet {
 		EmptyUpdate,
 		AddressDeserializationFailure,
 		RequestDoesNotExist,
+		NotEnoughAssets,
+		BalanceOverflow,
+		L1AssetCreationFailed,
+		MathOverflow,
 		TooManyRequests,
 		InvalidUpdate,
+		L1AssetNotFound,
 		WrongRequestId,
 	}
 
@@ -231,11 +246,11 @@ pub mod pallet {
 			// ensure sequencer has rights to update
 			if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
 				if sequencer.readRights == 0 {
-					log!(info, "{:?} does not have sufficient readRights", sequencer);
+					log!(debug, "{:?} does not have sufficient readRights", sequencer);
 					return Err(Error::<T>::OperationFailed.into())
 				}
 			} else {
-				log!(info, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
+				log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
 				return Err(Error::<T>::OperationFailed.into())
 			}
 
@@ -301,26 +316,77 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
+			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
 			// create cancel request
 			let cancel_request = Cancel {
+				l2RequestId,
 				updater: submitter,
 				canceler,
 				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
 				lastAcceptedRequestOnL1: request.lastAcceptedRequestOnL1,
 				hash: hash_of_pending_request,
 			};
-
-			// increase counter for updates originating on l2
-			let update_id = Self::get_l2_origin_updates_counter();
-			l2_origin_updates_counter::<T>::put(Self::get_l2_origin_updates_counter() + 1);
 			// add cancel request to pending updates
-			pending_updates::<T>::insert(
-				U256::from(update_id),
-				PendingUpdate::Cancel(cancel_request),
-			);
+			pending_updates::<T>::insert(l2RequestId, PendingUpdate::Cancel(cancel_request));
+
+			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter()
+				.checked_add(1)
+				.ok_or(Error::<T>::MathOverflow)?;
+			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
+
 			// remove whole l1l2 update (read) from pending requests
 			pending_requests::<T>::remove(&requests_to_cancel);
 
+			Ok(().into())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn withdraw(
+			origin: OriginFor<T>,
+			withdrawalRecipient: [u8; 20],
+			tokenAddress: [u8; 20],
+			amount: u128,
+		) -> DispatchResultWithPostInfo {
+			let account = ensure_signed(origin)?;
+
+			let eth_asset = L1Asset::Ethereum(tokenAddress);
+			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
+				.ok_or(Error::<T>::MathOverflow)?;
+
+			// fail will occur if user has not enough balance
+			<T as Config>::Tokens::ensure_can_withdraw(
+				asset_id.into(),
+				&account,
+				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err(Error::<T>::NotEnoughAssets))?;
+
+			// burn tokes for user
+			T::Tokens::burn_and_settle(
+				asset_id,
+				&account,
+				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
+			)?;
+
+			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
+
+			let withdrawal_update = Withdrawal {
+				l2RequestId,
+				withdrawalRecipient,
+				tokenAddress,
+				amount: U256::from(amount),
+			};
+			// add cancel request to pending updates
+			pending_updates::<T>::insert(l2RequestId, PendingUpdate::Withdrawal(withdrawal_update));
+
+			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter()
+				.checked_add(1)
+				.ok_or(Error::<T>::MathOverflow)?;
+			// increase counter for updates originating on l2
+			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
 			Ok(().into())
 		}
 
@@ -362,10 +428,11 @@ impl<T: Config> Pallet<T> {
 
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
-		if let Some(pending_requests_to_process) = pending_requests::<T>::get(U256::from(
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
-		)) {
-			log!(info, "dispute end ",);
+		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
+		if let Some(pending_requests_to_process) =
+			pending_requests::<T>::get(U256::from(block_number))
+		{
+			log!(debug, "dispute end {:?}", block_number);
 
 			let sequencer = &pending_requests_to_process.0;
 			let requests = pending_requests_to_process.1.clone();
@@ -374,7 +441,7 @@ impl<T: Config> Pallet<T> {
 				sp_core::U256::from(Self::get_prev_last_processed_request_on_l2())
 			{
 				log!(
-					info,
+					debug,
 					"lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2"
 				);
 
@@ -402,6 +469,7 @@ impl<T: Config> Pallet<T> {
 	fn process_requests(update: messages::L1Update) {
 		for (request_id, request_details) in update.into_requests() {
 			if pending_updates::<T>::contains_key(request_id) {
+				log!(debug, "Request already processed: {:?}", request_id);
 				continue
 			}
 
@@ -411,13 +479,6 @@ impl<T: Config> Pallet<T> {
 					PendingUpdate::RequestResult((
 						Self::process_deposit(&deposit).is_ok(),
 						UpdateType::DEPOSIT,
-					)),
-				),
-				messages::L1UpdateRequest::Withdraw(withdraw) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_withdraw(&withdraw).is_ok(),
-						UpdateType::WITHDRAWAL,
 					)),
 				),
 				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
@@ -457,48 +518,16 @@ impl<T: Config> Pallet<T> {
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.or(Err("Failed to create L1 Asset"))?,
+				.or(Err(Error::<T>::L1AssetCreationFailed))?,
 		};
-		log!(info, "Deposit processed successfully: {:?}", deposit_request_details);
+		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
 
 		// ADD tokens: mint tokens for user
 		T::Tokens::mint(
 			asset_id,
 			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
+			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 		)?;
-		Ok(())
-	}
-
-	fn process_withdraw(withdraw_request_details: &messages::Withdraw) -> Result<(), &'static str> {
-		// fail will occur if user has not enough balance
-		let amount: u128 = withdraw_request_details
-			.amount
-			.try_into()
-			.map_err(|_| "u128 to Balance failed")?;
-		let account: T::AccountId =
-			T::AddressConverter::convert(withdraw_request_details.depositRecipient);
-
-		let eth_asset = L1Asset::Ethereum(withdraw_request_details.tokenAddress);
-		let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
-			.ok_or("L1AssetNotFound")?;
-
-		T::Tokens::ensure_can_withdraw(
-			asset_id.into(),
-			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
-			WithdrawReasons::all(),
-			Default::default(),
-		)
-		.or(Err("NotEnoughAssets"))?;
-
-		// burn tokes for user
-		T::Tokens::burn_and_settle(
-			asset_id,
-			&account,
-			amount.try_into().map_err(|_| "u128 to Balance failed")?,
-		)?;
-
 		Ok(())
 	}
 
@@ -541,9 +570,12 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 
+		pending_updates::<T>::remove(cancel_request_id);
+
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
 
+		log!(debug, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
 		// additional checks
 		Ok(())
 	}
@@ -556,7 +588,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		log!(
-			info,
+			debug,
 			"Update removal processed successfully, removed: {:?}",
 			updates_to_remove_request_details
 		);
@@ -580,7 +612,7 @@ impl<T: Config> Pallet<T> {
 			Self::handle_sequencer_deactivation(sequencer.clone());
 		}
 
-		log!(info, "SLASH for: {:?}", sequencer);
+		log!(debug, "SLASH for: {:?}", sequencer);
 
 		Ok(())
 	}
@@ -594,6 +626,18 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	fn to_eth_withdrawal(
+		l2RequestId: U256,
+		withdrawal: Withdrawal,
+	) -> messages::eth_abi::Withdrawal {
+		messages::eth_abi::Withdrawal {
+			l2RequestId: to_eth_u256(l2RequestId),
+			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
+			tokenAddress: withdrawal.tokenAddress.into(),
+			amount: to_eth_u256(withdrawal.amount),
+		}
+	}
+
 	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
@@ -601,7 +645,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_l2_update() -> messages::eth_abi::L2Update {
-		let mut update = messages::eth_abi::L2Update { results: Vec::new(), cancles: Vec::new() };
+		let mut update = messages::eth_abi::L2Update {
+			results: Vec::new(),
+			cancels: Vec::new(),
+			withdrawals: Vec::new(),
+		};
 
 		for (request_id, req) in pending_updates::<T>::iter() {
 			match req {
@@ -612,7 +660,10 @@ impl<T: Config> Pallet<T> {
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancles.push(Self::to_eth_cancel(request_id, cancel));
+					update.cancels.push(Self::to_eth_cancel(request_id, cancel));
+				},
+				PendingUpdate::Withdrawal(withdrawal) => {
+					update.withdrawals.push(Self::to_eth_withdrawal(request_id, withdrawal));
 				},
 			};
 		}
@@ -668,7 +719,6 @@ impl<T: Config> Pallet<T> {
 		ensure!(update.offset > update.lastProccessedRequestOnL1, Error::<T>::WrongRequestId);
 		ensure!(update.offset <= update.lastAcceptedRequestOnL1, Error::<T>::WrongRequestId);
 
-		let withdraws_count = update.pendingWithdraws.len();
 		let deposits_count = update.pendingDeposits.len();
 		let cancels_count = update.pendingCancelResultions.len();
 		let l2_updates_count = update.pendingL2UpdatesToRemove.len();
@@ -679,11 +729,6 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::InvalidUpdate
 		);
 		ensure!(
-			update.order.iter().filter(|e| **e == PendingRequestType::WITHDRAWAL).count() ==
-				withdraws_count,
-			Error::<T>::InvalidUpdate
-		);
-		ensure!(
 			update
 				.order
 				.iter()
@@ -691,7 +736,6 @@ impl<T: Config> Pallet<T> {
 				.count() == cancels_count,
 			Error::<T>::InvalidUpdate
 		);
-
 		ensure!(
 			update
 				.order

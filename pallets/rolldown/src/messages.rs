@@ -30,16 +30,6 @@ pub struct Withdraw {
 	pub amount: sp_core::U256,
 }
 
-impl Into<eth_abi::Withdraw> for Withdraw {
-	fn into(self) -> eth_abi::Withdraw {
-		eth_abi::Withdraw {
-			withdrawRecipient: self.depositRecipient.into(),
-			tokenAddress: self.tokenAddress.into(),
-			amount: to_eth_u256(self.amount),
-		}
-	}
-}
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub l2UpdatesToRemove: Vec<sp_core::U256>,
@@ -76,7 +66,6 @@ impl Into<eth_abi::CancelResolution> for CancelResolution {
 #[repr(u8)]
 pub enum PendingRequestType {
 	DEPOSIT,
-	WITHDRAWAL,
 	CANCEL_RESOLUTION,
 	L2_UPDATES_TO_REMOVE,
 }
@@ -87,7 +76,6 @@ pub struct L1Update {
 	pub lastAcceptedRequestOnL1: sp_core::U256,
 	pub offset: sp_core::U256,
 	pub order: Vec<PendingRequestType>,
-	pub pendingWithdraws: Vec<Withdraw>,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResultions: Vec<CancelResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
@@ -95,7 +83,6 @@ pub struct L1Update {
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
-	Withdraw(Withdraw),
 	Deposit(Deposit),
 	Cancel(CancelResolution),
 	Remove(L2UpdatesToRemove),
@@ -105,7 +92,6 @@ impl Into<eth_abi::PendingRequestType> for PendingRequestType {
 	fn into(self) -> eth_abi::PendingRequestType {
 		match self {
 			PendingRequestType::DEPOSIT => eth_abi::PendingRequestType::DEPOSIT,
-			PendingRequestType::WITHDRAWAL => eth_abi::PendingRequestType::WITHDRAWAL,
 			PendingRequestType::CANCEL_RESOLUTION => eth_abi::PendingRequestType::CANCEL_RESOLUTION,
 			PendingRequestType::L2_UPDATES_TO_REMOVE =>
 				eth_abi::PendingRequestType::L2_UPDATES_TO_REMOVE,
@@ -118,7 +104,6 @@ impl L1Update {
 		let L1Update {
 			offset,
 			order,
-			mut pendingWithdraws,
 			mut pendingDeposits,
 			mut pendingCancelResultions,
 			mut pendingL2UpdatesToRemove,
@@ -134,8 +119,6 @@ impl L1Update {
 					match request_type {
 						PendingRequestType::DEPOSIT =>
 							L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),
-						PendingRequestType::WITHDRAWAL =>
-							L1UpdateRequest::Withdraw(pendingWithdraws.pop().unwrap()),
 						PendingRequestType::CANCEL_RESOLUTION =>
 							L1UpdateRequest::Cancel(pendingCancelResultions.pop().unwrap()),
 						PendingRequestType::L2_UPDATES_TO_REMOVE =>
@@ -160,7 +143,6 @@ impl Into<eth_abi::L1Update> for L1Update {
 			lastAcceptedRequestOnL1: to_eth_u256(self.lastAcceptedRequestOnL1),
 			offset: to_eth_u256(self.offset),
 			order: self.order.into_iter().map(Into::into).collect::<Vec<_>>(),
-			pendingWithdraws: self.pendingWithdraws.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingCancelResultions: self
 				.pendingCancelResultions
@@ -199,12 +181,6 @@ pub mod eth_abi {
 			uint256 amount;
 		}
 
-		struct Withdraw {
-			address withdrawRecipient;
-			address tokenAddress;
-			uint256 amount;
-		}
-
 		struct L2UpdatesToRemove {
 			uint256[] l2UpdatesToRemove;
 		}
@@ -214,14 +190,13 @@ pub mod eth_abi {
 			bool cancelJustified;
 		}
 
-		enum PendingRequestType{ DEPOSIT, WITHDRAWAL, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
+		enum PendingRequestType{ DEPOSIT, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
 
 		struct L1Update {
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			uint256 offset;
 			PendingRequestType[] order;
-			Withdraw[] pendingWithdraws;
 			Deposit[] pendingDeposits;
 			CancelResolution[] pendingCancelResultions;
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
@@ -240,6 +215,14 @@ pub mod eth_abi {
 		}
 
 		#[derive(Debug, PartialEq)]
+		struct Withdrawal {
+			uint256 l2RequestId;
+			address withdrawalRecipient;
+			address tokenAddress;
+			uint256 amount;
+		}
+
+		#[derive(Debug, PartialEq)]
 		struct Cancel {
 			uint256 l2RequestId;
 			uint256 lastProccessedRequestOnL1;
@@ -249,7 +232,8 @@ pub mod eth_abi {
 
 		#[derive(Debug, PartialEq)]
 		struct L2Update {
-			Cancel[] cancles;
+			Cancel[] cancels;
+			Withdrawal[] withdrawals;
 			RequestResult[] results;
 		}
 	}

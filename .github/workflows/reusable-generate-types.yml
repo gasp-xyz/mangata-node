@@ -11,7 +11,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:develop"
+        default: "mangatasolutions/rollup-node:develop"
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -26,7 +26,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/rollup-node:latest"
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -54,6 +54,8 @@ jobs:
           repository_owner: mangata-finance
           repository_name: mangata-dev-kit
           new_branch_name: ${{ env.BRANCH }}
+          # TODO: Remove this line once workflow is finalized and merged
+          new_branch_ref: feat/add-support-for-solochain-MGX-1001
           ignore_branch_exists: true
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 

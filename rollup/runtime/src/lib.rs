@@ -33,7 +33,7 @@ use sp_version::RuntimeVersion;
 
 pub use mangata_support::traits::{
 	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, PreValidateSwaps,
-	ProofOfStakeRewardsApi,
+	ProofOfStakeRewardsApi, GetMaintenanceStatusTrait
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
@@ -61,7 +61,7 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
-pub use frame_system::{
+pub use frame_system::{ SetCode,
 	limits::{BlockLength, BlockWeights},
 	Call as SystemCall, ConsumedWeight, EnsureRoot,
 };
@@ -213,7 +213,7 @@ impl frame_system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = cfg::frame_system::SS58Prefix;
 	/// The action to take on a Runtime Upgrade
-	type OnSetCode = ();
+	type OnSetCode = cfg::frame_system::MaintenanceGatedSetCode<Runtime, ()>;
 	/// The maximum number of consumers allowed on a single account.
 	type MaxConsumers = cfg::frame_system::MaxConsumers;
 }

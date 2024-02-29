@@ -46,7 +46,7 @@ jobs:
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
       BRANCH: ${{ inputs.branch }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Create branch ${{ env.BRANCH }} in mangata-dev-kit
         uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5

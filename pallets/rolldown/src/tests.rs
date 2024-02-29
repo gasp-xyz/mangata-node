@@ -1000,3 +1000,11 @@ fn test_remove_pending_updates() {
 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)), None);
 		});
 }
+
+#[test]
+fn hello() {
+	for x in (0..10).skip(5).take(30){
+		println!("{}", x);
+	}
+	// println!("sdfsdF");
+}

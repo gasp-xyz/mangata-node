@@ -130,10 +130,6 @@ pub mod pallet {
 	pub type last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_prev_last_processed_request_on_l2)]
-	pub type prev_last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
 	pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
 
@@ -142,6 +138,14 @@ pub mod pallet {
 	#[pallet::getter(fn get_pending_requests)]
 	pub type pending_requests<T: Config> =
 		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type request_to_execute<T: Config> = StorageMap<_, Blake2_128Concat, u128, (u128, messages::L1Update), ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -289,7 +293,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
 			Self::validate_l1_update(&update)?;
-			Self::process_requests(update.into());
+			Self::schedule_requests(update.into());
+			Self::process_requests();
 			Ok(().into())
 		}
 
@@ -437,17 +442,6 @@ impl<T: Config> Pallet<T> {
 			let sequencer = &pending_requests_to_process.0;
 			let requests = pending_requests_to_process.1.clone();
 
-			if requests.lastProccessedRequestOnL1 <
-				sp_core::U256::from(Self::get_prev_last_processed_request_on_l2())
-			{
-				log!(
-					debug,
-					"lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2"
-				);
-
-				// TODO: SLASH sequencer for bringing unnecessary past requests, to be tested
-				// Self::slash(sequencer);
-			}
 
 			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
@@ -459,48 +453,124 @@ impl<T: Config> Pallet<T> {
 					_ => {},
 				}
 			});
-			Self::process_requests(requests.clone());
+
+			Self::schedule_requests(requests.clone());
+			Self::process_requests();
 		}
 		pending_requests::<T>::remove(U256::from(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 		));
 	}
 
-	fn process_requests(update: messages::L1Update) {
-		for (request_id, request_details) in update.into_requests() {
-			if pending_updates::<T>::contains_key(request_id) {
-				log!(debug, "Request already processed: {:?}", request_id);
-				continue
-			}
+	fn process_requests() {
+        if let Some(request_id) = request_to_execute_cnt::<T>::get() {
+            let (pos, update) = request_to_execute::<T>::get(request_id);
+            let requests = update.into_requests();
+            let requests_to_process = requests.into_iter()
+                .enumerate()
+                .skip(pos as usize)
+                .take(T::RequestsPerBlock::get() as usize)
+                .map(|(pos , req)| Some((pos, req)))
+                .chain(std::iter::repeat(None));
 
-			match request_details {
-				messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_deposit(&deposit).is_ok(),
-						UpdateType::DEPOSIT,
-					)),
-				),
-				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_cancel_resolution(&cancel.into()).is_ok(),
-						UpdateType::CANCEL_RESOLUTION,
-					)),
-				),
-				messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_l2_updates_to_remove(&remove).is_ok(),
-						UpdateType::INDEX_UPDATE,
-					)),
-				),
-				_ => {},
-			};
-			// if success, increase last_processed_request_on_l2
-			let request_id: u128 = request_id.try_into().unwrap();
-			last_processed_request_on_l2::<T>::put(request_id);
-		}
+            // for elem in requests_to_process{
+            //     if let Some((pos, (request_id, request_details))) = elem {
+            //         match request_details {
+            //             messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
+            //                 request_id,
+            //                 PendingUpdate::RequestResult((
+            //                     Self::process_deposit(&deposit).is_ok(),
+            //                     UpdateType::DEPOSIT,
+            //                 )),
+            //             ),
+            //             messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
+            //                 request_id,
+            //                 PendingUpdate::RequestResult((
+            //                     Self::process_cancel_resolution(&cancel.into()).is_ok(),
+            //                     UpdateType::CANCEL_RESOLUTION,
+            //                 )),
+            //             ),
+            //             messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
+            //                 request_id,
+            //                 PendingUpdate::RequestResult((
+            //                     Self::process_l2_updates_to_remove(&remove).is_ok(),
+            //                     UpdateType::INDEX_UPDATE,
+            //                 )),
+            //             ),
+            //         };
+            //         let request_id: u128 = request_id.try_into().unwrap();
+            //         last_processed_request_on_l2::<T>::put(request_id);
+            //
+            //     }else{
+            //         //request fully process
+            //     }
+            // }
+
+            // for r in requests_to_process {
+            //     if let Some(id, details) = r {
+            //
+            //     }else{
+            //         // all request processed
+            //     }
+            // }
+
+            // let last_processed_request_id = pos + requests_to_process.len();
+            //
+            // for (r in  {
+            //
+            //
+            // }
+
+        }
+        //
+        // let requests = update.into_requests();
+        // for r in requests.into_iter().skip(pos){
+        // }
+
+        // for (request
+		// for (request_id, request_details) in update.into_requests() {
+		// 	if pending_updates::<T>::contains_key(request_id) {
+		// 		log!(debug, "Request already processed: {:?}", request_id);
+		// 		continue
+		// 	}
+		//
+		// 	match request_details {
+		// 		messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
+		// 			request_id,
+		// 			PendingUpdate::RequestResult((
+		// 				Self::process_deposit(&deposit).is_ok(),
+		// 				UpdateType::DEPOSIT,
+		// 			)),
+		// 		),
+		// 		messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
+		// 			request_id,
+		// 			PendingUpdate::RequestResult((
+		// 				Self::process_cancel_resolution(&cancel.into()).is_ok(),
+		// 				UpdateType::CANCEL_RESOLUTION,
+		// 			)),
+		// 		),
+		// 		messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
+		// 			request_id,
+		// 			PendingUpdate::RequestResult((
+		// 				Self::process_l2_updates_to_remove(&remove).is_ok(),
+		// 				UpdateType::INDEX_UPDATE,
+		// 			)),
+		// 		),
+		// 		_ => {},
+		// 	};
+		// 	// if success, increase last_processed_request_on_l2
+		// 	let request_id: u128 = request_id.try_into().unwrap();
+		// 	last_processed_request_on_l2::<T>::put(request_id);
+		// }
+	}
+
+	fn schedule_requests(update: messages::L1Update) {
+		if let Some(id) = request_to_execute_cnt::<T>::get() {
+            request_to_execute_cnt::<T>::put(id+1);
+            request_to_execute::<T>::insert(id+1, (0u128, update));
+        }else{
+            request_to_execute::<T>::insert(0u128, (0u128, update));
+        }
 	}
 
 	fn process_deposit(deposit_request_details: &messages::Deposit) -> Result<(), &'static str> {

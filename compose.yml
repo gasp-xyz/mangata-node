@@ -10,7 +10,7 @@ services:
     build: 
       context: .
       dockerfile: local.Dockerfile
-    image: mangatasolutions/rollup-node:${NODE_IMAGE_TAG:-local}
+    image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command: 
       - --alice 
       - --chain=rollup-local
@@ -26,7 +26,7 @@ services:
     build: 
       context: .
       dockerfile: local.Dockerfile
-    image: mangatasolutions/rollup-node:${NODE_IMAGE_TAG:-local}
+    image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command: 
       - --bob
       - --base-path=/data

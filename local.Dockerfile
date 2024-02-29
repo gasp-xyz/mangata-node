@@ -23,8 +23,7 @@ FROM debian:stable-slim
 WORKDIR /app
 
 ARG BINARY_PATH=target/release/rollup-node
-ARG WASM_PATH=target/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm
 
-COPY --from=builder /app/${BINARY_PATH} /app/
+COPY --from=builder /app/${BINARY_PATH} /app/node
 
-ENTRYPOINT ["/app/rollup-node"]
+ENTRYPOINT ["/app/node"]

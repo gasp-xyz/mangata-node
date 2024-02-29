@@ -221,7 +221,7 @@ impl frame_system::Config for Runtime {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = Aura;
+	type OnTimestampSet = ();
 	type MinimumPeriod = cfg::pallet_timestamp::MinimumPeriod;
 	type WeightInfo = weights::pallet_timestamp_weights::ModuleWeight<Runtime>;
 }

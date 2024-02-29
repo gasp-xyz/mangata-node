@@ -218,6 +218,21 @@ pub mod config {
 				.build_or_panic();
 			pub const SS58Prefix: u16 = 42;
 		}
+
+		pub struct MaintenanceGatedSetCode<T, E>(PhantomData<T>, PhantomData<E>);
+
+		impl<T, E> SetCode<T> for MaintenanceGatedSetCode<T, E>
+		where
+			T: ::pallet_maintenance::Config,
+			E: SetCode<T>,
+		{
+			fn set_code(code: Vec<u8>) -> DispatchResult {
+				if !::pallet_maintenance::Pallet::<T>::is_upgradable() {
+					return Err(::pallet_maintenance::Error::<T>::UpgradeBlockedByMaintenance.into())
+				}
+				E::set_code(code)
+			}
+		}
 	}
 
 	pub mod pallet_timestamp {

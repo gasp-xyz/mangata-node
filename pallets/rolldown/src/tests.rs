@@ -102,7 +102,7 @@ fn process_single_deposit() {
 			current_block_number + dispute_period,
 			sp_core::U256::from(1u128),
 			sp_core::U256::from(0u128),
-			H256::from(hex!("a6da6d182dcae74d865404d30cec0c198606da765b3b55c5d49d3efcdb4fc76f"))
+			H256::from(hex!("7ed3ac0ab62b9b310468bc6b5734824cec79e6ea8ce39eb148f824eec3041a0f"))
 		)));
 	});
 }
@@ -116,6 +116,7 @@ fn create_pending_update_after_dispute_period() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			})])
 			.with_offset(1u128)
 			.build();
@@ -126,11 +127,13 @@ fn create_pending_update_after_dispute_period() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				}),
 				L1UpdateRequest::Deposit(messages::Deposit {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				}),
 			])
 			.with_offset(2u128)
@@ -163,6 +166,7 @@ fn l2_counter_updates_when_requests_are_processed() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			})])
 			.build();
 
@@ -172,11 +176,13 @@ fn l2_counter_updates_when_requests_are_processed() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				}),
 				L1UpdateRequest::Deposit(messages::Deposit {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				}),
 			])
 			.build();
@@ -208,6 +214,7 @@ fn deposit_executed_after_dispute_period() {
 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -237,6 +244,7 @@ fn l1_upate_executed_immaidately_if_force_submitted() {
 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -260,6 +268,7 @@ fn each_request_executed_only_once() {
 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
@@ -292,12 +301,14 @@ fn updates_to_remove_executed_after_dispute_period() {
 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
 			let l2_updates_to_remove = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 					l2UpdatesToRemove: vec![sp_core::U256::from(1u128)],
+					blockHash: H256::from([0; 32]),
 				})])
 				.with_offset(2u128)
 				.with_last_processed(1u128)
@@ -344,6 +355,7 @@ fn test_cancel_removes_pending_requests() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -351,6 +363,7 @@ fn test_cancel_removes_pending_requests() {
 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(1u128),
 					cancelJustified: true,
+					blockHash: H256::from([0; 32]),
 				})])
 				.with_offset(0u128)
 				.build();
@@ -381,6 +394,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -434,6 +448,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -442,6 +457,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: true,
+					blockHash: H256::from([0; 32]),
 				})])
 				.with_offset(1u128)
 				.build();
@@ -475,6 +491,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -483,6 +500,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: false,
+					blockHash: H256::from([0; 32]),
 				})])
 				.with_offset(1u128)
 				.build();
@@ -532,6 +550,7 @@ fn test_cancel_removes_cancel_right() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -539,6 +558,7 @@ fn test_cancel_removes_cancel_right() {
 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
 					l2RequestId: U256::from(l2_request_id),
 					cancelJustified: true,
+					blockHash: H256::from([0; 32]),
 				})])
 				.with_offset(1u128)
 				.build();
@@ -604,6 +624,7 @@ fn test_l1_update_hash_compare_with_solidty() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			})])
 			.with_offset(1u128)
 			.with_last_accepted(0u128)
@@ -611,7 +632,7 @@ fn test_l1_update_hash_compare_with_solidty() {
 		let hash = Rolldown::calculate_hash_of_pending_requests(update.clone());
 		assert_eq!(
 			hash,
-			hex!("033f8b8c13f3dd23df7d50f5a5106621177bb75f71cb39e9a8fd4ab565bec339").into()
+			hex!("17df588b43dd6f217debd726704178a1ed63aa47522066e8c5283a7797f57e8c").into()
 		);
 	});
 }
@@ -632,6 +653,7 @@ fn cancel_request_as_council_executed_immadiately() {
 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
+					blockHash: H256::from([0; 32]),
 				})])
 				.build();
 
@@ -664,6 +686,7 @@ fn reject_update_with_too_many_requests() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32])
 			});
 			11
 		];
@@ -685,6 +708,7 @@ fn check_request_ids_starts_from_one() {
 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
 			tokenAddress: ETH_TOKEN_ADDRESS,
 			amount: sp_core::U256::from(MILLION),
+			blockHash: H256::from([0; 32]),
 		})];
 
 		assert_err!(
@@ -715,6 +739,7 @@ fn reject_consecutive_update_with_invalid_counters() {
 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
 			tokenAddress: ETH_TOKEN_ADDRESS,
 			amount: sp_core::U256::from(MILLION),
+			blockHash: H256::from([0; 32]),
 		})];
 
 		let deposit_update =
@@ -738,6 +763,7 @@ fn reject_update_with_invalid_too_high_request_id() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			})])
 			.with_offset(2u128)
 			.build();
@@ -759,6 +785,7 @@ fn reject_second_update_in_the_same_block() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			})])
 			.build();
 
@@ -781,6 +808,7 @@ fn accept_consecutive_update_split_into_two() {
 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
 			tokenAddress: ETH_TOKEN_ADDRESS,
 			amount: sp_core::U256::from(MILLION),
+			blockHash: H256::from([0; 32]),
 		});
 
 		let first_update = L1UpdateBuilder::default()
@@ -914,6 +942,7 @@ fn test_remove_pending_updates() {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			});
 
 			let update_with_deposit = L1UpdateBuilder::default()
@@ -949,7 +978,7 @@ fn test_remove_pending_updates() {
 				lastProccessedRequestOnL1: sp_core::U256::from(0u128),
 				lastAcceptedRequestOnL1: sp_core::U256::from(1u128),
 				hash: H256::from(hex!(
-					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
+					"b28626393d70283df9a357c4618b7956a9af73e9eb2ab0bad02408987dffa7ef"
 				)),
 			};
 
@@ -969,6 +998,7 @@ fn test_remove_pending_updates() {
 			let cancel_resolution_request = messages::CancelResolution {
 				l2RequestId: sp_core::U256::from(u128::MAX / 2),
 				cancelJustified: false,
+				blockHash: H256::from([0; 32]),
 			};
 
 			let remove_pending_updates_request = messages::L2UpdatesToRemove {
@@ -976,6 +1006,7 @@ fn test_remove_pending_updates() {
 					sp_core::U256::from(0u128),
 					sp_core::U256::from(u128::MAX / 2 + 1),
 				],
+				blockHash: H256::from([0; 32]),
 			};
 
 			let update_with_remove_and_resolution = L1UpdateBuilder::default()

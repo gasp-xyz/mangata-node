@@ -182,17 +182,17 @@ fn l2_counter_updates_when_requests_are_processed() {
 			.build();
 
 		forward_to_block::<Test>(10);
-		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 0_u128);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 0_u128.into());
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update1).unwrap();
 
 		forward_to_block::<Test>(11);
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
 		forward_to_block::<Test>(15);
-		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 1u128);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 1u128.into());
 
 		forward_to_block::<Test>(16);
-		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 2u128);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(), 2u128.into());
 	});
 }
 
@@ -655,25 +655,107 @@ fn cancel_request_as_council_executed_immadiately() {
 
 #[test]
 #[serial]
-fn reject_update_with_too_many_requests() {
+fn execute_a_lot_of_requests_in_following_blocks() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		forward_to_block::<Test>(10);
 
+		let requests_count = 25;
 		let requests = vec![
 			L1UpdateRequest::Deposit(messages::Deposit {
 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
 			});
-			11
+			requests_count
 		];
 
 		let deposit_update = L1UpdateBuilder::default().with_requests(requests).build();
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
-		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
-			Error::<Test>::TooManyRequests
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 0u128.into());
+		assert_eq!(request_to_execute_cnt::<Test>::get(), None);
+
+		forward_to_block::<Test>(15);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(),
+			Rolldown::get_max_requests_per_block().into()
 		);
+
+		forward_to_block::<Test>(16);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(),
+			(2u128 * Rolldown::get_max_requests_per_block()).into()
+		);
+
+		forward_to_block::<Test>(17);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), requests_count.into());
+
+		forward_to_block::<Test>(100);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), requests_count.into());
+	});
+}
+
+#[test]
+#[serial]
+fn ignore_duplicated_requests_when_already_executed() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let dummy_request = L1UpdateRequest::Deposit(messages::Deposit {
+			depositRecipient: ETH_RECIPIENT_ACCOUNT,
+			tokenAddress: ETH_TOKEN_ADDRESS,
+			amount: sp_core::U256::from(MILLION),
+		});
+		let first_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request.clone(); 5]).build();
+		let second_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request; 6]).build();
+
+		forward_to_block::<Test>(10);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+		forward_to_block::<Test>(11);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 0u128.into());
+
+		forward_to_block::<Test>(15);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 5u128.into());
+
+		forward_to_block::<Test>(16);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 6u128.into());
+	});
+}
+
+#[test]
+#[serial]
+fn process_l1_reads_in_order() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let dummy_request = L1UpdateRequest::Deposit(messages::Deposit {
+			depositRecipient: ETH_RECIPIENT_ACCOUNT,
+			tokenAddress: ETH_TOKEN_ADDRESS,
+			amount: sp_core::U256::from(MILLION),
+		});
+		let first_update = L1UpdateBuilder::default()
+			.with_requests(vec![dummy_request.clone(); 11])
+			.build();
+		let second_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request; 20]).build();
+
+		forward_to_block::<Test>(10);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+		forward_to_block::<Test>(11);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 0u128.into());
+
+		forward_to_block::<Test>(15);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 10u128.into());
+
+		forward_to_block::<Test>(16);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(), 20u128.into());
 	});
 }
 
@@ -786,29 +868,30 @@ fn accept_consecutive_update_split_into_two() {
 		let first_update = L1UpdateBuilder::default()
 			.with_requests(vec![
 				dummy_update.clone();
-				Rolldown::get_max_requests_per_block() as usize
+				(2 * Rolldown::get_max_requests_per_block()) as usize
 			])
 			.with_last_accepted(20)
 			.with_last_processed(0)
 			.with_offset(1u128)
 			.build();
 
-		let second_update = L1UpdateBuilder::default()
-			.with_requests(vec![dummy_update; Rolldown::get_max_requests_per_block() as usize])
-			.with_last_accepted(20)
-			.with_last_processed(0)
-			.with_offset(11u128)
-			.build();
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
-		forward_to_block::<Test>(12);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
-
-		forward_to_block::<Test>(17);
-
+		forward_to_block::<Test>(15);
 		let mut expected_updates = pending_updates::<Test>::iter_keys().collect::<Vec<_>>();
 		expected_updates.sort();
+		assert_eq!(
+			(1u128..11u128)
+				.collect::<Vec<_>>()
+				.into_iter()
+				.map(|id: u128| sp_core::U256::from(id))
+				.collect::<Vec<sp_core::U256>>(),
+			expected_updates
+		);
 
+		forward_to_block::<Test>(16);
+		let mut expected_updates = pending_updates::<Test>::iter_keys().collect::<Vec<_>>();
+		expected_updates.sort();
 		assert_eq!(
 			(1u128..21u128)
 				.collect::<Vec<_>>()
@@ -999,12 +1082,4 @@ fn test_remove_pending_updates() {
 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2)), None);
 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)), None);
 		});
-}
-
-#[test]
-fn hello() {
-	for x in (0..10).skip(5).take(30){
-		println!("{}", x);
-	}
-	// println!("sdfsdF");
 }

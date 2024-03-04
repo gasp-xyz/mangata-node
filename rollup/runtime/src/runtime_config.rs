@@ -22,7 +22,7 @@ pub mod types {
 	pub type Amount = i128;
 
 	// /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-	pub type Signature = MultiSignature;
+	pub type Signature = MultiSignatureAcc20;
 
 	// /// Some way of identifying an account on the chain. We intentionally make it equivalent
 	// /// to the public key of our transaction signing scheme.
@@ -495,8 +495,8 @@ pub mod config {
 				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
 			>,
 			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-			T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
-			sp_runtime::AccountId32: From<T::AccountId>,
+			T::AccountId: From<sp_runtime::AccountId20> + Into<sp_runtime::AccountId20>,
+			sp_runtime::AccountId20: From<T::AccountId>,
 		{
 			pub fn handle_sell_asset(
 				who: &T::AccountId,
@@ -722,9 +722,9 @@ pub mod config {
 				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
 			>,
 			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-			T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+			T::AccountId: From<sp_runtime::AccountId20> + Into<sp_runtime::AccountId20>,
 			Balance: From<<C as MultiTokenCurrency<T::AccountId>>::Balance>,
-			sp_runtime::AccountId32: From<T::AccountId>,
+			sp_runtime::AccountId20: From<T::AccountId>,
 		{
 			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 			type Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance;
@@ -960,7 +960,7 @@ pub mod config {
 		T1: Get<C::CurrencyId>,
 		// Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
 		// Balance: From<TokenId>,
-		// sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+		// sp_runtime::AccountId20: From<<T as frame_system::Config>::AccountId>,
 		{
 			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 			type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -1087,28 +1087,26 @@ pub mod config {
 		impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
 			fn get() -> Vec<T::AccountId> {
 				let accounts: Vec<_> = [
+					// TODO AccountId20
+					// Change the following
 					hex_literal::hex![
-						"c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"
+						"c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"
 					],
 					hex_literal::hex![
-						"c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"
+						"c4690c56c36cec7ed5f6ed5d5eebace0c317073a"
 					],
 					hex_literal::hex![
-						"fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"
+						"fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"
 					],
 				]
 				.iter()
-				.map(|acc| sp_runtime::AccountId32::from(*acc))
+				.map(|acc| sp_runtime::AccountId20::from(*acc))
 				.collect();
 
 				accounts
 					.into_iter()
 					.map(|acc| {
 						T::AccountId::decode(&mut acc.as_ref())
-							// &mut sp_runtime::AccountId32::as_ref(
-							// &sp_runtime::AccountId32::from(acc),
-							// )
-							// )
 							.unwrap()
 					})
 					.collect()

@@ -16,6 +16,8 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
+use sp_runtime::{traits::IdentifyAccount, MultiSignerAcc20};
+use sp_core::Pair;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -205,7 +207,7 @@ pub fn run() -> sc_cli::Result<()> {
 							Box::new(RemarkBuilder::new(client.clone())),
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
-								Sr25519Keyring::Alice.to_account_id(),
+								MultiSignerAcc20::from(crate::benchmarking::get_pair_from_seed::<sp_core::ecdsa::Pair>("Alice").public()).into_account(),
 								Default::default(),
 							)),
 						]);

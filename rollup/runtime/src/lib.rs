@@ -19,7 +19,7 @@ use sp_runtime::{
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
-	MultiSignature, OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
+	MultiSignature, MultiSignatureAcc20, OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -354,7 +354,7 @@ use cfg::pallet_transaction_payment_mangata::{
 pub struct Foo<T>(PhantomData<T>);
 impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
-	T: frame_system::Config<AccountId = sp_runtime::AccountId32>,
+	T: frame_system::Config<AccountId = sp_runtime::AccountId20>,
 {
 	fn trigger(who: T::AccountId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
@@ -417,7 +417,7 @@ impl Into<CallType> for RuntimeCall {
 }
 
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{generic::ExtendedCall, AccountId32};
+use sp_runtime::{generic::ExtendedCall, AccountId20};
 use sp_std::{fmt::Write, prelude::*};
 
 impl ExtendedCall for RuntimeCall {
@@ -659,7 +659,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressRelayVoteThreshold = cfg::pallet_crowdloan_rewards::RelaySignaturesThreshold;
 	type NativeTokenId = tokens::RxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RelayChainAccountId = sp_runtime::AccountId20;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
 	type SignatureNetworkIdentifier = cfg::pallet_crowdloan_rewards::SigantureNetworkIdentifier;
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
@@ -910,7 +910,7 @@ impl_runtime_apis! {
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
-		) -> Option<(sp_runtime::AccountId32, u32)> {
+		) -> Option<(sp_runtime::AccountId20, u32)> {
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
 				<Runtime as frame_system::Config>::Lookup::lookup(sig.0)
@@ -1213,10 +1213,10 @@ impl_runtime_apis! {
 				// and execute_block_ver_impl initializes the block
 				// That means that at this point the block is not initialized
 				// That means session was not on_initialize
-				// That means we can use session validator set
+				// That means we can use aura validator set
 				// as they have not been overwritten yet
 
-				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
+				pallet_aura::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
 					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
 				).expect("Could not find AuRa author index!")
 				.to_raw_vec();

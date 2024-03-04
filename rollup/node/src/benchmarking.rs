@@ -12,14 +12,14 @@ use sc_executor::WasmExecutor;
 use sp_api::ProvideRuntimeApi;
 use sp_core::{crypto::key_types::AURA, Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
-use sp_keyring::Sr25519Keyring;
 use sp_keystore::Keystore;
-use sp_runtime::{traits::Zero, OpaqueExtrinsic, SaturatedConversion};
+use sp_runtime::{MultiSignerAcc20, traits::{Zero, IdentifyAccount}, OpaqueExtrinsic, SaturatedConversion};
 use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
 use substrate_frame_rpc_system::AccountNonceApi;
+use sp_core::{ecdsa, sr25519};
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 type HostFunctions = sp_io::SubstrateHostFunctions;
@@ -30,12 +30,17 @@ type HostFunctions =
 
 type WasmFullClient = sc_service::TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
 
-pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::sr25519::Pair) -> u32 {
+pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u32 {
 	let best_hash = client.chain_info().best_hash;
 	client
 		.runtime_api()
-		.account_nonce(best_hash, account.public().into())
+		.account_nonce(best_hash, MultiSignerAcc20::from(account.public()).into_account())
 		.expect("Fetching account nonce works; qed")
+}
+
+pub fn get_pair_from_seed<TPair: sp_core::Pair>(seed: &str) -> TPair {
+	TPair::from_string(&format!("//{}", seed), None)
+		.expect("static values are valid; qed")
 }
 
 /// Create a transaction using the given `call`.
@@ -43,7 +48,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::sr25519::Pair) -> 
 /// Note: Should only be used for benchmarking.
 pub fn create_benchmark_extrinsic(
 	client: &WasmFullClient,
-	sender: sp_core::sr25519::Pair,
+	sender: sp_core::ecdsa::Pair,
 	call: runtime::RuntimeCall,
 	nonce: Option<u32>,
 ) -> runtime::UncheckedExtrinsic {
@@ -86,8 +91,8 @@ pub fn create_benchmark_extrinsic(
 
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
-		sp_runtime::AccountId32::from(sender.public()).into(),
-		runtime::Signature::Sr25519(signature),
+		MultiSignerAcc20::from(sender.public()).into_account().into(),
+		runtime::Signature::Ecdsa(signature),
 		extra,
 	)
 }
@@ -150,7 +155,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = Sr25519Keyring::Bob.pair();
+		let acc = get_pair_from_seed::<ecdsa::Pair>("Bob");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,
@@ -189,7 +194,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = Sr25519Keyring::Bob.pair();
+		let acc = get_pair_from_seed::<ecdsa::Pair>("Bob");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,

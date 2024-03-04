@@ -50,11 +50,11 @@ macro_rules! log {
 #[derive(Debug, PartialEq)]
 pub struct EthereumAddressConverter<AccountId>(sp_std::marker::PhantomData<AccountId>);
 
-impl Convert<[u8; 20], sp_runtime::AccountId32>
-	for EthereumAddressConverter<sp_runtime::AccountId32>
+impl Convert<[u8; 20], sp_runtime::AccountId20>
+	for EthereumAddressConverter<sp_runtime::AccountId20>
 {
-	fn convert(eth_addr: [u8; 20]) -> sp_runtime::AccountId32 {
-		Blake2_256::hash(eth_addr.as_ref()).into()
+	fn convert(eth_addr: [u8; 20]) -> sp_runtime::AccountId20 {
+		eth_addr.into()
 	}
 }
 

@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -430,6 +431,16 @@ impl<T: Config> Pallet<T> {
 
 	fn get_max_requests_per_block() -> u128 {
 		T::RequestsPerBlock::get()
+	}
+
+	pub fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool> {
+		let pending_requests_to_process = pending_requests::<T>::get::<U256>(request_id.into());
+		if let Some((_, l1_update)) = pending_requests_to_process {
+			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
+			Some(hash == calculated_hash)
+		} else {
+			None
+		}
 	}
 
 	// should run each block, check if dispute period ended, if yes, process pending requests

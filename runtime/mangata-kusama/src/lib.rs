@@ -866,8 +866,8 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 
-		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> bool {
-			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id).is_some()
+		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
 		}
 	}
 

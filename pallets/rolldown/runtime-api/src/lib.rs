@@ -7,6 +7,6 @@ sp_api::decl_runtime_apis! {
 	pub trait RolldownRuntimeApi{
 		fn get_pending_updates_hash() -> sp_core::H256;
 		fn get_pending_updates() -> Vec<u8>;
-		fn verify_pending_requests(hash: H256, request_id: u128) -> bool;
+		fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool>;
 	}
 }

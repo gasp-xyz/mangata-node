@@ -31,7 +31,7 @@ pub trait RolldownApi<BlockHash> {
 		hash: H256,
 		request_id: u128,
 		at: Option<BlockHash>,
-	) -> RpcResult<bool>;
+	) -> RpcResult<Option<bool>>;
 }
 
 pub struct Rolldown<C, M> {
@@ -86,7 +86,7 @@ where
 		hash: H256,
 		request_id: u128,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<bool> {
+	) -> RpcResult<Option<bool>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.verify_pending_requests(at, hash, request_id).map_err(|e| {

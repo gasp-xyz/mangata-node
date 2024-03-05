@@ -127,11 +127,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
-	pub type last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn get_prev_last_processed_request_on_l2)]
-	pub type prev_last_processed_request_on_l2<T: Config> = StorageValue<_, u128, ValueQuery>;
+	pub type last_processed_request_on_l2<T: Config> = StorageValue<_, U256, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
@@ -142,6 +138,15 @@ pub mod pallet {
 	#[pallet::getter(fn get_pending_requests)]
 	pub type pending_requests<T: Config> =
 		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type request_to_execute<T: Config> =
+		StorageMap<_, Blake2_128Concat, u128, (u128, messages::L1Update), ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -289,7 +294,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
 			Self::validate_l1_update(&update)?;
-			Self::process_requests(update.into());
+			Self::schedule_requests(update.into());
+			Self::process_requests();
 			Ok(().into())
 		}
 
@@ -437,18 +443,6 @@ impl<T: Config> Pallet<T> {
 			let sequencer = &pending_requests_to_process.0;
 			let requests = pending_requests_to_process.1.clone();
 
-			if requests.lastProccessedRequestOnL1 <
-				sp_core::U256::from(Self::get_prev_last_processed_request_on_l2())
-			{
-				log!(
-					debug,
-					"lastProccessedRequestOnL1 is less than prev_last_processed_request_on_l2"
-				);
-
-				// TODO: SLASH sequencer for bringing unnecessary past requests, to be tested
-				// Self::slash(sequencer);
-			}
-
 			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
@@ -459,47 +453,85 @@ impl<T: Config> Pallet<T> {
 					_ => {},
 				}
 			});
-			Self::process_requests(requests.clone());
+
+			Self::schedule_requests(requests.clone());
 		}
 		pending_requests::<T>::remove(U256::from(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 		));
+		Self::process_requests();
 	}
 
-	fn process_requests(update: messages::L1Update) {
-		for (request_id, request_details) in update.into_requests() {
-			if pending_updates::<T>::contains_key(request_id) {
-				log!(debug, "Request already processed: {:?}", request_id);
-				continue
-			}
+	fn process_single_request(request: (sp_core::U256, messages::L1UpdateRequest)) {
+		let (request_id, request_details) = request;
 
-			match request_details {
-				messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_deposit(&deposit).is_ok(),
-						UpdateType::DEPOSIT,
-					)),
-				),
-				messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_cancel_resolution(&cancel.into()).is_ok(),
-						UpdateType::CANCEL_RESOLUTION,
-					)),
-				),
-				messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
-					request_id,
-					PendingUpdate::RequestResult((
-						Self::process_l2_updates_to_remove(&remove).is_ok(),
-						UpdateType::INDEX_UPDATE,
-					)),
-				),
-				_ => {},
-			};
-			// if success, increase last_processed_request_on_l2
-			let request_id: u128 = request_id.try_into().unwrap();
-			last_processed_request_on_l2::<T>::put(request_id);
+		if request_id <= last_processed_request_on_l2::<T>::get().into() {
+			return
+		}
+
+		match request_details {
+			messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
+				request_id,
+				PendingUpdate::RequestResult((
+					Self::process_deposit(&deposit).is_ok(),
+					UpdateType::DEPOSIT,
+				)),
+			),
+			messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
+				request_id,
+				PendingUpdate::RequestResult((
+					Self::process_cancel_resolution(&cancel.into()).is_ok(),
+					UpdateType::CANCEL_RESOLUTION,
+				)),
+			),
+			messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
+				request_id,
+				PendingUpdate::RequestResult((
+					Self::process_l2_updates_to_remove(&remove).is_ok(),
+					UpdateType::INDEX_UPDATE,
+				)),
+			),
+		};
+
+		last_processed_request_on_l2::<T>::put(request_id);
+	}
+
+	fn process_requests() {
+		if let Some(end_dispute_period) = request_to_execute_cnt::<T>::get() {
+			request_to_execute::<T>::mutate_exists(end_dispute_period, |req| {
+				if let Some((pos, update)) = req.clone() {
+					let requests_count = update.order.len() as u128;
+					let requests = update.clone().into_requests();
+					let requests_to_process = requests
+						.into_iter()
+						.skip(pos as usize)
+						.enumerate()
+						.filter(|(_, (request_id, _update))| {
+							*request_id > last_processed_request_on_l2::<T>::get().into()
+						})
+						.take(T::RequestsPerBlock::get() as usize);
+
+					for (i, r) in requests_to_process {
+						Self::process_single_request(r);
+						if (pos + i as u128) >= requests_count {
+							*req = None;
+							break
+						} else {
+							*req = Some((pos + (i as u128), update.clone()));
+						}
+					}
+				}
+			});
+		}
+	}
+
+	fn schedule_requests(update: messages::L1Update) {
+		if let Some(id) = request_to_execute_cnt::<T>::get() {
+			request_to_execute_cnt::<T>::put(id + 1);
+			request_to_execute::<T>::insert(id + 1, (0u128, update));
+		} else {
+			request_to_execute_cnt::<T>::put(0);
+			request_to_execute::<T>::insert(0u128, (0u128, update));
 		}
 	}
 
@@ -703,11 +735,7 @@ impl<T: Config> Pallet<T> {
 	pub fn validate_l1_update(update: &messages::L1Update) -> DispatchResult {
 		ensure!(!update.order.is_empty(), Error::<T>::EmptyUpdate);
 		ensure!(
-			update.order.len() as u128 <= Self::get_max_requests_per_block(),
-			Error::<T>::TooManyRequests
-		);
-		ensure!(
-			update.lastProccessedRequestOnL1 == last_processed_request_on_l2::<T>::get().into(),
+			update.lastProccessedRequestOnL1 == last_processed_request_on_l2::<T>::get(),
 			Error::<T>::InvalidUpdate
 		);
 		// if there are no requests on l1 there is no need for update

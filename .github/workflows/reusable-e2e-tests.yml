@@ -196,7 +196,7 @@ jobs:
           NODE_IMAGE: ${{ env.NODE_DOCKER_IMAGE }}
         run: |
           echo "Starting nodes with image: ${NODE_IMAGE}"
-          docker compose up -d
+          docker-compose up -d
           docker ps
 
       - name: Sleep for 2 minutes

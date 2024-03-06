@@ -175,13 +175,9 @@ jobs:
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: '18.18.2'
-
-      - name: Replace parachain docker image reference in config
-        working-directory: devops/parachain-launch
-        run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
@@ -195,19 +191,13 @@ jobs:
             yarn add @mangata-finance/types@${{ env.MANGATA_TYPES_VERSION }}
           fi
 
-      - name: Run parachain launch
-        working-directory: devops/parachain-launch
-        run: npx @open-web3/parachain-launch generate config.yml
-
-      - name: Remove obsolete node run args from generated docker-compose.yml
-        working-directory: devops/parachain-launch/output
-        run: sed -i '/ws-external/d' docker-compose.yml
-
-      - run: docker ps --no-trunc
-      - name: Start mangata-node parachain
-        working-directory: devops/parachain-launch/output
-        run: docker-compose up -d --build
-      - run: docker ps --no-trunc
+      - name: Run the Node
+        env:
+          NODE_IMAGE: ${{ env.NODE_DOCKER_IMAGE }}
+        run: |
+          echo "Starting nodes with image: ${NODE_IMAGE}"
+          docker compose up -d
+          docker ps
 
       - name: Sleep for 2 minutes
         run: sleep 120s

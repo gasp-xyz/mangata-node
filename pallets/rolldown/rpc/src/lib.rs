@@ -31,7 +31,7 @@ pub trait RolldownApi<BlockHash> {
 		hash: H256,
 		request_id: u128,
 		at: Option<BlockHash>,
-	) -> RpcResult<Option<bool>>;
+	) -> RpcResult<bool>;
 }
 
 pub struct Rolldown<C, M> {
@@ -86,15 +86,24 @@ where
 		hash: H256,
 		request_id: u128,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Option<bool>> {
+	) -> RpcResult<bool> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.verify_pending_requests(at, hash, request_id).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+		api.verify_pending_requests(at, hash, request_id)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
+			.and_then(|e| match e {
+				Some(result) => Ok(result),
+				None => Err(JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some("Request does not exist".to_string()),
+				)))),
+			})
 	}
 }

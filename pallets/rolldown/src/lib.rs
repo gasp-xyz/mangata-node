@@ -98,7 +98,6 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Cancel<AccountId> {
-		pub l2RequestId: U256,
 		pub updater: AccountId,
 		pub canceler: AccountId,
 		pub lastProccessedRequestOnL1: U256,
@@ -108,7 +107,6 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 	pub struct Withdrawal {
-		pub l2RequestId: U256,
 		pub withdrawalRecipient: [u8; 20],
 		pub tokenAddress: [u8; 20],
 		pub amount: U256,
@@ -121,31 +119,44 @@ pub mod pallet {
 		Withdrawal(Withdrawal),
 	}
 
+	#[repr(u8)]
+	#[derive(Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
+	pub enum L1{
+		Ethereum,
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn get_sequencer_count)]
 	pub type sequencer_count<T: Config> = StorageValue<_, u128, ValueQuery>;
 
+	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
-	pub type last_processed_request_on_l2<T: Config> = StorageValue<_, U256, ValueQuery>;
+	// pub type last_processed_request_on_l2<T: Config> = StorageValue<_, U256, ValueQuery>;
+	pub type last_processed_request_on_l2<T: Config> = StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
 
+	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
-	pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
+	// pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
+	pub type l2_origin_request_id<T: Config> = StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
 
+
+	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
-	pub type pending_requests<T: Config> =
-		StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
+	// pub type pending_requests<T: Config> = StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
+	pub type pending_requests<T: Config> = StorageDoubleMap<_, Blake2_128Concat, u128, Blake2_128Concat, L1, (T::AccountId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	pub type request_to_execute<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, (u128, messages::L1Update), ValueQuery>;
+	// pub type request_to_execute<T: Config> = StorageMap<_, Blake2_128Concat, u128, (u128, messages::L1Update), ValueQuery>;
+	pub type request_to_execute<T: Config> = StorageDoubleMap<_, Blake2_128Concat, u128, Blake2_128Concat, L1, (u128, messages::L1Update), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
+	// pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
 	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
@@ -154,17 +165,18 @@ pub mod pallet {
 	pub type sequencer_rights<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
 
+	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_updates)]
 	pub type pending_updates<T: Config> =
-		StorageMap<_, Blake2_128Concat, sp_core::U256, PendingUpdate<T::AccountId>, OptionQuery>;
+		StorageDoubleMap<_, Blake2_128Concat, L1, Blake2_128Concat, u128, PendingUpdate<T::AccountId>, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
-		PendingRequestStored((T::AccountId, u128, sp_core::U256, sp_core::U256, H256)),
+		PendingRequestStored((T::AccountId, u128, u128, u128, H256)),
 	}
 
 	#[pallet::error]
@@ -227,7 +239,6 @@ pub mod pallet {
 					},
 				);
 			}
-			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
 		}
 	}
 
@@ -240,7 +251,7 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
-			Self::validate_l1_update(&requests)?;
+			Self::validate_l1_update(L1::Ethereum, &requests)?;
 
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
 			let current_block_number =
@@ -268,7 +279,8 @@ pub mod pallet {
 
 			// insert pending_requests
 			pending_requests::<T>::insert(
-				U256::from(dispute_period_end),
+				dispute_period_end,
+				L1::Ethereum,
 				(sequencer.clone(), requests.clone()),
 			);
 
@@ -278,8 +290,8 @@ pub mod pallet {
 			Pallet::<T>::deposit_event(Event::PendingRequestStored((
 				sequencer,
 				dispute_period_end,
-				requests.lastAcceptedRequestOnL1,
-				requests.lastProccessedRequestOnL1,
+				requests.lastAcceptedRequestOnL1.saturated_into(),
+				requests.lastAcceptedRequestOnL1.saturated_into(),
 				H256::from_slice(request_hash.as_slice()),
 			)));
 
@@ -293,7 +305,7 @@ pub mod pallet {
 			update: messages::L1Update,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
-			Self::validate_l1_update(&update)?;
+			Self::validate_l1_update(L1::Ethereum, &update)?;
 			Self::schedule_requests(update.into());
 			Self::process_requests();
 			Ok(().into())
@@ -304,7 +316,8 @@ pub mod pallet {
 		//EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
 		pub fn cancel_requests_from_l1(
 			origin: OriginFor<T>,
-			requests_to_cancel: U256,
+			l1: L1,
+			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
 
@@ -317,31 +330,30 @@ pub mod pallet {
 				}
 			})?;
 
-			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel)
+			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, l1)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
+			// TODO: fetch l1 from update
+			// let l1 = request.source;
+			let l1 = L1::Ethereum;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
-			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
+			let l2_request_id = l2_origin_request_id::<T>::mutate(l1, |request_id| {
+					let current = request_id.clone();
+					// TODO: safe math
+					*request_id += 1;
+					current
+				});
 			// create cancel request
 			let cancel_request = Cancel {
-				l2RequestId,
 				updater: submitter,
 				canceler,
 				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
 				lastAcceptedRequestOnL1: request.lastAcceptedRequestOnL1,
 				hash: hash_of_pending_request,
 			};
-			// add cancel request to pending updates
-			pending_updates::<T>::insert(l2RequestId, PendingUpdate::Cancel(cancel_request));
 
-			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter()
-				.checked_add(1)
-				.ok_or(Error::<T>::MathOverflow)?;
-			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
-
-			// remove whole l1l2 update (read) from pending requests
-			pending_requests::<T>::remove(&requests_to_cancel);
+			pending_updates::<T>::insert(l1, l2_request_id,PendingUpdate::Cancel(cancel_request));
 
 			Ok(().into())
 		}
@@ -350,6 +362,7 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn withdraw(
 			origin: OriginFor<T>,
+			l1: L1,
 			withdrawalRecipient: [u8; 20],
 			tokenAddress: [u8; 20],
 			amount: u128,
@@ -377,22 +390,21 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let l2RequestId = U256::from(Self::get_l2_origin_updates_counter());
+			let l2_request_id = l2_origin_request_id::<T>::mutate(l1, |request_id| {
+					let current = request_id.clone();
+					// TODO: safe math
+					*request_id += 1;
+					current
+				});
 
 			let withdrawal_update = Withdrawal {
-				l2RequestId,
 				withdrawalRecipient,
 				tokenAddress,
 				amount: U256::from(amount),
 			};
 			// add cancel request to pending updates
-			pending_updates::<T>::insert(l2RequestId, PendingUpdate::Withdrawal(withdrawal_update));
+			pending_updates::<T>::insert(l1, l2_request_id, PendingUpdate::Withdrawal(withdrawal_update));
 
-			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter()
-				.checked_add(1)
-				.ok_or(Error::<T>::MathOverflow)?;
-			// increase counter for updates originating on l2
-			l2_origin_updates_counter::<T>::put(l2_origin_updates_counter);
 			Ok(().into())
 		}
 
@@ -400,11 +412,12 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn force_cancel_requests_from_l1(
 			origin: OriginFor<T>,
-			requests_to_cancel: U256,
+			l1: L1,
+			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
 
-			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel)
+			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, l1)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			sequencer_rights::<T>::mutate_exists(submitter.clone(), |maybe_sequencer| {
@@ -435,9 +448,8 @@ impl<T: Config> Pallet<T> {
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
-		if let Some(pending_requests_to_process) =
-			pending_requests::<T>::get(U256::from(block_number))
-		{
+
+		for (l1,pending_requests_to_process) in pending_requests::<T>::iter_prefix(block_number) {
 			log!(debug, "dispute end {:?}", block_number);
 
 			let sequencer = &pending_requests_to_process.0;
@@ -456,21 +468,26 @@ impl<T: Config> Pallet<T> {
 
 			Self::schedule_requests(requests.clone());
 		}
-		pending_requests::<T>::remove(U256::from(
+
+		pending_requests::<T>::clear_prefix(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
-		));
+			u32::MAX,
+			None,
+		);
 		Self::process_requests();
 	}
 
-	fn process_single_request(request: (sp_core::U256, messages::L1UpdateRequest)) {
-		let (request_id, request_details) = request;
+	fn process_single_request(request: (u128, L1 ,messages::L1UpdateRequest)) {
+		let (request_id, l1, request_details) = request;
+		let request_id = request_id.saturated_into::<u128>();
 
-		if request_id <= last_processed_request_on_l2::<T>::get().into() {
+		if request_id <= last_processed_request_on_l2::<T>::get(l1).into() {
 			return
 		}
 
 		match request_details {
 			messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
+				l1,
 				request_id,
 				PendingUpdate::RequestResult((
 					Self::process_deposit(&deposit).is_ok(),
@@ -478,27 +495,30 @@ impl<T: Config> Pallet<T> {
 				)),
 			),
 			messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
+				l1,
 				request_id,
 				PendingUpdate::RequestResult((
-					Self::process_cancel_resolution(&cancel.into()).is_ok(),
+					Self::process_cancel_resolution(l1, &cancel.into()).is_ok(),
 					UpdateType::CANCEL_RESOLUTION,
 				)),
 			),
 			messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
+				l1,
 				request_id,
 				PendingUpdate::RequestResult((
-					Self::process_l2_updates_to_remove(&remove).is_ok(),
+					Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
 					UpdateType::INDEX_UPDATE,
 				)),
 			),
 		};
 
-		last_processed_request_on_l2::<T>::put(request_id);
+		last_processed_request_on_l2::<T>::insert(l1, request_id);
 	}
 
 	fn process_requests() {
+		let l1 = L1::Ethereum;
 		if let Some(end_dispute_period) = request_to_execute_cnt::<T>::get() {
-			request_to_execute::<T>::mutate_exists(end_dispute_period, |req| {
+			request_to_execute::<T>::mutate_exists(end_dispute_period, l1, |req| {
 				if let Some((pos, update)) = req.clone() {
 					let requests_count = update.order.len() as u128;
 					let requests = update.clone().into_requests();
@@ -507,12 +527,12 @@ impl<T: Config> Pallet<T> {
 						.skip(pos as usize)
 						.enumerate()
 						.filter(|(_, (request_id, _update))| {
-							*request_id > last_processed_request_on_l2::<T>::get().into()
+							*request_id > last_processed_request_on_l2::<T>::get(l1)
 						})
 						.take(T::RequestsPerBlock::get() as usize);
 
-					for (i, r) in requests_to_process {
-						Self::process_single_request(r);
+					for (i, (req_id, details)) in requests_to_process {
+						Self::process_single_request((req_id, L1::Ethereum, details));
 						if (pos + i as u128) >= requests_count {
 							*req = None;
 							break
@@ -528,10 +548,10 @@ impl<T: Config> Pallet<T> {
 	fn schedule_requests(update: messages::L1Update) {
 		if let Some(id) = request_to_execute_cnt::<T>::get() {
 			request_to_execute_cnt::<T>::put(id + 1);
-			request_to_execute::<T>::insert(id + 1, (0u128, update));
+			request_to_execute::<T>::insert(id + 1, L1::Ethereum, (0u128, update));
 		} else {
 			request_to_execute_cnt::<T>::put(0);
-			request_to_execute::<T>::insert(0u128, (0u128, update));
+			request_to_execute::<T>::insert(0u128, L1::Ethereum, (0u128, update));
 		}
 	}
 
@@ -564,12 +584,13 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_cancel_resolution(
+		l1: L1,
 		cancel_resolution: &messages::CancelResolution,
 	) -> Result<(), &'static str> {
-		let cancel_request_id = cancel_resolution.l2RequestId;
+		let cancel_request_id = cancel_resolution.l2RequestId.saturated_into::<u128>();
 		let cancel_justified = cancel_resolution.cancelJustified;
 
-		let cancel_update = match pending_updates::<T>::get(cancel_request_id) {
+		let cancel_update = match pending_updates::<T>::get(l1, cancel_request_id) {
 			Some(PendingUpdate::Cancel(cancel)) => Some(cancel),
 			_ => None,
 		}
@@ -602,7 +623,7 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 
-		pending_updates::<T>::remove(cancel_request_id);
+		pending_updates::<T>::remove(l1, cancel_request_id);
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
@@ -613,10 +634,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_l2_updates_to_remove(
+		l1: L1,
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			pending_updates::<T>::remove(requestId);
+			pending_updates::<T>::remove(l1, (*requestId).saturated_into::<u128>());
 		}
 
 		log!(
@@ -683,19 +705,19 @@ impl<T: Config> Pallet<T> {
 			withdrawals: Vec::new(),
 		};
 
-		for (request_id, req) in pending_updates::<T>::iter() {
+		for (l1, request_id, req) in pending_updates::<T>::iter() {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: to_eth_u256(request_id),
+						requestId: to_eth_u256(request_id.into()),
 						updateType: request_type,
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancels.push(Self::to_eth_cancel(request_id, cancel));
+					update.cancels.push(Self::to_eth_cancel(request_id.into(), cancel));
 				},
 				PendingUpdate::Withdrawal(withdrawal) => {
-					update.withdrawals.push(Self::to_eth_withdrawal(request_id, withdrawal));
+					update.withdrawals.push(Self::to_eth_withdrawal(request_id.into(), withdrawal));
 				},
 			};
 		}
@@ -732,10 +754,10 @@ impl<T: Config> Pallet<T> {
 		update.abi_encode()
 	}
 
-	pub fn validate_l1_update(update: &messages::L1Update) -> DispatchResult {
+	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {
 		ensure!(!update.order.is_empty(), Error::<T>::EmptyUpdate);
 		ensure!(
-			update.lastProccessedRequestOnL1 == last_processed_request_on_l2::<T>::get(),
+			update.lastProccessedRequestOnL1.saturated_into::<u128>() == last_processed_request_on_l2::<T>::get(l1),
 			Error::<T>::InvalidUpdate
 		);
 		// if there are no requests on l1 there is no need for update

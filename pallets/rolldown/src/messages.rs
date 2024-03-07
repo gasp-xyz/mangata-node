@@ -3,6 +3,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::Serialize;
 use sp_core::{RuntimeDebug, H256, U256};
+use sp_runtime::SaturatedConversion;
 use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
@@ -100,7 +101,7 @@ impl Into<eth_abi::PendingRequestType> for PendingRequestType {
 }
 
 impl L1Update {
-	pub fn into_requests(self) -> Vec<(sp_core::U256, L1UpdateRequest)> {
+	pub fn into_requests(self) -> Vec<(u128, L1UpdateRequest)> {
 		let L1Update {
 			offset,
 			order,
@@ -115,7 +116,7 @@ impl L1Update {
 			.enumerate()
 			.map(|(request_id, request_type)| {
 				(
-					sp_core::U256::from(request_id) + offset,
+					((request_id as u128) + offset.saturated_into::<u128>()),
 					match request_type {
 						PendingRequestType::DEPOSIT =>
 							L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),

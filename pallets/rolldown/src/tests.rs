@@ -881,7 +881,7 @@ fn accept_consecutive_update_split_into_two() {
 		let mut expected_updates = pending_updates::<Test>::iter_keys().collect::<Vec<_>>();
 		expected_updates.sort();
 		assert_eq!(
-			(1u128..11u128)
+			(0u128..11u128)
 				.collect::<Vec<_>>()
 				.into_iter()
 				.map(|id: u128| sp_core::U256::from(id))

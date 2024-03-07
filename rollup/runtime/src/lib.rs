@@ -1213,10 +1213,10 @@ impl_runtime_apis! {
 				// and execute_block_ver_impl initializes the block
 				// That means that at this point the block is not initialized
 				// That means session was not on_initialize
-				// That means we can use session validator set
+				// That means we can use aura validator set
 				// as they have not been overwritten yet
 
-				pallet_session::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
+				pallet_aura::FindAccountFromAuthorIndex::<Runtime, Aura>::find_author(
 					header.digest().logs().iter().filter_map(|d| d.as_pre_runtime())
 				).expect("Could not find AuRa author index!")
 				.to_raw_vec();

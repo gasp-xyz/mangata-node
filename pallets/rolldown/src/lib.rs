@@ -132,13 +132,12 @@ pub mod pallet {
 	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
-	// pub type last_processed_request_on_l2<T: Config> = StorageValue<_, U256, ValueQuery>;
 	pub type last_processed_request_on_l2<T: Config> = StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
+
 
 	//TODO: multi L1
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
-	// pub type l2_origin_updates_counter<T: Config> = StorageValue<_, u128, ValueQuery>;
 	pub type l2_origin_request_id<T: Config> = StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
 
 
@@ -146,18 +145,19 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
-	// pub type pending_requests<T: Config> = StorageMap<_, Blake2_128Concat, U256, (T::AccountId, messages::L1Update), OptionQuery>;
 	pub type pending_requests<T: Config> = StorageDoubleMap<_, Blake2_128Concat, u128, Blake2_128Concat, L1, (T::AccountId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	// pub type request_to_execute<T: Config> = StorageMap<_, Blake2_128Concat, u128, (u128, messages::L1Update), ValueQuery>;
-	pub type request_to_execute<T: Config> = StorageDoubleMap<_, Blake2_128Concat, u128, Blake2_128Concat, L1, (u128, messages::L1Update), ValueQuery>;
+	pub type request_to_execute<T: Config> = StorageMap<_, Blake2_128Concat, u128, (L1, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	// pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
-	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, OptionQuery>;
+	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type request_to_execute_last<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -291,7 +291,7 @@ pub mod pallet {
 				sequencer,
 				dispute_period_end,
 				requests.lastAcceptedRequestOnL1.saturated_into(),
-				requests.lastAcceptedRequestOnL1.saturated_into(),
+				requests.lastProccessedRequestOnL1.saturated_into(),
 				H256::from_slice(request_hash.as_slice()),
 			)));
 
@@ -305,8 +305,9 @@ pub mod pallet {
 			update: messages::L1Update,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
+			let l1= L1::Ethereum;
 			Self::validate_l1_update(L1::Ethereum, &update)?;
-			Self::schedule_requests(update.into());
+			Self::schedule_requests(l1, update.into());
 			Self::process_requests();
 			Ok(().into())
 		}
@@ -316,10 +317,10 @@ pub mod pallet {
 		//EXTRINSIC2 (who canceled, dispute_period_end(u32-blocknum)))
 		pub fn cancel_requests_from_l1(
 			origin: OriginFor<T>,
-			l1: L1,
 			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
+			let l1 = L1::Ethereum;
 
 			sequencer_rights::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
@@ -332,9 +333,6 @@ pub mod pallet {
 
 			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, l1)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
-			// TODO: fetch l1 from update
-			// let l1 = request.source;
-			let l1 = L1::Ethereum;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
@@ -362,12 +360,12 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn withdraw(
 			origin: OriginFor<T>,
-			l1: L1,
 			withdrawalRecipient: [u8; 20],
 			tokenAddress: [u8; 20],
 			amount: u128,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
+			let l1 = L1::Ethereum;
 
 			let eth_asset = L1Asset::Ethereum(tokenAddress);
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
@@ -412,12 +410,11 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn force_cancel_requests_from_l1(
 			origin: OriginFor<T>,
-			l1: L1,
 			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
 
-			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, l1)
+			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, L1::Ethereum)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			sequencer_rights::<T>::mutate_exists(submitter.clone(), |maybe_sequencer| {
@@ -466,7 +463,7 @@ impl<T: Config> Pallet<T> {
 				}
 			});
 
-			Self::schedule_requests(requests.clone());
+			Self::schedule_requests(l1, requests.clone());
 		}
 
 		pending_requests::<T>::clear_prefix(
@@ -477,15 +474,12 @@ impl<T: Config> Pallet<T> {
 		Self::process_requests();
 	}
 
-	fn process_single_request(request: (u128, L1 ,messages::L1UpdateRequest)) {
-		let (request_id, l1, request_details) = request;
-		let request_id = request_id.saturated_into::<u128>();
-
-		if request_id <= last_processed_request_on_l2::<T>::get(l1).into() {
+	fn process_single_request(request_id: u128, l1: L1 , request: messages::L1UpdateRequest) {
+		if request_id <= last_processed_request_on_l2::<T>::get(l1) {
 			return
 		}
 
-		match request_details {
+		match request {
 			messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
 				l1,
 				request_id,
@@ -516,43 +510,45 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_requests() {
-		let l1 = L1::Ethereum;
-		if let Some(end_dispute_period) = request_to_execute_cnt::<T>::get() {
-			request_to_execute::<T>::mutate_exists(end_dispute_period, l1, |req| {
-				if let Some((pos, update)) = req.clone() {
-					let requests_count = update.order.len() as u128;
-					let requests = update.clone().into_requests();
-					let requests_to_process = requests
-						.into_iter()
-						.skip(pos as usize)
-						.enumerate()
-						.filter(|(_, (request_id, _update))| {
-							*request_id > last_processed_request_on_l2::<T>::get(l1)
-						})
-						.take(T::RequestsPerBlock::get() as usize);
+		let mut limit = Self::get_max_requests_per_block();
 
-					for (i, (req_id, details)) in requests_to_process {
-						Self::process_single_request((req_id, L1::Ethereum, details));
-						if (pos + i as u128) >= requests_count {
-							*req = None;
-							break
-						} else {
-							*req = Some((pos + (i as u128), update.clone()));
-						}
+		loop {
+			if let Some((l1, r)) = request_to_execute::<T>::get(request_to_execute_cnt::<T>::get()){
+				let requests_to_process = r.into_requests();
+				let it = requests_to_process
+					.into_iter()
+					.filter(|(request_id, _)|
+						*request_id > last_processed_request_on_l2::<T>::get(l1)
+					)
+					.map(|val| Some(val))
+					.chain(std::iter::repeat(None))
+					.take(limit.try_into().unwrap());
+
+				for req in it {
+					if let Some((request_id, details)) = req{
+						Self::process_single_request(request_id, l1, details);
+						limit -= 1;
+					}else{
+						request_to_execute::<T>::remove(request_to_execute_cnt::<T>::get());
 					}
 				}
-			});
+			} else {
+				if request_to_execute::<T>::contains_key(request_to_execute_cnt::<T>::get() + 1){
+					request_to_execute_cnt::<T>::mutate(|v| *v += 1);
+				}else{
+					break;
+				}
+			}
+
+
 		}
 	}
 
-	fn schedule_requests(update: messages::L1Update) {
-		if let Some(id) = request_to_execute_cnt::<T>::get() {
-			request_to_execute_cnt::<T>::put(id + 1);
-			request_to_execute::<T>::insert(id + 1, L1::Ethereum, (0u128, update));
-		} else {
-			request_to_execute_cnt::<T>::put(0);
-			request_to_execute::<T>::insert(0u128, L1::Ethereum, (0u128, update));
-		}
+	fn schedule_requests(l1: L1, update: messages::L1Update) {
+		let id = request_to_execute_last::<T>::get();
+		println!("schedule requests {:?}", id + 1);
+		request_to_execute_last::<T>::put(id + 1);
+		request_to_execute::<T>::insert(id + 1, (l1, update));
 	}
 
 	fn process_deposit(deposit_request_details: &messages::Deposit) -> Result<(), &'static str> {

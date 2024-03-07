@@ -746,7 +746,8 @@ impl<T: Config> Pallet<T> {
 	pub fn validate_l1_update(update: &messages::L1Update) -> DispatchResult {
 		ensure!(!update.order.is_empty(), Error::<T>::EmptyUpdate);
 		ensure!(
-			update.lastProccessedRequestOnL1 == last_processed_request_on_l2::<T>::get(),
+			update.offset.saturated_into::<u128>() + (update.order.len() as u128) >
+				last_processed_request_on_l2::<T>::get().saturated_into::<u128>(),
 			Error::<T>::InvalidUpdate
 		);
 		// if there are no requests on l1 there is no need for update

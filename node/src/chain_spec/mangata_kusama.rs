@@ -230,8 +230,8 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
+						get_collator_keys_from_seed("Eve"),
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -250,8 +250,13 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
+					(
+						0u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
+					),
 					// ETH
-					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
+					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Eve")),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
@@ -273,7 +278,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool

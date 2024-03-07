@@ -634,8 +634,8 @@ mod tests {
 				crate::chain_spec::mangata_rococo::mangata_genesis(
 					vec![
 						(
-							get_account_id_from_seed::<sr25519::Public>("Alice"),
-							get_collator_keys_from_seed("Alice"),
+							get_account_id_from_seed::<sr25519::Public>("Eve"),
+							get_collator_keys_from_seed("Eve"),
 						),
 						(
 							get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -643,7 +643,7 @@ mod tests {
 						),
 					],
 					get_account_id_from_seed::<sr25519::Public>("Relay"),
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
 					vec![],
 					vec![],
 					vec![],

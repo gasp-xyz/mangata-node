@@ -355,15 +355,15 @@ fn test_cancel_removes_pending_requests() {
 				.with_offset(0u128)
 				.build();
 
-			assert!(!pending_requests::<Test>::contains_key( 15u128, L1::Ethereum));
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
 
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-			assert!(pending_requests::<Test>::contains_key( 15u128, L1::Ethereum));
+			assert!(pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
 
 			// Assert
-			assert!(!pending_requests::<Test>::contains_key( 15u128, L1::Ethereum));
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
 		});
 }
 
@@ -883,10 +883,7 @@ fn accept_consecutive_update_split_into_two() {
 			.collect::<Vec<_>>();
 		expected_updates.sort();
 		assert_eq!(
-			(1u128..11u128)
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<Vec<_>>(),
+			(1u128..11u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
 			expected_updates
 		);
 
@@ -896,10 +893,7 @@ fn accept_consecutive_update_split_into_two() {
 			.collect::<Vec<_>>();
 		expected_updates.sort();
 		assert_eq!(
-			(1u128..21u128)
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<Vec<_>>(),
+			(1u128..21u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
 			expected_updates
 		);
 	});
@@ -911,50 +905,50 @@ fn execute_two_consecutive_incremental_reqeusts() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
 		.execute_with_default_mocks(|| {
+			let dummy_update = L1UpdateRequest::Deposit(messages::Deposit {
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
 
-		let dummy_update = L1UpdateRequest::Deposit(messages::Deposit {
-			depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-			tokenAddress: ETH_TOKEN_ADDRESS,
-			amount: sp_core::U256::from(MILLION),
+			let first_update = L1UpdateBuilder::default()
+				.with_requests(vec![dummy_update.clone()])
+				.with_last_accepted(1)
+				.with_last_processed(0)
+				.with_offset(1u128)
+				.build();
+
+			let second_update = L1UpdateBuilder::default()
+				.with_requests(vec![dummy_update.clone(), dummy_update.clone()])
+				.with_last_accepted(2)
+				.with_last_processed(0)
+				.with_offset(1u128)
+				.build();
+
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+			forward_to_block::<Test>(14);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+
+			forward_to_block::<Test>(15);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				2 * MILLION
+			);
+
+			forward_to_block::<Test>(100);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				2 * MILLION
+			);
 		});
-
-		let first_update = L1UpdateBuilder::default()
-			.with_requests(vec![
-				dummy_update.clone(),
-			])
-			.with_last_accepted(1)
-			.with_last_processed(0)
-			.with_offset(1u128)
-			.build();
-
-		let second_update = L1UpdateBuilder::default()
-			.with_requests(vec![
-				dummy_update.clone(),
-				dummy_update.clone(),
-			])
-			.with_last_accepted(2)
-			.with_last_processed(0)
-			.with_offset(1u128)
-			.build();
-
-		forward_to_block::<Test>(10);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-
-		forward_to_block::<Test>(11);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
-
-		forward_to_block::<Test>(14);
-		assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-
-		forward_to_block::<Test>(15);
-		assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-
-		forward_to_block::<Test>(16);
-		assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 2 * MILLION);
-
-		forward_to_block::<Test>(100);
-		assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 2 * MILLION);
-	});
 }
 
 #[test]
@@ -1134,6 +1128,5 @@ fn test_remove_pending_updates() {
 			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1), None);
 		});
 }
-
 
 //TODO: update can only be called once per block

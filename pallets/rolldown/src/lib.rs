@@ -688,9 +688,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_cancel(request_id: U256, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+	fn to_eth_cancel(request_id: u128, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
-			l2RequestId: to_eth_u256(request_id),
+			requestId: messages::eth_abi::RequestId{
+					id: to_eth_u256(request_id.into()),
+					layer: messages::eth_abi::Layer::L2,
+			},
 			lastProccessedRequestOnL1: to_eth_u256(cancel.lastProccessedRequestOnL1),
 			lastAcceptedRequestOnL1: to_eth_u256(cancel.lastAcceptedRequestOnL1),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
@@ -698,11 +701,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn to_eth_withdrawal(
-		l2RequestId: U256,
+		request_id: u128,
 		withdrawal: Withdrawal,
 	) -> messages::eth_abi::Withdrawal {
 		messages::eth_abi::Withdrawal {
-			l2RequestId: to_eth_u256(l2RequestId),
+			requestId: messages::eth_abi::RequestId{
+					id: to_eth_u256(request_id.into()),
+					layer: messages::eth_abi::Layer::L2,
+			},
 			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
 			tokenAddress: withdrawal.tokenAddress.into(),
 			amount: to_eth_u256(withdrawal.amount),
@@ -726,15 +732,18 @@ impl<T: Config> Pallet<T> {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: to_eth_u256(request_id.into()),
+						requestId: messages::eth_abi::RequestId{
+							id: to_eth_u256(request_id.into()),
+							layer: messages::eth_abi::Layer::L2,
+						},
 						updateType: request_type,
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancels.push(Self::to_eth_cancel(request_id.into(), cancel));
+					update.cancels.push(Self::to_eth_cancel(request_id, cancel));
 				},
 				PendingUpdate::Withdrawal(withdrawal) => {
-					update.withdrawals.push(Self::to_eth_withdrawal(request_id.into(), withdrawal));
+					update.withdrawals.push(Self::to_eth_withdrawal(request_id, withdrawal));
 				},
 			};
 		}

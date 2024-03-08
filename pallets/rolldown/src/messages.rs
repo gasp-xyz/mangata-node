@@ -73,10 +73,6 @@ pub enum PendingRequestType {
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L1Update {
-	pub lastProccessedRequestOnL1: sp_core::U256,
-	pub lastAcceptedRequestOnL1: sp_core::U256,
-	pub offset: sp_core::U256,
-	pub order: Vec<PendingRequestType>,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResultions: Vec<CancelResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
@@ -140,11 +136,10 @@ pub fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
-			lastProccessedRequestOnL1: to_eth_u256(self.lastProccessedRequestOnL1),
-			lastAcceptedRequestOnL1: to_eth_u256(self.lastAcceptedRequestOnL1),
-			offset: to_eth_u256(self.offset),
-			order: self.order.into_iter().map(Into::into).collect::<Vec<_>>(),
-			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
+			pendingDeposits: self.pendingDeposits
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
 			pendingCancelResultions: self
 				.pendingCancelResultions
 				.into_iter()
@@ -177,16 +172,19 @@ pub mod eth_abi {
 	sol! {
 		// L1 to L2
 		struct Deposit {
+			RequestId requestId;
 			address depositRecipient;
 			address tokenAddress;
 			uint256 amount;
 		}
 
 		struct L2UpdatesToRemove {
+			RequestId requestId;
 			uint256[] l2UpdatesToRemove;
 		}
 
 		struct CancelResolution {
+			RequestId requestId;
 			uint256 l2RequestId;
 			bool cancelJustified;
 		}
@@ -194,10 +192,6 @@ pub mod eth_abi {
 		enum PendingRequestType{ DEPOSIT, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
 
 		struct L1Update {
-			uint256 lastProccessedRequestOnL1;
-			uint256 lastAcceptedRequestOnL1;
-			uint256 offset;
-			PendingRequestType[] order;
 			Deposit[] pendingDeposits;
 			CancelResolution[] pendingCancelResultions;
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
@@ -207,17 +201,26 @@ pub mod eth_abi {
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
 		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
 
+		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
+		enum Layer{ L1, L2 }
+
+		#[derive(Debug, Eq, PartialEq)]
+		struct RequestId {
+			Layer layer;
+			uint256 id;
+		}
+
 		// L2 to L1
 		#[derive(Debug, PartialEq)]
 		struct RequestResult {
-			uint256 requestId;
+			RequestId requestId;
 			UpdateType updateType;
 			bool status;
 		}
 
 		#[derive(Debug, PartialEq)]
 		struct Withdrawal {
-			uint256 l2RequestId;
+			RequestId requestId;
 			address withdrawalRecipient;
 			address tokenAddress;
 			uint256 amount;
@@ -225,7 +228,7 @@ pub mod eth_abi {
 
 		#[derive(Debug, PartialEq)]
 		struct Cancel {
-			uint256 l2RequestId;
+			RequestId requestId;
 			uint256 lastProccessedRequestOnL1;
 			uint256 lastAcceptedRequestOnL1;
 			bytes32 hash;

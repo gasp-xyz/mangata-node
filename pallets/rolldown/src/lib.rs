@@ -518,17 +518,15 @@ impl<T: Config> Pallet<T> {
 				return;
 			}
 			if let Some((l1, r)) = request_to_execute::<T>::get(request_to_execute_cnt::<T>::get()){
-				let requests_to_process = r.into_requests();
-				let it = requests_to_process
+				for req in r.into_requests()
 					.into_iter()
 					.filter(|(request_id, _)|
 						*request_id > last_processed_request_on_l2::<T>::get(l1)
 					)
 					.map(|val| Some(val))
 					.chain(std::iter::repeat(None))
-					.take(limit.try_into().unwrap());
-
-				for req in it {
+					.take(limit.try_into().unwrap())
+				{
 					if let Some((request_id, details)) = req{
 						Self::process_single_request(request_id, l1, details);
 						limit -= 1;

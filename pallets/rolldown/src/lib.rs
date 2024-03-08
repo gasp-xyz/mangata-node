@@ -218,7 +218,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub sequencers: Vec<T::AccountId>,
+		pub sequencers: Vec<T::AccountId>
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -239,6 +239,7 @@ pub mod pallet {
 					},
 				);
 			}
+			l2_origin_request_id::<T>::insert(L1::Ethereum, u128::MAX / 2);
 		}
 	}
 
@@ -513,6 +514,9 @@ impl<T: Config> Pallet<T> {
 		let mut limit = Self::get_max_requests_per_block();
 
 		loop {
+			if limit == 0 {
+				return;
+			}
 			if let Some((l1, r)) = request_to_execute::<T>::get(request_to_execute_cnt::<T>::get()){
 				let requests_to_process = r.into_requests();
 				let it = requests_to_process
@@ -530,10 +534,12 @@ impl<T: Config> Pallet<T> {
 						limit -= 1;
 					}else{
 						request_to_execute::<T>::remove(request_to_execute_cnt::<T>::get());
+						request_to_execute_cnt::<T>::mutate(|v| *v += 1);
+						break;
 					}
 				}
 			} else {
-				if request_to_execute::<T>::contains_key(request_to_execute_cnt::<T>::get() + 1){
+				if request_to_execute::<T>::contains_key(request_to_execute_cnt::<T>::get() + 1) {
 					request_to_execute_cnt::<T>::mutate(|v| *v += 1);
 				}else{
 					break;
@@ -546,7 +552,6 @@ impl<T: Config> Pallet<T> {
 
 	fn schedule_requests(l1: L1, update: messages::L1Update) {
 		let id = request_to_execute_last::<T>::get();
-		println!("schedule requests {:?}", id + 1);
 		request_to_execute_last::<T>::put(id + 1);
 		request_to_execute::<T>::insert(id + 1, (l1, update));
 	}

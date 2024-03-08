@@ -654,7 +654,6 @@ fn cancel_request_as_council_executed_immadiately() {
 }
 
 #[test]
-#[ignore]
 #[serial]
 fn execute_a_lot_of_requests_in_following_blocks() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
@@ -729,7 +728,6 @@ fn ignore_duplicated_requests_when_already_executed() {
 }
 
 #[test]
-#[ignore]
 #[serial]
 fn process_l1_reads_in_order() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
@@ -853,7 +851,6 @@ fn reject_second_update_in_the_same_block() {
 }
 
 #[test]
-#[ignore]
 #[serial]
 fn accept_consecutive_update_split_into_two() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
@@ -886,7 +883,7 @@ fn accept_consecutive_update_split_into_two() {
 			.collect::<Vec<_>>();
 		expected_updates.sort();
 		assert_eq!(
-			(0u128..11u128)
+			(1u128..11u128)
 				.collect::<Vec<_>>()
 				.into_iter()
 				.collect::<Vec<_>>(),
@@ -968,125 +965,123 @@ fn test_withdraw() {
 		});
 }
 
-// #[test]
-// #[serial]
-// fn error_on_withdrawal_more() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			assert_err!(
-// 				Rolldown::withdraw(
-// 					RuntimeOrigin::signed(ALICE),
-// 					ETH_RECIPIENT_ACCOUNT,
-// 					ETH_TOKEN_ADDRESS,
-// 					10_000_000u128
-// 				),
-// 				Error::<Test>::NotEnoughAssets
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_remove_pending_updates() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().return_const(Ok(().into()));
-//
-// 			let deposit_request = L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			});
-//
-// 			let update_with_deposit = L1UpdateBuilder::default()
-// 				.with_requests(vec![deposit_request.clone()])
-// 				.with_last_processed(0)
-// 				.with_last_accepted(1)
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update_with_deposit.clone())
-// 				.unwrap();
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-// 			Rolldown::withdraw(
-// 				RuntimeOrigin::signed(ALICE),
-// 				ETH_RECIPIENT_ACCOUNT,
-// 				ETH_TOKEN_ADDRESS,
-// 				1_000_000u128,
-// 			)
-// 			.unwrap();
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
-// 			forward_to_block::<Test>(20);
-//
-// 			let withdrawal_update = Withdrawal {
-// 				l2RequestId: sp_core::U256::from(u128::MAX / 2 + 1),
-// 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: U256::from(1_000_000u128),
-// 			};
-// 			let cancel_update = Cancel {
-// 				l2RequestId: sp_core::U256::from(u128::MAX / 2),
-// 				updater: 2,
-// 				canceler: 3,
-// 				lastProccessedRequestOnL1: sp_core::U256::from(0u128),
-// 				lastAcceptedRequestOnL1: sp_core::U256::from(1u128),
-// 				hash: H256::from(hex!(
-// 					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
-// 				)),
-// 			};
-//
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(sp_core::U256::from(1u128)),
-// 				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
-// 			);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2)),
-// 				Some(PendingUpdate::Cancel(cancel_update))
-// 			);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)),
-// 				Some(PendingUpdate::Withdrawal(withdrawal_update))
-// 			);
-//
-// 			let cancel_resolution_request = messages::CancelResolution {
-// 				l2RequestId: sp_core::U256::from(u128::MAX / 2),
-// 				cancelJustified: false,
-// 			};
-//
-// 			let remove_pending_updates_request = messages::L2UpdatesToRemove {
-// 				l2UpdatesToRemove: vec![
-// 					sp_core::U256::from(0u128),
-// 					sp_core::U256::from(u128::MAX / 2 + 1),
-// 				],
-// 			};
-//
-// 			let update_with_remove_and_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![
-// 					L1UpdateRequest::Remove(remove_pending_updates_request),
-// 					L1UpdateRequest::Cancel(cancel_resolution_request),
-// 				])
-// 				.with_last_accepted(3)
-// 				.with_last_processed(1)
-// 				.with_offset(2u128)
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(
-// 				RuntimeOrigin::signed(CHARLIE),
-// 				update_with_remove_and_resolution,
-// 			)
-// 			.unwrap();
-//
-// 			forward_to_block::<Test>(30);
-// 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(0u128)), None);
-// 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2)), None);
-// 			assert_eq!(pending_updates::<Test>::get(sp_core::U256::from(u128::MAX / 2 + 1)), None);
-// 		});
-// }
+#[test]
+#[serial]
+fn error_on_withdraw_too_much() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					10_000_000u128
+				),
+				Error::<Test>::NotEnoughAssets
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_remove_pending_updates() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_request = L1UpdateRequest::Deposit(messages::Deposit {
+				depositRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
+
+			let update_with_deposit = L1UpdateBuilder::default()
+				.with_requests(vec![deposit_request.clone()])
+				.with_last_processed(0)
+				.with_last_accepted(1)
+				.with_offset(1u128)
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update_with_deposit.clone())
+				.unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000_000u128,
+			)
+			.unwrap();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
+			forward_to_block::<Test>(20);
+
+			let withdrawal_update = Withdrawal {
+				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: U256::from(1_000_000u128),
+			};
+			let cancel_update = Cancel {
+				updater: 2,
+				canceler: 3,
+				lastProccessedRequestOnL1: sp_core::U256::from(0u128),
+				lastAcceptedRequestOnL1: sp_core::U256::from(1u128),
+				hash: H256::from(hex!(
+					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
+				)),
+			};
+
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+			);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2),
+				Some(PendingUpdate::Cancel(cancel_update))
+			);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1),
+				Some(PendingUpdate::Withdrawal(withdrawal_update))
+			);
+
+			let cancel_resolution_request = messages::CancelResolution {
+				l2RequestId: sp_core::U256::from(u128::MAX / 2),
+				cancelJustified: false,
+			};
+
+			let remove_pending_updates_request = messages::L2UpdatesToRemove {
+				l2UpdatesToRemove: vec![
+					sp_core::U256::from(0u128),
+					sp_core::U256::from(u128::MAX / 2 + 1),
+				],
+			};
+
+			let update_with_remove_and_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Remove(remove_pending_updates_request),
+					L1UpdateRequest::Cancel(cancel_resolution_request),
+				])
+				.with_last_accepted(3)
+				.with_last_processed(1)
+				.with_offset(2u128)
+				.build();
+
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(CHARLIE),
+				update_with_remove_and_resolution,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(30);
+			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, 0u128), None);
+			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2), None);
+			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1), None);
+		});
+}
 
 
 //TODO: update can only be called once per block

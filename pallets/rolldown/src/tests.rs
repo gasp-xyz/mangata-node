@@ -112,7 +112,7 @@ fn create_pending_update_after_dispute_period() {
 				L1UpdateRequest::Deposit(messages::Deposit::default()),
 				L1UpdateRequest::Deposit(messages::Deposit::default()),
 			])
-			.with_offset(2u128)
+			.with_offset(1u128)
 			.build();
 
 		forward_to_block::<Test>(10);
@@ -133,979 +133,906 @@ fn create_pending_update_after_dispute_period() {
 	});
 }
 
-// #[test]
-// #[serial]
-// fn l2_counter_updates_when_requests_are_processed() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		let update1 = L1UpdateBuilder::default()
-// 			.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			})])
-// 			.build();
-//
-// 		let update2 = L1UpdateBuilder::default()
-// 			.with_requests(vec![
-// 				L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				}),
-// 				L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				}),
-// 			])
-// 			.build();
-//
-// 		forward_to_block::<Test>(10);
-// 		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 0_u128.into());
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update1).unwrap();
-//
-// 		forward_to_block::<Test>(11);
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
-//
-// 		forward_to_block::<Test>(15);
-// 		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 1u128.into());
-//
-// 		forward_to_block::<Test>(16);
-// 		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 2u128.into());
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn deposit_executed_after_dispute_period() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-// 			let update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
-// 			forward_to_block::<Test>(14);
-// 			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-//
-// 			forward_to_block::<Test>(15);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-// 				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
-// 			);
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn l1_upate_executed_immaidately_if_force_submitted() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-// 			let update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-// 			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-// 			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), update).unwrap();
-// 			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn each_request_executed_only_once() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-// 			let update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
-//
-// 			forward_to_block::<Test>(11);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
-//
-// 			forward_to_block::<Test>(14);
-// 			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-//
-// 			forward_to_block::<Test>(15);
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-//
-// 			forward_to_block::<Test>(20);
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn updates_to_remove_executed_after_dispute_period() {
-// 	ExtBuilder::new()
-// 		.issue(CHARLIE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			let l2_updates_to_remove = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-// 					l2UpdatesToRemove: vec![sp_core::U256::from(1u128)],
-// 				})])
-// 				.with_offset(2u128)
-// 				.with_last_processed(1u128)
-// 				.with_last_accepted(2u128)
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-//
-// 			forward_to_block::<Test>(15);
-// 			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-//
-// 			forward_to_block::<Test>(100);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-// 				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
-// 			);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
-// 				.unwrap();
-//
-// 			forward_to_block::<Test>(104);
-// 			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-// 			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
-//
-// 			forward_to_block::<Test>(105);
-// 			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
-// 			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_cancel_removes_pending_requests() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			// Arrange
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().return_const(Ok(().into()));
-//
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			let cancel_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-// 					l2RequestId: U256::from(1u128),
-// 					cancelJustified: true,
-// 				})])
-// 				.with_offset(0u128)
-// 				.build();
-//
-// 			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
-//
-// 			// Act
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-// 			assert!(pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-//
-// 			// Assert
-// 			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_cancel_produce_update_with_correct_hash() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			// Arrange
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			// Act
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-// 			let req: messages::eth_abi::L1Update =
-// 				pending_requests::<Test>::get(15u128, L1::Ethereum).unwrap().1.into();
-//
-// 			assert_eq!(
-// 				Rolldown::get_l2_update(),
-// 				messages::eth_abi::L2Update {
-// 					withdrawals: vec![],
-// 					cancels: vec![],
-// 					results: vec![]
-// 				}
-// 			);
-//
-// 			let update_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-//
-// 			assert_eq!(
-// 				Rolldown::get_l2_update(),
-// 				messages::eth_abi::L2Update {
-// 					cancels: vec![messages::eth_abi::Cancel {
-// 						l2RequestId: messages::to_eth_u256(U256::from(update_id)),
-// 						lastProccessedRequestOnL1: messages::to_eth_u256(U256::from(0u128)),
-// 						lastAcceptedRequestOnL1: messages::to_eth_u256(U256::from(1u128)),
-// 						hash: alloy_primitives::FixedBytes::<32>::from_slice(
-// 							Keccak256::digest(&req.abi_encode()[..]).as_ref()
-// 						),
-// 					}],
-// 					withdrawals: vec![],
-// 					results: vec![]
-// 				}
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_read() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			// Arrange
-//
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
-// 			let cancel_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-// 					l2RequestId: U256::from(l2_request_id),
-// 					cancelJustified: true,
-// 				})])
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			// Act
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-// 			forward_to_block::<Test>(11);
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128).unwrap();
-// 			forward_to_block::<Test>(12);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
-// 			forward_to_block::<Test>(16);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().with(eq(ALICE)).return_const(Ok(().into()));
-// 			forward_to_block::<Test>(17);
-// 		})
-// }
-//
-// #[test]
-// #[serial]
-// fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			// Arrange
-//
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
-// 			let cancel_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-// 					l2RequestId: U256::from(l2_request_id),
-// 					cancelJustified: false,
-// 				})])
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			// Act
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-// 			forward_to_block::<Test>(11);
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128).unwrap();
-// 			forward_to_block::<Test>(12);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
-// 			forward_to_block::<Test>(16);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().with(eq(BOB)).return_const(Ok(().into()));
-// 			forward_to_block::<Test>(17);
-// 		})
-// }
-//
-// #[test]
-// #[serial]
-// fn test_cancel_unexisting_request_fails() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-// 			assert_err!(
-// 				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
-// 				Error::<Test>::RequestDoesNotExist
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_cancel_removes_cancel_right() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().return_const(Ok(().into()));
-//
-// 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			let cancel_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
-// 					l2RequestId: U256::from(l2_request_id),
-// 					cancelJustified: true,
-// 				})])
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(BOB).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-//
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-//
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
-// 			);
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(BOB).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-//
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-//
-// 			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
-// 			);
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(BOB).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
-// 			);
-//
-// 			forward_to_block::<Test>(11);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(BOB).unwrap(),
-// 				SequencerRights { readRights: 0u128, cancelRights: 1u128 }
-// 			);
-//
-// 			forward_to_block::<Test>(16);
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(BOB).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// // this test ensures that the hash calculated on rust side matches hash calculated in contract
-// fn test_l1_update_hash_compare_with_solidty() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		let update = L1UpdateBuilder::new()
-// 			.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			})])
-// 			.with_offset(1u128)
-// 			.with_last_accepted(0u128)
-// 			.build();
-// 		let hash = Rolldown::calculate_hash_of_pending_requests(update.clone());
-// 		assert_eq!(
-// 			hash,
-// 			hex!("033f8b8c13f3dd23df7d50f5a5106621177bb75f71cb39e9a8fd4ab565bec339").into()
-// 		);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn cancel_request_as_council_executed_immadiately() {
-// 	ExtBuilder::new()
-// 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().return_const(Ok(().into()));
-//
-// 			let deposit_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 					depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 					tokenAddress: ETH_TOKEN_ADDRESS,
-// 					amount: sp_core::U256::from(MILLION),
-// 				})])
-// 				.build();
-//
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
-// 			);
-//
-// 			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), 15u128.into()).unwrap();
-// 			assert_eq!(
-// 				sequencer_rights::<Test>::get(ALICE).unwrap(),
-// 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn execute_a_lot_of_requests_in_following_blocks() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		let requests_count = 25;
-// 		let requests = vec![
-// 			L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			});
-// 			requests_count
-// 		];
-//
-// 		let deposit_update = L1UpdateBuilder::default().with_requests(requests).build();
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-//
-// 		forward_to_block::<Test>(14);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
-// 		assert_eq!(request_to_execute_cnt::<Test>::get(), 0u128);
-//
-// 		forward_to_block::<Test>(15);
-// 		assert_eq!(
-// 			last_processed_request_on_l2::<Test>::get(L1::Ethereum),
-// 			Rolldown::get_max_requests_per_block().into()
-// 		);
-//
-// 		forward_to_block::<Test>(16);
-// 		assert_eq!(
-// 			last_processed_request_on_l2::<Test>::get(L1::Ethereum),
-// 			(2u128 * Rolldown::get_max_requests_per_block()).into()
-// 		);
-//
-// 		forward_to_block::<Test>(17);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), requests_count as u128);
-//
-// 		forward_to_block::<Test>(100);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), requests_count as u128);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn ignore_duplicated_requests_when_already_executed() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		let dummy_request = L1UpdateRequest::Deposit(messages::Deposit {
-// 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 			tokenAddress: ETH_TOKEN_ADDRESS,
-// 			amount: sp_core::U256::from(MILLION),
-// 		});
-// 		let first_update =
-// 			L1UpdateBuilder::default().with_requests(vec![dummy_request.clone(); 5]).build();
-// 		let second_update =
-// 			L1UpdateBuilder::default().with_requests(vec![dummy_request; 6]).build();
-//
-// 		forward_to_block::<Test>(10);
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-//
-// 		forward_to_block::<Test>(11);
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
-//
-// 		forward_to_block::<Test>(14);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
-//
-// 		forward_to_block::<Test>(15);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 5u128.into());
-//
-// 		forward_to_block::<Test>(16);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 6u128.into());
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn process_l1_reads_in_order() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		let dummy_request = L1UpdateRequest::Deposit(messages::Deposit {
-// 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 			tokenAddress: ETH_TOKEN_ADDRESS,
-// 			amount: sp_core::U256::from(MILLION),
-// 		});
-// 		let first_update = L1UpdateBuilder::default()
-// 			.with_requests(vec![dummy_request.clone(); 11])
-// 			.build();
-// 		let second_update =
-// 			L1UpdateBuilder::default().with_requests(vec![dummy_request; 20]).build();
-//
-// 		forward_to_block::<Test>(10);
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-//
-// 		forward_to_block::<Test>(11);
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
-//
-// 		forward_to_block::<Test>(14);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
-//
-// 		forward_to_block::<Test>(15);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 10u128.into());
-//
-// 		forward_to_block::<Test>(16);
-// 		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 20u128.into());
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn check_request_ids_starts_from_one() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		let requests = vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 			tokenAddress: ETH_TOKEN_ADDRESS,
-// 			amount: sp_core::U256::from(MILLION),
-// 		})];
-//
-// 		assert_err!(
-// 			Rolldown::update_l2_from_l1(
-// 				RuntimeOrigin::signed(ALICE),
-// 				L1UpdateBuilder::new().with_requests(requests.clone()).build()
-// 			),
-// 			Error::<Test>::WrongRequestId
-// 		);
-//
-// 		assert_err!(
-// 			Rolldown::update_l2_from_l1(
-// 				RuntimeOrigin::signed(ALICE),
-// 				L1UpdateBuilder::new().with_requests(requests).with_offset(2u128).build()
-// 			),
-// 			Error::<Test>::WrongRequestId
-// 		);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn reject_consecutive_update_with_invalid_counters() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		let requests = vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 			tokenAddress: ETH_TOKEN_ADDRESS,
-// 			amount: sp_core::U256::from(MILLION),
-// 		})];
-//
-// 		let deposit_update =
-// 			L1UpdateBuilder::default().with_requests(requests).with_offset(100u128).build();
-//
-// 		assert_err!(
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
-// 			Error::<Test>::WrongRequestId
-// 		);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn reject_update_with_invalid_too_high_request_id() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		let deposit_update = L1UpdateBuilder::default()
-// 			.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			})])
-// 			.with_offset(2u128)
-// 			.build();
-//
-// 		assert_err!(
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
-// 			Error::<Test>::WrongRequestId
-// 		);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn reject_second_update_in_the_same_block() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-// 		let deposit_update = L1UpdateBuilder::default()
-// 			.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			})])
-// 			.build();
-//
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update.clone()).unwrap();
-//
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn accept_consecutive_update_split_into_two() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		// imagine that there are 20 request on L1 waiting to be processed
-// 		// they need to be split into 2 update_l2_from_l1 calls
-//
-// 		let dummy_update = L1UpdateRequest::Deposit(messages::Deposit {
-// 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 			tokenAddress: ETH_TOKEN_ADDRESS,
-// 			amount: sp_core::U256::from(MILLION),
-// 		});
-//
-// 		let first_update = L1UpdateBuilder::default()
-// 			.with_requests(vec![
-// 				dummy_update.clone();
-// 				(2 * Rolldown::get_max_requests_per_block()) as usize
-// 			])
-// 			.with_last_accepted(20)
-// 			.with_last_processed(0)
-// 			.with_offset(1u128)
-// 			.build();
-//
-// 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-//
-// 		forward_to_block::<Test>(15);
-// 		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
-// 			.map(|(k, _)| k)
-// 			.collect::<Vec<_>>();
-// 		expected_updates.sort();
-// 		assert_eq!(
-// 			(1u128..11u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
-// 			expected_updates
-// 		);
-//
-// 		forward_to_block::<Test>(16);
-// 		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
-// 			.map(|(k, _)| k)
-// 			.collect::<Vec<_>>();
-// 		expected_updates.sort();
-// 		assert_eq!(
-// 			(1u128..21u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
-// 			expected_updates
-// 		);
-// 	});
-// }
-//
-// #[test]
-// #[serial]
-// fn execute_two_consecutive_incremental_reqeusts() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
-// 		.execute_with_default_mocks(|| {
-// 			let dummy_update = L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			});
-//
-// 			let first_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![dummy_update.clone()])
-// 				.with_last_accepted(1)
-// 				.with_last_processed(0)
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			let second_update = L1UpdateBuilder::default()
-// 				.with_requests(vec![dummy_update.clone(), dummy_update.clone()])
-// 				.with_last_accepted(2)
-// 				.with_last_processed(0)
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			forward_to_block::<Test>(10);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-//
-// 			forward_to_block::<Test>(11);
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
-//
-// 			forward_to_block::<Test>(14);
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-//
-// 			forward_to_block::<Test>(15);
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
-//
-// 			forward_to_block::<Test>(16);
-// 			assert_eq!(
-// 				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
-// 				2 * MILLION
-// 			);
-//
-// 			forward_to_block::<Test>(100);
-// 			assert_eq!(
-// 				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
-// 				2 * MILLION
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn reject_update_with_missing_requests() {
-// 	ExtBuilder::new().execute_with_default_mocks(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		let update =
-// 			L1Update { order: vec![messages::PendingRequestType::DEPOSIT], ..Default::default() };
-//
-// 		assert_err!(
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update),
-// 			Error::<Test>::EmptyUpdate
-// 		);
-// 	});
-// }
-//
-// #[test]
-// fn test_conversion_u256() {
-// 	let val = sp_core::U256::from(1u8);
-// 	let eth_val = alloy_primitives::U256::from(1u8);
-// 	assert_eq!(messages::to_eth_u256(val), eth_val);
-// }
-//
-// #[test]
-// fn test_conversion_address() {
-// 	let byte_address: [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);
-// 	assert_eq!(DummyAddressConverter::convert(byte_address), consts::CHARLIE);
-// }
-//
-// #[test]
-// #[serial]
-// fn test_withdraw() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), MILLION);
-// 			Rolldown::withdraw(
-// 				RuntimeOrigin::signed(ALICE),
-// 				ETH_RECIPIENT_ACCOUNT,
-// 				ETH_TOKEN_ADDRESS,
-// 				1_000_000u128,
-// 			)
-// 			.unwrap();
-//
-// 			let withdrawal_update = Withdrawal {
-// 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: U256::from(1_000_000u128),
-// 			};
-// 			// check iftokens were burned
-// 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
-// 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), 0_u128);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2),
-// 				Some(PendingUpdate::Withdrawal(withdrawal_update))
-// 			);
-// 			assert_eq!(Rolldown::get_l2_origin_updates_counter(L1::Ethereum), u128::MAX / 2 + 1);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn error_on_withdraw_too_much() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			assert_err!(
-// 				Rolldown::withdraw(
-// 					RuntimeOrigin::signed(ALICE),
-// 					ETH_RECIPIENT_ACCOUNT,
-// 					ETH_TOKEN_ADDRESS,
-// 					10_000_000u128
-// 				),
-// 				Error::<Test>::NotEnoughAssets
-// 			);
-// 		});
-// }
-//
-// #[test]
-// #[serial]
-// fn test_remove_pending_updates() {
-// 	ExtBuilder::new()
-// 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-// 		.execute_with_default_mocks(|| {
-// 			forward_to_block::<Test>(10);
-//
-// 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-// 			slash_sequencer_mock.expect().return_const(Ok(().into()));
-//
-// 			let deposit_request = L1UpdateRequest::Deposit(messages::Deposit {
-// 				depositRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: sp_core::U256::from(MILLION),
-// 			});
-//
-// 			let update_with_deposit = L1UpdateBuilder::default()
-// 				.with_requests(vec![deposit_request.clone()])
-// 				.with_last_processed(0)
-// 				.with_last_accepted(1)
-// 				.with_offset(1u128)
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update_with_deposit.clone())
-// 				.unwrap();
-// 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
-// 			Rolldown::withdraw(
-// 				RuntimeOrigin::signed(ALICE),
-// 				ETH_RECIPIENT_ACCOUNT,
-// 				ETH_TOKEN_ADDRESS,
-// 				1_000_000u128,
-// 			)
-// 			.unwrap();
-// 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
-// 			forward_to_block::<Test>(20);
-//
-// 			let withdrawal_update = Withdrawal {
-// 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
-// 				tokenAddress: ETH_TOKEN_ADDRESS,
-// 				amount: U256::from(1_000_000u128),
-// 			};
-// 			let cancel_update = Cancel {
-// 				updater: 2,
-// 				canceler: 3,
-// 				lastProccessedRequestOnL1: sp_core::U256::from(0u128),
-// 				lastAcceptedRequestOnL1: sp_core::U256::from(1u128),
-// 				hash: H256::from(hex!(
-// 					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
-// 				)),
-// 			};
-//
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-// 				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
-// 			);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2),
-// 				Some(PendingUpdate::Cancel(cancel_update))
-// 			);
-// 			assert_eq!(
-// 				pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1),
-// 				Some(PendingUpdate::Withdrawal(withdrawal_update))
-// 			);
-//
-// 			let cancel_resolution_request = messages::CancelResolution {
-// 				l2RequestId: sp_core::U256::from(u128::MAX / 2),
-// 				cancelJustified: false,
-// 			};
-//
-// 			let remove_pending_updates_request = messages::L2UpdatesToRemove {
-// 				l2UpdatesToRemove: vec![
-// 					sp_core::U256::from(0u128),
-// 					sp_core::U256::from(u128::MAX / 2 + 1),
-// 				],
-// 			};
-//
-// 			let update_with_remove_and_resolution = L1UpdateBuilder::default()
-// 				.with_requests(vec![
-// 					L1UpdateRequest::Remove(remove_pending_updates_request),
-// 					L1UpdateRequest::Cancel(cancel_resolution_request),
-// 				])
-// 				.with_last_accepted(3)
-// 				.with_last_processed(1)
-// 				.with_offset(2u128)
-// 				.build();
-//
-// 			Rolldown::update_l2_from_l1(
-// 				RuntimeOrigin::signed(CHARLIE),
-// 				update_with_remove_and_resolution,
-// 			)
-// 			.unwrap();
-//
-// 			forward_to_block::<Test>(30);
-// 			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, 0u128), None);
-// 			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2), None);
-// 			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1), None);
-// 		});
-// }
+#[test]
+#[serial]
+fn l2_counter_updates_when_requests_are_processed() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let update1 = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
 
-//TODO: update can only be called once per block
+		let update2 = L1UpdateBuilder::default()
+			.with_requests(vec![
+				L1UpdateRequest::Deposit(Default::default()),
+				L1UpdateRequest::Deposit(Default::default()),
+			])
+			.build();
+
+		forward_to_block::<Test>(10);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 0_u128.into());
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update1).unwrap();
+
+		forward_to_block::<Test>(11);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
+
+		forward_to_block::<Test>(15);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 1u128.into());
+
+		forward_to_block::<Test>(16);
+		assert_eq!(Rolldown::get_last_processed_request_on_l2(L1::Ethereum), 2u128.into());
+	});
+}
+
+#[test]
+#[serial]
+fn deposit_executed_after_dispute_period() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})])
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			forward_to_block::<Test>(14);
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+
+			forward_to_block::<Test>(15);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+			);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+		});
+}
+
+#[test]
+#[serial]
+fn l1_upate_executed_immaidately_if_force_submitted() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})])
+				.build();
+
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), update).unwrap();
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+		});
+}
+
+#[test]
+#[serial]
+fn each_request_executed_only_once() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
+
+			forward_to_block::<Test>(14);
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+
+			forward_to_block::<Test>(15);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+
+			forward_to_block::<Test>(20);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+		});
+}
+
+#[test]
+#[serial]
+fn updates_to_remove_executed_after_dispute_period() {
+	ExtBuilder::new()
+		.issue(CHARLIE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+				})])
+				.build();
+
+			let l2_updates_to_remove = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
+					requestId: Default::default(),
+					l2UpdatesToRemove: vec![sp_core::U256::from(1u128)],
+				})])
+				.with_offset(2u128)
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+
+			forward_to_block::<Test>(15);
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+
+			forward_to_block::<Test>(100);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+			);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
+				.unwrap();
+
+			forward_to_block::<Test>(104);
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
+
+			forward_to_block::<Test>(105);
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+		});
+}
+
+#[test]
+#[serial]
+fn test_cancel_removes_pending_requests() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					requestId: Default::default(),
+					l2RequestId: 1u128,
+					cancelJustified: true,
+				})])
+				.build();
+
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert!(pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
+			// Assert
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+		});
+}
+
+#[test]
+#[serial]
+fn test_cancel_produce_update_with_correct_hash() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			let req: messages::eth_abi::L1Update =
+				pending_requests::<Test>::get(15u128, L1::Ethereum).unwrap().1.into();
+
+			assert_eq!(
+				Rolldown::get_l2_update(L1::Ethereum),
+				messages::eth_abi::L2Update {
+					withdrawals: vec![],
+					cancels: vec![],
+					results: vec![]
+				}
+			);
+
+			let update_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
+			assert_eq!(
+				Rolldown::get_l2_update(L1::Ethereum),
+				messages::eth_abi::L2Update {
+					cancels: vec![
+						messages::eth_abi::Cancel {
+						requestId: messages::eth_abi::RequestId {
+							origin: messages::eth_abi::Origin::L2,
+							id: messages::to_eth_u256(U256::from(update_id))
+						},
+						range: messages::eth_abi::Range {
+							start: messages::to_eth_u256(U256::from(1)),
+							end: messages::to_eth_u256(U256::from(1))
+						},
+						hash: alloy_primitives::FixedBytes::<32>::from_slice(
+							Keccak256::digest(&req.abi_encode()[..]).as_ref()
+						),
+					}],
+					withdrawals: vec![],
+					results: vec![]
+				}
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_read() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default())
+				])
+				.build();
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					requestId: Default::default(),
+					l2RequestId: l2_request_id,
+					cancelJustified: true,
+				})])
+				.with_offset(1u128)
+				.build();
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128).unwrap();
+			forward_to_block::<Test>(12);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			forward_to_block::<Test>(16);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().with(eq(ALICE)).return_const(Ok(().into()));
+			forward_to_block::<Test>(17);
+		})
+}
+
+#[test]
+#[serial]
+fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					requestId: Default::default(),
+					l2RequestId: l2_request_id,
+					cancelJustified: false,
+				})])
+				.with_offset(1u128)
+				.build();
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128).unwrap();
+			forward_to_block::<Test>(12);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			forward_to_block::<Test>(16);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().with(eq(BOB)).return_const(Ok(().into()));
+			forward_to_block::<Test>(17);
+		})
+}
+
+#[test]
+#[serial]
+fn test_cancel_unexisting_request_fails() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::RequestDoesNotExist
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_cancel_removes_cancel_right() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
+				.build();
+
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+					requestId: Default::default(),
+					l2RequestId: l2_request_id,
+					cancelJustified: true,
+				})])
+				.with_offset(1u128)
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+			);
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+			);
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
+			);
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 1u128 }
+			);
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+		});
+}
+
+#[test]
+#[serial]
+// this test ensures that the hash calculated on rust side matches hash calculated in contract
+fn test_l1_update_hash_compare_with_solidty() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
+		let hash = Rolldown::calculate_hash_of_pending_requests(update.clone());
+		assert_eq!(
+			hash,
+			hex!("ceaf0183acf3eabc31bed81b28660ee7cfdb6bb22a275c2546c5955eaf1d1987").into()
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn cancel_request_as_council_executed_immadiately() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+			);
+
+			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), 15u128.into()).unwrap();
+			assert_eq!(
+				sequencer_rights::<Test>::get(ALICE).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn execute_a_lot_of_requests_in_following_blocks() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+		let requests_count = 25;
+		let requests = vec![
+			L1UpdateRequest::Deposit(messages::Deposit::default());
+			requests_count
+		];
+
+		let deposit_update = L1UpdateBuilder::default().with_requests(requests).build();
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
+		assert_eq!(request_to_execute_cnt::<Test>::get(), 0u128);
+
+		forward_to_block::<Test>(15);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(L1::Ethereum),
+			Rolldown::get_max_requests_per_block().into()
+		);
+
+		forward_to_block::<Test>(16);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(L1::Ethereum),
+			(2u128 * Rolldown::get_max_requests_per_block()).into()
+		);
+
+		forward_to_block::<Test>(17);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), requests_count as u128);
+
+		forward_to_block::<Test>(100);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), requests_count as u128);
+	});
+}
+
+#[test]
+#[serial]
+fn ignore_duplicated_requests_when_already_executed() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let dummy_request = L1UpdateRequest::Deposit(Default::default());
+		let first_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request.clone(); 5]).build();
+		let second_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request; 6]).build();
+
+		forward_to_block::<Test>(10);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+		forward_to_block::<Test>(11);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
+
+		forward_to_block::<Test>(15);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 5u128.into());
+
+		forward_to_block::<Test>(16);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 6u128.into());
+	});
+}
+
+#[test]
+#[serial]
+fn process_l1_reads_in_order() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let dummy_request = L1UpdateRequest::Deposit(Default::default());
+		let first_update = L1UpdateBuilder::default()
+			.with_requests(vec![dummy_request.clone(); 11])
+			.build();
+		let second_update =
+			L1UpdateBuilder::default().with_requests(vec![dummy_request; 20]).build();
+
+		forward_to_block::<Test>(10);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+		forward_to_block::<Test>(11);
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+		forward_to_block::<Test>(14);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 0u128.into());
+
+		forward_to_block::<Test>(15);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 10u128.into());
+
+		forward_to_block::<Test>(16);
+		assert_eq!(last_processed_request_on_l2::<Test>::get(L1::Ethereum), 20u128.into());
+	});
+}
+
+#[test]
+#[serial]
+fn check_request_ids_starts_from_one() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let requests = vec![L1UpdateRequest::Deposit(Default::default())];
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(ALICE),
+				L1UpdateBuilder::new()
+					.with_requests(requests.clone())
+					.with_offset(0u128)
+					.build()
+			),
+			Error::<Test>::WrongRequestId
+		);
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(ALICE),
+				L1UpdateBuilder::new()
+					.with_requests(requests)
+					.with_offset(2u128).build()
+			),
+			Error::<Test>::WrongRequestId
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn reject_consecutive_update_with_invalid_counters() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+
+		let deposit_update =
+			L1UpdateBuilder::default().with_requests(vec![L1UpdateRequest::Deposit(Default::default())]).with_offset(100u128).build();
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+			Error::<Test>::WrongRequestId
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn reject_update_with_invalid_too_high_request_id() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+		let deposit_update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.with_offset(2u128)
+			.build();
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+			Error::<Test>::WrongRequestId
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn reject_second_update_in_the_same_block() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+		let deposit_update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
+
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update.clone()).unwrap();
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update),
+			Error::<Test>::MultipleUpdatesInSingleBlock
+		)
+	});
+}
+
+#[test]
+#[serial]
+fn accept_consecutive_update_split_into_two() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+
+		// imagine that there are 20 request on L1 waiting to be processed
+		// they need to be split into 2 update_l2_from_l1 calls
+
+		let dummy_update = L1UpdateRequest::Deposit(Default::default());
+
+		let first_update = L1UpdateBuilder::default()
+			.with_requests(vec![
+				dummy_update.clone();
+				(2 * Rolldown::get_max_requests_per_block()) as usize
+			])
+			.with_offset(1u128)
+			.build();
+
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+		forward_to_block::<Test>(15);
+		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
+			.map(|(k, _)| k)
+			.collect::<Vec<_>>();
+		expected_updates.sort();
+		assert_eq!(
+			(1u128..11u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
+			expected_updates
+		);
+
+		forward_to_block::<Test>(16);
+		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
+			.map(|(k, _)| k)
+			.collect::<Vec<_>>();
+		expected_updates.sort();
+		assert_eq!(
+			(1u128..21u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
+			expected_updates
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn execute_two_consecutive_incremental_reqeusts() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			let dummy_update = L1UpdateRequest::Deposit(messages::Deposit {
+				requestId: Default::default(),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
+
+			let first_update = L1UpdateBuilder::default()
+				.with_requests(vec![dummy_update.clone()])
+				.with_offset(1u128)
+				.build();
+
+			let second_update = L1UpdateBuilder::default()
+				.with_requests(vec![dummy_update.clone(), dummy_update.clone()])
+				.with_offset(1u128)
+				.build();
+
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+
+			forward_to_block::<Test>(14);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
+
+			forward_to_block::<Test>(15);
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				2 * MILLION
+			);
+
+			forward_to_block::<Test>(100);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				2 * MILLION
+			);
+		});
+}
+
+#[test]
+fn test_conversion_u256() {
+	let val = sp_core::U256::from(1u8);
+	let eth_val = alloy_primitives::U256::from(1u8);
+	assert_eq!(messages::to_eth_u256(val), eth_val);
+}
+
+#[test]
+fn test_conversion_address() {
+	let byte_address: [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);
+	assert_eq!(DummyAddressConverter::convert(byte_address), consts::CHARLIE);
+}
+
+#[test]
+#[serial]
+fn test_withdraw() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), MILLION);
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000_000u128,
+			)
+			.unwrap();
+
+			let withdrawal_update = Withdrawal {
+				requestId: (Origin::L2, 1u128).into(),
+				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: U256::from(1_000_000u128),
+			};
+			// check iftokens were burned
+			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
+			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), 0_u128);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				Some(PendingUpdate::Withdrawal(withdrawal_update))
+			);
+			assert_eq!(Rolldown::get_l2_origin_updates_counter(L1::Ethereum), 2);
+		});
+}
+
+#[test]
+#[serial]
+fn error_on_withdraw_too_much() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					10_000_000u128
+				),
+				Error::<Test>::NotEnoughAssets
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_remove_pending_updates() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_request = L1UpdateRequest::Deposit(messages::Deposit {
+				requestId: Default::default(),
+				depositRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+			});
+
+			let update_with_deposit = L1UpdateBuilder::default()
+				.with_requests(vec![deposit_request.clone()])
+				.with_offset(1u128)
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update_with_deposit.clone())
+				.unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000_000u128,
+			)
+			.unwrap();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
+			forward_to_block::<Test>(20);
+
+			let withdrawal_update = Withdrawal {
+				requestId: (Origin::L2, 1u128).into(),
+				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: U256::from(1_000_000u128),
+			};
+			let cancel_update = Cancel {
+				requestId: (Origin::L2, 2u128).into(),
+				updater: 2,
+				canceler: 3,
+				range: (1u128, 1u128).into(),
+				hash: H256::from(hex!(
+					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
+				)),
+			};
+
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+			);
+			// assert_eq!(
+			// 	pending_updates::<Test>::get(L1::Ethereum, 2u128),
+			// 	Some(PendingUpdate::Cancel(cancel_update))
+			// );
+			// assert_eq!(
+			// 	pending_updates::<Test>::get(L1::Ethereum, 3u128),
+			// 	Some(PendingUpdate::Withdrawal(withdrawal_update))
+			// );
+
+		// 	let cancel_resolution_request = messages::CancelResolution {
+		// 		l2RequestId: sp_core::U256::from(u128::MAX / 2),
+		// 		cancelJustified: false,
+		// 	};
+		//
+		// 	let remove_pending_updates_request = messages::L2UpdatesToRemove {
+		// 		l2UpdatesToRemove: vec![
+		// 			sp_core::U256::from(0u128),
+		// 			sp_core::U256::from(u128::MAX / 2 + 1),
+		// 		],
+		// 	};
+		//
+		// 	let update_with_remove_and_resolution = L1UpdateBuilder::default()
+		// 		.with_requests(vec![
+		// 			L1UpdateRequest::Remove(remove_pending_updates_request),
+		// 			L1UpdateRequest::Cancel(cancel_resolution_request),
+		// 		])
+		// 		.with_last_accepted(3)
+		// 		.with_last_processed(1)
+		// 		.with_offset(2u128)
+		// 		.build();
+		//
+		// 	Rolldown::update_l2_from_l1(
+		// 		RuntimeOrigin::signed(CHARLIE),
+		// 		update_with_remove_and_resolution,
+		// 	)
+		// 	.unwrap();
+		//
+		// 	forward_to_block::<Test>(30);
+		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, 0u128), None);
+		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2), None);
+		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1), None);
+		});
+}

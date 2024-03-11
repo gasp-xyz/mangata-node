@@ -13,7 +13,7 @@ pub enum L1 {
 }
 
 #[repr(u8)]
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Copy)]
 pub enum Origin{
 	L1,
 	L2
@@ -62,6 +62,12 @@ pub struct RequestId {
 	pub id: u128,
 }
 
+impl From<(Origin, u128)> for RequestId {
+	fn from((origin, id): (Origin, u128)) -> RequestId {
+		RequestId{origin, id}
+	}
+}
+
 impl Into<eth_abi::RequestId> for RequestId {
 	fn into(self) -> eth_abi::RequestId {
 		eth_abi::RequestId {
@@ -101,7 +107,7 @@ pub struct Withdraw {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub requestId: RequestId,
-	pub l2UpdatesToRemove: Vec<sp_core::U256>,
+	pub l2UpdatesToRemove: Vec<RequestId>,
 }
 
 impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
@@ -111,7 +117,7 @@ impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 			l2UpdatesToRemove: self
 				.l2UpdatesToRemove
 				.into_iter()
-				.map(|req_id| to_eth_u256(req_id))
+				.map(|req| req.into())
 				.collect(),
 		}
 	}
@@ -120,7 +126,7 @@ impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct CancelResolution {
 	pub requestId: RequestId,
-	pub l2RequestId: sp_core::U256,
+	pub l2RequestId: u128,
 	pub cancelJustified: bool,
 }
 
@@ -128,7 +134,7 @@ impl Into<eth_abi::CancelResolution> for CancelResolution {
 	fn into(self) -> eth_abi::CancelResolution {
 		eth_abi::CancelResolution {
 			requestId: self.requestId.into(),
-			l2RequestId: to_eth_u256(self.l2RequestId),
+			l2RequestId: to_eth_u256(self.l2RequestId.into()),
 			cancelJustified: self.cancelJustified.into(),
 		}
 	}
@@ -218,54 +224,41 @@ impl L1Update {
 		let mut result = vec![];
 
 		let L1Update {
-			mut pendingDeposits,
-			mut pendingCancelResultions,
-			mut pendingL2UpdatesToRemove,
+			pendingDeposits,
+			pendingCancelResultions,
+			pendingL2UpdatesToRemove,
 		} = self;
 
+		let mut deposits_it = pendingDeposits.into_iter().peekable();
+		let mut cancel_it = pendingCancelResultions.into_iter().peekable();
+		let mut remove_it = pendingL2UpdatesToRemove.into_iter().peekable();
+
 		loop {
-
-			let all = [
-				pendingDeposits.first().map(|v| v.requestId.id),
-				pendingCancelResultions.first().map(|v| v.requestId.id),
-				pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
-			]
-			.into_iter()
-			.cloned()
-			.filter_map(|v| v)
-			.collect::<Vec<_>>();
-
-			println!("all: {:?}", all);
-
 			let min = [
-				pendingDeposits.first().map(|v| v.requestId.id),
-				pendingCancelResultions.first().map(|v| v.requestId.id),
-				pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
+				deposits_it.peek().map(|v| v.requestId.id),
+				cancel_it.peek().map(|v| v.requestId.id),
+				remove_it.peek().map(|v| v.requestId.id)
 			]
 			.into_iter()
 			.cloned()
 			.filter_map(|v| v)
 			.min();
 
-			println!("min: {:?}", min);
-			println!("pendingDeposits: {:?}", pendingDeposits.first());
-			println!("pendingCancelResultions: {:?}", pendingCancelResultions.first());
-			println!("pendingL2UpdatesToRemove: {:?}", pendingL2UpdatesToRemove.first());
 
-			match ((pendingDeposits.first()), pendingCancelResultions.first(), pendingL2UpdatesToRemove.first(), min) {
+			match (deposits_it.peek(), cancel_it.peek(), remove_it.peek(), min) {
 				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
-					if let Some(elem) = pendingDeposits.pop(){
-						result.push(L1UpdateRequest::Deposit(elem));
+					if let Some(elem) = deposits_it.next(){
+						result.push(L1UpdateRequest::Deposit(elem.clone()));
 					}
 				},
 				(_, Some(cancel),  _, Some(min)) if cancel.requestId.id == min => {
-					if let Some(elem) = pendingCancelResultions.pop(){
-						result.push(L1UpdateRequest::Cancel(elem));
+					if let Some(elem) = cancel_it.next(){
+						result.push(L1UpdateRequest::Cancel(elem.clone()));
 					}
 				},
 				(_, _, Some(update), Some(min)) if update.requestId.id == min => {
-					if let Some(elem) = pendingL2UpdatesToRemove.pop(){
-						result.push(L1UpdateRequest::Remove(elem));
+					if let Some(elem) = remove_it.next(){
+						result.push(L1UpdateRequest::Remove(elem.clone()));
 					}
 				},
 				_ => { break; }
@@ -329,7 +322,7 @@ pub mod eth_abi {
 
 		struct L2UpdatesToRemove {
 			RequestId requestId;
-			uint256[] l2UpdatesToRemove;
+			RequestId[] l2UpdatesToRemove;
 		}
 
 		struct CancelResolution {

@@ -181,7 +181,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		L1,
 		Blake2_128Concat,
-		u128,
+		RequestId,
 		PendingUpdate<T::AccountId>,
 		OptionQuery,
 	>;
@@ -209,6 +209,7 @@ pub mod pallet {
 		InvalidUpdate,
 		L1AssetNotFound,
 		WrongRequestId,
+		MultipleUpdatesInSingleBlock
 	}
 
 	#[pallet::config]
@@ -253,7 +254,7 @@ pub mod pallet {
 					},
 				);
 			}
-			l2_origin_request_id::<T>::insert(L1::Ethereum, u128::MAX / 2);
+			l2_origin_request_id::<T>::insert(L1::Ethereum, 1);
 		}
 	}
 
@@ -291,6 +292,11 @@ pub mod pallet {
 					sequencer.readRights -= 1;
 				}
 			});
+
+			ensure!(
+				!pending_requests::<T>::contains_key(dispute_period_end, L1::Ethereum),
+				Error::<T>::MultipleUpdatesInSingleBlock
+			);
 
 			// insert pending_requests
 			pending_requests::<T>::insert(
@@ -370,7 +376,7 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-			pending_updates::<T>::insert(l1, l2_request_id, PendingUpdate::Cancel(cancel_request));
+			pending_updates::<T>::insert(l1, RequestId::from((Origin::L2, l2_request_id)), PendingUpdate::Cancel(cancel_request));
 
 			Ok(().into())
 		}
@@ -414,11 +420,12 @@ pub mod pallet {
 				current
 			});
 
-			let withdrawal_update = Withdrawal {
-				requestId: RequestId{
+			let request_id = RequestId{
 					origin: Origin::L2,
 					id: l2_request_id,
-				},
+				};
+			let withdrawal_update = Withdrawal {
+				requestId: request_id.clone(),
 				withdrawalRecipient,
 				tokenAddress,
 				amount: U256::from(amount)
@@ -426,7 +433,7 @@ pub mod pallet {
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(
 				l1,
-				l2_request_id,
+				request_id,
 				PendingUpdate::Withdrawal(withdrawal_update),
 			);
 
@@ -503,7 +510,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_single_request(l1: L1, request: messages::L1UpdateRequest) {
-		println!("Processing single request: {:?}", request);
+		// println!("Processing single request: {:?}", request);
 		let request_id = request.id();
 		if request_id <= last_processed_request_on_l2::<T>::get(l1) {
 			return
@@ -512,7 +519,7 @@ impl<T: Config> Pallet<T> {
 		match request {
 			messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
 				l1,
-				request_id,
+				deposit.requestId.clone(),
 				PendingUpdate::RequestResult((
 					Self::process_deposit(&deposit).is_ok(),
 					UpdateType::DEPOSIT,
@@ -520,7 +527,7 @@ impl<T: Config> Pallet<T> {
 			),
 			messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
 				l1,
-				request_id,
+				cancel.requestId.clone(),
 				PendingUpdate::RequestResult((
 					Self::process_cancel_resolution(l1, &cancel.into()).is_ok(),
 					UpdateType::CANCEL_RESOLUTION,
@@ -528,7 +535,7 @@ impl<T: Config> Pallet<T> {
 			),
 			messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
 				l1,
-				request_id,
+				remove.requestId.clone(),
 				PendingUpdate::RequestResult((
 					Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
 					UpdateType::INDEX_UPDATE,
@@ -548,7 +555,6 @@ impl<T: Config> Pallet<T> {
 			}
 			if let Some((l1, r)) = request_to_execute::<T>::get(request_to_execute_cnt::<T>::get())
 			{
-				println!("Processing request: {:?}", r.clone().into_requests());
 				for req in r
 					.into_requests()
 					.into_iter()
@@ -616,10 +622,10 @@ impl<T: Config> Pallet<T> {
 		l1: L1,
 		cancel_resolution: &messages::CancelResolution,
 	) -> Result<(), &'static str> {
-		let cancel_request_id = cancel_resolution.l2RequestId.saturated_into::<u128>();
+		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
 
-		let cancel_update = match pending_updates::<T>::get(l1, cancel_request_id) {
+		let cancel_update = match pending_updates::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
 			Some(PendingUpdate::Cancel(cancel)) => Some(cancel),
 			_ => None,
 		}
@@ -652,7 +658,7 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 
-		pending_updates::<T>::remove(l1, cancel_request_id);
+		pending_updates::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
@@ -667,7 +673,7 @@ impl<T: Config> Pallet<T> {
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			pending_updates::<T>::remove(l1, (*requestId).saturated_into::<u128>());
+			pending_updates::<T>::remove(l1, requestId);
 		}
 
 		log!(
@@ -700,26 +706,19 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_cancel(request_id: u128, cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
+	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
 		messages::eth_abi::Cancel {
-			requestId: messages::eth_abi::RequestId{
-					id: to_eth_u256(request_id.into()),
-					origin: messages::eth_abi::Origin::L2,
-			},
+			requestId:  cancel.requestId.into(),
 			range: cancel.range.into(),
 			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
 		}
 	}
 
 	fn to_eth_withdrawal(
-		request_id: u128,
 		withdrawal: Withdrawal,
 	) -> messages::eth_abi::Withdrawal {
 		messages::eth_abi::Withdrawal {
-			requestId: messages::eth_abi::RequestId{
-					id: to_eth_u256(request_id.into()),
-					origin: messages::eth_abi::Origin::L2,
-			},
+			requestId: withdrawal.requestId.into(),
 			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
 			tokenAddress: withdrawal.tokenAddress.into(),
 			amount: to_eth_u256(withdrawal.amount),
@@ -743,18 +742,15 @@ impl<T: Config> Pallet<T> {
 			match req {
 				PendingUpdate::RequestResult((status, request_type)) =>
 					update.results.push(messages::eth_abi::RequestResult {
-						requestId: messages::eth_abi::RequestId{
-							id: to_eth_u256(request_id.into()),
-							origin: messages::eth_abi::Origin::L2,
-						},
+						requestId: request_id.into(),
 						updateType: request_type,
 						status,
 					}),
 				PendingUpdate::Cancel(cancel) => {
-					update.cancels.push(Self::to_eth_cancel(request_id, cancel));
+					update.cancels.push(Self::to_eth_cancel(cancel));
 				},
 				PendingUpdate::Withdrawal(withdrawal) => {
-					update.withdrawals.push(Self::to_eth_withdrawal(request_id, withdrawal));
+					update.withdrawals.push(Self::to_eth_withdrawal(withdrawal));
 				},
 			};
 		}
@@ -798,6 +794,20 @@ impl<T: Config> Pallet<T> {
 			 Error::<T>::EmptyUpdate
 		);
 
+		ensure!(
+			update.pendingDeposits.iter().map(|v| v.requestId.origin).all(|v| v == Origin::L1),
+			Error::<T>::InvalidUpdate
+		);
+		ensure!(
+			update.pendingCancelResultions.iter().map(|v| v.requestId.origin).all(|v| v == Origin::L1),
+			Error::<T>::InvalidUpdate
+		);
+		ensure!(
+			update.pendingL2UpdatesToRemove.iter().map(|v| v.requestId.origin).all(|v| v == Origin::L1),
+			Error::<T>::InvalidUpdate
+		);
+
+
 		// check that consecutive id
 		ensure!(
 		update.pendingDeposits
@@ -808,6 +818,7 @@ impl<T: Config> Pallet<T> {
 			.all(|(a, b)| a < b),
 			Error::<T>::InvalidUpdate
 		);
+
 		ensure!(
 		update.pendingCancelResultions
 			.iter()
@@ -837,9 +848,17 @@ impl<T: Config> Pallet<T> {
 			.min()
 			.ok_or(Error::<T>::InvalidUpdate)?;
 
+		ensure!(
+			lowest_id > 0u128,
+			Error::<T>::WrongRequestId
+		);
+
+		ensure!(
+			lowest_id == last_processed_request_on_l2::<T>::get(l1) + 1,
+			Error::<T>::WrongRequestId
+		);
 
 		let last_id = lowest_id + (update.pendingDeposits.len() as u128) + (update.pendingCancelResultions.len() as u128) + (update.pendingL2UpdatesToRemove.len() as u128);
-		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::InvalidUpdate);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut cancel_it = update.pendingCancelResultions.iter();

@@ -1,13 +1,79 @@
 #![allow(non_snake_case)]
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::Serialize;
 use sp_core::{RuntimeDebug, H256, U256};
 use sp_runtime::SaturatedConversion;
 use sp_std::vec::Vec;
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+#[repr(u8)]
+#[derive(Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, Serialize)]
+pub enum L1 {
+	Ethereum,
+}
+
+#[repr(u8)]
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+pub enum Origin{
+	L1,
+	L2
+}
+
+impl Default for Origin{
+	fn default() -> Self {
+		Origin::L1
+	}
+}
+
+impl Into<eth_abi::Origin> for Origin {
+	fn into(self) -> eth_abi::Origin {
+		match self {
+			Origin::L1 => eth_abi::Origin::L1,
+			Origin::L2 => eth_abi::Origin::L2,
+		}
+	}
+}
+
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+pub struct Range{
+	pub start: u128,
+	pub end: u128,
+}
+
+impl From<(u128, u128)> for Range {
+	fn from((start, end): (u128, u128)) -> Range {
+		Range{start, end}
+	}
+}
+
+impl Into<eth_abi::Range> for Range {
+	fn into(self) -> eth_abi::Range {
+		eth_abi::Range {
+			start: to_eth_u256(self.start.into()),
+			end: to_eth_u256(self.end.into()),
+		}
+	}
+}
+
+
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
+pub struct RequestId {
+	pub origin: Origin,
+	pub id: u128,
+}
+
+impl Into<eth_abi::RequestId> for RequestId {
+	fn into(self) -> eth_abi::RequestId {
+		eth_abi::RequestId {
+			origin: self.origin.into(),
+			id: to_eth_u256(U256::from(self.id)),
+		}
+	}
+}
+
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
 pub struct Deposit {
+	pub requestId: RequestId,
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
 	pub amount: sp_core::U256,
@@ -16,6 +82,7 @@ pub struct Deposit {
 impl Into<eth_abi::Deposit> for Deposit {
 	fn into(self) -> eth_abi::Deposit {
 		eth_abi::Deposit {
+			requestId: self.requestId.into(),
 			depositRecipient: self.depositRecipient.into(),
 			tokenAddress: self.tokenAddress.into(),
 			amount: to_eth_u256(self.amount),
@@ -31,14 +98,16 @@ pub struct Withdraw {
 	pub amount: sp_core::U256,
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct L2UpdatesToRemove {
+	pub requestId: RequestId,
 	pub l2UpdatesToRemove: Vec<sp_core::U256>,
 }
 
 impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	fn into(self) -> eth_abi::L2UpdatesToRemove {
 		eth_abi::L2UpdatesToRemove {
+			requestId: self.requestId.into(),
 			l2UpdatesToRemove: self
 				.l2UpdatesToRemove
 				.into_iter()
@@ -48,8 +117,9 @@ impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	}
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct CancelResolution {
+	pub requestId: RequestId,
 	pub l2RequestId: sp_core::U256,
 	pub cancelJustified: bool,
 }
@@ -57,6 +127,7 @@ pub struct CancelResolution {
 impl Into<eth_abi::CancelResolution> for CancelResolution {
 	fn into(self) -> eth_abi::CancelResolution {
 		eth_abi::CancelResolution {
+			requestId: self.requestId.into(),
 			l2RequestId: to_eth_u256(self.l2RequestId),
 			cancelJustified: self.cancelJustified.into(),
 		}
@@ -85,6 +156,25 @@ pub enum L1UpdateRequest {
 	Remove(L2UpdatesToRemove),
 }
 
+impl L1UpdateRequest{
+	pub fn id(&self) -> u128 {
+		match self {
+			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
+			L1UpdateRequest::Cancel(cancel) => cancel.requestId.id.clone(),
+			L1UpdateRequest::Remove(remove) => remove.requestId.id.clone(),
+		}
+	}
+
+	pub fn origin(&self) -> Origin {
+		match self {
+			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
+			L1UpdateRequest::Cancel(cancel) => cancel.requestId.origin.clone(),
+			L1UpdateRequest::Remove(remove) => remove.requestId.origin.clone(),
+		}
+	}
+
+}
+
 impl Into<eth_abi::PendingRequestType> for PendingRequestType {
 	fn into(self) -> eth_abi::PendingRequestType {
 		match self {
@@ -97,33 +187,92 @@ impl Into<eth_abi::PendingRequestType> for PendingRequestType {
 }
 
 impl L1Update {
-	pub fn into_requests(self) -> Vec<(u128, L1UpdateRequest)> {
+	pub fn range(&self) -> Option<Range> {
+		let first = [
+			self.pendingDeposits.first().map(|v| v.requestId.id),
+			self.pendingCancelResultions.first().map(|v| v.requestId.id),
+			self.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
+			]
+			.into_iter()
+			.cloned()
+			.filter_map(|v| v)
+		.min();
+
+		let last = [
+			self.pendingDeposits.last().map(|v| v.requestId.id),
+			self.pendingCancelResultions.last().map(|v| v.requestId.id),
+			self.pendingL2UpdatesToRemove.last().map(|v| v.requestId.id)
+			]
+			.into_iter()
+			.cloned()
+			.filter_map(|v| v)
+		.max();
+		if let (Some(first), Some(last)) = (first, last){
+			Some(Range{start: first, end: last})
+		}else{
+			None
+		}
+
+	}
+	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
+		let mut result = vec![];
+
 		let L1Update {
-			offset,
-			order,
 			mut pendingDeposits,
 			mut pendingCancelResultions,
 			mut pendingL2UpdatesToRemove,
-			..
 		} = self;
 
-		order
+		loop {
+
+			let all = [
+				pendingDeposits.first().map(|v| v.requestId.id),
+				pendingCancelResultions.first().map(|v| v.requestId.id),
+				pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
+			]
 			.into_iter()
-			.enumerate()
-			.map(|(request_id, request_type)| {
-				(
-					((request_id as u128) + offset.saturated_into::<u128>()),
-					match request_type {
-						PendingRequestType::DEPOSIT =>
-							L1UpdateRequest::Deposit(pendingDeposits.pop().unwrap()),
-						PendingRequestType::CANCEL_RESOLUTION =>
-							L1UpdateRequest::Cancel(pendingCancelResultions.pop().unwrap()),
-						PendingRequestType::L2_UPDATES_TO_REMOVE =>
-							L1UpdateRequest::Remove(pendingL2UpdatesToRemove.pop().unwrap()),
-					},
-				)
-			})
-			.collect()
+			.cloned()
+			.filter_map(|v| v)
+			.collect::<Vec<_>>();
+
+			println!("all: {:?}", all);
+
+			let min = [
+				pendingDeposits.first().map(|v| v.requestId.id),
+				pendingCancelResultions.first().map(|v| v.requestId.id),
+				pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
+			]
+			.into_iter()
+			.cloned()
+			.filter_map(|v| v)
+			.min();
+
+			println!("min: {:?}", min);
+			println!("pendingDeposits: {:?}", pendingDeposits.first());
+			println!("pendingCancelResultions: {:?}", pendingCancelResultions.first());
+			println!("pendingL2UpdatesToRemove: {:?}", pendingL2UpdatesToRemove.first());
+
+			match ((pendingDeposits.first()), pendingCancelResultions.first(), pendingL2UpdatesToRemove.first(), min) {
+				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
+					if let Some(elem) = pendingDeposits.pop(){
+						result.push(L1UpdateRequest::Deposit(elem));
+					}
+				},
+				(_, Some(cancel),  _, Some(min)) if cancel.requestId.id == min => {
+					if let Some(elem) = pendingCancelResultions.pop(){
+						result.push(L1UpdateRequest::Cancel(elem));
+					}
+				},
+				(_, _, Some(update), Some(min)) if update.requestId.id == min => {
+					if let Some(elem) = pendingL2UpdatesToRemove.pop(){
+						result.push(L1UpdateRequest::Remove(elem));
+					}
+				},
+				_ => { break; }
+			}
+
+		}
+		result
 	}
 }
 
@@ -202,11 +351,11 @@ pub mod eth_abi {
 		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
-		enum Layer{ L1, L2 }
+		enum Origin{ L1, L2 }
 
 		#[derive(Debug, Eq, PartialEq)]
 		struct RequestId {
-			Layer layer;
+			Origin origin;
 			uint256 id;
 		}
 
@@ -227,10 +376,15 @@ pub mod eth_abi {
 		}
 
 		#[derive(Debug, PartialEq)]
+		struct Range{
+			uint256 start;
+			uint256 end;
+		}
+
+		#[derive(Debug, PartialEq)]
 		struct Cancel {
 			RequestId requestId;
-			uint256 lastProccessedRequestOnL1;
-			uint256 lastAcceptedRequestOnL1;
+			Range range;
 			bytes32 hash;
 		}
 

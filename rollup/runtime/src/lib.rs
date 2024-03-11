@@ -762,6 +762,7 @@ impl pallet_rolldown::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
+	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -879,6 +880,10 @@ impl_runtime_apis! {
 		}
 		fn get_pending_updates() -> Vec<u8> {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+		}
+
+		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
 		}
 	}
 

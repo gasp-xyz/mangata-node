@@ -131,7 +131,7 @@ jobs:
   deploy-rollup-dev:
     name: Deploy to rollup-dev on every commit to `eth-rollup-develop` branch
     needs: [init, build-and-test]
-    if: startsWith(github.head_ref, 'eth-rollup-develop')
+    if: github.event_name == 'push' && github.ref_name == 'eth-rollup-develop'
     uses: ./.github/workflows/reusable-deploy-rollup-dev.yml
     secrets: inherit
     with:

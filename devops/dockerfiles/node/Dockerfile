@@ -1,10 +1,9 @@
 FROM debian:buster
 
-ARG BUILD_DIR=target/release
+ARG BINARY_PATH=target/release/rollup-node
 
-WORKDIR /rollup
+WORKDIR /app
 
-COPY $BUILD_DIR/rollup-node /rollup/node
-COPY $BUILD_DIR/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm /rollup/
+COPY ${BINARY_PATH} /app/node
 
-ENTRYPOINT ["/rollup/node"]
+ENTRYPOINT ["/app/node"]

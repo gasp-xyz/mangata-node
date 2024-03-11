@@ -54,8 +54,7 @@ jobs:
           repository_owner: mangata-finance
           repository_name: mangata-dev-kit
           new_branch_name: ${{ env.BRANCH }}
-          # TODO: Remove this line once workflow is finalized and merged
-          new_branch_ref: feat/add-support-for-solochain-MGX-1001
+          new_branch_ref: eth-rollup-develop
           ignore_branch_exists: true
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 

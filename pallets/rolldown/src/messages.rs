@@ -7,19 +7,21 @@ use sp_runtime::SaturatedConversion;
 use sp_std::vec::Vec;
 
 #[repr(u8)]
-#[derive(Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, Serialize)]
+#[derive(
+	Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, Serialize,
+)]
 pub enum L1 {
 	Ethereum,
 }
 
 #[repr(u8)]
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Copy)]
-pub enum Origin{
+pub enum Origin {
 	L1,
-	L2
+	L2,
 }
 
-impl Default for Origin{
+impl Default for Origin {
 	fn default() -> Self {
 		Origin::L1
 	}
@@ -35,26 +37,22 @@ impl Into<eth_abi::Origin> for Origin {
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-pub struct Range{
+pub struct Range {
 	pub start: u128,
 	pub end: u128,
 }
 
 impl From<(u128, u128)> for Range {
 	fn from((start, end): (u128, u128)) -> Range {
-		Range{start, end}
+		Range { start, end }
 	}
 }
 
 impl Into<eth_abi::Range> for Range {
 	fn into(self) -> eth_abi::Range {
-		eth_abi::Range {
-			start: to_eth_u256(self.start.into()),
-			end: to_eth_u256(self.end.into()),
-		}
+		eth_abi::Range { start: to_eth_u256(self.start.into()), end: to_eth_u256(self.end.into()) }
 	}
 }
-
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
 pub struct RequestId {
@@ -70,16 +68,13 @@ impl RequestId {
 
 impl From<(Origin, u128)> for RequestId {
 	fn from((origin, id): (Origin, u128)) -> RequestId {
-		RequestId{origin, id}
+		RequestId { origin, id }
 	}
 }
 
 impl Into<eth_abi::RequestId> for RequestId {
 	fn into(self) -> eth_abi::RequestId {
-		eth_abi::RequestId {
-			origin: self.origin.into(),
-			id: to_eth_u256(U256::from(self.id)),
-		}
+		eth_abi::RequestId { origin: self.origin.into(), id: to_eth_u256(U256::from(self.id)) }
 	}
 }
 
@@ -120,11 +115,7 @@ impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	fn into(self) -> eth_abi::L2UpdatesToRemove {
 		eth_abi::L2UpdatesToRemove {
 			requestId: self.requestId.into(),
-			l2UpdatesToRemove: self
-				.l2UpdatesToRemove
-				.into_iter()
-				.map(|req| req.into())
-				.collect(),
+			l2UpdatesToRemove: self.l2UpdatesToRemove.into_iter().map(|req| req.into()).collect(),
 		}
 	}
 }
@@ -168,7 +159,7 @@ pub enum L1UpdateRequest {
 	Remove(L2UpdatesToRemove),
 }
 
-impl L1UpdateRequest{
+impl L1UpdateRequest {
 	pub fn request_id(&self) -> RequestId {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.clone(),
@@ -192,7 +183,6 @@ impl L1UpdateRequest{
 			L1UpdateRequest::Remove(remove) => remove.requestId.origin.clone(),
 		}
 	}
-
 }
 
 impl Into<eth_abi::PendingRequestType> for PendingRequestType {
@@ -211,37 +201,32 @@ impl L1Update {
 		let first = [
 			self.pendingDeposits.first().map(|v| v.requestId.id),
 			self.pendingCancelResultions.first().map(|v| v.requestId.id),
-			self.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id)
-			]
-			.into_iter()
-			.cloned()
-			.filter_map(|v| v)
+			self.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
+		]
+		.into_iter()
+		.cloned()
+		.filter_map(|v| v)
 		.min();
 
 		let last = [
 			self.pendingDeposits.last().map(|v| v.requestId.id),
 			self.pendingCancelResultions.last().map(|v| v.requestId.id),
-			self.pendingL2UpdatesToRemove.last().map(|v| v.requestId.id)
-			]
-			.into_iter()
-			.cloned()
-			.filter_map(|v| v)
+			self.pendingL2UpdatesToRemove.last().map(|v| v.requestId.id),
+		]
+		.into_iter()
+		.cloned()
+		.filter_map(|v| v)
 		.max();
-		if let (Some(first), Some(last)) = (first, last){
-			Some(Range{start: first, end: last})
-		}else{
+		if let (Some(first), Some(last)) = (first, last) {
+			Some(Range { start: first, end: last })
+		} else {
 			None
 		}
-
 	}
 	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
 		let mut result = vec![];
 
-		let L1Update {
-			pendingDeposits,
-			pendingCancelResultions,
-			pendingL2UpdatesToRemove,
-		} = self;
+		let L1Update { pendingDeposits, pendingCancelResultions, pendingL2UpdatesToRemove } = self;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
 		let mut cancel_it = pendingCancelResultions.into_iter().peekable();
@@ -251,33 +236,33 @@ impl L1Update {
 			let min = [
 				deposits_it.peek().map(|v| v.requestId.id),
 				cancel_it.peek().map(|v| v.requestId.id),
-				remove_it.peek().map(|v| v.requestId.id)
+				remove_it.peek().map(|v| v.requestId.id),
 			]
 			.into_iter()
 			.cloned()
 			.filter_map(|v| v)
 			.min();
 
-
 			match (deposits_it.peek(), cancel_it.peek(), remove_it.peek(), min) {
 				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
-					if let Some(elem) = deposits_it.next(){
+					if let Some(elem) = deposits_it.next() {
 						result.push(L1UpdateRequest::Deposit(elem.clone()));
 					}
 				},
-				(_, Some(cancel),  _, Some(min)) if cancel.requestId.id == min => {
-					if let Some(elem) = cancel_it.next(){
+				(_, Some(cancel), _, Some(min)) if cancel.requestId.id == min => {
+					if let Some(elem) = cancel_it.next() {
 						result.push(L1UpdateRequest::CancelResolution(elem.clone()));
 					}
 				},
 				(_, _, Some(update), Some(min)) if update.requestId.id == min => {
-					if let Some(elem) = remove_it.next(){
+					if let Some(elem) = remove_it.next() {
 						result.push(L1UpdateRequest::Remove(elem.clone()));
 					}
 				},
-				_ => { break; }
+				_ => {
+					break
+				},
 			}
-
 		}
 		result
 	}
@@ -292,10 +277,7 @@ pub fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
-			pendingDeposits: self.pendingDeposits
-				.into_iter()
-				.map(Into::into)
-				.collect::<Vec<_>>(),
+			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingCancelResultions: self
 				.pendingCancelResultions
 				.into_iter()

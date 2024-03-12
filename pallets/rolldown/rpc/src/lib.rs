@@ -5,14 +5,16 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::error::{CallError, ErrorObject},
 };
+
 use rolldown_runtime_api::RolldownRuntimeApi;
 pub use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
+use codec::Decode;
 
 #[rpc(client, server)]
-pub trait RolldownApi<BlockHash> {
+pub trait RolldownApi<BlockHash, L1Update> {
 	/// Calculates amount of available native rewards
 	///
 	/// * `account` - user account address
@@ -23,6 +25,9 @@ pub trait RolldownApi<BlockHash> {
 
 	#[method(name = "rolldown_pending_updates")]
 	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
+
+	#[method(name = "rolldown_update_eth_raw")]
+	fn update_eth_raw(&self, payload: Vec<u8>, at: Option<BlockHash>) -> RpcResult<L1Update>;
 }
 
 pub struct Rolldown<C, M> {
@@ -37,13 +42,14 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block> RolldownApiServer<<Block as BlockT>::Hash> for Rolldown<C, Block>
+impl<C, Block, L1Update> RolldownApiServer<<Block as BlockT>::Hash, L1Update> for Rolldown<C, Block>
 where
 	Block: BlockT,
+	L1Update: Decode,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: RolldownRuntimeApi<Block>,
+	C::Api: RolldownRuntimeApi<Block, L1Update>,
 {
 	fn pending_updates_hash(
 		&self,
@@ -64,6 +70,17 @@ where
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.get_pending_updates(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+	fn update_eth_raw(&self, payload: Vec<u8>, at: Option<<Block as BlockT>::Hash>) -> RpcResult<L1Update> {
+		let api = self.client.runtime_api();
+		let at = at.unwrap_or(self.client.info().best_hash);
+		api.update_eth_raw(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

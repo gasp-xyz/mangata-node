@@ -10,6 +10,7 @@ use itertools::Itertools;
 use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L1};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
+use scale_info::prelude::string::String;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -65,9 +66,11 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod messages;
+pub mod messages;
 
 pub use pallet::*;
+use crate::messages::L1Update;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -564,7 +567,7 @@ impl<T: Config> Pallet<T> {
 					.into_iter()
 					.filter(|request| request.id() > last_processed_request_on_l2::<T>::get(l1))
 					.map(|val| Some(val))
-					.chain(std::iter::repeat(None))
+					.chain(sp_std::iter::repeat(None))
 					.take(limit.try_into().unwrap())
 				{
 					if let Some(request) = req {
@@ -792,6 +795,10 @@ impl<T: Config> Pallet<T> {
 	pub fn l2_update_encoded() -> Vec<u8> {
 		let update = Pallet::<T>::get_l2_update(L1::Ethereum);
 		update.abi_encode()
+	}
+
+	pub fn convert_eth_l1update_to_substrate_l1update(update: messages::eth_abi::L1Update) -> Result<L1Update, String> {
+		update.try_into()
 	}
 
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {

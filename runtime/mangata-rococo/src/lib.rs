@@ -870,13 +870,18 @@ mod benches {
 
 impl_runtime_apis! {
 
-	impl rolldown_runtime_api::RolldownRuntimeApi<Block> for Runtime {
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::L1Update> for Runtime {
 		fn get_pending_updates_hash() -> sp_core::H256 {
 			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
 		}
 
 		fn get_pending_updates() -> Vec<u8> {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+		}
+		
+		fn update_eth_raw(paylod: Vec<u8>) -> pallet_rolldown::L1Update {
+			let update = pallet_rolldown::messages::eth_abi::L1Update::abi_decode(paylod.as_ref());
+			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(update)?
 		}
 	}
 

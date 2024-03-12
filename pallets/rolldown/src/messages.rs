@@ -1,10 +1,16 @@
 #![allow(non_snake_case)]
+
+use alloy_sol_types::SolValue;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::Serialize;
 use sp_core::{RuntimeDebug, H256, U256};
 use sp_runtime::SaturatedConversion;
 use sp_std::vec::Vec;
+use sp_std::vec;
+use scale_info::prelude::string::String;
+use scale_info::prelude::format;
+use sp_std::convert::{TryFrom, TryInto};
 
 #[repr(u8)]
 #[derive(
@@ -274,6 +280,13 @@ pub fn to_eth_u256(value: U256) -> alloy_primitives::U256 {
 	alloy_primitives::U256::from_be_bytes(bytes)
 }
 
+pub fn from_eth_u256(value: alloy_primitives::U256) -> U256 {
+	let bytes: [u8; 32] = value.to_be_bytes();
+	let mut buf = [0u8; 32];
+	buf.copy_from_slice(&bytes[..]);
+	U256::from_big_endian(&buf)
+}
+
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
@@ -291,6 +304,98 @@ impl Into<eth_abi::L1Update> for L1Update {
 		}
 	}
 }
+
+impl TryFrom<eth_abi::Deposit> for Deposit {
+	type Error = String;
+
+	fn try_from(deposit: eth_abi::Deposit) -> Result<Self, Self::Error> {
+		let request_id = deposit.requestId.try_into();
+		let deposit_recipient = deposit.depositRecipient.try_into();
+		let token_address= deposit.tokenAddress.try_into();
+
+		Ok(Self {
+			requestId: request_id.map_err(|e| format!("Error converting requestId: {}", e))?,
+			depositRecipient: deposit_recipient.map_err(|e| format!("Error converting depositRecipient: {}", e))?,
+			tokenAddress: token_address.map_err(|e| format!("Error converting tokenAddress: {}", e))?,
+			amount: from_eth_u256(deposit.amount),
+		})
+	}
+}
+
+impl TryFrom<eth_abi::L1Update> for L1Update {
+	type Error = String;
+
+	fn try_from(update: eth_abi::L1Update) -> Result<Self, Self::Error> {
+		let pending_deposits: Result<Vec<_>, _> = update.pendingDeposits.into_iter().map(|d| d.try_into()).collect();
+		let pending_cancel_resultions: Result<Vec<_>, _> = update.pendingCancelResultions.into_iter().map(|c| c.try_into()).collect();
+		let pending_l2_updates_to_remove: Result<Vec<_>, _> = update.pendingL2UpdatesToRemove.into_iter().map(|u| u.try_into()).collect();
+
+		Ok(Self {
+			pendingDeposits: pending_deposits.map_err(|e| format!("Error converting pendingDeposits: {}", e))?,
+			pendingCancelResultions: pending_cancel_resultions.map_err(|e| format!("Error converting pendingCancelResultions: {}", e))?,
+			pendingL2UpdatesToRemove: pending_l2_updates_to_remove.map_err(|e| format!("Error converting pendingL2UpdatesToRemove: {}", e))?,
+		})
+	}
+}
+
+impl TryFrom<eth_abi::RequestId> for RequestId {
+	type Error = String; // Change to appropriate error type
+
+	fn try_from(request_id: eth_abi::RequestId) -> Result<Self, Self::Error> {
+		let origin  = request_id.origin.try_into();
+		let id: Result<u128, _> = request_id.id.try_into();
+
+		Ok(Self {
+			origin: origin.map_err(|e| format!("Error converting origin: {}", e))?,
+			id: id.map_err(|e| format!("Error converting id: {}", e))?,
+		})
+	}
+}
+
+impl TryFrom<eth_abi::Origin> for Origin {
+	type Error = String;
+
+	fn try_from(origin: eth_abi::Origin) -> Result<Self, Self::Error> {
+		match origin {
+			eth_abi::Origin::L1 => Ok(Origin::L1),
+			eth_abi::Origin::L2 => Ok(Origin::L2),
+			_ => Err("Invalid origin type".to_string()),
+		}
+	}
+}
+
+impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
+	type Error = String; 
+
+	fn try_from(value: eth_abi::CancelResolution) -> Result<Self, Self::Error> {
+		let request_id: RequestId = value.requestId.try_into().map_err(|e| format!("Error converting requestId: {}", e))?;
+		let l2_request_id = value.l2RequestId.try_into();
+
+		Ok(Self {
+			requestId: request_id,
+			l2RequestId: l2_request_id.map_err(|e| format!("Error converting l2_request_id: {}", e))?,
+			cancelJustified: value.cancelJustified,
+		})
+	}
+}
+impl TryFrom<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
+	type Error = String; 
+	fn try_from(value: eth_abi::L2UpdatesToRemove) -> Result<Self, Self::Error> {
+		let request_id: RequestId = value.requestId.try_into().map_err(|e| format!("Error converting requestId: {}", e))?;
+
+		let l2_updates_to_remove: Result<Vec<RequestId>, _> = value.l2UpdatesToRemove
+			.into_iter()
+			.map(|id| id.try_into().map_err(|e| format!("Error converting l2UpdatesToRemove: {}", e)))
+			.collect();
+
+		Ok(Self {
+			requestId: request_id,
+			l2UpdatesToRemove: l2_updates_to_remove?,
+		})
+	}
+}
+
+
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct Cancel<AccountId> {

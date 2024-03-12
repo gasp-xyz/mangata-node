@@ -540,7 +540,7 @@ impl<T: Config> Pallet<T> {
 						Self::process_deposit(&deposit).is_ok(),
 						UpdateType::DEPOSIT
 					),
-			messages::L1UpdateRequest::Cancel(cancel) =>
+			messages::L1UpdateRequest::CancelResolution(cancel) =>
 					(
 						Self::process_cancel_resolution(l1, &cancel).is_ok(),
 						UpdateType::CANCEL_RESOLUTION
@@ -562,34 +562,6 @@ impl<T: Config> Pallet<T> {
 				updateType: request_type,
 			})
 		);
-
-		// let status = match request {
-		// 	messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
-		// 		l1,
-		// 		l2_request_id,
-		// 		PendingUpdate::RequestResult((
-		// 			Self::process_deposit(&deposit).is_ok(),
-		// 			UpdateType::DEPOSIT,
-		// 		)),
-		// 	),
-		// 	messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
-		// 		l1,
-		// 		l2_request_id,
-		// 		PendingUpdate::RequestResult((
-		// 			Self::process_cancel_resolution(l1, &cancel.into()).is_ok(),
-		// 			UpdateType::CANCEL_RESOLUTION,
-		// 		)),
-		// 	),
-		// 	messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
-		// 		l1,
-		// 		l2_request_id,
-		// 		PendingUpdate::RequestResult((
-		// 			Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
-		// 			UpdateType::INDEX_UPDATE,
-		// 		)),
-		// 	),
-		// };
-		//
 
 		last_processed_request_on_l2::<T>::insert(l1, request.id());
 	}

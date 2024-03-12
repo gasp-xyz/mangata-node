@@ -48,7 +48,7 @@ impl L1UpdateBuilder {
 					d.requestId.id = rid;
 					update.pendingDeposits.push(d);
 				},
-				L1UpdateRequest::Cancel(mut c) => {
+				L1UpdateRequest::CancelResolution(mut c) => {
 					c.requestId.id = rid;
 					update.pendingCancelResultions.push(c);
 				},
@@ -331,7 +331,7 @@ fn test_cancel_removes_pending_requests() {
 				.build();
 
 			let cancel_resolution = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+				.with_requests(vec![L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: Default::default(),
 					l2RequestId: 1u128,
 					cancelJustified: true,
@@ -422,7 +422,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
 			let cancel_resolution = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+				.with_requests(vec![L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: Default::default(),
 					l2RequestId: l2_request_id,
 					cancelJustified: true,
@@ -460,7 +460,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
 			let cancel_resolution = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+				.with_requests(vec![L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: Default::default(),
 					l2RequestId: l2_request_id,
 					cancelJustified: false,
@@ -513,7 +513,7 @@ fn test_cancel_removes_cancel_right() {
 				.build();
 
 			let cancel_resolution = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::Cancel(messages::CancelResolution {
+				.with_requests(vec![L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: Default::default(),
 					l2RequestId: l2_request_id,
 					cancelJustified: true,
@@ -1041,7 +1041,7 @@ fn test_remove_pending_updates() {
 			let update_with_remove_and_resolution = L1UpdateBuilder::new()
 				.with_requests(vec![
 					L1UpdateRequest::Remove(remove_pending_updates_request),
-					L1UpdateRequest::Cancel(cancel_resolution_request),
+					L1UpdateRequest::CancelResolution(cancel_resolution_request),
 				])
 				.build();
 

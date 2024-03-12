@@ -164,7 +164,7 @@ pub struct L1Update {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
 	Deposit(Deposit),
-	Cancel(CancelResolution),
+	CancelResolution(CancelResolution),
 	Remove(L2UpdatesToRemove),
 }
 
@@ -172,7 +172,7 @@ impl L1UpdateRequest{
 	pub fn request_id(&self) -> RequestId {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.clone(),
-			L1UpdateRequest::Cancel(cancel) => cancel.requestId.clone(),
+			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.clone(),
 		}
 	}
@@ -180,7 +180,7 @@ impl L1UpdateRequest{
 	pub fn id(&self) -> u128 {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
-			L1UpdateRequest::Cancel(cancel) => cancel.requestId.id.clone(),
+			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.id.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.id.clone(),
 		}
 	}
@@ -188,7 +188,7 @@ impl L1UpdateRequest{
 	pub fn origin(&self) -> Origin {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
-			L1UpdateRequest::Cancel(cancel) => cancel.requestId.origin.clone(),
+			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.origin.clone(),
 		}
 	}
@@ -267,7 +267,7 @@ impl L1Update {
 				},
 				(_, Some(cancel),  _, Some(min)) if cancel.requestId.id == min => {
 					if let Some(elem) = cancel_it.next(){
-						result.push(L1UpdateRequest::Cancel(elem.clone()));
+						result.push(L1UpdateRequest::CancelResolution(elem.clone()));
 					}
 				},
 				(_, _, Some(update), Some(min)) if update.requestId.id == min => {

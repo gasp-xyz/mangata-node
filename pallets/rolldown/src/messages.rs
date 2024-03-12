@@ -62,6 +62,12 @@ pub struct RequestId {
 	pub id: u128,
 }
 
+impl RequestId {
+	pub fn new(origin: Origin, id: u128) -> Self {
+		Self { origin, id }
+	}
+}
+
 impl From<(Origin, u128)> for RequestId {
 	fn from((origin, id): (Origin, u128)) -> RequestId {
 		RequestId{origin, id}
@@ -163,6 +169,14 @@ pub enum L1UpdateRequest {
 }
 
 impl L1UpdateRequest{
+	pub fn request_id(&self) -> RequestId {
+		match self {
+			L1UpdateRequest::Deposit(deposit) => deposit.requestId.clone(),
+			L1UpdateRequest::Cancel(cancel) => cancel.requestId.clone(),
+			L1UpdateRequest::Remove(remove) => remove.requestId.clone(),
+		}
+	}
+
 	pub fn id(&self) -> u128 {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
@@ -356,6 +370,7 @@ pub mod eth_abi {
 		#[derive(Debug, PartialEq)]
 		struct RequestResult {
 			RequestId requestId;
+			uint256 originRequestId;
 			UpdateType updateType;
 			bool status;
 		}

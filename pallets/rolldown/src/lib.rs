@@ -107,6 +107,14 @@ pub mod pallet {
 		pub hash: H256,
 	}
 
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
+	pub struct RequestResult {
+		pub requestId: RequestId,
+		pub originRequestId: u128,
+		pub status: bool,
+		pub updateType: UpdateType,
+	}
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 	pub struct Withdrawal {
 		pub requestId: RequestId,
@@ -117,7 +125,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum PendingUpdate<AccountId> {
-		RequestResult((bool, UpdateType)),
+		RequestResult(RequestResult),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
 	}
@@ -172,7 +180,7 @@ pub mod pallet {
 	pub type sequencer_rights<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
 
-	//TODO: multi L1
+	//maps L1 and !!!! request origin id!!! to pending update
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_updates)]
@@ -510,40 +518,80 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_single_request(l1: L1, request: messages::L1UpdateRequest) {
-		// println!("Processing single request: {:?}", request);
-		let request_id = request.id();
-		if request_id <= last_processed_request_on_l2::<T>::get(l1) {
+		if request.id() <= last_processed_request_on_l2::<T>::get(l1) {
 			return
 		}
 
-		match request {
-			messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
-				l1,
-				deposit.requestId.clone(),
-				PendingUpdate::RequestResult((
-					Self::process_deposit(&deposit).is_ok(),
-					UpdateType::DEPOSIT,
-				)),
-			),
-			messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
-				l1,
-				cancel.requestId.clone(),
-				PendingUpdate::RequestResult((
-					Self::process_cancel_resolution(l1, &cancel.into()).is_ok(),
-					UpdateType::CANCEL_RESOLUTION,
-				)),
-			),
-			messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
-				l1,
-				remove.requestId.clone(),
-				PendingUpdate::RequestResult((
-					Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
-					UpdateType::INDEX_UPDATE,
-				)),
-			),
+		let id = l2_origin_request_id::<T>::mutate(l1, |request_id| {
+			let current = request_id.clone();
+			// TODO: safe math
+			*request_id += 1;
+			current
+		});
+
+		let l2_request_id = RequestId{
+			origin: Origin::L2,
+			id,
 		};
 
-		last_processed_request_on_l2::<T>::insert(l1, request_id);
+		let (status, request_type) = match request.clone() {
+			messages::L1UpdateRequest::Deposit(deposit) =>
+					(
+						Self::process_deposit(&deposit).is_ok(),
+						UpdateType::DEPOSIT
+					),
+			messages::L1UpdateRequest::Cancel(cancel) =>
+					(
+						Self::process_cancel_resolution(l1, &cancel).is_ok(),
+						UpdateType::CANCEL_RESOLUTION
+					),
+			messages::L1UpdateRequest::Remove(remove) =>
+					(
+						Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
+						UpdateType::INDEX_UPDATE
+					),
+		};
+
+		pending_updates::<T>::insert(
+			l1,
+			request.request_id(),
+			PendingUpdate::RequestResult(RequestResult{
+				requestId: l2_request_id,
+				originRequestId: request.id(),
+				status,
+				updateType: request_type,
+			})
+		);
+
+		// let status = match request {
+		// 	messages::L1UpdateRequest::Deposit(deposit) => pending_updates::<T>::insert(
+		// 		l1,
+		// 		l2_request_id,
+		// 		PendingUpdate::RequestResult((
+		// 			Self::process_deposit(&deposit).is_ok(),
+		// 			UpdateType::DEPOSIT,
+		// 		)),
+		// 	),
+		// 	messages::L1UpdateRequest::Cancel(cancel) => pending_updates::<T>::insert(
+		// 		l1,
+		// 		l2_request_id,
+		// 		PendingUpdate::RequestResult((
+		// 			Self::process_cancel_resolution(l1, &cancel.into()).is_ok(),
+		// 			UpdateType::CANCEL_RESOLUTION,
+		// 		)),
+		// 	),
+		// 	messages::L1UpdateRequest::Remove(remove) => pending_updates::<T>::insert(
+		// 		l1,
+		// 		l2_request_id,
+		// 		PendingUpdate::RequestResult((
+		// 			Self::process_l2_updates_to_remove(l1, &remove).is_ok(),
+		// 			UpdateType::INDEX_UPDATE,
+		// 		)),
+		// 	),
+		// };
+		//
+
+		last_processed_request_on_l2::<T>::insert(l1, request.id());
 	}
 
 	fn process_requests() {
@@ -714,6 +762,16 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	fn to_eth_request_result(request: RequestResult) -> messages::eth_abi::RequestResult {
+		messages::eth_abi::RequestResult {
+			requestId:  request.requestId.into(),
+			originRequestId: messages::to_eth_u256(request.originRequestId.into()),
+			updateType: request.updateType.into(),
+			status: request.status.into()
+		}
+	}
+
+
 	fn to_eth_withdrawal(
 		withdrawal: Withdrawal,
 	) -> messages::eth_abi::Withdrawal {
@@ -740,12 +798,8 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in pending_updates::<T>::iter_prefix(l1) {
 			match req {
-				PendingUpdate::RequestResult((status, request_type)) =>
-					update.results.push(messages::eth_abi::RequestResult {
-						requestId: request_id.into(),
-						updateType: request_type,
-						status,
-					}),
+				PendingUpdate::RequestResult(result) =>
+					update.results.push(Self::to_eth_request_result(result)),
 				PendingUpdate::Cancel(cancel) => {
 					update.cancels.push(Self::to_eth_cancel(cancel));
 				},

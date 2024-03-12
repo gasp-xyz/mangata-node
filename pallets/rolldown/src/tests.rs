@@ -18,14 +18,14 @@ pub const ETH_RECIPIENT_ACCOUNT_MGX: AccountId = CHARLIE;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Tokens;
 
-struct L1UpdateBuilder(u128, Vec<L1UpdateRequest>);
+struct L1UpdateBuilder(Option<u128>, Vec<L1UpdateRequest>);
 impl L1UpdateBuilder {
 	fn new() -> Self {
-		Self(0u128, Default::default())
+		Self(None, Default::default())
 	}
 
 	fn with_offset(mut self, offset: u128) -> Self {
-		self.0 = offset;
+		self.0 = Some(offset);
 		self
 	}
 
@@ -38,18 +38,22 @@ impl L1UpdateBuilder {
 		let mut update = messages::L1Update::default();
 
 		for (id, r) in self.1.into_iter().enumerate(){
-			let request_id = (id as u128) + self.0;
+			let rid = if let Some(offset) = self.0{
+				(id as u128) + offset
+			}else{
+				r.id()
+			};
 			match r {
 				L1UpdateRequest::Deposit(mut d) => {
-					d.requestId.id = request_id;
+					d.requestId.id = rid;
 					update.pendingDeposits.push(d);
 				},
 				L1UpdateRequest::Cancel(mut c) => {
-					c.requestId.id = request_id;
+					c.requestId.id = rid;
 					update.pendingCancelResultions.push(c);
 				},
 				L1UpdateRequest::Remove(mut r) => {
-					r.requestId.id = request_id;
+					r.requestId.id = rid;
 					update.pendingL2UpdatesToRemove.push(r);
 				},
 			}
@@ -60,7 +64,7 @@ impl L1UpdateBuilder {
 
 impl Default for L1UpdateBuilder {
 	fn default() -> Self {
-		Self(1u128, Default::default())
+		Self(Some(1u128), Default::default())
 	}
 }
 
@@ -122,14 +126,14 @@ fn create_pending_update_after_dispute_period() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
 		assert_eq!(pending_updates::<Test>::iter().next(), None);
-		assert!(pending_updates::<Test>::get(L1::Ethereum, 1u128).is_none());
-		assert!(pending_updates::<Test>::get(L1::Ethereum, 2u128).is_none());
+		assert!(pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 1u128)).is_none());
+		assert!(pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 2u128)).is_none());
 
 		forward_to_block::<Test>(15);
-		assert!(pending_updates::<Test>::get(L1::Ethereum, 1u128).is_some());
+		assert!(pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 1u128)).is_some());
 
 		forward_to_block::<Test>(16);
-		assert!(pending_updates::<Test>::get(L1::Ethereum, 2u128).is_some());
+		assert!(pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 2u128)).is_some());
 	});
 }
 
@@ -181,13 +185,18 @@ fn deposit_executed_after_dispute_period() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
-			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 0u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				Some(PendingUpdate::RequestResult(RequestResult{
+					requestId: RequestId::new(Origin::L2, 1u128),
+					originRequestId: 1u128,
+					status: true,
+					updateType: UpdateType::DEPOSIT
+				}))
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
@@ -210,9 +219,9 @@ fn l1_upate_executed_immaidately_if_force_submitted() {
 				.build();
 
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 1u128)));
 			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), update).unwrap();
-			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 1u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
 }
@@ -238,7 +247,7 @@ fn each_request_executed_only_once() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
 
 			forward_to_block::<Test>(14);
-			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 0u128));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 0u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
 			forward_to_block::<Test>(15);
@@ -269,7 +278,7 @@ fn updates_to_remove_executed_after_dispute_period() {
 			let l2_updates_to_remove = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 					requestId: Default::default(),
-					l2UpdatesToRemove: vec![sp_core::U256::from(1u128)],
+					l2UpdatesToRemove: vec![RequestId::new(Origin::L1, 1u128)],
 				})])
 				.with_offset(2u128)
 				.build();
@@ -277,23 +286,28 @@ fn updates_to_remove_executed_after_dispute_period() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 			forward_to_block::<Test>(15);
-			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 1u128)));
 
 			forward_to_block::<Test>(100);
 			assert_eq!(
-				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				Some(PendingUpdate::RequestResult(RequestResult{
+					requestId: RequestId::new(Origin::L2, 1u128),
+					originRequestId: 1u128,
+					status: true,
+					updateType: UpdateType::DEPOSIT
+				}))
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
 				.unwrap();
 
 			forward_to_block::<Test>(104);
-			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
-			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 1u128)));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 2u128)));
 
 			forward_to_block::<Test>(105);
-			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, 2u128));
-			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, 1u128));
+			assert!(pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 2u128)));
+			assert!(!pending_updates::<Test>::contains_key(L1::Ethereum, RequestId::new(Origin::L1, 1u128)));
 		});
 }
 
@@ -805,9 +819,10 @@ fn accept_consecutive_update_split_into_two() {
 
 		forward_to_block::<Test>(15);
 		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
-			.map(|(k, _)| k)
+			.map(|(k, _)| k.id)
 			.collect::<Vec<_>>();
 		expected_updates.sort();
+
 		assert_eq!(
 			(1u128..11u128).collect::<Vec<_>>().into_iter().collect::<Vec<_>>(),
 			expected_updates
@@ -815,7 +830,7 @@ fn accept_consecutive_update_split_into_two() {
 
 		forward_to_block::<Test>(16);
 		let mut expected_updates = pending_updates::<Test>::iter_prefix(L1::Ethereum)
-			.map(|(k, _)| k)
+			.map(|(k, _)| k.id)
 			.collect::<Vec<_>>();
 		expected_updates.sort();
 		assert_eq!(
@@ -912,7 +927,7 @@ fn test_withdraw() {
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), 0_u128);
 			assert_eq!(
-				pending_updates::<Test>::get(L1::Ethereum, 1u128),
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L2, 1u128)),
 				Some(PendingUpdate::Withdrawal(withdrawal_update))
 			);
 			assert_eq!(Rolldown::get_l2_origin_updates_counter(L1::Ethereum), 2);
@@ -970,69 +985,74 @@ fn test_remove_pending_updates() {
 				1_000_000u128,
 			)
 			.unwrap();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
-			forward_to_block::<Test>(20);
 
 			let withdrawal_update = Withdrawal {
-				requestId: (Origin::L2, 1u128).into(),
+				requestId: (Origin::L2, 2u128).into(),
 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: U256::from(1_000_000u128),
 			};
 			let cancel_update = Cancel {
-				requestId: (Origin::L2, 2u128).into(),
+				requestId: (Origin::L2, 1u128).into(),
 				updater: 2,
 				canceler: 3,
 				range: (1u128, 1u128).into(),
 				hash: H256::from(hex!(
-					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
+					"3c51dc6749d88c5ef24c0e19a3a189f0ebaa7fbc8386cdf4b60e56a26321f6bd"
 				)),
 			};
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L2, 1u128)),
+				Some(PendingUpdate::Cancel(cancel_update))
+			);
+			assert_eq!(
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L2, 2u128)),
+				Some(PendingUpdate::Withdrawal(withdrawal_update))
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
+			forward_to_block::<Test>(20);
+
 
 			assert_eq!(
-				pending_updates::<Test>::get(L1::Ethereum, 1u128),
-				Some(PendingUpdate::RequestResult((true, UpdateType::DEPOSIT)))
+				pending_updates::<Test>::get(L1::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				Some(PendingUpdate::RequestResult(RequestResult{
+					requestId: RequestId::new(Origin::L2, 3u128),
+					originRequestId: 1u128,
+					status: true,
+					updateType: UpdateType::DEPOSIT
+				}))
 			);
-			// assert_eq!(
-			// 	pending_updates::<Test>::get(L1::Ethereum, 2u128),
-			// 	Some(PendingUpdate::Cancel(cancel_update))
-			// );
-			// assert_eq!(
-			// 	pending_updates::<Test>::get(L1::Ethereum, 3u128),
-			// 	Some(PendingUpdate::Withdrawal(withdrawal_update))
-			// );
 
-		// 	let cancel_resolution_request = messages::CancelResolution {
-		// 		l2RequestId: sp_core::U256::from(u128::MAX / 2),
-		// 		cancelJustified: false,
-		// 	};
-		//
-		// 	let remove_pending_updates_request = messages::L2UpdatesToRemove {
-		// 		l2UpdatesToRemove: vec![
-		// 			sp_core::U256::from(0u128),
-		// 			sp_core::U256::from(u128::MAX / 2 + 1),
-		// 		],
-		// 	};
-		//
-		// 	let update_with_remove_and_resolution = L1UpdateBuilder::default()
-		// 		.with_requests(vec![
-		// 			L1UpdateRequest::Remove(remove_pending_updates_request),
-		// 			L1UpdateRequest::Cancel(cancel_resolution_request),
-		// 		])
-		// 		.with_last_accepted(3)
-		// 		.with_last_processed(1)
-		// 		.with_offset(2u128)
-		// 		.build();
-		//
-		// 	Rolldown::update_l2_from_l1(
-		// 		RuntimeOrigin::signed(CHARLIE),
-		// 		update_with_remove_and_resolution,
-		// 	)
-		// 	.unwrap();
-		//
-		// 	forward_to_block::<Test>(30);
-		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, 0u128), None);
-		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2), None);
-		// 	assert_eq!(pending_updates::<Test>::get(L1::Ethereum, u128::MAX / 2 + 1), None);
+			let cancel_resolution_request = messages::CancelResolution {
+				requestId: RequestId { origin: Origin::L1, id: 2u128 },
+				l2RequestId: 1u128,
+				cancelJustified: false,
+			};
+
+			let remove_pending_updates_request = messages::L2UpdatesToRemove {
+				requestId: RequestId { origin: Origin::L1, id: 3u128 },
+				l2UpdatesToRemove: vec![
+					RequestId::new(Origin::L1, 1u128),
+					RequestId::new(Origin::L2, 1u128),
+				],
+			};
+
+			let update_with_remove_and_resolution = L1UpdateBuilder::new()
+				.with_requests(vec![
+					L1UpdateRequest::Remove(remove_pending_updates_request),
+					L1UpdateRequest::Cancel(cancel_resolution_request),
+				])
+				.build();
+
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(CHARLIE),
+				update_with_remove_and_resolution,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(30);
+			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, RequestId{ origin: Origin::L1, id: 1u128 }), None);
+			assert_eq!(pending_updates::<Test>::get(L1::Ethereum, RequestId{ origin: Origin::L2, id: 1u128 }), None);
 		});
 }

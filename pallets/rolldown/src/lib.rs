@@ -7,9 +7,9 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L1};
+use scale_info::prelude::string::String;
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
-use scale_info::prelude::string::String;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -67,8 +67,8 @@ mod mock;
 
 pub mod messages;
 
-pub use pallet::*;
 use crate::messages::L1Update;
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -796,7 +796,9 @@ impl<T: Config> Pallet<T> {
 		update.abi_encode()
 	}
 
-	pub fn convert_eth_l1update_to_substrate_l1update(update: messages::eth_abi::L1Update) -> Result<L1Update, String> {
+	pub fn convert_eth_l1update_to_substrate_l1update(
+		update: messages::eth_abi::L1Update,
+	) -> Result<L1Update, String> {
 		update.try_into()
 	}
 

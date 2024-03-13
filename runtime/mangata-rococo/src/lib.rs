@@ -880,7 +880,7 @@ impl_runtime_apis! {
 		fn get_pending_updates() -> Vec<u8> {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
-		
+
 		fn update_eth_raw(paylod: Vec<u8>) -> pallet_rolldown::messages::L1Update {
 			let update = pallet_rolldown::messages::eth_abi::L1Update::abi_decode(paylod.as_ref(), true).unwrap();
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(update).unwrap()

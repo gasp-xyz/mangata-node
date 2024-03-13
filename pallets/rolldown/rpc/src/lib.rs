@@ -6,12 +6,12 @@ use jsonrpsee::{
 	types::error::{CallError, ErrorObject},
 };
 
+use codec::Decode;
 use rolldown_runtime_api::RolldownRuntimeApi;
 pub use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
-use codec::Decode;
 
 #[rpc(client, server)]
 pub trait RolldownApi<BlockHash, L1Update> {
@@ -77,7 +77,11 @@ where
 			)))
 		})
 	}
-	fn update_eth_raw(&self, payload: Vec<u8>, at: Option<<Block as BlockT>::Hash>) -> RpcResult<L1Update> {
+	fn update_eth_raw(
+		&self,
+		payload: Vec<u8>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<L1Update> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.update_eth_raw(at, payload).map_err(|e| {

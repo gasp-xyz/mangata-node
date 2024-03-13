@@ -377,8 +377,8 @@ fn test_cancel_removes_pending_requests() {
 						l2RequestId: 1u128,
 						cancelJustified: true,
 						blockHash: H256::from([0; 32]),
-					})
-				])
+					},
+				)])
 				.build();
 
 			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
@@ -468,7 +468,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 						l2RequestId: l2_request_id,
 						cancelJustified: true,
 						blockHash: H256::from([0; 32]),
-					}
+					},
 				)])
 				.with_offset(1u128)
 				.build();
@@ -509,7 +509,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 						l2RequestId: l2_request_id,
 						cancelJustified: false,
 						blockHash: H256::from([0; 32]),
-					}
+					},
 				)])
 				.with_offset(1u128)
 				.build();
@@ -565,7 +565,7 @@ fn test_cancel_removes_cancel_right() {
 						l2RequestId: l2_request_id,
 						cancelJustified: true,
 						blockHash: H256::from([0; 32]),
-					}
+					},
 				)])
 				.with_offset(1u128)
 				.build();
@@ -628,31 +628,38 @@ fn test_l1_update_hash_compare_with_solidty() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let update = L1UpdateBuilder::new()
 			.with_requests(vec![
-				L1UpdateRequest::Deposit(messages::Deposit{
+				L1UpdateRequest::Deposit(messages::Deposit {
 					requestId: RequestId::new(Origin::L1, 1u128),
 					depositRecipient: hex!("0000000000000000000000000000000000000002"),
 					tokenAddress: hex!("0000000000000000000000000000000000000003"),
 					amount: 4u128.into(),
-					blockHash: H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000005")),
+					blockHash: H256::from(hex!(
+						"0000000000000000000000000000000000000000000000000000000000000005"
+					)),
 				}),
-				L1UpdateRequest::CancelResolution( messages::CancelResolution {
+				L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: RequestId::new(Origin::L1, 6u128),
 					l2RequestId: 7u128,
 					cancelJustified: true,
-					blockHash: H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000008")),
+					blockHash: H256::from(hex!(
+						"0000000000000000000000000000000000000000000000000000000000000008"
+					)),
 				}),
-				L1UpdateRequest::WithdrawalResolution( messages::WithdrawalResolution {
+				L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
 					requestId: RequestId::new(Origin::L1, 9u128),
 					l2RequestId: 10u128,
 					status: true,
-					blockHash: H256::from(hex!("000000000000000000000000000000000000000000000000000000000000000b")),
+					blockHash: H256::from(hex!(
+						"000000000000000000000000000000000000000000000000000000000000000b"
+					)),
 				}),
 				L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 					requestId: RequestId::new(Origin::L1, 12u128),
 					l2UpdatesToRemove: vec![13u128],
-					blockHash: H256::from(hex!("000000000000000000000000000000000000000000000000000000000000000e")),
-
-				})
+					blockHash: H256::from(hex!(
+						"000000000000000000000000000000000000000000000000000000000000000e"
+					)),
+				}),
 			])
 			.build();
 		let hash = Rolldown::calculate_hash_of_pending_requests(update);

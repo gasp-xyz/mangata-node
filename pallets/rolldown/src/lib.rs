@@ -638,7 +638,10 @@ impl<T: Config> Pallet<T> {
 		l1: L1,
 		withdrawal_resolution: &messages::WithdrawalResolution,
 	) -> Result<(), &'static str> {
-		pending_updates::<T>::remove(l1, RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)));
+		pending_updates::<T>::remove(
+			l1,
+			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
+		);
 		//TODO: handle sending tokens back
 		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
 		Ok(())

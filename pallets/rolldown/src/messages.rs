@@ -166,12 +166,11 @@ impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
 	}
 }
 
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L1Update {
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResultions: Vec<CancelResolution>,
-    pub pendingWithdrawalResolutions: Vec<WithdrawalResolution>,
+	pub pendingWithdrawalResolutions: Vec<WithdrawalResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
@@ -180,7 +179,7 @@ pub enum L1UpdateRequest {
 	Deposit(Deposit),
 	CancelResolution(CancelResolution),
 	Remove(L2UpdatesToRemove),
-	WithdrawalResolution(WithdrawalResolution)
+	WithdrawalResolution(WithdrawalResolution),
 }
 
 impl L1UpdateRequest {
@@ -207,7 +206,8 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.origin.clone(),
-			L1UpdateRequest::WithdrawalResolution(withdrawal) => withdrawal.requestId.origin.clone(),
+			L1UpdateRequest::WithdrawalResolution(withdrawal) =>
+				withdrawal.requestId.origin.clone(),
 		}
 	}
 }
@@ -245,7 +245,12 @@ impl L1Update {
 	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
 		let mut result: Vec<L1UpdateRequest> = Default::default();
 
-		let L1Update { pendingDeposits, pendingCancelResultions, pendingL2UpdatesToRemove , pendingWithdrawalResolutions} = self;
+		let L1Update {
+			pendingDeposits,
+			pendingCancelResultions,
+			pendingL2UpdatesToRemove,
+			pendingWithdrawalResolutions,
+		} = self;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
 		let mut cancel_it = pendingCancelResultions.into_iter().peekable();
@@ -264,7 +269,13 @@ impl L1Update {
 			.filter_map(|v| v)
 			.min();
 
-			match (deposits_it.peek(), cancel_it.peek(), remove_it.peek(), withdrawal_it.peek(), min) {
+			match (
+				deposits_it.peek(),
+				cancel_it.peek(),
+				remove_it.peek(),
+				withdrawal_it.peek(),
+				min,
+			) {
 				(Some(deposit), _, _, _, Some(min)) if deposit.requestId.id == min => {
 					if let Some(elem) = deposits_it.next() {
 						result.push(L1UpdateRequest::Deposit(elem.clone()));

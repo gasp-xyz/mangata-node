@@ -381,8 +381,8 @@ pub mod eth_abi {
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
 		enum UpdateType{
-			WITHDRAWAL,
 			DEPOSIT,
+			WITHDRAWAL,
 			WITHDRAWAL_RESOLUTION,
 			INDEX_UPDATE,
 			CANCEL,

@@ -38,6 +38,8 @@ pub struct IssuanceInfo<Balance> {
 	pub liquidity_mining_split: Perbill,
 	// The split of issuance assgined to staking
 	pub staking_split: Perbill,
+	// The split of issuance assgined to sequencing
+	pub sequencing_split: Perbill,
 	// The total mga allocated to crowdloan rewards
 	pub total_crowdloan_allocation: Balance,
 }
@@ -139,6 +141,9 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The split of issuance for staking rewards
 		type StakingSplit: Get<Perbill>;
+		#[pallet::constant]
+		/// The split of issuance for sequencer rewards
+		type SequencingSplit: Get<Perbill>;
 		#[pallet::constant]
 		/// The number of blocks the tge tokens vest for
 		type TGEReleasePeriod: Get<u32>;
@@ -341,6 +346,7 @@ impl<T: Config> Pallet<T> {
 			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 			liquidity_mining_split: T::LiquidityMiningSplit::get(),
 			staking_split: T::StakingSplit::get(),
+			sequencing_split: T::SequencingSplit::get(),
 			total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
 		};
 
@@ -356,6 +362,7 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
+				.and_then(|v| v.checked_add(&issuance_config.sequencing_split))
 				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
 				Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
@@ -429,6 +436,8 @@ impl<T: Config> Pallet<T> {
 
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
+		let sequencing_issuance = issuance_config.sequencing_split * current_round_issuance;
+
 		T::LiquidityMiningApi::distribute_rewards(liquidity_mining_issuance);
 
 		{
@@ -442,22 +451,29 @@ impl<T: Config> Pallet<T> {
 				&T::StakingIssuanceVault::get(),
 				staking_issuance,
 			);
+			let sequencing_issuance_issued = T::Tokens::deposit_creating(
+				T::NativeCurrencyId::get().into(),
+				&T::SequencingIssuanceVault::get(),
+				sequencing_issuance,
+			);
 			Self::deposit_event(Event::SessionIssuanceIssued(
 				current_round,
 				liquidity_mining_issuance_issued.peek(),
 				staking_issuance_issued.peek(),
+				sequencing_issuance_issued.peek(),
 			));
 		}
 
 		SessionIssuance::<T>::insert(
 			current_round,
-			Some((liquidity_mining_issuance, staking_issuance)),
+			Some((liquidity_mining_issuance, staking_issuance, sequencing_issuance)),
 		);
 
 		Pallet::<T>::deposit_event(Event::SessionIssuanceRecorded(
 			current_round,
 			liquidity_mining_issuance,
 			staking_issuance,
+			sequencing_issuance
 		));
 
 		Ok(())

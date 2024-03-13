@@ -56,6 +56,8 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
 
+use alloy_sol_types::{sol_data::*, SolValue};
+
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
@@ -870,7 +872,7 @@ mod benches {
 
 impl_runtime_apis! {
 
-	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::L1Update> for Runtime {
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update> for Runtime {
 		fn get_pending_updates_hash() -> sp_core::H256 {
 			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
 		}
@@ -879,9 +881,9 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 		
-		fn update_eth_raw(paylod: Vec<u8>) -> pallet_rolldown::L1Update {
-			let update = pallet_rolldown::messages::eth_abi::L1Update::abi_decode(paylod.as_ref());
-			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(update)?
+		fn update_eth_raw(paylod: Vec<u8>) -> pallet_rolldown::messages::L1Update {
+			let update = pallet_rolldown::messages::eth_abi::L1Update::abi_decode(paylod.as_ref(), true).unwrap();
+			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(update).unwrap()
 		}
 	}
 

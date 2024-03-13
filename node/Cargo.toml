@@ -26,6 +26,7 @@ xyk-rpc = { path = "../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../pallets/xyk/runtime-api" }
 rolldown-runtime-api = { path = "../pallets/rolldown/runtime-api" }
 rolldown-rpc = { path = "../pallets/rolldown/rpc" }
+pallet-rolldown = { path = "../pallets/rolldown", default-features = false }
 proof-of-stake-runtime-api = { path = '../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../pallets/metamask-signature-rpc/' }

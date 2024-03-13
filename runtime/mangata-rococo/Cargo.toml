@@ -24,6 +24,7 @@ serde = { version = "1.0.137", optional = true, features = ["derive"] }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
 bs58 = { version = "0.5.0", default-features = false }
+alloy-sol-types = { version = "0.5.0", default-features = false }
 
 # Local Dependencies
 common-runtime = { path = '../common', default-features = false, version = '4.0.0' }

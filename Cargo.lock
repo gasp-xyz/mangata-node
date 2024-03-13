@@ -5989,6 +5989,7 @@ dependencies = [
 name = "mangata-kusama-runtime"
 version = "4.0.0"
 dependencies = [
+ "alloy-sol-types",
  "common-runtime",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -6106,6 +6107,7 @@ dependencies = [
  "mangata-kusama-runtime",
  "mangata-rococo-runtime",
  "metamask-signature-rpc",
+ "pallet-rolldown",
  "pallet-transaction-payment-mangata",
  "pallet-transaction-payment-mangata-rpc",
  "parity-scale-codec",
@@ -6162,6 +6164,7 @@ dependencies = [
 name = "mangata-rococo-runtime"
 version = "4.0.0"
 dependencies = [
+ "alloy-sol-types",
  "bs58 0.5.0",
  "common-runtime",
  "cumulus-pallet-aura-ext",

@@ -359,7 +359,7 @@ impl TryFrom<eth_abi::Origin> for Origin {
 		match origin {
 			eth_abi::Origin::L1 => Ok(Origin::L1),
 			eth_abi::Origin::L2 => Ok(Origin::L2),
-			_ => Err("Invalid origin type".to_string()),
+			_ => Err(String::from("Invalid origin type")),
 		}
 	}
 }

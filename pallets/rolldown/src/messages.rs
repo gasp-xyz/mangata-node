@@ -224,7 +224,7 @@ impl L1Update {
 		}
 	}
 	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
-		let mut result = vec![];
+		let mut result: Vec<L1UpdateRequest> = Default::default();
 
 		let L1Update { pendingDeposits, pendingCancelResultions, pendingL2UpdatesToRemove } = self;
 

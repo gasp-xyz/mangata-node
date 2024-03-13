@@ -108,14 +108,18 @@ pub struct Withdraw {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub requestId: RequestId,
-	pub l2UpdatesToRemove: Vec<RequestId>,
+	pub l2UpdatesToRemove: Vec<u128>,
 }
 
 impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	fn into(self) -> eth_abi::L2UpdatesToRemove {
 		eth_abi::L2UpdatesToRemove {
 			requestId: self.requestId.into(),
-			l2UpdatesToRemove: self.l2UpdatesToRemove.into_iter().map(|req| req.into()).collect(),
+			l2UpdatesToRemove: self
+				.l2UpdatesToRemove
+				.into_iter()
+				.map(|rid| to_eth_u256(rid.into()))
+				.collect(),
 		}
 	}
 }
@@ -259,9 +263,7 @@ impl L1Update {
 						result.push(L1UpdateRequest::Remove(elem.clone()));
 					}
 				},
-				_ => {
-					break
-				},
+				_ => break,
 			}
 		}
 		result
@@ -318,7 +320,7 @@ pub mod eth_abi {
 
 		struct L2UpdatesToRemove {
 			RequestId requestId;
-			RequestId[] l2UpdatesToRemove;
+			uint256[] l2UpdatesToRemove;
 		}
 
 		struct CancelResolution {

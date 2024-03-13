@@ -675,7 +675,7 @@ impl<T: Config> Pallet<T> {
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			pending_updates::<T>::remove(l1, requestId);
+			pending_updates::<T>::remove(l1, RequestId { origin: Origin::L1, id: *requestId });
 		}
 
 		log!(

@@ -294,7 +294,7 @@ fn updates_to_remove_executed_after_dispute_period() {
 			let l2_updates_to_remove = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 					requestId: Default::default(),
-					l2UpdatesToRemove: vec![RequestId::new(Origin::L1, 1u128)],
+					l2UpdatesToRemove: vec![1u128],
 				})])
 				.with_offset(2u128)
 				.build();
@@ -1063,10 +1063,7 @@ fn test_remove_pending_updates() {
 
 			let remove_pending_updates_request = messages::L2UpdatesToRemove {
 				requestId: RequestId { origin: Origin::L1, id: 3u128 },
-				l2UpdatesToRemove: vec![
-					RequestId::new(Origin::L1, 1u128),
-					RequestId::new(Origin::L2, 1u128),
-				],
+				l2UpdatesToRemove: vec![1u128],
 			};
 
 			let update_with_remove_and_resolution = L1UpdateBuilder::new()

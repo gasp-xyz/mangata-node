@@ -6,7 +6,6 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use itertools::Itertools;
 use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L1};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
@@ -835,37 +834,37 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// check that consecutive id
-		ensure!(
-			update
-				.pendingDeposits
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
-
-		ensure!(
-			update
-				.pendingCancelResultions
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
-		ensure!(
-			update
-				.pendingL2UpdatesToRemove
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
+		// ensure!(
+		// 	update
+		// 		.pendingDeposits
+		// 		.iter()
+		// 		.map(|v| v.requestId.id)
+		// 		.into_iter()
+		// 		.tuple_windows()
+		// 		.all(|(a, b)| a < b),
+		// 	Error::<T>::InvalidUpdate
+		// );
+		//
+		// ensure!(
+		// 	update
+		// 		.pendingCancelResultions
+		// 		.iter()
+		// 		.map(|v| v.requestId.id)
+		// 		.into_iter()
+		// 		.tuple_windows()
+		// 		.all(|(a, b)| a < b),
+		// 	Error::<T>::InvalidUpdate
+		// );
+		// ensure!(
+		// 	update
+		// 		.pendingL2UpdatesToRemove
+		// 		.iter()
+		// 		.map(|v| v.requestId.id)
+		// 		.into_iter()
+		// 		.tuple_windows()
+		// 		.all(|(a, b)| a < b),
+		// 	Error::<T>::InvalidUpdate
+		// );
 
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),

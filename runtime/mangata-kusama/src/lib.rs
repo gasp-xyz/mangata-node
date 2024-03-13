@@ -865,6 +865,10 @@ impl_runtime_apis! {
 		fn get_pending_updates() -> Vec<u8> {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
+
+		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
+		}
 	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{

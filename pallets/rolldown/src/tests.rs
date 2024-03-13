@@ -40,6 +40,10 @@ impl L1UpdateBuilder {
 		for (id, r) in self.1.into_iter().enumerate() {
 			let rid = if let Some(offset) = self.0 { (id as u128) + offset } else { r.id() };
 			match r {
+				L1UpdateRequest::WithdrawalResolution(mut w) => {
+					w.requestId.id = rid;
+					update.pendingWithdrawalResolutions.push(w);
+				},
 				L1UpdateRequest::Deposit(mut d) => {
 					d.requestId.id = rid;
 					update.pendingDeposits.push(d);
@@ -94,7 +98,7 @@ fn process_single_deposit() {
 			ALICE,
 			current_block_number + dispute_period,
 			(1u128, 1u128).into(),
-			H256::from(hex!("a6da6d182dcae74d865404d30cec0c198606da765b3b55c5d49d3efcdb4fc76f"))
+			H256::from(hex!("4c3d07c246f723174706be0b6e191b5d91d72180377232d9df34c0b6e5a0d397"))
 		)));
 	});
 }
@@ -372,8 +376,9 @@ fn test_cancel_removes_pending_requests() {
 						requestId: Default::default(),
 						l2RequestId: 1u128,
 						cancelJustified: true,
-					blockHash: H256::from([0; 32]),
-				)])
+						blockHash: H256::from([0; 32]),
+					})
+				])
 				.build();
 
 			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
@@ -462,7 +467,8 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 						requestId: Default::default(),
 						l2RequestId: l2_request_id,
 						cancelJustified: true,
-					blockHash: H256::from([0; 32]),
+						blockHash: H256::from([0; 32]),
+					}
 				)])
 				.with_offset(1u128)
 				.build();
@@ -502,7 +508,8 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 						requestId: Default::default(),
 						l2RequestId: l2_request_id,
 						cancelJustified: false,
-					blockHash: H256::from([0; 32]),
+						blockHash: H256::from([0; 32]),
+					}
 				)])
 				.with_offset(1u128)
 				.build();
@@ -557,7 +564,8 @@ fn test_cancel_removes_cancel_right() {
 						requestId: Default::default(),
 						l2RequestId: l2_request_id,
 						cancelJustified: true,
-					blockHash: H256::from([0; 32]),
+						blockHash: H256::from([0; 32]),
+					}
 				)])
 				.with_offset(1u128)
 				.build();
@@ -618,13 +626,39 @@ fn test_cancel_removes_cancel_right() {
 // this test ensures that the hash calculated on rust side matches hash calculated in contract
 fn test_l1_update_hash_compare_with_solidty() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		let update = L1UpdateBuilder::default()
-			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+		let update = L1UpdateBuilder::new()
+			.with_requests(vec![
+				L1UpdateRequest::Deposit(messages::Deposit{
+					requestId: RequestId::new(Origin::L1, 1u128),
+					depositRecipient: hex!("0000000000000000000000000000000000000002"),
+					tokenAddress: hex!("0000000000000000000000000000000000000003"),
+					amount: 4u128.into(),
+					blockHash: H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000005")),
+				}),
+				L1UpdateRequest::CancelResolution( messages::CancelResolution {
+					requestId: RequestId::new(Origin::L1, 6u128),
+					l2RequestId: 7u128,
+					cancelJustified: true,
+					blockHash: H256::from(hex!("0000000000000000000000000000000000000000000000000000000000000008")),
+				}),
+				L1UpdateRequest::WithdrawalResolution( messages::WithdrawalResolution {
+					requestId: RequestId::new(Origin::L1, 9u128),
+					l2RequestId: 10u128,
+					status: true,
+					blockHash: H256::from(hex!("000000000000000000000000000000000000000000000000000000000000000b")),
+				}),
+				L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
+					requestId: RequestId::new(Origin::L1, 12u128),
+					l2UpdatesToRemove: vec![13u128],
+					blockHash: H256::from(hex!("000000000000000000000000000000000000000000000000000000000000000e")),
+
+				})
+			])
 			.build();
-		let hash = Rolldown::calculate_hash_of_pending_requests(update.clone());
+		let hash = Rolldown::calculate_hash_of_pending_requests(update);
 		assert_eq!(
 			hash,
-			hex!("033f8b8c13f3dd23df7d50f5a5106621177bb75f71cb39e9a8fd4ab565bec339").into()
+			hex!("5129c9a6605d367397902fa839ef429af9abed97f0dd36e3b1973939817d40dc").into()
 		);
 	});
 }
@@ -642,7 +676,6 @@ fn cancel_request_as_council_executed_immadiately() {
 
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
-					blockHash: H256::from([0; 32]),
 				.build();
 
 			assert_eq!(
@@ -889,6 +922,7 @@ fn execute_two_consecutive_incremental_reqeusts() {
 				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
+				blockHash: H256::from([0; 32]),
 			});
 
 			let first_update = L1UpdateBuilder::default()
@@ -1037,7 +1071,7 @@ fn test_remove_pending_updates() {
 				canceler: 3,
 				range: (1u128, 1u128).into(),
 				hash: H256::from(hex!(
-					"94b9731791414107389e1c17f67d1f8116829cfc62d7990595aa9d54351538c2"
+					"32e24f8bb09dfc23e2e9be65fbcfb9a18ed4401f97c59d47dc2962c11bb5687a"
 				)),
 			};
 			assert_eq!(

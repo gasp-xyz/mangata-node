@@ -7,7 +7,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L1};
+use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
 
@@ -480,7 +480,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool> {
-		let pending_requests_to_process = pending_requests::<T>::get::<U256>(request_id.into());
+		let pending_requests_to_process = pending_requests::<T>::get(request_id, L1::Ethereum);
 		if let Some((_, l1_update)) = pending_requests_to_process {
 			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
 			Some(hash == calculated_hash)
@@ -540,6 +540,10 @@ impl<T: Config> Pallet<T> {
 				(Self::process_deposit(&deposit).is_ok(), UpdateType::DEPOSIT),
 			messages::L1UpdateRequest::CancelResolution(cancel) => (
 				Self::process_cancel_resolution(l1, &cancel).is_ok(),
+				UpdateType::CANCEL_RESOLUTION,
+			),
+			messages::L1UpdateRequest::WithdrawalResolution(withdrawal) => (
+				Self::process_withdrawal_resolution(l1, &withdrawal).is_ok(),
 				UpdateType::CANCEL_RESOLUTION,
 			),
 			messages::L1UpdateRequest::Remove(remove) =>
@@ -627,6 +631,16 @@ impl<T: Config> Pallet<T> {
 			&account,
 			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 		)?;
+		Ok(())
+	}
+
+	fn process_withdrawal_resolution(
+		l1: L1,
+		withdrawal_resolution: &messages::WithdrawalResolution,
+	) -> Result<(), &'static str> {
+		pending_updates::<T>::remove(l1, RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)));
+		//TODO: handle sending tokens back
+		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
 		Ok(())
 	}
 

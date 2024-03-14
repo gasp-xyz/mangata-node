@@ -89,7 +89,7 @@ jobs:
         id: setTestRun
 
 
-  e2e-test-matrix:
+  e2e-tm:
     needs: [setup-report]
     strategy:
       fail-fast: false
@@ -294,7 +294,7 @@ jobs:
           docker-compose down -v
 
   test-complete:
-    needs: [setup-report, e2e-test-matrix]
+    needs: [setup-report, e2e-tm]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -312,7 +312,7 @@ jobs:
         continue-on-error: true
 
   slack-notify-nook:
-    needs: [e2e-test-matrix]
+    needs: [e2e-tm]
     if: failure()
     runs-on: ubuntu-latest
     steps:

@@ -881,14 +881,8 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 
-		fn update_eth_raw(payload: Vec<u8>) -> pallet_rolldown::messages::L1Update {
-			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(payload)
-			.map_err(|e|
-					{
-						log::warn!(target:"rolldown", "rpc 'rolldown::update_raw_eth' error: '{:?}', returning error", e);
-						e
-					}
-				).unwrap()
+		fn update_eth_raw(payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
+			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(payload).ok()
 		}
 	}
 

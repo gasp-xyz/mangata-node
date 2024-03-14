@@ -800,8 +800,6 @@ impl<T: Config> Pallet<T> {
 	pub fn convert_eth_l1update_to_substrate_l1update(
 		payload: Vec<u8>,
 	) -> Result<L1Update, String> {
-		// let update = messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)?;
-		// update.try_into()
 		messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)
 			.map_err(|err| format!("Failed to decode L1Update: {}", err))
 			.and_then(|update| update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err)))

@@ -27,7 +27,7 @@ pub trait RolldownApi<BlockHash, L1Update> {
 	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
 	#[method(name = "rolldown_update_eth_raw")]
-	fn update_eth_raw(&self, payload: Vec<u8>, at: Option<BlockHash>) -> RpcResult<L1Update>;
+	fn update_eth_raw(&self, payload: Vec<u8>, at: Option<BlockHash>) -> RpcResult<Option<L1Update>>;
 }
 
 pub struct Rolldown<C, M> {
@@ -81,7 +81,7 @@ where
 		&self,
 		payload: Vec<u8>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<L1Update> {
+	) -> RpcResult<Option<L1Update>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.update_eth_raw(at, payload).map_err(|e| {

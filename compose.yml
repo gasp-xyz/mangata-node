@@ -31,6 +31,7 @@ services:
     image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command: 
       - --bob
+      - --chain=rollup-local
       - --base-path=/data
       - --rpc-cors=all
       - --unsafe-rpc-external

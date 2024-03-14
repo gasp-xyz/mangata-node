@@ -184,6 +184,11 @@ pub mod pallet {
 		InvalidUpdate,
 		L1AssetNotFound,
 		WrongRequestId,
+		InvalidUpdateInvalidUpdateWronglastProccessedRequestOnL1,
+		InvalidUpdateInvalidUpdateWrongUpdatesToRemoveCount,
+		InvalidUpdateInvalidUpdateWrongCancelResolutionCount,
+		InvalidUpdateInvalidUpdateWrongDepositCount,
+		
 	}
 
 	#[pallet::config]
@@ -754,7 +759,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(update.lastAcceptedRequestOnL1 > 0u128.into(), Error::<T>::EmptyUpdate);
 		ensure!(
 			update.lastAcceptedRequestOnL1 > update.lastProccessedRequestOnL1,
-			Error::<T>::InvalidUpdate
+			Error::<T>::InvalidUpdateInvalidUpdateWronglastProccessedRequestOnL1
 		);
 		ensure!(update.offset > update.lastProccessedRequestOnL1, Error::<T>::WrongRequestId);
 		ensure!(update.offset <= update.lastAcceptedRequestOnL1, Error::<T>::WrongRequestId);
@@ -766,7 +771,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			update.order.iter().filter(|e| **e == PendingRequestType::DEPOSIT).count() ==
 				deposits_count,
-			Error::<T>::InvalidUpdate
+			Error::<T>::InvalidUpdateInvalidUpdateWrongDepositCount
 		);
 		ensure!(
 			update
@@ -774,7 +779,7 @@ impl<T: Config> Pallet<T> {
 				.iter()
 				.filter(|e| **e == PendingRequestType::CANCEL_RESOLUTION)
 				.count() == cancels_count,
-			Error::<T>::InvalidUpdate
+			Error::<T>::InvalidUpdateInvalidUpdateWrongCancelResolutionCount
 		);
 		ensure!(
 			update
@@ -782,7 +787,7 @@ impl<T: Config> Pallet<T> {
 				.iter()
 				.filter(|e| **e == PendingRequestType::L2_UPDATES_TO_REMOVE)
 				.count() == l2_updates_count,
-			Error::<T>::InvalidUpdate
+			Error::<T>::InvalidUpdateInvalidUpdateWrongUpdatesToRemoveCount
 		);
 		Ok(().into())
 	}

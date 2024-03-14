@@ -291,7 +291,7 @@ impl L1Update {
 						result.push(L1UpdateRequest::Remove(elem.clone()));
 					}
 				},
-				(_, _, Some(update), _, Some(min)) if update.requestId.id == min => {
+				(_, _, _, Some(update), Some(min)) if update.requestId.id == min => {
 					if let Some(elem) = withdrawal_it.next() {
 						result.push(L1UpdateRequest::WithdrawalResolution(elem.clone()));
 					}

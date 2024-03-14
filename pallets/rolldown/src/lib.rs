@@ -544,7 +544,7 @@ impl<T: Config> Pallet<T> {
 			),
 			messages::L1UpdateRequest::WithdrawalResolution(withdrawal) => (
 				Self::process_withdrawal_resolution(l1, &withdrawal).is_ok(),
-				UpdateType::WITHDRAWAL_RESOLUTION
+				UpdateType::WITHDRAWAL_RESOLUTION,
 			),
 			messages::L1UpdateRequest::Remove(remove) =>
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
@@ -638,7 +638,6 @@ impl<T: Config> Pallet<T> {
 		l1: L1,
 		withdrawal_resolution: &messages::WithdrawalResolution,
 	) -> Result<(), &'static str> {
-
 		pending_updates::<T>::remove(
 			l1,
 			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
@@ -899,7 +898,6 @@ impl<T: Config> Pallet<T> {
 		.min()
 		.ok_or(Error::<T>::InvalidUpdate)?;
 
-
 		ensure!(lowest_id > 0u128, Error::<T>::WrongRequestId);
 
 		ensure!(
@@ -912,10 +910,7 @@ impl<T: Config> Pallet<T> {
 			(update.pendingCancelResultions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
 
-		ensure!(
-			last_id > last_processed_request_on_l2::<T>::get(l1),
-			Error::<T>::WrongRequestId
-		);
+		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut cancel_it = update.pendingCancelResultions.iter();

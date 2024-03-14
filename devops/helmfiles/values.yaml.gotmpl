@@ -3,16 +3,12 @@ remoteCluster: true
 environment: {{ requiredEnv "ENVIRONMENT" | quote }}
 image:
   tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-customChainspecUrl: {{ .Values | get "nodeCustomChainspecUrl" "" }}
-chain: {{ .Values.nodeChain }}
-storageClass: {{ .Values.storageClass }}
-storageSize: {{ .Values.storageSize }}
-relaychain:
-  image: {{ .Values.relaychainImage }}
-  forceUseCustomChainspecPath: true
-  storageSize: {{ .Values.relaychainStorageSize }}
-  customChainspecUrl: {{ .Values | get "relaychainCustomChainspecUrl" "" }}
-  bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}
-  kubernetesVolumeSnapshot: {{ .Values | get "relaychainKubernetesVolumeSnapshot" "" }}
-resources: {{ toYaml .Values.resources | nindent 10 }}
+chain: rollup-local
+isParachain: false
+isCollator: false
+enableStartupProbe: true
+enablePodMonitoringCollectors: {{ .Values.enablePodMonitorCollectors | toYaml }}
 enableServiceMonitorCollectors: {{ .Values.enableServiceMonitorCollectors | toYaml }}
+storageClass: node-data-volume-retain
+storageSize: {{ .Values.storageSize }}
+resources: {{ toYaml .Values.resources | nindent 10 }}

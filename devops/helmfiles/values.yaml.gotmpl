@@ -1,9 +1,12 @@
 role: collator
+command: /app/node
 remoteCluster: true
 environment: {{ requiredEnv "ENVIRONMENT" | quote }}
 image:
+  repository: mangatasolutions/rollup-node
   tag: {{ requiredEnv "IMAGE_TAG" | quote }}
 chain: rollup-local
+disableChainspecGeneration: true
 isParachain: false
 isCollator: false
 enableStartupProbe: true

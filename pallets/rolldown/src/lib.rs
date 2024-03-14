@@ -10,6 +10,7 @@ use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L
 use scale_info::prelude::string::String;
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
+use scale_info::prelude::format;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -797,9 +798,13 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn convert_eth_l1update_to_substrate_l1update(
-		update: messages::eth_abi::L1Update,
+		payload: Vec<u8>,
 	) -> Result<L1Update, String> {
-		update.try_into()
+		// let update = messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)?;
+		// update.try_into()
+		messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)
+			.map_err(|err| format!("Failed to decode L1Update: {}", err))
+			.and_then(|update| update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err)))
 	}
 
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {

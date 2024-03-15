@@ -136,6 +136,11 @@ benchmarks! {
 		let pool_creation_amount: BalanceOf<T> = 10000000000000000.to_balance::<T>();
 		let trade_amount: BalanceOf<T> = 1000000000000.to_balance::<T>();
 
+		// Create 4 tokens to avoid DisallowedPool (Bootstrap by default disallows pools between 0 & 4)
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
+
 		let mut initial_asset_id = <T as Config>::Currency::get_next_currency_id();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
 
@@ -213,6 +218,11 @@ benchmarks! {
 		let mint_amount: BalanceOf<T> = 1000000000000000000.to_balance::<T>();
 		let pool_creation_amount: BalanceOf<T> = 10000000000000000.to_balance::<T>();
 		let trade_amount: BalanceOf<T> = 1000000000000.to_balance::<T>();
+
+		// Create 4 tokens to avoid DisallowedPool (Bootstrap by default disallows pools between 0 & 4)
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
+		<T as Config>::Currency::create(&caller, mint_amount).unwrap();
 
 		let mut initial_asset_id = <T as Config>::Currency::get_next_currency_id();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
@@ -440,6 +450,11 @@ benchmarks! {
 		let reward_ratio = 1_000_000.to_balance::<T>();
 		let initial_amount:BalanceOf<T> = 1_000_000_000.to_balance::<T>();
 		let pool_amount:BalanceOf<T> = initial_amount / 2_u32.into();
+
+		// Create 4 tokens to avoid DisallowedPool (Bootstrap by default disallows pools between 0 & 4)
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
 		let next_asset_id = <T as Config>::Currency::get_next_currency_id();
 		let asset_id_1;

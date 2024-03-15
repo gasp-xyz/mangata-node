@@ -11,7 +11,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:develop"
+        default: "mangatasolutions/rollup-node:develop"
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -26,7 +26,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/rollup-node:latest"
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -43,10 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
-      PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
+      PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/rollup-node:{0}', inputs.globalVersion) }}
       BRANCH: ${{ inputs.branch }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Create branch ${{ env.BRANCH }} in mangata-dev-kit
         uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
@@ -54,6 +54,7 @@ jobs:
           repository_owner: mangata-finance
           repository_name: mangata-dev-kit
           new_branch_name: ${{ env.BRANCH }}
+          new_branch_ref: eth-rollup-develop
           ignore_branch_exists: true
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
@@ -61,7 +62,7 @@ jobs:
         uses: jonas-schievink/workflow-proxy@v1
         with:
           ref: ${{ env.BRANCH }}
-          workflow: pr-automation-types.yml
+          workflow: pr-automation-types-rollup-solochain.yml
           repo: mangata-finance/mangata-dev-kit
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}", "branch": "${{ env.BRANCH }}"}'

@@ -25,14 +25,14 @@ Mangata operates as a cross-chain liquidity protocol, facilitating seamless tran
 
 [Mangata API Docs](https://mangata-finance.notion.site/Mangata-API-Docs-06f68bc6ba004416ae5c6686163b0468)
 
-## Build mangata-node locally
+## Build rollup-node locally
 - Install [docker](https://docs.docker.com/engine/install/ubuntu/)
 
-### Compile mangata-node binary and wasms artifacts
-- use docker wrapper for cargo to build `mangata-node`
+### Compile rollup-node binary and wasms artifacts
+- use docker wrapper for cargo to build `rollup-node`
 
 ```
-./docker-cargo.sh build --release -p mangata-node
+./docker-cargo.sh build --release -p rollup-node
 ```
 
 build artifacts will be placed in `<REPO ROOT>/docker-cargo/release`
@@ -45,14 +45,14 @@ cargo test
 Run unit tests and generate code coverage report in html format:
 ```bash
 cargo install cargo-tarpaulin
-cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Html
+cargo tarpaulin --timeout 120 --workspace -e rollup-runtime-integration-test rollup-node --exclude-files **/mock.rs **/weights.rs **/weights/* --out Html
 ```
 
 ### Generate docker image
 You can use `build-image.sh` script to build & generate docker image
 
 ```
-./scripts/build-image.sh mangatasolutions/mangata-node:dev
+./scripts/build-image.sh mangatasolutions/rollup-node:dev
 ```
 
 or you can use already compiled build atributes generated in previous step
@@ -61,53 +61,46 @@ or you can use already compiled build atributes generated in previous step
 SKIP_BUILD=1 BUILD_DIR=./docker-cargo/release ./scripts/build-image.sh
 ```
 
-This will generate new local docker image `mangatasolutions/mangata-node:dev`
+This will generate new local docker image `mangatasolutions/rollup-node:dev`
 
 ## Run
 
-In order to run mangata-parachain locally one need to set up both:
-- local relay network
-- local parachain network
+In order to run the rollup-node locally one need to set up:
+- local rollup network
 
 Because of number of parameters is quite troublesome thats why we came up with dedicated dockerized environment.
 
-### Set up network using parachain-launch
+### Set up network using docker-compose
 
-Dockerized setup requires you to build development docker image [mangatasolutions/mangata-node:dev](#generate-docker-image).
+Dockerized setup requires you to build development docker image [mangatasolutions/rollup-node:dev](#generate-docker-image).
 
-Start docker environment using, you need to
+Start docker environment using docker-compose, you need to
 
 ```bash
-cd ./launch
-yarn install
-yarn gen
-yarn up
+cd ./devops/launch
+docker compose up
 ```
 
 once started, you can access nodes using port forwards
-- [127.0.0.1:9944](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - relaychain 1st collator
-- [127.0.0.1:9945](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - relaychain 2nd collator
-- [127.0.0.1:9946](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - parachain 1st collator
-- [127.0.0.1:9947](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - parachain 2nd collator
+- [127.0.0.1:9944](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) - rollup 1st node
+- [127.0.0.1:9945](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9945#/explorer) - rollup 2nd node
 
 Docker setup can be stopped using
 
 ```bash
-cd ./launch
-yarn down
+cd ./devops/launch
+docker compose down
 ```
 
 ### Sudo access
-`Alice` is set as sudo account for parachain-launch docker setup
+`Alice` is set as sudo account for docker setup
 
 ## Mangata node configuration
 
 There is number of chain configurations available for both development and production environements:
 
-| chainspec (`--chain`)         |      Sudo      |  Description                     |
-|-------------------------------|----------------|----------------------------------|
-| `mangata-kusama`              |    *******     | production kusama public mainnet |
-| `mangata-kusama-local`        |     Alice      | development kusama local testnet |
-| `mangata-rococo`              |    *******     | production rococo public testnet |
-| `mangata-rococo-local`        |     Alice      | development rococo local testnet |
+| chainspec (`--chain`)         |      Sudo      |                           Description                         |
+|-------------------------------|----------------|---------------------------------------------------------------|
+| `rollup-local`                |    *******     | development rollup local testnet                              |
+| `rollup-local-seq`            |     Alice      | development rollup local testnet with collators as sequencers |
 

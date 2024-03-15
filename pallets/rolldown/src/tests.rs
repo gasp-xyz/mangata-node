@@ -727,6 +727,7 @@ fn ignore_duplicated_requests_when_already_executed() {
 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
 			tokenAddress: ETH_TOKEN_ADDRESS,
 			amount: sp_core::U256::from(MILLION),
+			blockHash: H256::from([0; 32]),
 		});
 		let first_update =
 			L1UpdateBuilder::default().with_requests(vec![dummy_request.clone(); 5]).build();
@@ -758,6 +759,7 @@ fn process_l1_reads_in_order() {
 			depositRecipient: ETH_RECIPIENT_ACCOUNT,
 			tokenAddress: ETH_TOKEN_ADDRESS,
 			amount: sp_core::U256::from(MILLION),
+			blockHash: H256::from([0; 32]),
 		});
 		let first_update = L1UpdateBuilder::default()
 			.with_requests(vec![dummy_request.clone(); 11])

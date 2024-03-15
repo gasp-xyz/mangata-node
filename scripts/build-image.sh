@@ -2,7 +2,7 @@
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 
 if [ -z "${SKIP_BUILD}" ]; then
-    ${REPO_ROOT}/docker-cargo.sh build --release --features=mangata-rococo,mangata-kusama
+    ${REPO_ROOT}/docker-cargo.sh build --release
 else
     echo "build skipped because SKIP_BUILD flag is set"
 fi
@@ -15,7 +15,7 @@ else
     DOCKER_LABEL=${GIT_REV}-dirty
 fi
 
-DOCKER_IMAGE_TAG=${@:-mangatasolutions/mangata-node:dev}
+DOCKER_IMAGE_TAG=${@:-mangatasolutions/rollup-node:dev}
 DOCKER_TAGS=""
 
 echo "building docker image ${DOCKER_IMAGE_TAG} with tags:"

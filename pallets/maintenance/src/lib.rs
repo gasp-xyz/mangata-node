@@ -82,6 +82,8 @@ pub mod pallet {
 		AlreadyUpgradableInMaintenanceMode,
 		/// Already not upgradable in maintenance mode
 		AlreadyNotUpgradableInMaintenanceMode,
+		/// Upgrade blocked by Maintenance
+		UpgradeBlockedByMaintenance,
 	}
 
 	#[pallet::config]
@@ -209,7 +211,7 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> GetMaintenanceStatusTrait for Pallet<T> {
+impl<T: Config> Pallet<T> {
 	fn is_maintenance() -> bool {
 		let current_maintenance_status = MaintenanceStatus::<T>::get();
 		current_maintenance_status.is_maintenance
@@ -220,5 +222,15 @@ impl<T: Config> GetMaintenanceStatusTrait for Pallet<T> {
 		(!current_maintenance_status.is_maintenance) ||
 			(current_maintenance_status.is_maintenance &&
 				current_maintenance_status.is_upgradable_in_maintenance)
+	}
+}
+
+impl<T: Config> GetMaintenanceStatusTrait for Pallet<T> {
+	fn is_maintenance() -> bool {
+		<Pallet<T>>::is_maintenance()
+	}
+
+	fn is_upgradable() -> bool {
+		<Pallet<T>>::is_upgradable()
 	}
 }

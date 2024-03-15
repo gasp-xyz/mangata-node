@@ -5,7 +5,7 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, Get, ReservableCurrency, StorageVersion},
+	traits::{Currency, Get, ReservableCurrency, StorageVersion, OneSessionHandler, DefensiveSaturating},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
@@ -18,9 +18,10 @@ use scale_info::prelude::format;
 use sp_core::U256;
 use sp_runtime::{
 	serde::{Deserialize, Serialize},
-	traits::CheckedAdd,
-	Saturating,
+	traits::{CheckedAdd, Zero, One},
+	Saturating, RuntimeAppPublic
 };
+use sp_std::collections::btree_map::Entry::{Vacant, Occupied};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SequencerIndex = u32;
@@ -48,7 +49,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use super::*;
+use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -60,21 +61,23 @@ pub mod pallet {
 	// to work correctly with the on_initialize hook and the NextSequencerIndex updates
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
 			NextSequencerIndex::<T>::mutate(|x|
 				// If the active set was empty the SelectedSequencer
 				// will be None - in which case init to 0;
 				if SelectedSequencer::<T>::get().is_some(){
-					x.saturating_add(One::one());
+					if (n % T::BlocksForSequencerUpdate::get().into()).is_zero(){
+						*x = x.saturating_add(One::one());
+					}
 				} else {
 					*x = Zero::zero();
 				}
 			);
 
-			T::DbWeight::get().reads_writes(2, 1)
+			T::DbWeight::get().reads_writes(4, 3)
 		}
 
-		fn on_finalize() -> Weight {
+		fn on_finalize(_n: BlockNumberFor<T>) -> () {
 			let active_sequencers = ActiveSequencers::<T>::get();
 			let next_sequencer_index = NextSequencerIndex::<T>::get();
 			if active_sequencers.len().is_zero(){
@@ -82,17 +85,16 @@ pub mod pallet {
 			} else {
 				if next_sequencer_index > active_sequencers.len() as u32{
 					log!(error, "Value of NextSequencerIndex - {:?}, greater than ActiveSequencers length - {:?}", next_sequencer_index, active_sequencers.len());
-					NextSequencerIndex::<T>::put(Zero::zero());
-					SelectedSequencer::<T>::put(active_sequencers.get(Zero::zero()).expect("We checked that ActiveSequencers length is non-zero"));
+					NextSequencerIndex::<T>::put(SequencerIndex::zero());
+					SelectedSequencer::<T>::put(active_sequencers.get(SequencerIndex::zero() as usize).expect("We checked that ActiveSequencers length is non-zero"));
 				} else if next_sequencer_index == active_sequencers.len() as u32{
-					NextSequencerIndex::<T>::put(Zero::zero());
-					SelectedSequencer::<T>::put(active_sequencers.get(Zero::zero()).expect("We checked that ActiveSequencers length is non-zero"));
+					NextSequencerIndex::<T>::put(SequencerIndex::zero());
+					SelectedSequencer::<T>::put(active_sequencers.get(SequencerIndex::zero() as usize).expect("We checked that ActiveSequencers length is non-zero"));
 				} else {
-					SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
+					SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index as usize).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
 				}
 			}
 
-			T::DbWeight::get().reads_writes(2, 2)
 		}
 	}
 
@@ -125,14 +127,19 @@ pub mod pallet {
 
 	
 	#[pallet::storage]
+	#[pallet::getter(fn get_current_round)]
+	pub type CurrentRound<T: Config> =
+		StorageValue<_, RoundIndex, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_next_sequencer_index)]
 	pub type NextSequencerIndex<T: Config> =
-		StorageValue<_, SequencerIndex, OptionQuery>;
+		StorageValue<_, SequencerIndex, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_round_collators)]
 	pub type RoundCollators<T: Config> =
-		StorageMap<_, Blake2_128Concat, RoundIndex, Vec<AccountId>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, RoundIndex, Vec<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -146,13 +153,18 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+
+	}
 
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {
 		OperationFailed,
 		MathOverflow,
+		SequencerIsNotInActiveSet,
+		SequencerAlreadyInActiveSet,
+		CantUnstakeWhileInActiveSet,
 	}
 
 	#[pallet::config]
@@ -172,12 +184,15 @@ pub mod pallet {
 		type NoOfPastSessionsForEligibility: Get<u32>;
 		#[pallet::constant]
 		type MaxSequencers: Get<u32>;
+		#[pallet::constant]
+		type BlocksForSequencerUpdate: Get<u32>;
+		
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(4, 5 + T::MaxSequencers::get()).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(4, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			stake_amount: BalanceOf<T>,
@@ -204,7 +219,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3 + T::MaxSequencers::get()).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn leave_active_sequencers(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -217,7 +232,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3 + T::MaxSequencers::get()).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn rejoin_active_sequencers(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -246,7 +261,11 @@ pub mod pallet {
 			T::RolldownProvider::sequencer_unstaking(sender)?;
 
 			let sequencer_stake = SequencerStake::<T>::get(sender);
-			T::Currency::unreserve(&sender, sequencer_stake)?;
+			let unreserve_remaining = T::Currency::unreserve(&sender, sequencer_stake);
+			if !unreserve_remaining.is_zero(){
+				log!(error, "unstake unreserve_remaining is non-zero - sender {:?}, sequencer {:?}, unreserve_remaining {:?}", &sender, sequencer_stake, unreserve_remaining);
+			}
+			
 			SequencerStake::<T>::remove(sender);
 
 			Ok(().into())
@@ -254,7 +273,7 @@ pub mod pallet {
 
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2 + T::MaxSequencers::get(), 5 + T::MaxSequencers::get()).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2.saturating_add(T::MaxSequencers::get().into()), 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn set_sequencer_configuration(
 			origin: OriginFor<T>,
 			minimal_stake_amount: BalanceOf<T>,
@@ -266,9 +285,9 @@ pub mod pallet {
 			<SlashFineAmount<T>>::put(slash_fine_amount);
 
 			let active_sequencers = ActiveSequencers::<T>::get();
-			let deactivating_sequencers = active_sequencers.filter(|s| {
+			let deactivating_sequencers = active_sequencers.into_iter().filter(|s| {
 				SequencerStake::<T>::get(s) < minimal_stake_amount
-			});
+			}).collect::<_>();
 
 			Pallet::<T>::remove_sequencers_from_active_set(deactivating_sequencers);
 
@@ -278,12 +297,12 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn initialize_sequencers(collators: Vec<T::AccountId>) {
+	fn initialize_eligible_sequencers(collators: Vec<T::AccountId>) {
 		EligibleToBeSequencers::<T>::put(
 			BTreeMap::from(
-				collators.iter().map(
+				collators.clone().into_iter().map(
 					|s| (s, RoundRefCount::one())
-				).collect::<_>()
+				).collect::<BTreeMap<AccountIdOf<T>, RoundRefCount>>()
 			)
 		);
 		let round_index = CurrentRound::<T>::get();
@@ -297,7 +316,7 @@ impl<T: Config> Pallet<T> {
 		let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
 		let mut exiting_collators = vec![];
 		if round_index >= T::NoOfPastSessionsForEligibility::get(){
-			let first_round_collators_of_window = RoundCollators::<T>::take(round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()))
+			let first_round_collators_of_window = RoundCollators::<T>::take(round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()));
 			for col in first_round_collators_of_window {
 				match eligible_to_be_sequencers.entry(col) {
 					Vacant(x) => {log!(error, "exiting_collator {:?} not in eligible_to_be_sequencers {:?}", col, eligible_to_be_sequencers)},
@@ -310,7 +329,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		for col in collators {
-			eligible_to_be_sequencers.entry(col).and_modify(|x| {*x.saturating_add(One::one())}).or_insert(One::one());
+			eligible_to_be_sequencers.entry(col).and_modify(|x| {*x = x.saturating_add(One::one())}).or_insert(One::one());
 		}
 
 		RoundCollators::<T>::insert(round_index, collators);
@@ -321,15 +340,15 @@ impl<T: Config> Pallet<T> {
 		// Remove from the storage item ActiveSequencers
 		// To remove rights - call handle_sequencer_deactivation?
 		// dedup maybe?
-		maybe_remove_sequencers_from_active_set(exiting_collators);
+		Self::maybe_remove_sequencers_from_active_set(exiting_collators);
 	}
 
-	fn maybe_remove_sequencers_from_active_set(maybe_deactivating_sequencers: Vec<T::AccountId>){
+	fn maybe_remove_sequencers_from_active_set(mut maybe_deactivating_sequencers: Vec<T::AccountId>){
 		let active_sequencers = ActiveSequencers::<T>::get();
 		maybe_deactivating_sequencers.retain(|&x|{
-			active_sequencers.contains(x);
+			active_sequencers.contains(&x)
 		});
-		remove_sequencers_from_active_set(maybe_deactivating_sequencers);
+		Self::remove_sequencers_from_active_set(maybe_deactivating_sequencers);
 	}
 
 	// Caller should check if the sequencer is infact in the active set
@@ -340,16 +359,16 @@ impl<T: Config> Pallet<T> {
 
 		// At this point NextSequencerIndex should already have been updated 
 		let next_sequencer_index = NextSequencerIndex::<T>::get();
-		let active_sequencers = ActiveSequencers::<T>::get();
+		let mut active_sequencers = ActiveSequencers::<T>::get();
 
 		let mut index: SequencerIndex = 0;
 		let mut next_sequencer_index_offset: SequencerIndex = 0;
 		active_sequencers.retain(|x| {
 			let should_remove = deactivating_sequencers.contains(x);
 			if should_remove && index < next_sequencer_index{
-				next_sequencer_index_offset.saturating_add(One::one());
+				next_sequencer_index_offset = next_sequencer_index_offset.saturating_add(One::one());
 			}
-			index.saturating_add(One::one());
+			index = index.saturating_add(One::one());
 			!should_remove
 		});
 
@@ -361,12 +380,9 @@ impl<T: Config> Pallet<T> {
 
 }
 
-// TODO
-// Init SelectedSequencer and NextSequencerIndex
-
-// TODO
-// empty set of active sequncer -> set None in Selected Sequencer and then no one
-// is allowed to read L1 to L2 till some seq join the active set
+impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
+	type Public = T::AuthorityId;
+}
 
 impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 	type Key = T::AuthorityId;
@@ -375,15 +391,15 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 	where
 		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 	{
-		let authorities = validators.map(|(v, _)| v).collect::<Vec<_>>();
-		Self::initialize_eligible_sequencers(&authorities);
+		let authorities = validators.into_iter().map(|(v, _)| *v).collect::<Vec<_>>();
+		Self::initialize_eligible_sequencers(authorities);
 	}
 
 	fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, _queued_validators: I)
 	where
 		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 	{
-		let authorities = validators.map(|(v, _)| v).collect::<Vec<_>>();
+		let authorities = validators.into_iter().map(|(v, _)| *v).collect::<Vec<_>>();
 		Self::process_new_session_collators(authorities);
 	}
 
@@ -394,7 +410,7 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {
 	fn is_active_sequencer(sequencer: AccountIdOf<T>) -> bool {
-		ActiveSequencers::<T>::get().contains(sequencer)
+		ActiveSequencers::<T>::get().contains(&sequencer)
 	}
 
 	fn slash_sequencer(sequencer: AccountIdOf<T>) -> DispatchResult {

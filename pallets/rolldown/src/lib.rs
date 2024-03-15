@@ -161,6 +161,16 @@ pub mod pallet {
 	pub type pending_updates<T: Config> =
 		StorageMap<_, Blake2_128Concat, sp_core::U256, PendingUpdate<T::AccountId>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_awaiting_cancel_resolution)]
+	pub type AwaitingCancelResolution<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BTreeSet<U256>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_last_update_by_sequencer)]
+	pub type LastUpdateBySequencer<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, U256, OptionQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -241,6 +251,7 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
+			ensure!(T::SequencerStakingProvider::is_selected_sequencer(&sequencer), Error::<T>::OnlySelectedSequencerisAllowedToUpdate);
 			Self::validate_l1_update(&requests)?;
 
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
@@ -275,6 +286,8 @@ pub mod pallet {
 
 			let update: messages::eth_abi::L1Update = requests.clone().into();
 			let request_hash = Keccak256::digest(&update.abi_encode());
+
+			LastUpdateBySequencer::<T>::insert(sequencer, current_block_number);
 
 			Pallet::<T>::deposit_event(Event::PendingRequestStored((
 				sequencer,
@@ -335,6 +348,9 @@ pub mod pallet {
 			};
 			// add cancel request to pending updates
 			pending_updates::<T>::insert(l2RequestId, PendingUpdate::Cancel(cancel_request));
+
+			AwaitingCancelResolution::<T>::mutate(submitter, |v| v.insert(l2RequestId));
+			AwaitingCancelResolution::<T>::mutate(canceler, |v| v.insert(l2RequestId));
 
 			let l2_origin_updates_counter = Self::get_l2_origin_updates_counter()
 				.checked_add(1)
@@ -615,6 +631,9 @@ impl<T: Config> Pallet<T> {
 
 		pending_updates::<T>::remove(cancel_request_id);
 
+		AwaitingCancelResolution::<T>::mutate(submitter, |v| v.remove(cancel_request_id));
+		AwaitingCancelResolution::<T>::mutate(canceler, |v| v.remove(cancel_request_id));
+
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
 
@@ -641,19 +660,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn slash(sequencer: &T::AccountId) -> Result<(), &'static str> {
-		// check if sequencer is active
-		let is_active_sequencer_before =
-			T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
 		// slash sequencer
 		T::SequencerStakingProvider::slash_sequencer(sequencer.clone())?;
-		// check if sequencer is active
-		let is_active_sequencer_after =
-			T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
-
-		// if sequencer was active and is not active anymore, remove rights
-		if is_active_sequencer_before && !is_active_sequencer_after {
-			Self::handle_sequencer_deactivation(sequencer.clone());
-		}
 
 		log!(debug, "SLASH for: {:?}", sequencer);
 
@@ -731,6 +739,20 @@ impl<T: Config> Pallet<T> {
 				});
 			}
 		}
+	}
+
+	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
+		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
+		// lower sequencer count
+		sequencer_count::<T>::put(Self::get_sequencer_count().saturating_sub(deactivated_sequencers_len.into()));
+		// remove all rights of deactivated sequencer
+		for deactivated_sequencer in deactivated_sequencers {
+			sequencer_rights::<T>::remove(deactivated_sequencer.clone());
+		}
+		sequencer_rights::<T>::translate(|_k, mut v| {
+			*v.cancelRights = v.cancelRights.saturating_sub(RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len));
+			Some(v)
+		});
 	}
 
 	pub fn pending_updates_proof() -> sp_core::H256 {
@@ -811,5 +833,23 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 				});
 			}
 		}
+	}
+
+	fn sequencer_unstaking(sequencer: AccountIdOf<T>) -> DispatchResult{
+		ensure!(
+			LastUpdateBySequencer::<T>::get(&sequencer).saturating_add(T::DisputePeriodLength::get())
+			<
+			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
+			Error::<T>::SequencerLastUpdateStillInDisputePeriod
+		);
+		ensure!(
+			AwaitingCancelResolution::<T>::get(&sequencer).is_empty(),
+			Error::<T>::SequencerAwaitingCancelResolution
+		);
+
+		LastUpdateBySequencer::<T>::remove(&sequencer);
+		AwaitingCancelResolution::<T>::remove(&sequencer);
+
+		Ok(())
 	}
 }

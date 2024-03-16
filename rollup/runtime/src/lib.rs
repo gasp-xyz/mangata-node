@@ -770,6 +770,10 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = Rolldown;
+	type AuthorityId = AuraId;
+	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<10>;
+	type MaxSequencers = frame_support::traits::ConstU32<10>;
+	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

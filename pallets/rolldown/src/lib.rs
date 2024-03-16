@@ -21,7 +21,7 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{serde::Serialize, traits::Convert};
-use sp_std::{convert::TryInto, prelude::*, vec::Vec};
+use sp_std::{convert::TryInto, prelude::*, vec::Vec, collections::btree_set::BTreeSet};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -162,14 +162,15 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, sp_core::U256, PendingUpdate<T::AccountId>, OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn get_awaiting_cancel_resolution)]
 	pub type AwaitingCancelResolution<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, BTreeSet<U256>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, BTreeSet<U256>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_update_by_sequencer)]
 	pub type LastUpdateBySequencer<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, U256, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -194,6 +195,9 @@ pub mod pallet {
 		InvalidUpdate,
 		L1AssetNotFound,
 		WrongRequestId,
+		OnlySelectedSequencerisAllowedToUpdate,
+		SequencerLastUpdateStillInDisputePeriod,
+		SequencerAwaitingCancelResolution
 	}
 
 	#[pallet::config]
@@ -287,7 +291,7 @@ pub mod pallet {
 			let update: messages::eth_abi::L1Update = requests.clone().into();
 			let request_hash = Keccak256::digest(&update.abi_encode());
 
-			LastUpdateBySequencer::<T>::insert(sequencer, current_block_number);
+			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
 
 			Pallet::<T>::deposit_event(Event::PendingRequestStored((
 				sequencer,
@@ -340,8 +344,8 @@ pub mod pallet {
 			// create cancel request
 			let cancel_request = Cancel {
 				l2RequestId,
-				updater: submitter,
-				canceler,
+				updater: submitter.clone(),
+				canceler: canceler.clone(),
 				lastProccessedRequestOnL1: request.lastProccessedRequestOnL1,
 				lastAcceptedRequestOnL1: request.lastAcceptedRequestOnL1,
 				hash: hash_of_pending_request,
@@ -427,7 +431,7 @@ pub mod pallet {
 			sequencer_rights::<T>::mutate_exists(submitter.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
-						if T::SequencerStakingProvider::is_active_sequencer(submitter.clone()) =>
+						if T::SequencerStakingProvider::is_active_sequencer(&submitter) =>
 					{
 						sequencer_rights.readRights = 1;
 					},
@@ -473,7 +477,7 @@ impl<T: Config> Pallet<T> {
 			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
-						if T::SequencerStakingProvider::is_active_sequencer(sequencer.clone()) =>
+						if T::SequencerStakingProvider::is_active_sequencer(sequencer) =>
 					{
 						sequencer_rights.readRights += 1;
 					},
@@ -611,7 +615,7 @@ impl<T: Config> Pallet<T> {
 		sequencer_rights::<T>::mutate_exists(updater.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
-					if T::SequencerStakingProvider::is_active_sequencer(updater) =>
+					if T::SequencerStakingProvider::is_active_sequencer(&updater) =>
 				{
 					sequencer.readRights += 1;
 				},
@@ -621,7 +625,7 @@ impl<T: Config> Pallet<T> {
 		sequencer_rights::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
-					if T::SequencerStakingProvider::is_active_sequencer(canceler) =>
+					if T::SequencerStakingProvider::is_active_sequencer(&canceler) =>
 				{
 					sequencer.cancelRights += 1;
 				},
@@ -631,8 +635,8 @@ impl<T: Config> Pallet<T> {
 
 		pending_updates::<T>::remove(cancel_request_id);
 
-		AwaitingCancelResolution::<T>::mutate(submitter, |v| v.remove(cancel_request_id));
-		AwaitingCancelResolution::<T>::mutate(canceler, |v| v.remove(cancel_request_id));
+		AwaitingCancelResolution::<T>::mutate(&updater, |v| v.remove(&cancel_request_id));
+		AwaitingCancelResolution::<T>::mutate(&canceler, |v| v.remove(&cancel_request_id));
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		Self::slash(&to_be_slashed);
@@ -661,7 +665,7 @@ impl<T: Config> Pallet<T> {
 
 	fn slash(sequencer: &T::AccountId) -> Result<(), &'static str> {
 		// slash sequencer
-		T::SequencerStakingProvider::slash_sequencer(sequencer.clone())?;
+		T::SequencerStakingProvider::slash_sequencer(sequencer)?;
 
 		log!(debug, "SLASH for: {:?}", sequencer);
 
@@ -749,8 +753,8 @@ impl<T: Config> Pallet<T> {
 		for deactivated_sequencer in deactivated_sequencers {
 			sequencer_rights::<T>::remove(deactivated_sequencer.clone());
 		}
-		sequencer_rights::<T>::translate(|_k, mut v| {
-			*v.cancelRights = v.cancelRights.saturating_sub(RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len));
+		sequencer_rights::<T>::translate::<SequencerRights, _>(|_k, mut v| {
+			v.cancelRights = v.cancelRights.saturating_sub(RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len.into()));
 			Some(v)
 		});
 	}
@@ -811,12 +815,12 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
-	fn new_sequencer_active(sequencer: AccountIdOf<T>) {
+	fn new_sequencer_active(sequencer: &AccountIdOf<T>) {
 		// raise sequencer count
 		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
 		// add rights to new sequencer
 		sequencer_rights::<T>::insert(
-			sequencer.clone(),
+			sequencer,
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
 				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get() - 1),
@@ -835,9 +839,9 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 		}
 	}
 
-	fn sequencer_unstaking(sequencer: AccountIdOf<T>) -> DispatchResult{
+	fn sequencer_unstaking(sequencer: &AccountIdOf<T>) -> DispatchResult{
 		ensure!(
-			LastUpdateBySequencer::<T>::get(&sequencer).saturating_add(T::DisputePeriodLength::get())
+			LastUpdateBySequencer::<T>::get(sequencer).saturating_add(T::DisputePeriodLength::get())
 			<
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 			Error::<T>::SequencerLastUpdateStillInDisputePeriod
@@ -852,4 +856,9 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 
 		Ok(())
 	}
+
+	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
+		Pallet::<T>::handle_sequencer_deactivations(deactivated_sequencers)
+	}
+
 }

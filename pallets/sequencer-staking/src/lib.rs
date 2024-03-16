@@ -109,12 +109,14 @@ use super::*;
 		StorageValue<_, RoundIndex, ValueQuery>;
 	
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn get_eligible_to_be_sequencers)]
 	pub type EligibleToBeSequencers<T: Config> =
 		StorageValue<_, BTreeMap<AccountIdOf<T>, RoundRefCount>, ValueQuery>;
 
 
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn get_active_sequencers)]
 	pub type ActiveSequencers<T: Config> =
 		StorageValue<_, Vec<AccountIdOf<T>>, ValueQuery>;
@@ -137,6 +139,7 @@ use super::*;
 		StorageValue<_, SequencerIndex, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn get_round_collators)]
 	pub type RoundCollators<T: Config> =
 		StorageMap<_, Blake2_128Concat, RoundIndex, Vec<T::AccountId>, ValueQuery>;
@@ -201,12 +204,12 @@ use super::*;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(sender)
+				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(&sender)
 				{
 					ActiveSequencers::<T>::mutate(|active_sequencers|{
-						active_sequencers.push(sender);
+						active_sequencers.push(sender.clone());
 					});
-					T::RolldownProvider::new_sequencer_active(sender.clone());
+					T::RolldownProvider::new_sequencer_active(&sender);
 				}
 				Ok(())
 			})?;
@@ -224,7 +227,7 @@ use super::*;
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(Self::is_active_sequencer(sender), Error::<T>::SequencerIsNotInActiveSet);
+			ensure!(Self::is_active_sequencer(&sender), Error::<T>::SequencerIsNotInActiveSet);
 
 			Self::remove_sequencers_from_active_set(vec![sender]);
 
@@ -237,13 +240,13 @@ use super::*;
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(!Self::is_active_sequencer(sender), Error::<T>::SequencerAlreadyInActiveSet);
-			if SequencerStake::<T>::get(sender) >= MinimalStakeAmount::<T>::get()
+			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::SequencerAlreadyInActiveSet);
+			if SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get()
 			{
 				ActiveSequencers::<T>::mutate(|active_sequencers|{
-					active_sequencers.push(sender);
+					active_sequencers.push(sender.clone());
 				});
-				T::RolldownProvider::new_sequencer_active(sender.clone());
+				T::RolldownProvider::new_sequencer_active(&sender);
 			}
 
 			Ok(().into())
@@ -256,11 +259,11 @@ use super::*;
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(!Self::is_active_sequencer(sender), Error::<T>::CantUnstakeWhileInActiveSet);
+			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::CantUnstakeWhileInActiveSet);
 
-			T::RolldownProvider::sequencer_unstaking(sender)?;
+			T::RolldownProvider::sequencer_unstaking(&sender)?;
 
-			let sequencer_stake = SequencerStake::<T>::get(sender);
+			let sequencer_stake = SequencerStake::<T>::get(&sender);
 			let unreserve_remaining = T::Currency::unreserve(&sender, sequencer_stake);
 			if !unreserve_remaining.is_zero(){
 				log!(error, "unstake unreserve_remaining is non-zero - sender {:?}, sequencer {:?}, unreserve_remaining {:?}", &sender, sequencer_stake, unreserve_remaining);
@@ -318,7 +321,7 @@ impl<T: Config> Pallet<T> {
 		if round_index >= T::NoOfPastSessionsForEligibility::get(){
 			let first_round_collators_of_window = RoundCollators::<T>::take(round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()));
 			for col in first_round_collators_of_window {
-				match eligible_to_be_sequencers.entry(col) {
+				match eligible_to_be_sequencers.entry(col.clone()) {
 					Vacant(x) => {log!(error, "exiting_collator {:?} not in eligible_to_be_sequencers {:?}", col, eligible_to_be_sequencers)},
 					Occupied(x) if *x.get() == 1 => { x.remove(); exiting_collators.push(col);}
 					Occupied(mut x) => {
@@ -328,7 +331,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		for col in collators {
+		for col in collators.clone() {
 			eligible_to_be_sequencers.entry(col).and_modify(|x| {*x = x.saturating_add(One::one())}).or_insert(One::one());
 		}
 
@@ -345,7 +348,7 @@ impl<T: Config> Pallet<T> {
 
 	fn maybe_remove_sequencers_from_active_set(mut maybe_deactivating_sequencers: Vec<T::AccountId>){
 		let active_sequencers = ActiveSequencers::<T>::get();
-		maybe_deactivating_sequencers.retain(|&x|{
+		maybe_deactivating_sequencers.retain(|x|{
 			active_sequencers.contains(&x)
 		});
 		Self::remove_sequencers_from_active_set(maybe_deactivating_sequencers);
@@ -391,7 +394,7 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 	where
 		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 	{
-		let authorities = validators.into_iter().map(|(v, _)| *v).collect::<Vec<_>>();
+		let authorities = validators.map(|(v, _)| v.clone()).collect::<Vec<_>>();
 		Self::initialize_eligible_sequencers(authorities);
 	}
 
@@ -399,7 +402,7 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 	where
 		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 	{
-		let authorities = validators.into_iter().map(|(v, _)| *v).collect::<Vec<_>>();
+		let authorities = validators.map(|(v, _)| v.clone()).collect::<Vec<_>>();
 		Self::process_new_session_collators(authorities);
 	}
 
@@ -409,21 +412,25 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 }
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {
-	fn is_active_sequencer(sequencer: AccountIdOf<T>) -> bool {
-		ActiveSequencers::<T>::get().contains(&sequencer)
+	fn is_active_sequencer(sequencer: &AccountIdOf<T>) -> bool {
+		ActiveSequencers::<T>::get().contains(sequencer)
 	}
 
-	fn slash_sequencer(sequencer: AccountIdOf<T>) -> DispatchResult {
+	fn is_selected_sequencer(sequencer: &AccountIdOf<T>) -> bool {
+		SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
+	}
+
+	fn slash_sequencer(sequencer: &AccountIdOf<T>) -> DispatchResult {
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
-		<SequencerStake<T>>::try_mutate(&sequencer, |stake| -> DispatchResult {
+		<SequencerStake<T>>::try_mutate(sequencer, |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
 			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);
 			*stake = stake.saturating_sub(slash_fine_amount_actual);
-			let _ = T::Currency::slash_reserved(&sequencer, slash_fine_amount_actual);
+			let _ = T::Currency::slash_reserved(sequencer, slash_fine_amount_actual);
 			Ok(())
 		})?;
 
-		Self::maybe_remove_sequencers_from_active_set(vec![sequencer]);
+		Self::maybe_remove_sequencers_from_active_set(vec![sequencer.clone()]);
 
 		Ok(().into())
 	}
@@ -443,7 +450,7 @@ impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin>
 					if <Pallet<T> as SequencerStakingProviderTrait<
 						AccountIdOf<T>,
 						BalanceOf<T>,
-					>>::is_active_sequencer(who.clone()) =>
+					>>::is_active_sequencer(&who) =>
 					Ok(who.clone()),
 				r => Err(T::RuntimeOrigin::from(r)),
 			}

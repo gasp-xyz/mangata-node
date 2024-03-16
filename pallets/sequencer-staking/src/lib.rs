@@ -104,11 +104,6 @@ use super::*;
 		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_current_round_index)]
-	pub type CurrentRoundIndex<T: Config> =
-		StorageValue<_, RoundIndex, ValueQuery>;
-	
-	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_eligible_to_be_sequencers)]
 	pub type EligibleToBeSequencers<T: Config> =
@@ -337,7 +332,7 @@ impl<T: Config> Pallet<T> {
 
 		RoundCollators::<T>::insert(round_index, collators);
 		EligibleToBeSequencers::<T>::put(eligible_to_be_sequencers);
-		CurrentRoundIndex::<T>::put(round_index);
+		CurrentRound::<T>::put(round_index);
 
 		// TODO
 		// Remove from the storage item ActiveSequencers

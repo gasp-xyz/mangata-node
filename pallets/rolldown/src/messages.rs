@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use alloy_primitives::FixedBytes;
 use alloy_sol_types::SolValue;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::{
@@ -93,6 +94,7 @@ pub struct Deposit {
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
 	pub amount: sp_core::U256,
+	pub blockHash: sp_core::H256,
 }
 
 impl Into<eth_abi::Deposit> for Deposit {
@@ -102,6 +104,7 @@ impl Into<eth_abi::Deposit> for Deposit {
 			depositRecipient: self.depositRecipient.into(),
 			tokenAddress: self.tokenAddress.into(),
 			amount: to_eth_u256(self.amount),
+			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
 		}
 	}
 }
@@ -117,14 +120,20 @@ pub struct Withdraw {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct L2UpdatesToRemove {
 	pub requestId: RequestId,
-	pub l2UpdatesToRemove: Vec<RequestId>,
+	pub l2UpdatesToRemove: Vec<u128>,
+	pub blockHash: sp_core::H256,
 }
 
 impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 	fn into(self) -> eth_abi::L2UpdatesToRemove {
 		eth_abi::L2UpdatesToRemove {
 			requestId: self.requestId.into(),
-			l2UpdatesToRemove: self.l2UpdatesToRemove.into_iter().map(|req| req.into()).collect(),
+			l2UpdatesToRemove: self
+				.l2UpdatesToRemove
+				.into_iter()
+				.map(|rid| to_eth_u256(rid.into()))
+				.collect(),
+			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
 		}
 	}
 }
@@ -134,6 +143,7 @@ pub struct CancelResolution {
 	pub requestId: RequestId,
 	pub l2RequestId: u128,
 	pub cancelJustified: bool,
+	pub blockHash: sp_core::H256,
 }
 
 impl Into<eth_abi::CancelResolution> for CancelResolution {
@@ -142,22 +152,35 @@ impl Into<eth_abi::CancelResolution> for CancelResolution {
 			requestId: self.requestId.into(),
 			l2RequestId: to_eth_u256(self.l2RequestId.into()),
 			cancelJustified: self.cancelJustified.into(),
+			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
 		}
 	}
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-#[repr(u8)]
-pub enum PendingRequestType {
-	DEPOSIT,
-	CANCEL_RESOLUTION,
-	L2_UPDATES_TO_REMOVE,
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+pub struct WithdrawalResolution {
+	pub requestId: RequestId,
+	pub l2RequestId: u128,
+	pub status: bool,
+	pub blockHash: H256,
+}
+
+impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
+	fn into(self) -> eth_abi::WithdrawalResolution {
+		eth_abi::WithdrawalResolution {
+			requestId: self.requestId.into(),
+			l2RequestId: to_eth_u256(self.l2RequestId.into()),
+			status: self.status.into(),
+			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
+		}
+	}
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L1Update {
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResultions: Vec<CancelResolution>,
+	pub pendingWithdrawalResolutions: Vec<WithdrawalResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
 
@@ -166,6 +189,7 @@ pub enum L1UpdateRequest {
 	Deposit(Deposit),
 	CancelResolution(CancelResolution),
 	Remove(L2UpdatesToRemove),
+	WithdrawalResolution(WithdrawalResolution),
 }
 
 impl L1UpdateRequest {
@@ -174,6 +198,7 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.clone(),
+			L1UpdateRequest::WithdrawalResolution(withdrawal) => withdrawal.requestId.clone(),
 		}
 	}
 
@@ -182,6 +207,7 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.id.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.id.clone(),
+			L1UpdateRequest::WithdrawalResolution(withdrawal) => withdrawal.requestId.id.clone(),
 		}
 	}
 
@@ -190,17 +216,8 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
 			L1UpdateRequest::Remove(remove) => remove.requestId.origin.clone(),
-		}
-	}
-}
-
-impl Into<eth_abi::PendingRequestType> for PendingRequestType {
-	fn into(self) -> eth_abi::PendingRequestType {
-		match self {
-			PendingRequestType::DEPOSIT => eth_abi::PendingRequestType::DEPOSIT,
-			PendingRequestType::CANCEL_RESOLUTION => eth_abi::PendingRequestType::CANCEL_RESOLUTION,
-			PendingRequestType::L2_UPDATES_TO_REMOVE =>
-				eth_abi::PendingRequestType::L2_UPDATES_TO_REMOVE,
+			L1UpdateRequest::WithdrawalResolution(withdrawal) =>
+				withdrawal.requestId.origin.clone(),
 		}
 	}
 }
@@ -211,6 +228,7 @@ impl L1Update {
 			self.pendingDeposits.first().map(|v| v.requestId.id),
 			self.pendingCancelResultions.first().map(|v| v.requestId.id),
 			self.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
+			self.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
 		]
 		.into_iter()
 		.cloned()
@@ -221,6 +239,7 @@ impl L1Update {
 			self.pendingDeposits.last().map(|v| v.requestId.id),
 			self.pendingCancelResultions.last().map(|v| v.requestId.id),
 			self.pendingL2UpdatesToRemove.last().map(|v| v.requestId.id),
+			self.pendingWithdrawalResolutions.last().map(|v| v.requestId.id),
 		]
 		.into_iter()
 		.cloned()
@@ -232,40 +251,59 @@ impl L1Update {
 			None
 		}
 	}
+
 	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
 		let mut result: Vec<L1UpdateRequest> = Default::default();
 
-		let L1Update { pendingDeposits, pendingCancelResultions, pendingL2UpdatesToRemove } = self;
+		let L1Update {
+			pendingDeposits,
+			pendingCancelResultions,
+			pendingL2UpdatesToRemove,
+			pendingWithdrawalResolutions,
+		} = self;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
 		let mut cancel_it = pendingCancelResultions.into_iter().peekable();
 		let mut remove_it = pendingL2UpdatesToRemove.into_iter().peekable();
+		let mut withdrawal_it = pendingWithdrawalResolutions.into_iter().peekable();
 
 		loop {
 			let min = [
 				deposits_it.peek().map(|v| v.requestId.id),
 				cancel_it.peek().map(|v| v.requestId.id),
 				remove_it.peek().map(|v| v.requestId.id),
+				withdrawal_it.peek().map(|v| v.requestId.id),
 			]
 			.into_iter()
 			.cloned()
 			.filter_map(|v| v)
 			.min();
 
-			match (deposits_it.peek(), cancel_it.peek(), remove_it.peek(), min) {
-				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
+			match (
+				deposits_it.peek(),
+				cancel_it.peek(),
+				remove_it.peek(),
+				withdrawal_it.peek(),
+				min,
+			) {
+				(Some(deposit), _, _, _, Some(min)) if deposit.requestId.id == min => {
 					if let Some(elem) = deposits_it.next() {
 						result.push(L1UpdateRequest::Deposit(elem.clone()));
 					}
 				},
-				(_, Some(cancel), _, Some(min)) if cancel.requestId.id == min => {
+				(_, Some(cancel), _, _, Some(min)) if cancel.requestId.id == min => {
 					if let Some(elem) = cancel_it.next() {
 						result.push(L1UpdateRequest::CancelResolution(elem.clone()));
 					}
 				},
-				(_, _, Some(update), Some(min)) if update.requestId.id == min => {
+				(_, _, Some(update), _, Some(min)) if update.requestId.id == min => {
 					if let Some(elem) = remove_it.next() {
 						result.push(L1UpdateRequest::Remove(elem.clone()));
+					}
+				},
+				(_, _, _, Some(update), Some(min)) if update.requestId.id == min => {
+					if let Some(elem) = withdrawal_it.next() {
+						result.push(L1UpdateRequest::WithdrawalResolution(elem.clone()));
 					}
 				},
 				_ => break,
@@ -302,7 +340,34 @@ impl Into<eth_abi::L1Update> for L1Update {
 				.into_iter()
 				.map(Into::into)
 				.collect::<Vec<_>>(),
+			pendingWithdrawalResolutions: self
+				.pendingWithdrawalResolutions
+				.into_iter()
+				.map(Into::into)
+				.collect::<Vec<_>>(),
 		}
+	}
+}
+
+impl TryFrom<eth_abi::WithdrawalResolution> for WithdrawalResolution {
+	type Error = String;
+
+	fn try_from(value: eth_abi::WithdrawalResolution) -> Result<Self, Self::Error> {
+		let request_id = value
+			.requestId
+			.try_into()
+			.map_err(|e| format!("Error converting requestId: {}", e))?;
+		let l2RequestId = value
+			.l2RequestId
+			.try_into()
+			.map_err(|e| format!("Error converting l2RequestId: {}", e))?;
+
+		Ok(Self {
+			requestId: request_id,
+			l2RequestId,
+			status: value.status,
+			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
+		})
 	}
 }
 
@@ -321,6 +386,7 @@ impl TryFrom<eth_abi::Deposit> for Deposit {
 			tokenAddress: token_address
 				.map_err(|e| format!("Error converting tokenAddress: {}", e))?,
 			amount: from_eth_u256(deposit.amount),
+			blockHash: sp_core::H256::from_slice(&deposit.blockHash[..]),
 		})
 	}
 }
@@ -335,6 +401,8 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 			update.pendingCancelResultions.into_iter().map(|c| c.try_into()).collect();
 		let pending_l2_updates_to_remove: Result<Vec<_>, _> =
 			update.pendingL2UpdatesToRemove.into_iter().map(|u| u.try_into()).collect();
+		let pending_withdrawal_resolutions: Result<Vec<_>, _> =
+			update.pendingWithdrawalResolutions.into_iter().map(|u| u.try_into()).collect();
 
 		Ok(Self {
 			pendingDeposits: pending_deposits
@@ -343,6 +411,8 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 				.map_err(|e| format!("Error converting pendingCancelResultions: {}", e))?,
 			pendingL2UpdatesToRemove: pending_l2_updates_to_remove
 				.map_err(|e| format!("Error converting pendingL2UpdatesToRemove: {}", e))?,
+			pendingWithdrawalResolutions: pending_withdrawal_resolutions
+				.map_err(|e| format!("Error converting pendingWithdrawalResolutions: {}", e))?,
 		})
 	}
 }
@@ -388,6 +458,7 @@ impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
 			l2RequestId: l2_request_id
 				.map_err(|e| format!("Error converting l2_request_id: {}", e))?,
 			cancelJustified: value.cancelJustified,
+			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
 		})
 	}
 }
@@ -399,15 +470,17 @@ impl TryFrom<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 			.try_into()
 			.map_err(|e| format!("Error converting requestId: {}", e))?;
 
-		let l2_updates_to_remove: Result<Vec<RequestId>, _> = value
-			.l2UpdatesToRemove
-			.into_iter()
-			.map(|id| {
-				id.try_into().map_err(|e| format!("Error converting l2UpdatesToRemove: {}", e))
-			})
-			.collect();
+		let l2_updates_to_remove_result: Result<Vec<_>, _> =
+			value.l2UpdatesToRemove.into_iter().map(|id| id.try_into()).collect();
 
-		Ok(Self { requestId: request_id, l2UpdatesToRemove: l2_updates_to_remove? })
+		let l2_updates_to_remove = l2_updates_to_remove_result
+			.map_err(|e| format!("Error converting l2UpdatesToRemove: {}", e))?;
+
+		Ok(Self {
+			requestId: request_id,
+			l2UpdatesToRemove: l2_updates_to_remove,
+			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
+		})
 	}
 }
 
@@ -428,35 +501,56 @@ pub mod eth_abi {
 	use scale_info::TypeInfo;
 	sol! {
 		// L1 to L2
+		#[derive(Debug)]
 		struct Deposit {
 			RequestId requestId;
 			address depositRecipient;
 			address tokenAddress;
 			uint256 amount;
+			bytes32 blockHash;
 		}
 
+		#[derive(Debug)]
 		struct L2UpdatesToRemove {
 			RequestId requestId;
-			RequestId[] l2UpdatesToRemove;
+			uint256[] l2UpdatesToRemove;
+			bytes32 blockHash;
 		}
 
+		#[derive(Debug)]
+		struct WithdrawalResolution {
+			RequestId requestId;
+			uint256 l2RequestId;
+			bool status;
+			bytes32 blockHash;
+		}
+
+		#[derive(Debug)]
 		struct CancelResolution {
 			RequestId requestId;
 			uint256 l2RequestId;
 			bool cancelJustified;
+			bytes32 blockHash;
 		}
 
-		enum PendingRequestType{ DEPOSIT, CANCEL_RESOLUTION, L2_UPDATES_TO_REMOVE}
-
+		#[derive(Debug)]
 		struct L1Update {
 			Deposit[] pendingDeposits;
 			CancelResolution[] pendingCancelResultions;
+			WithdrawalResolution[] pendingWithdrawalResolutions;
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
 		}
 
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
-		enum UpdateType{ DEPOSIT, WITHDRAWAL, INDEX_UPDATE, CANCEL_RESOLUTION}
+		enum UpdateType{
+			DEPOSIT,
+			WITHDRAWAL,
+			WITHDRAWAL_RESOLUTION,
+			INDEX_UPDATE,
+			CANCEL,
+			CANCEL_RESOLUTION
+		}
 
 		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
 		enum Origin{ L1, L2 }

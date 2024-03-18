@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -6,11 +7,10 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, PendingRequestType, RequestId, UpdateType, L1};
-use scale_info::prelude::string::String;
+use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
+use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
-use scale_info::prelude::format;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -482,6 +482,16 @@ impl<T: Config> Pallet<T> {
 		T::RequestsPerBlock::get()
 	}
 
+	pub fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool> {
+		let pending_requests_to_process = pending_requests::<T>::get(request_id, L1::Ethereum);
+		if let Some((_, l1_update)) = pending_requests_to_process {
+			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
+			Some(hash == calculated_hash)
+		} else {
+			None
+		}
+	}
+
 	// should run each block, check if dispute period ended, if yes, process pending requests
 	fn end_dispute_period() {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
@@ -534,6 +544,10 @@ impl<T: Config> Pallet<T> {
 			messages::L1UpdateRequest::CancelResolution(cancel) => (
 				Self::process_cancel_resolution(l1, &cancel).is_ok(),
 				UpdateType::CANCEL_RESOLUTION,
+			),
+			messages::L1UpdateRequest::WithdrawalResolution(withdrawal) => (
+				Self::process_withdrawal_resolution(l1, &withdrawal).is_ok(),
+				UpdateType::WITHDRAWAL_RESOLUTION,
 			),
 			messages::L1UpdateRequest::Remove(remove) =>
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
@@ -623,6 +637,19 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn process_withdrawal_resolution(
+		l1: L1,
+		withdrawal_resolution: &messages::WithdrawalResolution,
+	) -> Result<(), &'static str> {
+		pending_updates::<T>::remove(
+			l1,
+			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
+		);
+		//TODO: handle sending tokens back
+		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
+		Ok(())
+	}
+
 	fn process_cancel_resolution(
 		l1: L1,
 		cancel_resolution: &messages::CancelResolution,
@@ -679,7 +706,7 @@ impl<T: Config> Pallet<T> {
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			pending_updates::<T>::remove(l1, requestId);
+			pending_updates::<T>::remove(l1, RequestId { origin: Origin::L1, id: *requestId });
 		}
 
 		log!(
@@ -802,7 +829,9 @@ impl<T: Config> Pallet<T> {
 	) -> Result<L1Update, String> {
 		messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)
 			.map_err(|err| format!("Failed to decode L1Update: {}", err))
-			.and_then(|update| update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err)))
+			.and_then(|update| {
+				update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err))
+			})
 	}
 
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {
@@ -885,7 +914,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(lowest_id > 0u128, Error::<T>::WrongRequestId);
 
 		ensure!(
-			lowest_id == last_processed_request_on_l2::<T>::get(l1) + 1,
+			lowest_id <= last_processed_request_on_l2::<T>::get(l1) + 1,
 			Error::<T>::WrongRequestId
 		);
 
@@ -893,6 +922,8 @@ impl<T: Config> Pallet<T> {
 			(update.pendingDeposits.len() as u128) +
 			(update.pendingCancelResultions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
+
+		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut cancel_it = update.pendingCancelResultions.iter();

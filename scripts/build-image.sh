@@ -2,11 +2,11 @@
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 
 if [ -z "${SKIP_BUILD}" ]; then
-    ${REPO_ROOT}/docker-cargo.sh build --release --features=mangata-rococo,mangata-kusama
+    ${REPO_ROOT}/docker-cargo.sh build --release
 else
     echo "build skipped because SKIP_BUILD flag is set"
 fi
-BUILD_DIR=${BUILD_DIR:-./docker-cargo/release}
+BINARY_PATH=${BINARY_PATH:-./docker-cargo/release/rollup-node}
 GIT_REV=$(git -C ${REPO_ROOT} rev-parse HEAD)
 
 if git -C ${REPO_ROOT} diff --quiet HEAD; then
@@ -15,7 +15,7 @@ else
     DOCKER_LABEL=${GIT_REV}-dirty
 fi
 
-DOCKER_IMAGE_TAG=${@:-mangatasolutions/mangata-node:dev}
+DOCKER_IMAGE_TAG=${@:-mangatasolutions/rollup-node:dev}
 DOCKER_TAGS=""
 
 echo "building docker image ${DOCKER_IMAGE_TAG} with tags:"
@@ -24,14 +24,14 @@ for tag in ${DOCKER_IMAGE_TAG}; do
     DOCKER_TAGS="${DOCKER_TAGS} -t ${tag}"
 done
 
-if [ ! -e ${BUILD_DIR} ]; then
-    echo "env variable 'BUILD_DIR' : ${BUILD_DIR} not found" >&2
+if [ ! -e ${BINARY_PATH} ]; then
+    echo "env variable 'BUILD_DIR' : ${BINARY_PATH} not found" >&2
     exit 1
 fi
 
 docker build \
-    --build-arg BUILD_DIR=${BUILD_DIR} \
+    --build-arg BINARY_PATH=${BINARY_PATH} \
     --label "git_rev=${DOCKER_LABEL}" \
     ${DOCKER_TAGS} \
     -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile \
-    ${REPO_ROOT}
+    .

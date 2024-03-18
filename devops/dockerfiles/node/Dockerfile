@@ -1,11 +1,9 @@
 FROM debian:buster
 
-ARG BUILD_DIR=target/release
+ARG BINARY_PATH=target/release/rollup-node
 
-WORKDIR /mangata
+WORKDIR /app
 
-COPY $BUILD_DIR/mangata-node /mangata/node
-COPY $BUILD_DIR/wbuild/mangata-*-runtime/mangata_*_runtime.compact.compressed.wasm /mangata/
-# COPY $BUILD_DIR/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm /mangata/
+COPY ${BINARY_PATH} /app/node
 
-ENTRYPOINT ["/mangata/node"]
+ENTRYPOINT ["/app/node"]

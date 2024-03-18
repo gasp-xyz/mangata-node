@@ -19,10 +19,11 @@ tmp
 benchmarks
 chains
 **/chains/
+./target/*
+./docker-cargo/*
 
-**/target/
 !target/release/rollup-node
-!target/release/wbuild/rollup*
+!docker-cargo/release/rollup-node
 
 # dotfiles in the repo root
 /.*

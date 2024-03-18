@@ -190,7 +190,7 @@ use super::*;
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(4, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			stake_amount: BalanceOf<T>,
@@ -199,7 +199,7 @@ use super::*;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(&sender)
+				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(&sender) && Self::is_eligible_to_be_sequencer(&sender)
 				{
 					ActiveSequencers::<T>::mutate(|active_sequencers|{
 						active_sequencers.push(sender.clone());
@@ -230,13 +230,13 @@ use super::*;
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn rejoin_active_sequencers(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::SequencerAlreadyInActiveSet);
-			if SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get()
+			if SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get() && Self::is_eligible_to_be_sequencer(&sender)
 			{
 				ActiveSequencers::<T>::mutate(|active_sequencers|{
 					active_sequencers.push(sender.clone());
@@ -295,6 +295,11 @@ use super::*;
 }
 
 impl<T: Config> Pallet<T> {
+
+	fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool{
+		EligibleToBeSequencers::<T>::get().contains_key(account)
+	}
+
 	fn initialize_eligible_sequencers(collators: Vec<T::AccountId>) {
 		EligibleToBeSequencers::<T>::put(
 			BTreeMap::from(

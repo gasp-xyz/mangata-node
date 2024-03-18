@@ -6924,7 +6924,6 @@ dependencies = [
 name = "rollup-runtime"
 version = "1.0.0"
 dependencies = [
- "alloy-sol-types",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",

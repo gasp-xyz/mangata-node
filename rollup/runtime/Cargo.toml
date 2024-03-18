@@ -21,7 +21,6 @@ hex-literal = { version = "0.3.1" }
 log = { version = "0.4.17", default-features = false }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
-alloy-sol-types = { version = "0.5.0", default-features = false }
 
 # Local Dependencies
 pallet-bootstrap = { path = "../../pallets/bootstrap", default-features = false, version = "0.1.0" }

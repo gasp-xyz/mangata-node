@@ -8,7 +8,7 @@ sp_api::decl_runtime_apis! {
 	L1Update: Decode {
 		fn get_pending_updates_hash() -> H256;
 		fn get_pending_updates() -> Vec<u8>;
-		fn update_eth_raw(payload: Vec<u8>) -> Option<L1Update>;
+		fn get_native_l1_update(payload: Vec<u8>) -> Option<L1Update>;
 		fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool>;
 	}
 }

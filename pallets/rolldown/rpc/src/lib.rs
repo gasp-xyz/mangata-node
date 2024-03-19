@@ -27,8 +27,8 @@ pub trait RolldownApi<BlockHash, L1Update> {
 	#[method(name = "rolldown_pending_updates")]
 	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
-	#[method(name = "rolldown_update_eth_raw")]
-	fn update_eth_raw(
+	#[method(name = "rolldown_get_native_l1_update")]
+	fn get_native_l1_update(
 		&self,
 		payload: Vec<u8>,
 		at: Option<BlockHash>,
@@ -89,14 +89,14 @@ where
 			)))
 		})
 	}
-	fn update_eth_raw(
+	fn get_native_l1_update(
 		&self,
 		payload: Vec<u8>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Option<L1Update>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.update_eth_raw(at, payload).map_err(|e| {
+		api.get_native_l1_update(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

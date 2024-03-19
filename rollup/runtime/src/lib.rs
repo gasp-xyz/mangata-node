@@ -883,7 +883,7 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 
-		fn update_eth_raw(payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
+		fn get_native_l1_update(payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(payload).ok()
 		}
 

@@ -16,7 +16,8 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
-use sp_runtime::{traits::IdentifyAccount, MultiSignerAcc20};
+use sp_runtime::{traits::IdentifyAccount};
+use rollup_runtime::Signer;
 use sp_core::Pair;
 
 impl SubstrateCli for Cli {
@@ -207,7 +208,7 @@ pub fn run() -> sc_cli::Result<()> {
 							Box::new(RemarkBuilder::new(client.clone())),
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
-								MultiSignerAcc20::from(crate::benchmarking::get_pair_from_seed::<sp_core::ecdsa::Pair>("Alice").public()).into_account(),
+								Signer::from(crate::benchmarking::get_pair_from_seed::<sp_core::ecdsa::Pair>("Alice").public()).into_account(),
 								Default::default(),
 							)),
 						]);

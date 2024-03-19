@@ -5,7 +5,7 @@
 use crate::service::Block;
 use rollup_runtime as runtime;
 use rollup_runtime::config::frame_system::BlockHashCount;
-use runtime::{AccountId, Balance, RuntimeApi, SystemCall, TokenId, TokensCall};
+use runtime::{AccountId, Balance, RuntimeApi, SystemCall, TokenId, TokensCall, Signer};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sc_executor::WasmExecutor;
@@ -13,7 +13,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_core::{crypto::key_types::AURA, Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keystore::Keystore;
-use sp_runtime::{MultiSignerAcc20, traits::{Zero, IdentifyAccount}, OpaqueExtrinsic, SaturatedConversion};
+use sp_runtime::{traits::{Zero, IdentifyAccount}, OpaqueExtrinsic, SaturatedConversion, account::EthereumSignature};
 use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -34,7 +34,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u3
 	let best_hash = client.chain_info().best_hash;
 	client
 		.runtime_api()
-		.account_nonce(best_hash, MultiSignerAcc20::from(account.public()).into_account())
+		.account_nonce(best_hash, Signer::from(account.public()).into_account())
 		.expect("Fetching account nonce works; qed")
 }
 
@@ -91,8 +91,8 @@ pub fn create_benchmark_extrinsic(
 
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
-		MultiSignerAcc20::from(sender.public()).into_account().into(),
-		runtime::Signature::Ecdsa(signature),
+		Signer::from(sender.public()).into_account().into(),
+		EthereumSignature::from(signature),
 		extra,
 	)
 }

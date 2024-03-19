@@ -52,6 +52,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	properties.insert("tokenSymbol".into(), "RXL".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
+	properties.insert("isEthereum".into(), true.into());
 
 	ChainSpec::from_genesis(
 		// Name

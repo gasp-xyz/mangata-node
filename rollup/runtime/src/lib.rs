@@ -13,13 +13,13 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		AccountIdConversion, IdentityLookup, BlakeTwo256, Block as BlockT, ConvertInto,
 		DispatchInfoOf, IdentifyAccount, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
 		SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
-	MultiSignature, MultiSignatureAcc20, OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
+	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber,
+	OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -35,6 +35,7 @@ pub use mangata_support::traits::{
 	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, GetMaintenanceStatusTrait,
 	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
+pub use sp_runtime::account::EthereumSignature;
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -191,7 +192,7 @@ impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).

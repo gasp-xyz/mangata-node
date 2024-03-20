@@ -883,8 +883,8 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
 		}
 
-		fn get_native_l1_update(payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
-			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(payload).ok()
+		fn get_native_l1_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
+			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(hex_payload).ok()
 		}
 
 		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {

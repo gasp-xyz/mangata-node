@@ -11,6 +11,14 @@ use sp_runtime::{
 	BoundedVec,
 };
 
+// ETH Account Info
+// Alice -
+// seed: 0xcb6df9de1efca7a3998a8ead4e02159d5fa99c3e0d4fd6432667390bb4726854
+// accountId: 0xe04cc55ebee1cbce552f250e85c57b70b2e2625b
+// Bob -
+// seed: 0x79c3b7fc0b7697b9414cb87adcb37317d1cab32818ae18c0e97ad76395d1fdcf
+// accountId: 0x25451a4de12dccc2d166922fa938e900fcc4ed24
+
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -19,9 +27,10 @@ pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
+	let pair = TPublic::Pair::from_string(&format!("//{}", seed), None)
+		.expect("static values are valid; qed");
+	// log::info!("Dev Account Seed Info - {:?}, {:x?}", seed, array_bytes::bytes2hex("0x", pair.to_raw_vec()));
+	pair.public()
 }
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -31,7 +40,9 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
+	let account = AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account();
+	// log::info!("Dev Account PublicKey Info - {:?}, {:?}", seed, account);
+	account
 }
 
 /// Generate an Aura authority key.

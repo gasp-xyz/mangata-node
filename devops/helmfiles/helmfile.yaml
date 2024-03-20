@@ -14,48 +14,29 @@ environments:
 ---
 repositories:
   - name: mangata-node
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v2.2.0
-  - name: mangata-relaychain
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v1.1.0
-
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v2.3.0
 
 helmDefaults:
   wait: true
 
 releases:
-  - name: relaychain
-    installed: {{ .Values.enableLocalRelaychain | toYaml }}
-    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
-    chart: mangata-relaychain/relaychain-testnet
-    values:
-      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
-        image: {{ .Values.relaychainImage }}
-        storageClass: node-data-volume
-        storageSize: {{ .Values.relaychainStorageSize }}
-        remoteCluster: true
   - name: node-01
     chart: mangata-node/node
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     values:
       - values.yaml.gotmpl
-      - isCollator: {{ .Values.node01.isCollator  | toYaml }}
-        parachainRegisterSidecar:
-          enable: {{ .Values.enableParachainRegisterSidecar  | toYaml }}
-        bootnodeAddr: {{ .Values.node01.bootnodeAddr }}
-        customNodeKey: {{ .Values.node01.nodeKey | fetchSecretValue | quote }}
-        accountKeys:
-          - type: aura
-            scheme: sr25519
-            seed: {{ .Values.node01.accountKeySeed | fetchSecretValue | quote }}
+      - # Identity ID: 12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+        customNodeKey: '0000000000000000000000000000000000000000000000000000000000000001'
+        bootnodeAddr: /dns/node-02/tcp/30333/p2p/12D3KooWFz4zM26EKYTpX98GhLhS3KLv7mUyvpYXCdzxdrorSVCu
+        extraArgs:
+          - --alice
   - name: node-02
     chart: mangata-node/node
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     values:
       - values.yaml.gotmpl
-      - isCollator: {{ .Values.node02.isCollator  | toYaml }}
-        bootnodeAddr: {{ .Values.node02.bootnodeAddr }}
-        customNodeKey: {{ .Values.node02.nodeKey |fetchSecretValue | quote }}
-        accountKeys:
-          - type: aura
-            scheme: sr25519
-            seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
+      - # Identity ID: 12D3KooWFz4zM26EKYTpX98GhLhS3KLv7mUyvpYXCdzxdrorSVCu
+        customNodeKey: 'bcaf1bb787b48156aadaf318603e5b37e637883edafb850912e364e913e2c35b'
+        bootnodeAddr: /dns/node-01/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+        extraArgs:
+          - --bob

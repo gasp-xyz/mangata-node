@@ -2,6 +2,8 @@
 #![cfg(not(feature = "runtime-benchmarks"))]
 #![allow(non_snake_case)]
 
+use log::{info, warn};
+
 use super::{Event, *};
 use crate::mock::*;
 use frame_support::{assert_err, assert_err_ignore_postinfo, dispatch::GetDispatchInfo};

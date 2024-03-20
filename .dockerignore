@@ -1,14 +1,29 @@
-*
-./target/
-!/target/release/polkadot-collator
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm.md5
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.compact.wasm
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.compact.wasm.md5
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.wasm
-!/docker-cargo/release/wbuild/rollup-runtime/rollup_runtime.wasm.md5
+.git
+.github
+target
+devops
+launch
+scripts
+workflows
+Makefile
+Tiltfile
+**/*.txt
+**/*.md
+./docker-cargo
+Dockerfile
+compose.yml
+.gitignore
+.dockerignore
 
-!/docker-cargo/release/rollup-node
+tmp
+benchmarks
+chains
+**/chains/
+./target/*
+./docker-cargo/*
 
 !target/release/rollup-node
-!target/release/wbuild/rollup*
+!docker-cargo/release/rollup-node
+
+# dotfiles in the repo root
+/.*

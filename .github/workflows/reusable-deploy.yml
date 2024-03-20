@@ -43,7 +43,7 @@ jobs:
     env:
       ENV_REF: ${{ inputs.env == 'fungible' && format('pr-{0}', github.event.number) || inputs.env }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: jkroepke/setup-vals@v1.0.4
       - name: Setup helmfile
         uses: mamezou-tech/setup-helmfile@v1.2.0

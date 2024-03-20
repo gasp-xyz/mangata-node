@@ -1,4 +1,4 @@
-name: Deploy mangata-node to `rollup-dev`
+name: Deploy rollup-node to `rollup-dev`
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
     steps:
       - name: Verify specified version exists
-        run: docker pull mangatasolutions/mangata-node:${{ inputs.version }}
+        run: docker pull mangatasolutions/rollup-node:${{ inputs.version }}
       
       - name: Checkout `mangata-finance/gitops` repository
         uses: actions/checkout@v4

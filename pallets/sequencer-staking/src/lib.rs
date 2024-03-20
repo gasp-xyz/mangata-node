@@ -163,6 +163,9 @@ use super::*;
 		SequencerIsNotInActiveSet,
 		SequencerAlreadyInActiveSet,
 		CantUnstakeWhileInActiveSet,
+		NotEligibleToBeSequencer,
+		NotEnoughSequencerStake,
+		MaxSequencersLimitReached
 	}
 
 	#[pallet::config]
@@ -199,7 +202,8 @@ use super::*;
 
 			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(&sender) && Self::is_eligible_to_be_sequencer(&sender)
+				if *stake >= MinimalStakeAmount::<T>::get() && !Self::is_active_sequencer(&sender)
+					&& Self::is_eligible_to_be_sequencer(&sender) && ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize
 				{
 					ActiveSequencers::<T>::mutate(|active_sequencers|{
 						active_sequencers.push(sender.clone());
@@ -236,13 +240,14 @@ use super::*;
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::SequencerAlreadyInActiveSet);
-			if SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get() && Self::is_eligible_to_be_sequencer(&sender)
-			{
-				ActiveSequencers::<T>::mutate(|active_sequencers|{
-					active_sequencers.push(sender.clone());
-				});
-				T::RolldownProvider::new_sequencer_active(&sender);
-			}
+			ensure!(ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize, Error::<T>::MaxSequencersLimitReached);
+			ensure!(SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get(), Error::<T>::NotEnoughSequencerStake);
+			ensure!(Self::is_eligible_to_be_sequencer(&sender), Error::<T>::NotEligibleToBeSequencer);
+
+			ActiveSequencers::<T>::mutate(|active_sequencers|{
+				active_sequencers.push(sender.clone());
+			});
+			T::RolldownProvider::new_sequencer_active(&sender);
 
 			Ok(().into())
 		}

@@ -84,7 +84,7 @@ pub struct Deposit {
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
 	pub amount: sp_core::U256,
-	pub blockHash: sp_core::H256,
+	pub timeStamp: sp_core::U256,
 }
 
 impl Into<eth_abi::Deposit> for Deposit {
@@ -94,7 +94,7 @@ impl Into<eth_abi::Deposit> for Deposit {
 			depositRecipient: self.depositRecipient.into(),
 			tokenAddress: self.tokenAddress.into(),
 			amount: to_eth_u256(self.amount),
-			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
+			timeStamp: to_eth_u256(self.timeStamp),
 		}
 	}
 }
@@ -111,7 +111,7 @@ pub struct Withdraw {
 pub struct L2UpdatesToRemove {
 	pub requestId: RequestId,
 	pub l2UpdatesToRemove: Vec<u128>,
-	pub blockHash: sp_core::H256,
+	pub timeStamp: sp_core::U256,
 }
 
 impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
@@ -123,7 +123,7 @@ impl Into<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 				.into_iter()
 				.map(|rid| to_eth_u256(rid.into()))
 				.collect(),
-			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
+			timeStamp: to_eth_u256(self.timeStamp),
 		}
 	}
 }
@@ -133,7 +133,7 @@ pub struct CancelResolution {
 	pub requestId: RequestId,
 	pub l2RequestId: u128,
 	pub cancelJustified: bool,
-	pub blockHash: sp_core::H256,
+	pub timeStamp: sp_core::U256,
 }
 
 impl Into<eth_abi::CancelResolution> for CancelResolution {
@@ -142,7 +142,7 @@ impl Into<eth_abi::CancelResolution> for CancelResolution {
 			requestId: self.requestId.into(),
 			l2RequestId: to_eth_u256(self.l2RequestId.into()),
 			cancelJustified: self.cancelJustified.into(),
-			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
+			timeStamp: to_eth_u256(self.timeStamp),
 		}
 	}
 }
@@ -152,7 +152,7 @@ pub struct WithdrawalResolution {
 	pub requestId: RequestId,
 	pub l2RequestId: u128,
 	pub status: bool,
-	pub blockHash: H256,
+	pub timeStamp: sp_core::U256,
 }
 
 impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
@@ -161,7 +161,7 @@ impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
 			requestId: self.requestId.into(),
 			l2RequestId: to_eth_u256(self.l2RequestId.into()),
 			status: self.status.into(),
-			blockHash: alloy_primitives::FixedBytes::<32>::from_slice(&self.blockHash[..]),
+			timeStamp: to_eth_u256(self.timeStamp),
 		}
 	}
 }
@@ -355,14 +355,14 @@ pub mod eth_abi {
 			address depositRecipient;
 			address tokenAddress;
 			uint256 amount;
-			bytes32 blockHash;
+			uint256 timeStamp;
 		}
 
 		#[derive(Debug)]
 		struct L2UpdatesToRemove {
 			RequestId requestId;
 			uint256[] l2UpdatesToRemove;
-			bytes32 blockHash;
+			uint256 timeStamp;
 		}
 
 		#[derive(Debug)]
@@ -370,7 +370,7 @@ pub mod eth_abi {
 			RequestId requestId;
 			uint256 l2RequestId;
 			bool status;
-			bytes32 blockHash;
+			uint256 timeStamp;
 		}
 
 		#[derive(Debug)]
@@ -378,7 +378,7 @@ pub mod eth_abi {
 			RequestId requestId;
 			uint256 l2RequestId;
 			bool cancelJustified;
-			bytes32 blockHash;
+			uint256 timeStamp;
 		}
 
 		#[derive(Debug)]

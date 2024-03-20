@@ -13,6 +13,7 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
+use array_bytes::hex2bytes;
 
 #[rpc(client, server)]
 pub trait RolldownApi<BlockHash, L1Update> {
@@ -30,7 +31,7 @@ pub trait RolldownApi<BlockHash, L1Update> {
 	#[method(name = "rolldown_get_native_l1_update")]
 	fn get_native_l1_update(
 		&self,
-		payload: Vec<u8>,
+		hex_payload: String,
 		at: Option<BlockHash>,
 	) -> RpcResult<Option<L1Update>>;
 	#[method(name = "rolldown_verify_pending_requests")]
@@ -91,11 +92,20 @@ where
 	}
 	fn get_native_l1_update(
 		&self,
-		payload: Vec<u8>,
+		hex_payload: String,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Option<L1Update>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
+
+		let payload = hex2bytes(hex_payload).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				0,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})?;
+		
 		api.get_native_l1_update(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,

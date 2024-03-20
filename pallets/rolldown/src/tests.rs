@@ -1243,5 +1243,5 @@ fn test_get_native_l1_update() {
 	);
 	let mut input = Vec::new();
 	input.extend_from_slice(&raw_payload_fetched_from_contract);
-	Rolldown::convert_eth_l1update_to_substrate_l1update(input).expect("convertion works");
+	Rolldown::convert_eth_l1update_to_substrate_l1update(input).expect("conversion works");
 }

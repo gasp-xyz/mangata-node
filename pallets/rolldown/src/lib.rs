@@ -13,6 +13,7 @@ use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
+use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
@@ -235,33 +236,6 @@ pub mod pallet {
 		type DisputePeriodLength: Get<u128>;
 		#[pallet::constant]
 		type RequestsPerBlock: Get<u128>;
-	}
-
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub sequencers: Vec<T::AccountId>,
-	}
-
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			GenesisConfig { sequencers: vec![] }
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
-		fn build(&self) {
-			for s in self.sequencers.iter() {
-				sequencer_rights::<T>::insert(
-					s.clone(),
-					SequencerRights {
-						readRights: 1,
-						cancelRights: (self.sequencers.len() - 1) as u128,
-					},
-				);
-			}
-			l2_origin_request_id::<T>::insert(L1::Ethereum, 1);
-		}
 	}
 
 	#[pallet::call]
@@ -855,37 +829,37 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// check that consecutive id
-		// ensure!(
-		// 	update
-		// 		.pendingDeposits
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		//
-		// ensure!(
-		// 	update
-		// 		.pendingCancelResultions
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		// ensure!(
-		// 	update
-		// 		.pendingL2UpdatesToRemove
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
+		ensure!(
+			update
+				.pendingDeposits
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingCancelResultions
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+		ensure!(
+			update
+				.pendingL2UpdatesToRemove
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
 
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),

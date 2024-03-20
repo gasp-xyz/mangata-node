@@ -293,12 +293,17 @@ fn rollup_genesis(
 				.collect(),
 		},
 		vesting: Default::default(),
-		rolldown: rollup_runtime::RolldownConfig {
-			sequencers: if initial_collators_as_sequencers {
-				initial_authorities.iter().map(|(acc, _)| acc.clone()).collect()
-			} else {
-				Default::default()
-			},
+		sequencer_staking: if initial_collators_as_sequencers {
+			rollup_runtime::SequencerStakingConfig {
+				initial_sequencers: initial_authorities
+					.iter()
+					.map(|(acc, _)| acc.clone())
+					.collect(),
+				minimal_stake_amount: 1_000_000,
+				slash_fine_amount: 1_000_000,
+			}
+		} else {
+			Default::default()
 		},
 	}
 }

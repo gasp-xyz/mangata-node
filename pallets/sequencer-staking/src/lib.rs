@@ -134,6 +134,39 @@ pub mod pallet {
 			Ok(().into())
 		}
 	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub minimal_stake_amount: BalanceOf<T>,
+		pub slash_fine_amount: BalanceOf<T>,
+		pub initial_sequencers: Vec<AccountIdOf<T>>,
+	}
+
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig {
+				minimal_stake_amount: Default::default(),
+				slash_fine_amount: Default::default(),
+				initial_sequencers: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			log!(info, "Building Sequencer Staking GenesisConfig XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+			<MinimalStakeAmount<T>>::put(self.minimal_stake_amount);
+			<SlashFineAmount<T>>::put(self.slash_fine_amount);
+
+			log!(info, "minimal_stake_amount : {:?}", MinimalStakeAmount::<T>::get());
+			log!(info, "slash_fine_amount : {:?}", SlashFineAmount::<T>::get());
+
+			for sequencer in self.initial_sequencers.iter() {
+				T::RolldownProvider::new_sequencer_active(sequencer.clone());
+			}
+		}
+	}
 }
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {

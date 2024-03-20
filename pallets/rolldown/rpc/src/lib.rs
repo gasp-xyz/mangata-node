@@ -6,6 +6,7 @@ use jsonrpsee::{
 	types::error::{CallError, ErrorObject},
 };
 
+use array_bytes::hex2bytes;
 use codec::Decode;
 use rolldown_runtime_api::RolldownRuntimeApi;
 pub use sp_api::ProvideRuntimeApi;
@@ -13,7 +14,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
-use array_bytes::hex2bytes;
 
 #[rpc(client, server)]
 pub trait RolldownApi<BlockHash, L1Update> {
@@ -105,7 +105,7 @@ where
 				Some(format!("{:?}", e)),
 			)))
 		})?;
-		
+
 		api.get_native_l1_update(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,

@@ -183,7 +183,7 @@ impl ExtBuilder {
 			let is_liquidity_token_mock =
 				MockSequencerStakingProviderApi::is_active_sequencer_context();
 			is_liquidity_token_mock.expect().return_const(true);
-			
+
 			let is_selected_sequencer_mock =
 				MockSequencerStakingProviderApi::is_selected_sequencer_context();
 			is_selected_sequencer_mock.expect().return_const(true);

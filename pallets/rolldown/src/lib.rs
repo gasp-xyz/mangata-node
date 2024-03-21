@@ -23,7 +23,7 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{serde::Serialize, traits::Convert};
-use sp_std::{convert::TryInto, prelude::*, vec::Vec, collections::btree_set::BTreeSet};
+use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -286,7 +286,10 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
-			ensure!(T::SequencerStakingProvider::is_selected_sequencer(&sequencer), Error::<T>::OnlySelectedSequencerisAllowedToUpdate);
+			ensure!(
+				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
+				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
+			);
 			Self::validate_l1_update(L1::Ethereum, &requests)?;
 
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
@@ -825,13 +828,17 @@ impl<T: Config> Pallet<T> {
 	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
 		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
 		// lower sequencer count
-		sequencer_count::<T>::put(Self::get_sequencer_count().saturating_sub(deactivated_sequencers_len.into()));
+		sequencer_count::<T>::put(
+			Self::get_sequencer_count().saturating_sub(deactivated_sequencers_len.into()),
+		);
 		// remove all rights of deactivated sequencer
 		for deactivated_sequencer in deactivated_sequencers {
 			sequencer_rights::<T>::remove(deactivated_sequencer.clone());
 		}
 		sequencer_rights::<T>::translate::<SequencerRights, _>(|_k, mut v| {
-			v.cancelRights = v.cancelRights.saturating_sub(RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len.into()));
+			v.cancelRights = v.cancelRights.saturating_sub(
+				RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len.into()),
+			);
 			Some(v)
 		});
 	}
@@ -1018,11 +1025,11 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 		}
 	}
 
-	fn sequencer_unstaking(sequencer: &AccountIdOf<T>) -> DispatchResult{
+	fn sequencer_unstaking(sequencer: &AccountIdOf<T>) -> DispatchResult {
 		ensure!(
-			LastUpdateBySequencer::<T>::get(sequencer).saturating_add(T::DisputePeriodLength::get())
-			<
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
+			LastUpdateBySequencer::<T>::get(sequencer)
+				.saturating_add(T::DisputePeriodLength::get()) <
+				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 			Error::<T>::SequencerLastUpdateStillInDisputePeriod
 		);
 		ensure!(
@@ -1039,5 +1046,4 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
 		Pallet::<T>::handle_sequencer_deactivations(deactivated_sequencers)
 	}
-
 }

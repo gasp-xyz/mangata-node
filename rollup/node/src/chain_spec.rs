@@ -297,14 +297,15 @@ fn rollup_genesis(
 			minimal_stake_amount: 1_000_000_u128,
 			slash_fine_amount: 100_000_u128,
 			sequencers_stake: if initial_collators_as_sequencers {
-				initial_authorities.iter().map(|(acc, _)| (acc.clone(), 10_000_000_u128)).collect()
+				initial_authorities
+					.iter()
+					.map(|(acc, _)| (acc.clone(), 10_000_000_u128))
+					.collect()
 			} else {
 				Default::default()
 			},
 		},
 		// Use sequncer staking genesis config - this is intended only for testing
-		rolldown: rollup_runtime::RolldownConfig {
-			sequencers: vec![]
-		}
+		rolldown: rollup_runtime::RolldownConfig { sequencers: vec![] },
 	}
 }

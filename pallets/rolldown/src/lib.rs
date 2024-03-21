@@ -14,6 +14,7 @@ use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
+use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
@@ -868,41 +869,54 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// check that consecutive id
-		// ensure!(
-		// 	update
-		// 		.pendingDeposits
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		//
-		// ensure!(
-		// 	update
-		// 		.pendingCancelResultions
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		// ensure!(
-		// 	update
-		// 		.pendingL2UpdatesToRemove
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
+		ensure!(
+			update
+				.pendingDeposits
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingCancelResultions
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingL2UpdatesToRemove
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingWithdrawalResolutions
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
 
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),
 			update.pendingCancelResultions.first().map(|v| v.requestId.id),
+			update.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
 			update.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
 		]
 		.iter()
@@ -920,28 +934,35 @@ impl<T: Config> Pallet<T> {
 
 		let last_id = lowest_id +
 			(update.pendingDeposits.len() as u128) +
+			(update.pendingWithdrawalResolutions.len() as u128) +
 			(update.pendingCancelResultions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
 
 		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
+		let mut withdrawal_it = update.pendingWithdrawalResolutions.iter();
 		let mut cancel_it = update.pendingCancelResultions.iter();
 		let mut updates_it = update.pendingL2UpdatesToRemove.iter();
+		let mut withdrawal = withdrawal_it.next();
+
 		let mut deposit = deposit_it.next();
 		let mut cancel = cancel_it.next();
 		let mut update = updates_it.next();
 
 		for id in (lowest_id..last_id).into_iter() {
-			match (deposit, cancel, update) {
-				(Some(d), _, _) if d.requestId.id == id => {
+			match (deposit, cancel, update, withdrawal) {
+				(Some(d), _, _, _) if d.requestId.id == id => {
 					deposit = deposit_it.next();
 				},
-				(_, Some(c), _) if c.requestId.id == id => {
+				(_, Some(c), _, _) if c.requestId.id == id => {
 					cancel = cancel_it.next();
 				},
-				(_, _, Some(u)) if u.requestId.id == id => {
+				(_, _, Some(u), _) if u.requestId.id == id => {
 					update = updates_it.next();
+				},
+				(_, _, _, Some(w)) if w.requestId.id == id => {
+					withdrawal = withdrawal_it.next();
 				},
 				_ => return Err(Error::<T>::InvalidUpdate.into()),
 			}

@@ -219,33 +219,6 @@ pub mod pallet {
 		type RequestsPerBlock: Get<u128>;
 	}
 
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub sequencers: Vec<T::AccountId>,
-	}
-
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			GenesisConfig { sequencers: vec![] }
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
-		fn build(&self) {
-			for s in self.sequencers.iter() {
-				sequencer_rights::<T>::insert(
-					s.clone(),
-					SequencerRights {
-						readRights: 1,
-						cancelRights: (self.sequencers.len() - 1) as u128,
-					},
-				);
-			}
-			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
-		}
-	}
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]

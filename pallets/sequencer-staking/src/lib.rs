@@ -57,6 +57,54 @@ use super::*;
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub minimal_stake_amount: BalanceOf<T>,
+		pub slash_fine_amount: BalanceOf<T>,
+		pub sequencers_stake: Vec<(T::AccountId, BalanceOf<T>)>,
+	}
+
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { 
+				minimal_stake_amount: Default::default(),
+				slash_fine_amount: Default::default(),
+				sequencers_stake: vec![] }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		// Since this pallet is to be configured above session in construct_runtime!
+		// We can't check that these sequencers are eligible
+		// We can have that check in initialize_genesis_eligible_sequencers
+		// but for now it is not implemented. This is fine and doesn't really
+		// break anything. However, if these sequencer join the eligible set and
+		// then leave then ofcourse they will be removed from the active set too.
+		fn build(&self) {
+			MinimalStakeAmount::<T>::put(self.minimal_stake_amount);
+			SlashFineAmount::<T>::put(self.slash_fine_amount);
+
+			for (sender, stake_amount) in self.sequencers_stake.iter() {
+				assert!(!Pallet::<T>::is_active_sequencer(&sender));
+				assert!(ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize);
+				assert!(stake_amount >= &MinimalStakeAmount::<T>::get());
+
+				<SequencerStake<T>>::insert(sender, stake_amount);
+
+				ActiveSequencers::<T>::mutate(|active_sequencers|{
+					active_sequencers.push(sender.clone());
+				});
+				T::RolldownProvider::new_sequencer_active(&sender);
+	
+				// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
+				// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
+				assert!(T::Currency::reserve(&sender, *stake_amount).is_ok());
+			}
+		}
+	}
+
 	// The pallet needs to be configured above session in construct_runtime!
 	// to work correctly with the on_initialize hook and the NextSequencerIndex updates
 	#[pallet::hooks]
@@ -305,7 +353,7 @@ impl<T: Config> Pallet<T> {
 		EligibleToBeSequencers::<T>::get().contains_key(account)
 	}
 
-	fn initialize_eligible_sequencers(collators: Vec<T::AccountId>) {
+	fn initialize_genesis_eligible_sequencers(collators: Vec<T::AccountId>) {
 		EligibleToBeSequencers::<T>::put(
 			BTreeMap::from(
 				collators.clone().into_iter().map(
@@ -400,7 +448,7 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
 		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
 	{
 		let authorities = validators.map(|(v, _)| v.clone()).collect::<Vec<_>>();
-		Self::initialize_eligible_sequencers(authorities);
+		Self::initialize_genesis_eligible_sequencers(authorities);
 	}
 
 	fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, _queued_validators: I)

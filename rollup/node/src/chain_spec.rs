@@ -302,5 +302,9 @@ fn rollup_genesis(
 				Default::default()
 			},
 		},
+		// Use sequncer staking genesis config - this is intended only for testing
+		rolldown: rollup_runtime::RolldownConfig {
+			sequencers: vec![]
+		}
 	}
 }

@@ -516,6 +516,7 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	type InformSessionData = SequencerStaking;
 
 	#[cfg(feature = "experimental")]
 	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;
@@ -769,7 +770,6 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = Rolldown;
-	type AuthorityId = AuraId;
 	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<10>;
 	type MaxSequencers = frame_support::traits::ConstU32<10>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;

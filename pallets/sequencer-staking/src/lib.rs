@@ -13,7 +13,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::{convert::TryInto, prelude::*};
 
 use codec::alloc::string::{String, ToString};
-pub use mangata_support::traits::{RolldownProviderTrait, SequencerStakingProviderTrait};
+pub use mangata_support::traits::{RolldownProviderTrait, SequencerStakingProviderTrait, InformSessionDataTrait};
 use scale_info::prelude::format;
 use sp_core::U256;
 use sp_runtime::{
@@ -223,12 +223,6 @@ use super::*;
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
 		type RolldownProvider: RolldownProviderTrait<Self::AccountId>;
-		// we need this only to accept new_session validators from the session pallet 
-		type AuthorityId: Member
-			+ Parameter
-			+ RuntimeAppPublic
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen;
 		#[pallet::constant]
 		type NoOfPastSessionsForEligibility: Get<u32>;
 		#[pallet::constant]
@@ -436,32 +430,18 @@ impl<T: Config> Pallet<T> {
 
 }
 
-impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
-	type Public = T::AuthorityId;
-}
+impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
 
-impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
-	type Key = T::AuthorityId;
-
-	fn on_genesis_session<'a, I: 'a>(validators: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+	fn inform_initialized_authorities(accounts: Vec<T::AccountId>)
 	{
-		let authorities = validators.map(|(v, _)| v.clone()).collect::<Vec<_>>();
-		Self::initialize_genesis_eligible_sequencers(authorities);
+		Self::initialize_genesis_eligible_sequencers(accounts);
 	}
 
-	fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, _queued_validators: I)
-	where
-		I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+	fn inform_on_new_session(accounts: Vec<T::AccountId>)
 	{
-		let authorities = validators.map(|(v, _)| v.clone()).collect::<Vec<_>>();
-		Self::process_new_session_collators(authorities);
+		Self::process_new_session_collators(accounts);
 	}
 
-	fn on_disabled(i: u32) {
-		// Ignore
-	}
 }
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {

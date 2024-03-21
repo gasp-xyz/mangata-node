@@ -89,9 +89,9 @@ mockall::mock! {
 	pub SequencerStakingProviderApi {}
 
 	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
-		fn is_active_sequencer(sequencer: AccountId) -> bool;
-		fn slash_sequencer(sequencer: AccountId) -> DispatchResult;
-		fn process_potential_authors(authors: Vec<(AccountId, Balance)>,) -> Option<Vec<(AccountId, Balance)>>;
+		fn is_active_sequencer(sequencer: &AccountId) -> bool;
+		fn slash_sequencer(sequencer: &AccountId) -> DispatchResult;
+		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
 	}
 }
 
@@ -183,6 +183,10 @@ impl ExtBuilder {
 			let is_liquidity_token_mock =
 				MockSequencerStakingProviderApi::is_active_sequencer_context();
 			is_liquidity_token_mock.expect().return_const(true);
+			
+			let is_selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_selected_sequencer_context();
+			is_selected_sequencer_mock.expect().return_const(true);
 
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);

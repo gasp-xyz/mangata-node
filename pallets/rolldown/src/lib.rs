@@ -219,6 +219,28 @@ pub mod pallet {
 		type RequestsPerBlock: Get<u128>;
 	}
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub sequencers: Vec<T::AccountId>,
+	}
+
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { sequencers: vec![] }
+		}
+	}
+
+	// Use sequncer staking genesis config - this is intended only for testing
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			for s in self.sequencers.iter() {
+				Pallet::<T>::new_sequencer_active(s);
+			}
+			l2_origin_updates_counter::<T>::put(u128::MAX / 2);
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
@@ -796,13 +818,13 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 			sequencer,
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
-				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get() - 1),
+				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get().saturating_sub(2)),
 			},
 		);
 
 		// add 1 cancel right of all sequencers
 		for (sequencer, sequencer_rights) in sequencer_rights::<T>::iter() {
-			if sequencer_rights.cancelRights > 0 {
+			if sequencer_count::<T>::get() > 1 {
 				sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 					if let Some(ref mut sequencer) = maybe_sequencer {
 						sequencer.cancelRights += RIGHTS_MULTIPLIER;

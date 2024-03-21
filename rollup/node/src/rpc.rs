@@ -50,7 +50,7 @@ where
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: metamask_signature_rpc::MetamaskSignatureRuntimeApi<Block>,
-	C::Api: rolldown_runtime_api::RolldownRuntimeApi<Block>,
+	C::Api: rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + 'static,

@@ -8,6 +8,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
+use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
 
@@ -65,9 +66,11 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod messages;
+pub mod messages;
 
+use crate::messages::L1Update;
 pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -819,6 +822,16 @@ impl<T: Config> Pallet<T> {
 	pub fn l2_update_encoded() -> Vec<u8> {
 		let update = Pallet::<T>::get_l2_update(L1::Ethereum);
 		update.abi_encode()
+	}
+
+	pub fn convert_eth_l1update_to_substrate_l1update(
+		payload: Vec<u8>,
+	) -> Result<L1Update, String> {
+		messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)
+			.map_err(|err| format!("Failed to decode L1Update: {}", err))
+			.and_then(|update| {
+				update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err))
+			})
 	}
 
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {

@@ -7328,6 +7328,7 @@ dependencies = [
 name = "rolldown-rpc"
 version = "2.0.0"
 dependencies = [
+ "array-bytes",
  "jsonrpsee",
  "mangata-types",
  "parity-scale-codec",
@@ -7365,6 +7366,7 @@ dependencies = [
  "log",
  "mangata-rpc-nonce",
  "metamask-signature-rpc",
+ "pallet-rolldown",
  "pallet-transaction-payment-mangata",
  "pallet-transaction-payment-mangata-rpc",
  "parity-scale-codec",

@@ -20,6 +20,8 @@ use std::{
 };
 use substrate_frame_rpc_system::AccountNonceApi;
 use sp_core::{ecdsa, sr25519};
+use sp_keyring::EthereumKeyring;
+use sp_std::str::FromStr;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 type HostFunctions = sp_io::SubstrateHostFunctions;
@@ -39,8 +41,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u3
 }
 
 pub fn get_pair_from_seed<TPair: sp_core::Pair>(seed: &str) -> TPair {
-	TPair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
+	EthereumKeyring::from_str(seed).expect("The keypair should be defined").pair()
 }
 
 /// Create a transaction using the given `call`.
@@ -155,7 +156,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = get_pair_from_seed::<ecdsa::Pair>("Bob");
+		let acc = get_pair_from_seed::<ecdsa::Pair>("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,
@@ -194,7 +195,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = get_pair_from_seed::<ecdsa::Pair>("Bob");
+		let acc = get_pair_from_seed::<ecdsa::Pair>("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,

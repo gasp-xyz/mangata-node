@@ -66,6 +66,7 @@ sp-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", b
 sc-consensus = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-inherents = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

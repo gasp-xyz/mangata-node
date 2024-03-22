@@ -10,14 +10,8 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
-
-// ETH Account Info
-// Alice -
-// seed: 0xcb6df9de1efca7a3998a8ead4e02159d5fa99c3e0d4fd6432667390bb4726854
-// accountId: 0xe04cc55ebee1cbce552f250e85c57b70b2e2625b
-// Bob -
-// seed: 0x79c3b7fc0b7697b9414cb87adcb37317d1cab32818ae18c0e97ad76395d1fdcf
-// accountId: 0x25451a4de12dccc2d166922fa938e900fcc4ed24
+use sp_keyring::EthereumKeyring;
+use sp_std::str::FromStr;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -40,7 +34,7 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-	let account = AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account();
+	let account = EthereumKeyring::from_str(seed).expect("The keypair should be defined").to_account_id();
 	// log::info!("Dev Account PublicKey Info - {:?}, {:?}", seed, account);
 	account
 }
@@ -76,35 +70,35 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
-						authority_keys_from_seed("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
+						authority_keys_from_seed("Alith"),
 					),
 					(
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
-						authority_keys_from_seed("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+						authority_keys_from_seed("Baltathar"),
 					),
 				],
 				// Sudo account
-				get_account_id_from_seed::<ecdsa::Public>("Alice"),
+				get_account_id_from_seed::<ecdsa::Public>("Alith"),
 				// Tokens endowment
 				vec![
 					// MGA
 					(
 						0u32,
 						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
 					// ETH
-					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alice")),
+					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alith")),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Charlie"),
+						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
 					),
 				],
 				// Config for Staking
@@ -112,7 +106,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -128,7 +122,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 					),
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool

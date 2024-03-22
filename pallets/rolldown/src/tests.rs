@@ -1264,3 +1264,60 @@ fn test_reproduce_bug_with_incremental_updates() {
 			));
 		});
 }
+
+#[test]
+#[serial]
+fn test_get_native_l1_update() {
+	let raw_payload_fetched_from_contract = hex!(
+	"00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000000000002400000000000000000000000000000000000000000000000000000000000000260000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000b7278a61aa25c888815afc32ad3cc52ff24fe57500000000000000000000000000000000000000000000000000000000000007d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000b7278a61aa25c888815afc32ad3cc52ff24fe57500000000000000000000000000000000000000000000000000000000000007d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+	);
+	let mut input = Vec::new();
+	input.extend_from_slice(&raw_payload_fetched_from_contract);
+	Rolldown::convert_eth_l1update_to_substrate_l1update(input).expect("conversion works");
+}
+
+#[test]
+#[serial]
+fn test_withdrawal_resolution_works_passes_validation() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
+		.execute_with_default_mocks(|| {
+			let first_update = L1UpdateBuilder::new()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(messages::Deposit {
+						requestId: RequestId::new(Origin::L1, 33u128),
+						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+						tokenAddress: ETH_TOKEN_ADDRESS,
+						amount: sp_core::U256::from(MILLION),
+						blockHash: H256::from([0; 32]),
+					}),
+					L1UpdateRequest::Deposit(messages::Deposit {
+						requestId: RequestId::new(Origin::L1, 34u128),
+						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+						tokenAddress: ETH_TOKEN_ADDRESS,
+						amount: sp_core::U256::from(MILLION),
+						blockHash: H256::from([0; 32]),
+					}),
+					L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
+						requestId: RequestId::new(Origin::L1, 30u128),
+						l2RequestId: 31u128,
+						status: true,
+						blockHash: H256::from([0; 32]),
+					}),
+					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
+						requestId: RequestId::new(Origin::L1, 31u128),
+						l2UpdatesToRemove: vec![27u128, 28u128],
+						blockHash: H256::from([0; 32]),
+					}),
+					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
+						requestId: RequestId::new(Origin::L1, 32u128),
+						l2UpdatesToRemove: vec![29u128],
+						blockHash: H256::from([0; 32]),
+					}),
+				])
+				.build();
+
+			last_processed_request_on_l2::<Test>::insert(L1::Ethereum, 29);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+		});
+}

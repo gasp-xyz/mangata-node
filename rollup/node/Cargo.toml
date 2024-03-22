@@ -30,10 +30,12 @@ rollup-runtime = { path = "../runtime/" }
 xyk-rpc = { path = "../../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
 rolldown-rpc = { path = "../../pallets/rolldown/rpc" }
+
 rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
+pallet-rolldown = { path = "../../pallets/rolldown"}
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

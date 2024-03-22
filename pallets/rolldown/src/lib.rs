@@ -8,11 +8,13 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
+use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::SaturatedConversion;
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
+use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
@@ -65,9 +67,11 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod messages;
+pub mod messages;
 
+use crate::messages::L1Update;
 pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -819,6 +823,16 @@ impl<T: Config> Pallet<T> {
 		update.abi_encode()
 	}
 
+	pub fn convert_eth_l1update_to_substrate_l1update(
+		payload: Vec<u8>,
+	) -> Result<L1Update, String> {
+		messages::eth_abi::L1Update::abi_decode(payload.as_ref(), true)
+			.map_err(|err| format!("Failed to decode L1Update: {}", err))
+			.and_then(|update| {
+				update.try_into().map_err(|err| format!("Failed to convert L1Update: {}", err))
+			})
+	}
+
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
@@ -853,41 +867,54 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// check that consecutive id
-		// ensure!(
-		// 	update
-		// 		.pendingDeposits
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		//
-		// ensure!(
-		// 	update
-		// 		.pendingCancelResultions
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
-		// ensure!(
-		// 	update
-		// 		.pendingL2UpdatesToRemove
-		// 		.iter()
-		// 		.map(|v| v.requestId.id)
-		// 		.into_iter()
-		// 		.tuple_windows()
-		// 		.all(|(a, b)| a < b),
-		// 	Error::<T>::InvalidUpdate
-		// );
+		ensure!(
+			update
+				.pendingDeposits
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingCancelResultions
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingL2UpdatesToRemove
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
+
+		ensure!(
+			update
+				.pendingWithdrawalResolutions
+				.iter()
+				.map(|v| v.requestId.id)
+				.into_iter()
+				.tuple_windows()
+				.all(|(a, b)| a < b),
+			Error::<T>::InvalidUpdate
+		);
 
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),
 			update.pendingCancelResultions.first().map(|v| v.requestId.id),
+			update.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
 			update.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
 		]
 		.iter()
@@ -905,28 +932,35 @@ impl<T: Config> Pallet<T> {
 
 		let last_id = lowest_id +
 			(update.pendingDeposits.len() as u128) +
+			(update.pendingWithdrawalResolutions.len() as u128) +
 			(update.pendingCancelResultions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
 
 		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
+		let mut withdrawal_it = update.pendingWithdrawalResolutions.iter();
 		let mut cancel_it = update.pendingCancelResultions.iter();
 		let mut updates_it = update.pendingL2UpdatesToRemove.iter();
+		let mut withdrawal = withdrawal_it.next();
+
 		let mut deposit = deposit_it.next();
 		let mut cancel = cancel_it.next();
 		let mut update = updates_it.next();
 
 		for id in (lowest_id..last_id).into_iter() {
-			match (deposit, cancel, update) {
-				(Some(d), _, _) if d.requestId.id == id => {
+			match (deposit, cancel, update, withdrawal) {
+				(Some(d), _, _, _) if d.requestId.id == id => {
 					deposit = deposit_it.next();
 				},
-				(_, Some(c), _) if c.requestId.id == id => {
+				(_, Some(c), _, _) if c.requestId.id == id => {
 					cancel = cancel_it.next();
 				},
-				(_, _, Some(u)) if u.requestId.id == id => {
+				(_, _, Some(u), _) if u.requestId.id == id => {
 					update = updates_it.next();
+				},
+				(_, _, _, Some(w)) if w.requestId.id == id => {
+					withdrawal = withdrawal_it.next();
 				},
 				_ => return Err(Error::<T>::InvalidUpdate.into()),
 			}

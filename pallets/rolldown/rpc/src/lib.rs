@@ -5,6 +5,9 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::error::{CallError, ErrorObject},
 };
+
+use array_bytes::hex2bytes;
+use codec::Decode;
 use rolldown_runtime_api::RolldownRuntimeApi;
 pub use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -13,7 +16,7 @@ use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
 
 #[rpc(client, server)]
-pub trait RolldownApi<BlockHash> {
+pub trait RolldownApi<BlockHash, L1Update> {
 	/// Calculates amount of available native rewards
 	///
 	/// * `account` - user account address
@@ -25,6 +28,12 @@ pub trait RolldownApi<BlockHash> {
 	#[method(name = "rolldown_pending_updates")]
 	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
+	#[method(name = "rolldown_get_native_l1_update")]
+	fn get_native_l1_update(
+		&self,
+		hex_payload: String,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<L1Update>>;
 	#[method(name = "rolldown_verify_pending_requests")]
 	fn verify_pending_requests(
 		&self,
@@ -46,13 +55,14 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block> RolldownApiServer<<Block as BlockT>::Hash> for Rolldown<C, Block>
+impl<C, Block, L1Update> RolldownApiServer<<Block as BlockT>::Hash, L1Update> for Rolldown<C, Block>
 where
 	Block: BlockT,
+	L1Update: Decode,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: RolldownRuntimeApi<Block>,
+	C::Api: RolldownRuntimeApi<Block, L1Update>,
 {
 	fn pending_updates_hash(
 		&self,
@@ -73,6 +83,30 @@ where
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.get_pending_updates(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+	fn get_native_l1_update(
+		&self,
+		hex_payload: String,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<L1Update>> {
+		let api = self.client.runtime_api();
+		let at = at.unwrap_or(self.client.info().best_hash);
+
+		let payload = hex2bytes(hex_payload).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				0,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})?;
+
+		api.get_native_l1_update(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

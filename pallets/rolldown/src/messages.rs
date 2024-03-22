@@ -366,7 +366,7 @@ impl TryFrom<eth_abi::WithdrawalResolution> for WithdrawalResolution {
 			requestId: request_id,
 			l2RequestId,
 			status: value.status,
-			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
+			timeStamp: from_eth_u256(value.timeStamp),
 		})
 	}
 }
@@ -386,7 +386,7 @@ impl TryFrom<eth_abi::Deposit> for Deposit {
 			tokenAddress: token_address
 				.map_err(|e| format!("Error converting tokenAddress: {}", e))?,
 			amount: from_eth_u256(deposit.amount),
-			blockHash: sp_core::H256::from_slice(&deposit.blockHash[..]),
+			timeStamp: from_eth_u256(deposit.timeStamp),
 		})
 	}
 }
@@ -458,7 +458,7 @@ impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
 			l2RequestId: l2_request_id
 				.map_err(|e| format!("Error converting l2_request_id: {}", e))?,
 			cancelJustified: value.cancelJustified,
-			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
+			timeStamp: from_eth_u256(value.timeStamp),
 		})
 	}
 }
@@ -479,7 +479,7 @@ impl TryFrom<eth_abi::L2UpdatesToRemove> for L2UpdatesToRemove {
 		Ok(Self {
 			requestId: request_id,
 			l2UpdatesToRemove: l2_updates_to_remove,
-			blockHash: sp_core::H256::from_slice(&value.blockHash[..]),
+			timeStamp: from_eth_u256(value.timeStamp),
 		})
 	}
 }

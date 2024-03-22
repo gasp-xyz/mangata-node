@@ -1289,30 +1289,30 @@ fn test_withdrawal_resolution_works_passes_validation() {
 						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
-						blockHash: H256::from([0; 32]),
+						timeStamp: sp_core::U256::from(1),
 					}),
 					L1UpdateRequest::Deposit(messages::Deposit {
 						requestId: RequestId::new(Origin::L1, 34u128),
 						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
-						blockHash: H256::from([0; 32]),
+						timeStamp: sp_core::U256::from(1),
 					}),
 					L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
 						requestId: RequestId::new(Origin::L1, 30u128),
 						l2RequestId: 31u128,
 						status: true,
-						blockHash: H256::from([0; 32]),
+						timeStamp: sp_core::U256::from(1),
 					}),
 					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 						requestId: RequestId::new(Origin::L1, 31u128),
 						l2UpdatesToRemove: vec![27u128, 28u128],
-						blockHash: H256::from([0; 32]),
+						timeStamp: sp_core::U256::from(1),
 					}),
 					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
 						requestId: RequestId::new(Origin::L1, 32u128),
 						l2UpdatesToRemove: vec![29u128],
-						blockHash: H256::from([0; 32]),
+						timeStamp: sp_core::U256::from(1),
 					}),
 				])
 				.build();

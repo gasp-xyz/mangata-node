@@ -43,7 +43,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u3
 		.expect("Fetching account nonce works; qed")
 }
 
-pub fn get_pair_from_seed<TPair: sp_core::Pair>(seed: &str) -> TPair {
+pub fn get_pair_from_seed<TPair: sp_core::Pair>(seed: &str) -> TPair::Pair {
 	EthereumKeyring::from_str(seed).expect("The keypair should be defined").pair()
 }
 

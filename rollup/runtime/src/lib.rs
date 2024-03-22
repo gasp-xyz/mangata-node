@@ -13,13 +13,13 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, IdentityLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		DispatchInfoOf, IdentifyAccount, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
+		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
+		IdentifyAccount, IdentityLookup, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
 		SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber,
-	OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
+	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
+	Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -35,10 +35,10 @@ pub use mangata_support::traits::{
 	AssetRegistryApi, AssetRegistryProviderTrait, FeeLockTriggerTrait, GetMaintenanceStatusTrait,
 	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
-pub use sp_runtime::account::EthereumSignature;
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+pub use sp_runtime::account::EthereumSignature;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "runtime-benchmarks")]

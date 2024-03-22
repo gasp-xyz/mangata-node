@@ -6,11 +6,11 @@ use rollup_runtime::{
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{ecdsa, ByteArray, Encode, Pair, Public};
+use sp_keyring::EthereumKeyring;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
-use sp_keyring::EthereumKeyring;
 use sp_std::str::FromStr;
 
 // The URL for the telemetry server.
@@ -34,7 +34,9 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-	let account = EthereumKeyring::from_str(seed).expect("The keypair should be defined").to_account_id();
+	let account = EthereumKeyring::from_str(seed)
+		.expect("The keypair should be defined")
+		.to_account_id();
 	// log::info!("Dev Account PublicKey Info - {:?}, {:?}", seed, account);
 	account
 }

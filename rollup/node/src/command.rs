@@ -7,18 +7,18 @@ use crate::{
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::executor::block_on;
+use rollup_runtime::Signer;
 use sc_cli::SubstrateCli;
 use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::{Deref, PartialComponents};
+use sp_core::Pair;
 use sp_keyring::Sr25519Keyring;
+use sp_runtime::traits::IdentifyAccount;
 use std::{
 	convert::TryInto,
 	sync::{Arc, Mutex},
 	time::Duration,
 };
-use sp_runtime::{traits::IdentifyAccount};
-use rollup_runtime::Signer;
-use sp_core::Pair;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -204,14 +204,21 @@ pub fn run() -> sc_cli::Result<()> {
 
 						let client = Arc::new(Mutex::new(c));
 						// Register the *Remark* and *TKA* builders.
-						let ext_factory = ExtrinsicFactory(vec![
-							Box::new(RemarkBuilder::new(client.clone())),
-							Box::new(TransferKeepAliveBuilder::new(
-								client.clone(),
-								Signer::from(crate::benchmarking::get_pair_from_seed::<sp_core::ecdsa::Pair>("Alice").public()).into_account(),
-								Default::default(),
-							)),
-						]);
+						let ext_factory =
+							ExtrinsicFactory(vec![
+								Box::new(RemarkBuilder::new(client.clone())),
+								Box::new(TransferKeepAliveBuilder::new(
+									client.clone(),
+									Signer::from(
+										crate::benchmarking::get_pair_from_seed::<
+											sp_core::ecdsa::Pair,
+										>("Alice")
+										.public(),
+									)
+									.into_account(),
+									Default::default(),
+								)),
+							]);
 
 						let first_block_inherent =
 							block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))

@@ -1091,15 +1091,9 @@ pub mod config {
 				let accounts: Vec<_> = [
 					// TODO AccountId20
 					// Change the following
-					hex_literal::hex![
-						"c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"
-					],
-					hex_literal::hex![
-						"c4690c56c36cec7ed5f6ed5d5eebace0c317073a"
-					],
-					hex_literal::hex![
-						"fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"
-					],
+					hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"],
+					hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a"],
+					hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"],
 				]
 				.iter()
 				.map(|acc| sp_runtime::AccountId20::from(*acc))
@@ -1107,10 +1101,7 @@ pub mod config {
 
 				accounts
 					.into_iter()
-					.map(|acc| {
-						T::AccountId::decode(&mut acc.as_ref())
-							.unwrap()
-					})
+					.map(|acc| T::AccountId::decode(&mut acc.as_ref()).unwrap())
 					.collect()
 			}
 		}

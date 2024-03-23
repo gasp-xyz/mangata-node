@@ -43,7 +43,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u3
 		.expect("Fetching account nonce works; qed")
 }
 
-pub fn get_pair_from_seed<TPair: sp_core::Pair>(seed: &str) -> TPair::Pair {
+pub fn get_eth_pair_from_seed(seed: &str) -> ecdsa::Pair {
 	EthereumKeyring::from_str(seed).expect("The keypair should be defined").pair()
 }
 
@@ -159,7 +159,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = get_pair_from_seed::<ecdsa::Pair>("Baltathar");
+		let acc = get_eth_pair_from_seed("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,
@@ -198,7 +198,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = get_pair_from_seed::<ecdsa::Pair>("Baltathar");
+		let acc = get_eth_pair_from_seed("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,

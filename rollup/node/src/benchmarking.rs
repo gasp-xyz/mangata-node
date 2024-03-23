@@ -109,7 +109,7 @@ pub async fn inherent_benchmark_data(
 	duration: Duration,
 ) -> Result<InherentData> {
 	let keystore = sp_keystore::testing::MemoryKeystore::new();
-	let secret_uri = "//Alice";
+	let secret_uri = "//Alith";
 	let key_pair =
 		sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
 	keystore

@@ -204,21 +204,17 @@ pub fn run() -> sc_cli::Result<()> {
 
 						let client = Arc::new(Mutex::new(c));
 						// Register the *Remark* and *TKA* builders.
-						let ext_factory =
-							ExtrinsicFactory(vec![
-								Box::new(RemarkBuilder::new(client.clone())),
-								Box::new(TransferKeepAliveBuilder::new(
-									client.clone(),
-									Signer::from(
-										crate::benchmarking::get_pair_from_seed::<
-											sp_core::ecdsa::Pair,
-										>("Alice")
-										.public(),
-									)
-									.into_account(),
-									Default::default(),
-								)),
-							]);
+						let ext_factory = ExtrinsicFactory(vec![
+							Box::new(RemarkBuilder::new(client.clone())),
+							Box::new(TransferKeepAliveBuilder::new(
+								client.clone(),
+								Signer::from(
+									crate::benchmarking::get_eth_pair_from_seed("Alith").public(),
+								)
+								.into_account(),
+								Default::default(),
+							)),
+						]);
 
 						let first_block_inherent =
 							block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))

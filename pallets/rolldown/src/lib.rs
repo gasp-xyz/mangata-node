@@ -257,14 +257,12 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub _phantom: PhantomData<T>
+		pub _phantom: PhantomData<T>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig {
-				_phantom: Default::default()
-			}
+			GenesisConfig { _phantom: Default::default() }
 		}
 	}
 

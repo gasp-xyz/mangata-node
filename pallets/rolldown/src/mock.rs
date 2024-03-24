@@ -149,12 +149,10 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> {
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut t)
-		.expect("Tokens storage can be assimilated");
-	
+		rolldown::GenesisConfig::<Test> { _phantom: Default::default() }
+			.assimilate_storage(&mut t)
+			.expect("Tokens storage can be assimilated");
+
 		let mut ext = sp_io::TestExternalities::new(t);
 
 		ext.execute_with(|| {
@@ -162,7 +160,7 @@ impl ExtBuilder {
 				Pallet::<Test>::new_sequencer_active(s);
 			}
 		});
-		
+
 		Self { ext }
 	}
 

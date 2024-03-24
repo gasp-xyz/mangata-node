@@ -257,22 +257,20 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub sequencers: Vec<T::AccountId>,
+		pub _phantom: PhantomData<T>
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig { sequencers: vec![] }
+			GenesisConfig {
+				_phantom: Default::default()
+			}
 		}
 	}
 
-	// Use sequncer staking genesis config - this is intended only for testing
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			for s in self.sequencers.iter() {
-				Pallet::<T>::new_sequencer_active(s);
-			}
 			l2_origin_request_id::<T>::insert(L1::Ethereum, 1);
 		}
 	}

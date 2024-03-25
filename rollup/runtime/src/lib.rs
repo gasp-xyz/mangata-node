@@ -774,6 +774,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<10>;
 	type MaxSequencers = frame_support::traits::ConstU32<10>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
+	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

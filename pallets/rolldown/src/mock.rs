@@ -90,7 +90,7 @@ mockall::mock! {
 
 	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
 		fn is_active_sequencer(sequencer: &AccountId) -> bool;
-		fn slash_sequencer(sequencer: &AccountId) -> DispatchResult;
+		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
 		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
 	}
 }

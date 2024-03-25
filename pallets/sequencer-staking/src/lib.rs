@@ -231,6 +231,8 @@ pub mod pallet {
 		type MaxSequencers: Get<u32>;
 		#[pallet::constant]
 		type BlocksForSequencerUpdate: Get<u32>;
+		#[pallet::constant]
+		type CancellerRewardPercentage: Get<sp_runtime::Permill>;
 	}
 
 	#[pallet::call]
@@ -473,17 +475,24 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 		SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
 	}
 
-	fn slash_sequencer(sequencer: &AccountIdOf<T>) -> DispatchResult {
+	fn slash_sequencer(to_be_slashed: &T::AccountId, maybe_to_reward: Option<&T::AccountId>) -> DispatchResult {
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
-		<SequencerStake<T>>::try_mutate(sequencer, |stake| -> DispatchResult {
+		<SequencerStake<T>>::try_mutate(to_be_slashed, |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
 			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);
 			*stake = stake.saturating_sub(slash_fine_amount_actual);
-			let _ = T::Currency::slash_reserved(sequencer, slash_fine_amount_actual);
+			let mut burned_amount = slash_fine_amount_actual;
+			if let Some(to_reward) = maybe_to_reward {
+				let mut repatriate_amount = T::CancellerRewardPercentage::get() * slash_fine_amount; // this raw * is safe since result is a fraction of input
+				repatriate_amount = repatriate_amount.min(slash_fine_amount_actual);
+				burned_amount = slash_fine_amount_actual.saturating_sub(repatriate_amount);
+				let _ = T::Currency::repatriate_reserved(to_be_slashed, to_reward, repatriate_amount, frame_support::traits::BalanceStatus::Free);
+			}
+			let _ = T::Currency::slash_reserved(to_be_slashed, burned_amount);
 			Ok(())
 		})?;
 
-		Self::maybe_remove_sequencers_from_active_set(vec![sequencer.clone()]);
+		Self::maybe_remove_sequencers_from_active_set(vec![to_be_slashed.clone()]);
 
 		Ok(().into())
 	}

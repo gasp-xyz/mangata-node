@@ -1405,4 +1405,12 @@ pub mod config {
 			pub const SchedulesPerBlock: u32 = 5;
 		}
 	}
+
+	pub mod pallet_sequencer_staking {
+		use super::*;
+
+		parameter_types! {
+			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
+		}
+	}
 }

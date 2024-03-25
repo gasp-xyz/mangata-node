@@ -681,7 +681,7 @@ impl<T: Config> Pallet<T> {
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
-		let to_be_slashed = if cancel_justified { updater.clone() } else { canceler.clone() };
+		let (to_be_slashed, to_reward) = if cancel_justified { (updater.clone(), Some(canceler.clone())) } else { (canceler.clone(), None) };
 
 		// return rights to canceler and updater
 		// only if active sequencer
@@ -712,7 +712,9 @@ impl<T: Config> Pallet<T> {
 		AwaitingCancelResolution::<T>::mutate(&canceler, |v| v.remove(&cancel_request_id));
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
-		Self::slash(&to_be_slashed);
+		T::SequencerStakingProvider::slash_sequencer(&to_be_slashed, to_reward.as_ref())?;
+
+		log!(debug, "SLASH for: {:?}, rewarded: {:?}", to_be_slashed, to_reward);
 
 		log!(debug, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
 		// additional checks
@@ -733,15 +735,6 @@ impl<T: Config> Pallet<T> {
 			updates_to_remove_request_details
 		);
 		//additional checks
-
-		Ok(())
-	}
-
-	fn slash(sequencer: &T::AccountId) -> Result<(), &'static str> {
-		// slash sequencer
-		T::SequencerStakingProvider::slash_sequencer(sequencer)?;
-
-		log!(debug, "SLASH for: {:?}", sequencer);
 
 		Ok(())
 	}

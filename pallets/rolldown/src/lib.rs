@@ -681,7 +681,11 @@ impl<T: Config> Pallet<T> {
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
-		let (to_be_slashed, to_reward) = if cancel_justified { (updater.clone(), Some(canceler.clone())) } else { (canceler.clone(), None) };
+		let (to_be_slashed, to_reward) = if cancel_justified {
+			(updater.clone(), Some(canceler.clone()))
+		} else {
+			(canceler.clone(), None)
+		};
 
 		// return rights to canceler and updater
 		// only if active sequencer

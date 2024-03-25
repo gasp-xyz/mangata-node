@@ -475,7 +475,10 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 		SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
 	}
 
-	fn slash_sequencer(to_be_slashed: &T::AccountId, maybe_to_reward: Option<&T::AccountId>) -> DispatchResult {
+	fn slash_sequencer(
+		to_be_slashed: &T::AccountId,
+		maybe_to_reward: Option<&T::AccountId>,
+	) -> DispatchResult {
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
 		<SequencerStake<T>>::try_mutate(to_be_slashed, |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
@@ -486,7 +489,12 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 				let mut repatriate_amount = T::CancellerRewardPercentage::get() * slash_fine_amount; // this raw * is safe since result is a fraction of input
 				repatriate_amount = repatriate_amount.min(slash_fine_amount_actual);
 				burned_amount = slash_fine_amount_actual.saturating_sub(repatriate_amount);
-				let _ = T::Currency::repatriate_reserved(to_be_slashed, to_reward, repatriate_amount, frame_support::traits::BalanceStatus::Free);
+				let _ = T::Currency::repatriate_reserved(
+					to_be_slashed,
+					to_reward,
+					repatriate_amount,
+					frame_support::traits::BalanceStatus::Free,
+				);
 			}
 			let _ = T::Currency::slash_reserved(to_be_slashed, burned_amount);
 			Ok(())

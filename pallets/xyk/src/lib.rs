@@ -572,7 +572,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_pool)]
 	pub type Pools<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		(CurrencyIdOf<T>, CurrencyIdOf<T>),
 		(BalanceOf<T>, BalanceOf<T>),
 		ValueQuery,
@@ -582,7 +582,7 @@ pub mod pallet {
 	#[pallet::getter(fn liquidity_asset)]
 	pub type LiquidityAssets<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		(CurrencyIdOf<T>, CurrencyIdOf<T>),
 		Option<CurrencyIdOf<T>>,
 		ValueQuery,
@@ -592,7 +592,7 @@ pub mod pallet {
 	#[pallet::getter(fn liquidity_pool)]
 	pub type LiquidityPools<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		CurrencyIdOf<T>,
 		Option<(CurrencyIdOf<T>, CurrencyIdOf<T>)>,
 		ValueQuery,

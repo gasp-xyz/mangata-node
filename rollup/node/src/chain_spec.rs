@@ -212,8 +212,8 @@ pub fn rollup_eigen_local(initial_collators_as_sequencers: bool) -> ChainSpec {
 					// ETH
 					(
 						1u32,
-						300_000_000__000_000_000_000_000_000u128, 
-						get_account_id_from_seed::<sr25519::Public>("Alice")
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					// MGA
 					(

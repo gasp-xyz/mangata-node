@@ -2,6 +2,8 @@
 #![cfg(not(feature = "runtime-benchmarks"))]
 #![allow(non_snake_case)]
 
+use log::{info, warn};
+
 use super::{Event, *};
 use crate::mock::*;
 use frame_support::{assert_err, assert_err_ignore_postinfo, dispatch::GetDispatchInfo};
@@ -830,6 +832,7 @@ fn multiswap_sell_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_bad_slippage_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -884,6 +887,7 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -942,6 +946,7 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -992,6 +997,7 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

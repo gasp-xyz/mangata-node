@@ -6,6 +6,7 @@ use crate as rolldown;
 use core::convert::TryFrom;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
+use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
@@ -134,6 +135,8 @@ impl rolldown::Config for Test {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type AssetRegistryProvider = MockAssetRegistryProviderApi;
 	type AddressConverter = DummyAddressConverter;
+	type DisputePeriodLength = ConstU128<5>;
+	type RequestsPerBlock = ConstU128<10>;
 }
 
 pub struct ExtBuilder {
@@ -146,9 +149,11 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> { sequencers: vec![consts::ALICE, consts::BOB] }
-			.assimilate_storage(&mut t)
-			.expect("Tokens storage can be assimilated");
+		rolldown::GenesisConfig::<Test> {
+			sequencers: vec![consts::ALICE, consts::BOB, consts::CHARLIE],
+		}
+		.assimilate_storage(&mut t)
+		.expect("Tokens storage can be assimilated");
 
 		let ext = sp_io::TestExternalities::new(t);
 		Self { ext }

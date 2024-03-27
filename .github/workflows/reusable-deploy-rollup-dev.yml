@@ -1,0 +1,62 @@
+name: Deploy rollup-node to `rollup-dev`
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to be used for deployment"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to be used for deployment"
+        required: true
+        type: string
+
+concurrency: rollup-dev-environment
+
+jobs:
+  deploy-rollup-dev:
+    runs-on: ubuntu-latest
+    environment: rollup-dev
+    env:
+      GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+    steps:
+      - name: Verify specified version exists
+        run: docker pull mangatasolutions/rollup-node:${{ inputs.version }}
+      
+      - name: Checkout `mangata-finance/gitops` repository
+        uses: actions/checkout@v4
+        with:
+          repository: mangata-finance/gitops
+          ref: main
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      - name: Push updated version to `gitops` repository
+        id: version
+        run: |
+          echo -n '${{ inputs.version }}' > helmfiles/rollup-dev/.version
+          git config user.name mangatafinance
+          git config user.email solutions@mangata.finance
+          git add .
+          git commit -m 'chore: deploy ${{ inputs.version }} to rollup-dev environment' || \
+            echo "changed=false" >> $GITHUB_OUTPUT
+          git push
+      
+      - name: Watch deployment workflow run
+        run: |
+          # Rerun previous workflow if version didn't change
+          [ -n '${{ steps.version.outputs.changed }}' ] && gh run rerun $(gh run list -w deploy-rollup-dev.yml -L1 --json databaseId --jq '.[].databaseId')
+          
+          sleep 5 && gh run list -L10 -w deploy-rollup-dev.yml
+          export RUN_ID=$(gh run list -w deploy-rollup-dev.yml -L1 --json databaseId --jq '.[].databaseId')
+          
+          if [[ ($(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD)) && -z '${{ steps.version.outputs.changed }}' ]]; then
+            echo "Commited git SHA doesn't match with the SHA of the retrieved Run ID"
+            exit 1
+          fi
+          
+          echo "Deployed version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Deployment workflow URL: $(gh run view "$RUN_ID" --json url --jq '.url')" >> $GITHUB_STEP_SUMMARY
+          gh run watch "$RUN_ID" --exit-status

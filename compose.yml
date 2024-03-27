@@ -1,0 +1,46 @@
+# To get `mangatasolutions/rollup-node:local` image run next command from the root of the directory:
+# docker build -t mangatasolutions/rollup-node:local .
+# 
+# Note: You can also skip the step and let the docker-compose to build the image for you,
+# but for some reason it keeps loosing cache, so next rebuilds would take longer, than they should.
+name: mangata-node
+
+services: 
+  node-alice:
+    build: 
+      context: .
+      dockerfile: local.Dockerfile
+    image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
+    command: 
+      - --alice 
+      - --chain=rollup-local
+      - --base-path=/data
+      - --rpc-cors=all
+      - --unsafe-rpc-external
+      - --node-key=0000000000000000000000000000000000000000000000000000000000000001
+    ports:
+      - 9944:9944
+      - 30333:30333
+    volumes: 
+      - data-alice:/data
+  
+  node-bob:
+    build: 
+      context: .
+      dockerfile: local.Dockerfile
+    image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
+    command: 
+      - --bob
+      - --chain=rollup-local
+      - --base-path=/data
+      - --rpc-cors=all
+      - --unsafe-rpc-external
+      - --bootnodes=/dns/node-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+    ports:
+      - 9946:9944
+    volumes: 
+      - data-bob:/data
+
+volumes:
+  data-alice:
+  data-bob:

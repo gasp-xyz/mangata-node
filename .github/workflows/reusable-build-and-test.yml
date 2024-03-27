@@ -198,7 +198,7 @@ jobs:
             /usr/local/cargo/registry
           key: cargo-coverage-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin@0.26.1
+        run: cargo install --locked cargo-tarpaulin@0.26.1
       - name: Generate coverage report with cargo-tarpaulin
         run: cargo tarpaulin --timeout 120 --workspace -e rollup-runtime-integration-test rollup-node rollup-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Xml
       - name: Upload to codecov.io

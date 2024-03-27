@@ -13,13 +13,13 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		DispatchInfoOf, IdentifyAccount, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
+		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
+		IdentifyAccount, IdentityLookup, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
 		SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, MultiAddress,
-	MultiSignature, OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug,
+	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
+	Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -38,6 +38,7 @@ pub use mangata_support::traits::{
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
 use sp_api::HeaderT;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+pub use sp_runtime::account::EthereumSignature;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "runtime-benchmarks")]
@@ -192,7 +193,7 @@ impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
@@ -355,7 +356,7 @@ use cfg::pallet_transaction_payment_mangata::{
 pub struct Foo<T>(PhantomData<T>);
 impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
-	T: frame_system::Config<AccountId = sp_runtime::AccountId32>,
+	T: frame_system::Config<AccountId = sp_runtime::AccountId20>,
 {
 	fn trigger(who: T::AccountId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
@@ -418,7 +419,7 @@ impl Into<CallType> for RuntimeCall {
 }
 
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{generic::ExtendedCall, AccountId32};
+use sp_runtime::{generic::ExtendedCall, AccountId20};
 use sp_std::{fmt::Write, prelude::*};
 
 impl ExtendedCall for RuntimeCall {
@@ -920,7 +921,7 @@ impl_runtime_apis! {
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
-		) -> Option<(sp_runtime::AccountId32, u32)> {
+		) -> Option<(sp_runtime::AccountId20, u32)> {
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
 				<Runtime as frame_system::Config>::Lookup::lookup(sig.0)

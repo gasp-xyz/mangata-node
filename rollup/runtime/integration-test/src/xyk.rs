@@ -61,6 +61,6 @@ use hex_literal::hex;
 #[test]
 fn test_decode_extrinsic() {
 	test_env(None).execute_with(|| {
-		UncheckedExtrinsic::decode(&mut hex!("b0040a00008eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a4800000000821a0600").as_ref()).unwrap();
+		UncheckedExtrinsic::decode(&mut hex!("110284f24ff3a9cf04c71dbc94d0b566f7a27b94566cac0599155d6e4a33dd4d35c20e005a9d8a81740cfab3c8f89027ce3e4ccfa94a574eae6c14c5220df3dcf32c540cdde905e9d5fefaf1b30aa759a7e2f9b56b2e4401650000000d030000000004000000e803000000000000000000000000000088130000000000000000000000000000").as_ref()).unwrap();
 	});
 }

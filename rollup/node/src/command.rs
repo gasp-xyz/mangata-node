@@ -7,10 +7,13 @@ use crate::{
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::executor::block_on;
+use rollup_runtime::Signer;
 use sc_cli::SubstrateCli;
 use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::{Deref, PartialComponents};
+use sp_core::Pair;
 use sp_keyring::Sr25519Keyring;
+use sp_runtime::traits::IdentifyAccount;
 use std::{
 	convert::TryInto,
 	sync::{Arc, Mutex},
@@ -206,7 +209,10 @@ pub fn run() -> sc_cli::Result<()> {
 							Box::new(RemarkBuilder::new(client.clone())),
 							Box::new(TransferKeepAliveBuilder::new(
 								client.clone(),
-								Sr25519Keyring::Alice.to_account_id(),
+								Signer::from(
+									crate::benchmarking::get_eth_pair_from_seed("Alith").public(),
+								)
+								.into_account(),
 								Default::default(),
 							)),
 						]);

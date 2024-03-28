@@ -199,46 +199,46 @@ pub fn rollup_eigen_local(initial_collators_as_sequencers: bool) -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alice"),
 						authority_keys_from_seed("Alice"),
 					),
 					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Bob"),
 						authority_keys_from_seed("Bob"),
 					),
 				],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<ecdsa::Public>("Alice"),
 				// Tokens endowment
 				vec![
 					// MGA
 					(
 						0u32,
 						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alice"),
 					),
 					// ETH
 					(
 						1u32,
 						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alice"),
 					),
 					// MGA
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Bob"),
 					),
 					// ETH
 					(
 						1u32,
 						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Bob"),
 					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_account_id_from_seed::<ecdsa::Public>("Charlie"),
 					),
 				],
 				// Config for Staking
@@ -246,7 +246,7 @@ pub fn rollup_eigen_local(initial_collators_as_sequencers: bool) -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alice"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -262,7 +262,7 @@ pub fn rollup_eigen_local(initial_collators_as_sequencers: bool) -> ChainSpec {
 					),
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Bob"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool

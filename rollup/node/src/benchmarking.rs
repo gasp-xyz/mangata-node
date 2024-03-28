@@ -5,16 +5,21 @@
 use crate::service::Block;
 use rollup_runtime as runtime;
 use rollup_runtime::config::frame_system::BlockHashCount;
-use runtime::{AccountId, Balance, RuntimeApi, SystemCall, TokenId, TokensCall};
+use runtime::{AccountId, Balance, RuntimeApi, Signer, SystemCall, TokenId, TokensCall};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sc_executor::WasmExecutor;
 use sp_api::ProvideRuntimeApi;
-use sp_core::{crypto::key_types::AURA, Encode, Pair};
+use sp_core::{crypto::key_types::AURA, ecdsa, sr25519, Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
-use sp_keyring::Sr25519Keyring;
+use sp_keyring::EthereumKeyring;
 use sp_keystore::Keystore;
-use sp_runtime::{traits::Zero, OpaqueExtrinsic, SaturatedConversion};
+use sp_runtime::{
+	account::EthereumSignature,
+	traits::{IdentifyAccount, Zero},
+	OpaqueExtrinsic, SaturatedConversion,
+};
+use sp_std::str::FromStr;
 use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -30,12 +35,16 @@ type HostFunctions =
 
 type WasmFullClient = sc_service::TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
 
-pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::sr25519::Pair) -> u32 {
+pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::ecdsa::Pair) -> u32 {
 	let best_hash = client.chain_info().best_hash;
 	client
 		.runtime_api()
-		.account_nonce(best_hash, account.public().into())
+		.account_nonce(best_hash, Signer::from(account.public()).into_account())
 		.expect("Fetching account nonce works; qed")
+}
+
+pub fn get_eth_pair_from_seed(seed: &str) -> ecdsa::Pair {
+	EthereumKeyring::from_str(seed).expect("The keypair should be defined").pair()
 }
 
 /// Create a transaction using the given `call`.
@@ -43,7 +52,7 @@ pub fn fetch_nonce(client: &WasmFullClient, account: sp_core::sr25519::Pair) -> 
 /// Note: Should only be used for benchmarking.
 pub fn create_benchmark_extrinsic(
 	client: &WasmFullClient,
-	sender: sp_core::sr25519::Pair,
+	sender: sp_core::ecdsa::Pair,
 	call: runtime::RuntimeCall,
 	nonce: Option<u32>,
 ) -> runtime::UncheckedExtrinsic {
@@ -86,8 +95,8 @@ pub fn create_benchmark_extrinsic(
 
 	runtime::UncheckedExtrinsic::new_signed(
 		call,
-		sp_runtime::AccountId32::from(sender.public()).into(),
-		runtime::Signature::Sr25519(signature),
+		Signer::from(sender.public()).into_account().into(),
+		EthereumSignature::from(signature),
 		extra,
 	)
 }
@@ -100,7 +109,7 @@ pub async fn inherent_benchmark_data(
 	duration: Duration,
 ) -> Result<InherentData> {
 	let keystore = sp_keystore::testing::MemoryKeystore::new();
-	let secret_uri = "//Alice";
+	let secret_uri = "//Alith";
 	let key_pair =
 		sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
 	keystore
@@ -150,7 +159,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = Sr25519Keyring::Bob.pair();
+		let acc = get_eth_pair_from_seed("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,
@@ -189,7 +198,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 	}
 
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-		let acc = Sr25519Keyring::Bob.pair();
+		let acc = get_eth_pair_from_seed("Baltathar");
 		let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
 			&*self.client.lock().unwrap(),
 			acc,

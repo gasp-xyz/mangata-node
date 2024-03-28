@@ -134,7 +134,7 @@ pub mod pallet {
 	#[pallet::getter(fn get_reserve_status)]
 	pub type ReserveStatus<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
 		Twox64Concat,
 		CurrencyIdOf<T>,
@@ -146,7 +146,7 @@ pub mod pallet {
 	#[pallet::getter(fn get_relock_status)]
 	pub type RelockStatus<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
 		Twox64Concat,
 		CurrencyIdOf<T>,

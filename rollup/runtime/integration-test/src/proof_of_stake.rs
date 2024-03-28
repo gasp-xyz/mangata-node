@@ -23,9 +23,9 @@ fn forward_to_block(n: u32) {
 #[test]
 fn rewards_are_aligned_with_sessions() {
 	ExtBuilder::default().build().execute_with(|| {
-		let alice: sp_runtime::AccountId32 = [0u8; 32].into();
-		let bob: sp_runtime::AccountId32 = [1u8; 32].into();
-		let charlie: sp_runtime::AccountId32 = [2u8; 32].into();
+		let alice: sp_runtime::AccountId20 = [0u8; 20].into();
+		let bob: sp_runtime::AccountId20 = [1u8; 20].into();
+		let charlie: sp_runtime::AccountId20 = [2u8; 20].into();
 		let amount: u128 = 100_000u128;
 		let blocks_per_round = <Runtime as parachain_staking::Config>::BlocksPerRound::get();
 

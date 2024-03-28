@@ -5,11 +5,13 @@ use rollup_runtime::{
 };
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::{sr25519, ByteArray, Encode, Pair, Public};
+use sp_core::{ecdsa, ByteArray, Encode, Pair, Public};
+use sp_keyring::EthereumKeyring;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
+use sp_std::str::FromStr;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -19,9 +21,10 @@ pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
+	let pair = TPublic::Pair::from_string(&format!("//{}", seed), None)
+		.expect("static values are valid; qed");
+	// log::info!("Dev Account Seed Info - {:?}, {:x?}", seed, array_bytes::bytes2hex("0x", pair.to_raw_vec()));
+	pair.public()
 }
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -31,7 +34,11 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
+	let account = EthereumKeyring::from_str(seed)
+		.expect("The keypair should be defined")
+		.to_account_id();
+	// log::info!("Dev Account PublicKey Info - {:?}, {:?}", seed, account);
+	account
 }
 
 /// Generate an Aura authority key.
@@ -52,6 +59,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	properties.insert("tokenSymbol".into(), "RXL".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
+	properties.insert("isEthereum".into(), true.into());
 
 	ChainSpec::from_genesis(
 		// Name
@@ -64,35 +72,35 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						authority_keys_from_seed("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
+						authority_keys_from_seed("Alith"),
 					),
 					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						authority_keys_from_seed("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+						authority_keys_from_seed("Baltathar"),
 					),
 				],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<ecdsa::Public>("Alith"),
 				// Tokens endowment
 				vec![
 					// MGA
 					(
 						0u32,
 						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
 					// ETH
-					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
+					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alith")),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
 					),
 				],
 				// Config for Staking
@@ -100,7 +108,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -116,7 +124,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 					),
 					(
 						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool

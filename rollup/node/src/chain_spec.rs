@@ -1,7 +1,7 @@
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
 	AuraId, CustomMetadata, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
-	SystemConfig, XcmMetadata, WASM_BINARY,
+	SystemConfig, XcmMetadata, WASM_BINARY, L1Asset
 };
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
@@ -150,6 +150,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
+						None
 					),
 					(
 						1,
@@ -161,6 +162,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
+						Some(L1Asset::Ethereum(array_bytes::hex2array("0x5748395867463837537395739375937493733457").unwrap()))
 					),
 				],
 				initial_collators_as_sequencers,
@@ -187,7 +189,7 @@ fn rollup_genesis(
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
-	register_assets: Vec<(u32, AssetMetadataOf)>,
+	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
 	initial_collators_as_sequencers: bool,
 ) -> rollup_runtime::RuntimeGenesisConfig {
 	rollup_runtime::RuntimeGenesisConfig {
@@ -294,9 +296,9 @@ fn rollup_genesis(
 			assets: register_assets
 				.iter()
 				.cloned()
-				.map(|(id, meta)| {
+				.map(|(id, meta, maybe_l1_asset)| {
 					let encoded = AssetMetadataOf::encode(&meta);
-					(id, encoded)
+					(id, encoded, maybe_l1_asset)
 				})
 				.collect(),
 		},

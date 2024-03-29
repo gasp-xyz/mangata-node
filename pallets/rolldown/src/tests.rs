@@ -482,7 +482,10 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-			slash_sequencer_mock.expect().with(eq(ALICE)).return_const(Ok(().into()));
+			slash_sequencer_mock
+				.expect()
+				.withf(|a, b| *a == ALICE && b.cloned() == Some(BOB))
+				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
 		})
 }
@@ -523,7 +526,10 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
-			slash_sequencer_mock.expect().with(eq(BOB)).return_const(Ok(().into()));
+			slash_sequencer_mock
+				.expect()
+				.withf(|a, b| *a == BOB && b.cloned() == None)
+				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
 		})
 }

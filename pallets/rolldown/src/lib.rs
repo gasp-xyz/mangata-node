@@ -23,7 +23,7 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{serde::Serialize, traits::Convert};
-use sp_std::{convert::TryInto, prelude::*, vec::Vec};
+use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -196,6 +196,17 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn get_awaiting_cancel_resolution)]
+	pub type AwaitingCancelResolution<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BTreeSet<u128>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_last_update_by_sequencer)]
+	pub type LastUpdateBySequencer<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -219,6 +230,9 @@ pub mod pallet {
 		InvalidUpdate,
 		L1AssetNotFound,
 		WrongRequestId,
+		OnlySelectedSequencerisAllowedToUpdate,
+		SequencerLastUpdateStillInDisputePeriod,
+		SequencerAwaitingCancelResolution,
 		MultipleUpdatesInSingleBlock,
 	}
 
@@ -243,27 +257,18 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub sequencers: Vec<T::AccountId>,
+		pub _phantom: PhantomData<T>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig { sequencers: vec![] }
+			GenesisConfig { _phantom: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			for s in self.sequencers.iter() {
-				sequencer_rights::<T>::insert(
-					s.clone(),
-					SequencerRights {
-						readRights: 1,
-						cancelRights: (self.sequencers.len() - 1) as u128,
-					},
-				);
-			}
 			l2_origin_request_id::<T>::insert(L1::Ethereum, 1);
 		}
 	}
@@ -277,6 +282,10 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
+			ensure!(
+				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
+				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
+			);
 			Self::validate_l1_update(L1::Ethereum, &requests)?;
 
 			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
@@ -317,6 +326,8 @@ pub mod pallet {
 
 			let update: messages::eth_abi::L1Update = requests.clone().into();
 			let request_hash = Keccak256::digest(&update.abi_encode());
+
+			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
 
 			Pallet::<T>::deposit_event(Event::L1ReadStored((
 				sequencer,
@@ -375,11 +386,14 @@ pub mod pallet {
 			// create cancel request
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
-				updater: submitter,
-				canceler,
+				updater: submitter.clone(),
+				canceler: canceler.clone(),
 				range: request.range().ok_or(Error::<T>::InvalidUpdate)?,
 				hash: hash_of_pending_request,
 			};
+
+			AwaitingCancelResolution::<T>::mutate(submitter, |v| v.insert(l2_request_id));
+			AwaitingCancelResolution::<T>::mutate(canceler, |v| v.insert(l2_request_id));
 
 			pending_updates::<T>::insert(
 				l1,
@@ -461,7 +475,7 @@ pub mod pallet {
 			sequencer_rights::<T>::mutate_exists(submitter.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
-						if T::SequencerStakingProvider::is_active_sequencer(submitter.clone()) =>
+						if T::SequencerStakingProvider::is_active_sequencer(&submitter) =>
 					{
 						sequencer_rights.readRights = 1;
 					},
@@ -506,7 +520,7 @@ impl<T: Config> Pallet<T> {
 			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 				match maybe_sequencer {
 					&mut Some(ref mut sequencer_rights)
-						if T::SequencerStakingProvider::is_active_sequencer(sequencer.clone()) =>
+						if T::SequencerStakingProvider::is_active_sequencer(sequencer) =>
 					{
 						sequencer_rights.readRights += 1;
 					},
@@ -667,14 +681,18 @@ impl<T: Config> Pallet<T> {
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
-		let to_be_slashed = if cancel_justified { updater.clone() } else { canceler.clone() };
+		let (to_be_slashed, to_reward) = if cancel_justified {
+			(updater.clone(), Some(canceler.clone()))
+		} else {
+			(canceler.clone(), None)
+		};
 
 		// return rights to canceler and updater
 		// only if active sequencer
 		sequencer_rights::<T>::mutate_exists(updater.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
-					if T::SequencerStakingProvider::is_active_sequencer(updater) =>
+					if T::SequencerStakingProvider::is_active_sequencer(&updater) =>
 				{
 					sequencer.readRights += 1;
 				},
@@ -684,7 +702,7 @@ impl<T: Config> Pallet<T> {
 		sequencer_rights::<T>::mutate_exists(canceler.clone(), |maybe_sequencer| {
 			match maybe_sequencer {
 				&mut Some(ref mut sequencer)
-					if T::SequencerStakingProvider::is_active_sequencer(canceler) =>
+					if T::SequencerStakingProvider::is_active_sequencer(&canceler) =>
 				{
 					sequencer.cancelRights += 1;
 				},
@@ -694,8 +712,13 @@ impl<T: Config> Pallet<T> {
 
 		pending_updates::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
 
+		AwaitingCancelResolution::<T>::mutate(&updater, |v| v.remove(&cancel_request_id));
+		AwaitingCancelResolution::<T>::mutate(&canceler, |v| v.remove(&cancel_request_id));
+
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
-		Self::slash(&to_be_slashed);
+		T::SequencerStakingProvider::slash_sequencer(&to_be_slashed, to_reward.as_ref())?;
+
+		log!(debug, "SLASH for: {:?}, rewarded: {:?}", to_be_slashed, to_reward);
 
 		log!(debug, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
 		// additional checks
@@ -716,26 +739,6 @@ impl<T: Config> Pallet<T> {
 			updates_to_remove_request_details
 		);
 		//additional checks
-
-		Ok(())
-	}
-
-	fn slash(sequencer: &T::AccountId) -> Result<(), &'static str> {
-		// check if sequencer is active
-		let is_active_sequencer_before =
-			T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
-		// slash sequencer
-		T::SequencerStakingProvider::slash_sequencer(sequencer.clone())?;
-		// check if sequencer is active
-		let is_active_sequencer_after =
-			T::SequencerStakingProvider::is_active_sequencer(sequencer.clone());
-
-		// if sequencer was active and is not active anymore, remove rights
-		if is_active_sequencer_before && !is_active_sequencer_after {
-			Self::handle_sequencer_deactivation(sequencer.clone());
-		}
-
-		log!(debug, "SLASH for: {:?}", sequencer);
 
 		Ok(())
 	}
@@ -813,6 +816,24 @@ impl<T: Config> Pallet<T> {
 				});
 			}
 		}
+	}
+
+	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
+		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
+		// lower sequencer count
+		sequencer_count::<T>::put(
+			Self::get_sequencer_count().saturating_sub(deactivated_sequencers_len.into()),
+		);
+		// remove all rights of deactivated sequencer
+		for deactivated_sequencer in deactivated_sequencers {
+			sequencer_rights::<T>::remove(deactivated_sequencer.clone());
+		}
+		sequencer_rights::<T>::translate::<SequencerRights, _>(|_k, mut v| {
+			v.cancelRights = v.cancelRights.saturating_sub(
+				RIGHTS_MULTIPLIER.saturating_mul(deactivated_sequencers_len.into()),
+			);
+			Some(v)
+		});
 	}
 
 	pub fn pending_updates_proof() -> sp_core::H256 {
@@ -973,21 +994,21 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
-	fn new_sequencer_active(sequencer: AccountIdOf<T>) {
+	fn new_sequencer_active(sequencer: &AccountIdOf<T>) {
 		// raise sequencer count
 		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
 		// add rights to new sequencer
 		sequencer_rights::<T>::insert(
-			sequencer.clone(),
+			sequencer,
 			SequencerRights {
 				readRights: RIGHTS_MULTIPLIER,
-				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get() - 1),
+				cancelRights: RIGHTS_MULTIPLIER * (sequencer_count::<T>::get().saturating_sub(2)),
 			},
 		);
 
 		// add 1 cancel right of all sequencers
 		for (sequencer, sequencer_rights) in sequencer_rights::<T>::iter() {
-			if sequencer_rights.cancelRights > 0 {
+			if sequencer_count::<T>::get() > 1 {
 				sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
 					if let Some(ref mut sequencer) = maybe_sequencer {
 						sequencer.cancelRights += RIGHTS_MULTIPLIER;
@@ -995,5 +1016,27 @@ impl<T: Config> RolldownProviderTrait<AccountIdOf<T>> for Pallet<T> {
 				});
 			}
 		}
+	}
+
+	fn sequencer_unstaking(sequencer: &AccountIdOf<T>) -> DispatchResult {
+		ensure!(
+			LastUpdateBySequencer::<T>::get(sequencer)
+				.saturating_add(T::DisputePeriodLength::get()) <
+				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
+			Error::<T>::SequencerLastUpdateStillInDisputePeriod
+		);
+		ensure!(
+			AwaitingCancelResolution::<T>::get(&sequencer).is_empty(),
+			Error::<T>::SequencerAwaitingCancelResolution
+		);
+
+		LastUpdateBySequencer::<T>::remove(&sequencer);
+		AwaitingCancelResolution::<T>::remove(&sequencer);
+
+		Ok(())
+	}
+
+	fn handle_sequencer_deactivations(deactivated_sequencers: Vec<T::AccountId>) {
+		Pallet::<T>::handle_sequencer_deactivations(deactivated_sequencers)
 	}
 }

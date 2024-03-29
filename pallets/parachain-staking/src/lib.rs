@@ -1924,7 +1924,7 @@ pub mod pallet {
 			<TotalSelected<T>>::put(T::MinSelectedCandidates::get());
 			// Choose top TotalSelected collator candidates
 			let (v_count, _, total_relevant_exposure) = <Pallet<T>>::select_top_candidates(1u32);
-			// Start Round 1 at Block 0
+			// Start Round 0 at Block 0
 			let round: RoundInfo<BlockNumberFor<T>> =
 				RoundInfo::new(0u32, 0u32.into(), <T as pallet::Config>::BlocksPerRound::get());
 			<Round<T>>::put(round);
@@ -3277,14 +3277,10 @@ pub mod pallet {
 			let mut valuated_author_candidates_vec: Vec<(T::AccountId, BalanceOf<T>)> =
 				valuated_author_candidates_btreemap.into_iter().collect::<_>();
 
-			let min_stake_filtered_authors: Vec<_> = valuated_author_candidates_vec
+			let mut filtered_authors: Vec<_> = valuated_author_candidates_vec
 				.into_iter()
 				.filter(|x| x.1 >= T::MinCollatorStk::get())
 				.collect::<_>();
-			let mut filtered_authors = T::SequencerStakingProvider::process_potential_authors(
-				min_stake_filtered_authors.clone(),
-			)
-			.unwrap_or(min_stake_filtered_authors);
 
 			// order candidates by stake (least to greatest so requires `rev()`)
 			filtered_authors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());

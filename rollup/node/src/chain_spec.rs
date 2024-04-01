@@ -1,7 +1,7 @@
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
-	AuraId, CustomMetadata, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
-	SystemConfig, XcmMetadata, WASM_BINARY, L1Asset
+	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
+	SystemConfig, XcmMetadata, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
@@ -150,7 +150,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						None
+						None,
 					),
 					(
 						1,
@@ -162,7 +162,10 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						Some(L1Asset::Ethereum(array_bytes::hex2array("0x5748395867463837537395739375937493733457").unwrap()))
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
+								.unwrap(),
+						)),
 					),
 				],
 				initial_collators_as_sequencers,

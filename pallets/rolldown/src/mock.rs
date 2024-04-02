@@ -89,9 +89,9 @@ mockall::mock! {
 	pub SequencerStakingProviderApi {}
 
 	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
-		fn is_active_sequencer(sequencer: &AccountId) -> bool;
-		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
-		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
+		fn is_active_sequencer(sequencer: AccountId) -> bool;
+		fn slash_sequencer(sequencer: AccountId) -> DispatchResult;
+		fn process_potential_authors(authors: Vec<(AccountId, Balance)>,) -> Option<Vec<(AccountId, Balance)>>;
 	}
 }
 
@@ -149,18 +149,13 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> { _phantom: Default::default() }
-			.assimilate_storage(&mut t)
-			.expect("Tokens storage can be assimilated");
+		rolldown::GenesisConfig::<Test> {
+			sequencers: vec![consts::ALICE, consts::BOB, consts::CHARLIE],
+		}
+		.assimilate_storage(&mut t)
+		.expect("Tokens storage can be assimilated");
 
-		let mut ext = sp_io::TestExternalities::new(t);
-
-		ext.execute_with(|| {
-			for s in vec![consts::ALICE, consts::BOB, consts::CHARLIE].iter() {
-				Pallet::<Test>::new_sequencer_active(s);
-			}
-		});
-
+		let ext = sp_io::TestExternalities::new(t);
 		Self { ext }
 	}
 
@@ -188,10 +183,6 @@ impl ExtBuilder {
 			let is_liquidity_token_mock =
 				MockSequencerStakingProviderApi::is_active_sequencer_context();
 			is_liquidity_token_mock.expect().return_const(true);
-
-			let is_selected_sequencer_mock =
-				MockSequencerStakingProviderApi::is_selected_sequencer_context();
-			is_selected_sequencer_mock.expect().return_const(true);
 
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);

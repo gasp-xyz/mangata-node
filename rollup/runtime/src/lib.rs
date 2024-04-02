@@ -508,6 +508,7 @@ impl pallet_session::Config for Runtime {
 	type ShouldEndSession = ParachainStaking;
 	type NextSessionRotation = ParachainStaking;
 	type SessionManager = ParachainStaking;
+	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
 	type WeightInfo = weights::pallet_session_weights::ModuleWeight<Runtime>;
@@ -518,7 +519,6 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type InformSessionData = SequencerStaking;
 
 	#[cfg(feature = "experimental")]
 	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;
@@ -772,10 +772,6 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = Rolldown;
-	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<10>;
-	type MaxSequencers = frame_support::traits::ConstU32<10>;
-	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
-	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

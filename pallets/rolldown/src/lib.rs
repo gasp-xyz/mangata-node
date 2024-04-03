@@ -628,12 +628,10 @@ impl<T: Config> Pallet<T> {
 		let account: T::AccountId =
 			T::AddressConverter::convert(deposit_request_details.depositRecipient);
 
-		let amount: u128 = deposit_request_details.amount.try_into().unwrap();
+		let amount: u128 =
+			deposit_request_details.amount.try_into().or(Err(Error::<T>::BalanceOverflow))?;
 
 		// check ferried
-
-		// translate to token id
-		// Add check if token exists, if not create one
 
 		let eth_asset = L1Asset::Ethereum(deposit_request_details.tokenAddress);
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {

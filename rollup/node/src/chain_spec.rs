@@ -307,6 +307,8 @@ fn rollup_genesis(
 			sequencers_stake: if initial_collators_as_sequencers {
 				initial_authorities
 					.iter()
+					.rev()
+					.take(1)
 					.map(|(acc, _)| (acc.clone(), 10_000_000_u128))
 					.collect()
 			} else {

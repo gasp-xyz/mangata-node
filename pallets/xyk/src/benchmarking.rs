@@ -80,7 +80,8 @@ benchmarks! {
 	   let caller: T::AccountId = whitelisted_caller();
 	   let first_asset_amount = MILION.to_balance::<T>();
 	   let second_asset_amount = MILION.to_balance::<T>();
-	   let first_asset_id = <T as Config>::Currency::create(&caller, first_asset_amount).unwrap();
+	   <T as Config>::Currency::create(&caller, first_asset_amount).unwrap();
+	   let first_asset_id = <T as Config>::Currency::create(&caller, second_asset_amount).unwrap();
 	   let second_asset_id = <T as Config>::Currency::create(&caller, second_asset_amount).unwrap();
 	   let liquidity_asset_id = second_asset_id + 1_u32.into();
 
@@ -106,11 +107,13 @@ benchmarks! {
 	   let initial_amount: BalanceOf<T> = 1000000000000000.to_balance::<T>();
 	   let expected_amount = BalanceOf::<T>::zero();
 	   let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
 	   let pool_amount: BalanceOf<T> = 100_000_000_000_000.to_balance::<T>();
+
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id, pool_amount, non_native_asset_id1, pool_amount).unwrap();
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1, pool_amount, non_native_asset_id2, pool_amount).unwrap();
 
@@ -190,6 +193,7 @@ benchmarks! {
 	   let initial_amount: BalanceOf<T> = 1000000000000000.to_balance::<T>();
 	   let expected_amount = BalanceOf::<T>::zero();
 	   let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
@@ -333,6 +337,7 @@ benchmarks! {
 	   }
 
 	   <T as Config>::Currency::mint(native_asset_id, &caller, MILION.to_balance::<T>()).expect("Token creation failed");
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 	   let liquidity_asset_id = non_native_asset_id2 + 1_u32.into();
 	   let pool_creation_asset_1_amount = 40000000000000000000_u128.to_balance::<T>();
@@ -425,6 +430,7 @@ benchmarks! {
 	provide_liquidity_with_conversion {
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:BalanceOf<T> = 1_000_000_000.to_balance::<T>();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let asset_id_1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let asset_id_2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let liquidity_asset_id = asset_id_2 + 1_u32.into();

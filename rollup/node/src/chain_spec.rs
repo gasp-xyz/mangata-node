@@ -91,10 +91,19 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
 					// ETH
-					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alith")),
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
+					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+					),
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 					),
 					(
@@ -113,12 +122,12 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						0u32,
 						// How much mangata they pool
 						100_000_000__000_000_000_000_000_000_u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
+						// Id of the eth token,
+						1u32,
+						// How many eth tokens they pool,
 						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
-						3u32,
+						2u32,
 						// How many liquidity tokens they stake,
 						100_000_000__000_000_000_000_000_000_u128,
 					),
@@ -130,11 +139,11 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						// How much mangata they pool
 						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
+						1u32,
+						// How many eth tokens they pool,
 						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
-						3u32,
+						2u32,
 						// How many liquidity tokens they stake,
 						50_000_000__000_000_000_000_000_000_u128,
 					),
@@ -157,144 +166,6 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							decimals: 18,
 							name: BoundedVec::truncate_from(b"Ether".to_vec()),
 							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-					),
-				],
-				initial_collators_as_sequencers,
-			)
-		},
-		// Bootnodes
-		Vec::new(),
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// ForkId
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		None,
-	)
-}
-
-pub fn rollup_eigen_local(initial_collators_as_sequencers: bool) -> ChainSpec {
-	// Give your base currency a unit name and decimal places
-	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "RXL".into());
-	properties.insert("tokenDecimals".into(), 18u32.into());
-	properties.insert("ss58Format".into(), 42u32.into());
-
-	ChainSpec::from_genesis(
-		// Name
-		"Rollup Eigen Local",
-		// ID
-		"rollup_eigen_local",
-		ChainType::Local,
-		move || {
-			rollup_genesis(
-				// initial collators.
-				vec![
-					(
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
-						authority_keys_from_seed("Alice"),
-					),
-					(
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
-						authority_keys_from_seed("Bob"),
-					),
-				],
-				// Sudo account
-				get_account_id_from_seed::<ecdsa::Public>("Alice"),
-				// Tokens endowment
-				vec![
-					// MGA
-					(
-						0u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
-					),
-					// ETH
-					(
-						1u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
-					),
-					// MGA
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
-					),
-					// ETH
-					(
-						1u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Charlie"),
-					),
-				],
-				// Config for Staking
-				// Make sure it works with initial-authorities as staking uses both
-				vec![
-					(
-						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Alice"),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						100_000_000__000_000_000_000_000_000_u128,
-						// Id of the eth token,
-						1u32,
-						// How many eth tokens they pool,
-						200_000_000__000_000_000_000_000_000_u128,
-						// Id of the liquidity token that is generated
-						2u32,
-						// How many liquidity tokens they stake,
-						100_000_000__000_000_000_000_000_000_u128,
-					),
-					(
-						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Bob"),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						80_000_000__000_000_000_000_000_000_u128,
-						// Id of the dummy token,
-						1u32,
-						// How many eth tokens they pool,
-						200_000_000__000_000_000_000_000_000_u128,
-						// Id of the liquidity token that is generated
-						2u32,
-						// How many liquidity tokens they stake,
-						50_000_000__000_000_000_000_000_000_u128,
-					),
-				],
-				vec![
-					(
-						RX_TOKEN_ID,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
-							symbol: BoundedVec::truncate_from(b"MGA".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-					),
-					(
-						1,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Goerli Ether".to_vec()),
-							symbol: BoundedVec::truncate_from(b"gETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,

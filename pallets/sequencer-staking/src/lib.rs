@@ -114,45 +114,39 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-			NextSequencerIndex::<T>::mutate(|x|
-				// If the active set was empty the SelectedSequencer
-				// will be None - in which case init to 0;
-				if SelectedSequencer::<T>::get().is_some(){
-					if (n % T::BlocksForSequencerUpdate::get().into()).is_zero(){
-						*x = x.saturating_add(One::one());
-					}
-				} else {
-					*x = Zero::zero();
-				}
-			);
 
 			T::DbWeight::get().reads_writes(4, 3)
 		}
 
-		fn on_finalize(_n: BlockNumberFor<T>) -> () {
+		fn on_finalize(n: BlockNumberFor<T>) -> () {
+
+			if (n % T::BlocksForSequencerUpdate::get().into()).is_zero(){
 			let active_sequencers = ActiveSequencers::<T>::get();
-			let next_sequencer_index = NextSequencerIndex::<T>::get();
+			let mut next_sequencer_index = NextSequencerIndex::<T>::get();
 			if active_sequencers.len().is_zero() {
 				SelectedSequencer::<T>::kill();
+				NextSequencerIndex::<T>::put(SequencerIndex::zero());
 			} else {
 				if next_sequencer_index > active_sequencers.len() as u32 {
 					log!(error, "Value of NextSequencerIndex - {:?}, greater than ActiveSequencers length - {:?}", next_sequencer_index, active_sequencers.len());
-					NextSequencerIndex::<T>::put(SequencerIndex::zero());
+					next_sequencer_index = SequencerIndex::zero();
 					SelectedSequencer::<T>::put(
 						active_sequencers
-							.get(SequencerIndex::zero() as usize)
+							.get(next_sequencer_index as usize)
 							.expect("We checked that ActiveSequencers length is non-zero"),
 					);
 				} else if next_sequencer_index == active_sequencers.len() as u32 {
-					NextSequencerIndex::<T>::put(SequencerIndex::zero());
+					next_sequencer_index = SequencerIndex::zero();
 					SelectedSequencer::<T>::put(
 						active_sequencers
-							.get(SequencerIndex::zero() as usize)
+							.get(next_sequencer_index as usize)
 							.expect("We checked that ActiveSequencers length is non-zero"),
 					);
 				} else {
 					SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index as usize).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
 				}
+				NextSequencerIndex::<T>::put(next_sequencer_index.saturating_add(One::one()));
+			}
 			}
 		}
 	}
@@ -450,6 +444,13 @@ impl<T: Config> Pallet<T> {
 		NextSequencerIndex::<T>::put(
 			next_sequencer_index.defensive_saturating_sub(next_sequencer_index_offset),
 		);
+
+		if let Some(selected_sequencer) = SelectedSequencer::<T>::get(){
+			if !active_sequencers.contains(&selected_sequencer) {
+				SelectedSequencer::<T>::kill();
+			}
+		}
+
 		ActiveSequencers::<T>::put(active_sequencers);
 
 		T::RolldownProvider::handle_sequencer_deactivations(deactivating_sequencers);

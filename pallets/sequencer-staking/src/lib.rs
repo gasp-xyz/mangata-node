@@ -114,39 +114,37 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-
 			T::DbWeight::get().reads_writes(4, 3)
 		}
 
 		fn on_finalize(n: BlockNumberFor<T>) -> () {
-
-			if (n % T::BlocksForSequencerUpdate::get().into()).is_zero(){
-			let active_sequencers = ActiveSequencers::<T>::get();
-			let mut next_sequencer_index = NextSequencerIndex::<T>::get();
-			if active_sequencers.len().is_zero() {
-				SelectedSequencer::<T>::kill();
-				NextSequencerIndex::<T>::put(SequencerIndex::zero());
-			} else {
-				if next_sequencer_index > active_sequencers.len() as u32 {
-					log!(error, "Value of NextSequencerIndex - {:?}, greater than ActiveSequencers length - {:?}", next_sequencer_index, active_sequencers.len());
-					next_sequencer_index = SequencerIndex::zero();
-					SelectedSequencer::<T>::put(
-						active_sequencers
-							.get(next_sequencer_index as usize)
-							.expect("We checked that ActiveSequencers length is non-zero"),
-					);
-				} else if next_sequencer_index == active_sequencers.len() as u32 {
-					next_sequencer_index = SequencerIndex::zero();
-					SelectedSequencer::<T>::put(
-						active_sequencers
-							.get(next_sequencer_index as usize)
-							.expect("We checked that ActiveSequencers length is non-zero"),
-					);
+			if (n % T::BlocksForSequencerUpdate::get().into()).is_zero() {
+				let active_sequencers = ActiveSequencers::<T>::get();
+				let mut next_sequencer_index = NextSequencerIndex::<T>::get();
+				if active_sequencers.len().is_zero() {
+					SelectedSequencer::<T>::kill();
+					NextSequencerIndex::<T>::put(SequencerIndex::zero());
 				} else {
-					SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index as usize).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
+					if next_sequencer_index > active_sequencers.len() as u32 {
+						log!(error, "Value of NextSequencerIndex - {:?}, greater than ActiveSequencers length - {:?}", next_sequencer_index, active_sequencers.len());
+						next_sequencer_index = SequencerIndex::zero();
+						SelectedSequencer::<T>::put(
+							active_sequencers
+								.get(next_sequencer_index as usize)
+								.expect("We checked that ActiveSequencers length is non-zero"),
+						);
+					} else if next_sequencer_index == active_sequencers.len() as u32 {
+						next_sequencer_index = SequencerIndex::zero();
+						SelectedSequencer::<T>::put(
+							active_sequencers
+								.get(next_sequencer_index as usize)
+								.expect("We checked that ActiveSequencers length is non-zero"),
+						);
+					} else {
+						SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index as usize).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
+					}
+					NextSequencerIndex::<T>::put(next_sequencer_index.saturating_add(One::one()));
 				}
-				NextSequencerIndex::<T>::put(next_sequencer_index.saturating_add(One::one()));
-			}
 			}
 		}
 	}
@@ -445,7 +443,7 @@ impl<T: Config> Pallet<T> {
 			next_sequencer_index.defensive_saturating_sub(next_sequencer_index_offset),
 		);
 
-		if let Some(selected_sequencer) = SelectedSequencer::<T>::get(){
+		if let Some(selected_sequencer) = SelectedSequencer::<T>::get() {
 			if !active_sequencers.contains(&selected_sequencer) {
 				SelectedSequencer::<T>::kill();
 			}

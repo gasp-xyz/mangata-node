@@ -88,12 +88,12 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-		let encoded: Vec<(TokenId, Vec<u8>)> = self
+		let encoded: Vec<(TokenId, Vec<u8>, Option<_>)> = self
 			.assets
 			.iter()
 			.map(|(id, meta)| {
 				let encoded = AssetMetadataOf::encode(&meta);
-				(*id, encoded)
+				(*id, encoded, None)
 			})
 			.collect();
 

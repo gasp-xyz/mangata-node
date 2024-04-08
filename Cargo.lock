@@ -5492,7 +5492,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 [[package]]
 name = "orml-asset-registry"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/native-eth#1cb1dfe5bd562cf9f9db2acd308bebbaaf61ad37"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=eth-rollup-develop#7d26f236dff4f7771fb973f8f80fb7ce246ffef5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5516,7 +5516,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/native-eth#1cb1dfe5bd562cf9f9db2acd308bebbaaf61ad37"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=eth-rollup-develop#7d26f236dff4f7771fb973f8f80fb7ce246ffef5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5535,7 +5535,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/native-eth#1cb1dfe5bd562cf9f9db2acd308bebbaaf61ad37"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=eth-rollup-develop#7d26f236dff4f7771fb973f8f80fb7ce246ffef5"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5555,7 +5555,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/native-eth#1cb1dfe5bd562cf9f9db2acd308bebbaaf61ad37"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=eth-rollup-develop#7d26f236dff4f7771fb973f8f80fb7ce246ffef5"
 dependencies = [
  "frame-support",
  "parity-scale-codec",

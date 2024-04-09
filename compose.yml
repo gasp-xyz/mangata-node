@@ -13,7 +13,7 @@ services:
     image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command:
       - --alith
-      - --chain=rollup-local
+      - --chain=rollup-local-seq
       - --base-path=/data
       - --rpc-cors=all
       - --unsafe-rpc-external
@@ -22,7 +22,7 @@ services:
       - 9944:9944
       - 30333:30333
     volumes:
-      - data-alice:/data
+      - data-alith:/data
 
   node-bob:
     build:
@@ -31,7 +31,7 @@ services:
     image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command:
       - --baltathar
-      - --chain=rollup-local
+      - --chain=rollup-local-seq
       - --base-path=/data
       - --rpc-cors=all
       - --unsafe-rpc-external
@@ -39,8 +39,8 @@ services:
     ports:
       - 9946:9944
     volumes:
-      - data-bob:/data
+      - data-baltathar:/data
 
 volumes:
-  data-alice:
-  data-bob:
+  data-alith:
+  data-baltathar:

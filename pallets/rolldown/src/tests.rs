@@ -1330,8 +1330,8 @@ fn test_withdrawal_resolution_works_passes_validation() {
 
 fn is_sorted<I>(data: I) -> bool
 where
-    I: IntoIterator,
-    I::Item: Ord + Clone,
+	I: IntoIterator,
+	I::Item: Ord + Clone,
 {
 	data.into_iter().tuple_windows().all(|(a, b)| a <= b)
 }
@@ -1343,7 +1343,6 @@ fn test_L2Update_requests_are_in_order() {
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.execute_with_default_mocks(|| {
-
 			forward_to_block::<Test>(10);
 			let first_update = L1UpdateBuilder::default()
 				.with_requests(vec![

@@ -795,7 +795,15 @@ impl<T: Config> Pallet<T> {
 
 		update
 			.results
-			.sort_by(|a, b| a.requestId.id.partial_cmp(&b.requestId.id).unwrap());
+			.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+		update
+			.cancels
+			.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+
+		update
+			.withdrawals
+			.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+
 		update
 	}
 

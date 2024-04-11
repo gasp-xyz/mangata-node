@@ -56,7 +56,7 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "RXL".into());
+	properties.insert("tokenSymbol".into(), "GASP".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
@@ -153,8 +153,8 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						RX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
-							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
-							symbol: BoundedVec::truncate_from(b"MGXL".to_vec()),
+							name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -165,16 +165,13 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						1,
 						AssetMetadataOf {
 							decimals: 18,
-							name: BoundedVec::truncate_from(b"Ether".to_vec()),
-							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
+							name: BoundedVec::truncate_from(b"Gasp Ethereum".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
-								.unwrap(),
-						)),
+						None,
 					),
 				],
 				initial_collators_as_sequencers,

@@ -1327,3 +1327,55 @@ fn test_withdrawal_resolution_works_passes_validation() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 		});
 }
+
+fn is_sorted<I>(data: I) -> bool
+where
+	I: IntoIterator,
+	I::Item: Ord + Clone,
+{
+	data.into_iter().tuple_windows().all(|(a, b)| a <= b)
+}
+
+#[test]
+#[serial]
+fn test_L2Update_requests_are_in_order() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let first_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+
+			for _ in 1..20 {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1,
+				)
+				.unwrap();
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(BOB),
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1,
+				)
+				.unwrap();
+			}
+
+			forward_to_block::<Test>(15);
+			let l2update = Rolldown::get_l2_update(L1::Ethereum);
+			assert!(is_sorted(l2update.results.iter().map(|x| x.requestId.id)));
+			assert!(is_sorted(l2update.withdrawals.iter().map(|x| x.requestId.id)));
+		});
+}

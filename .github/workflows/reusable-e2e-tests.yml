@@ -278,11 +278,6 @@ jobs:
         if: failure()
         run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
 
-      - name: Stop docker instance
-        if: always()
-        run: |
-          docker kill $(docker ps -q) 2>/dev/null && echo $?
-          docker-compose down -v
 
   test-complete:
     needs: [setup-report, e2e-test-matrix]

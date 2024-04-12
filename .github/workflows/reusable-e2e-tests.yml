@@ -12,7 +12,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/rollup-node:latest"
+        default: "mangatasolutions/rollup-node:eth-rollup-develop"
       skipBuild:
         description: "Skip build phase"
         type: string
@@ -38,7 +38,7 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/rollup-node:latest"
+        default: "mangatasolutions/rollup-node:eth-rollup-develop"
       skipBuild:
         description: "Skip build phase"
         type: string

@@ -159,7 +159,10 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						None,
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
+								.unwrap(),
+						)),
 					),
 					(
 						1,
@@ -171,7 +174,10 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						None,
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0xce658E386fAc0646CEDAf810070f0525Af14D11d")
+								.unwrap(),
+						)),
 					),
 				],
 				initial_collators_as_sequencers,

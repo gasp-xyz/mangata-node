@@ -202,12 +202,19 @@ jobs:
       - name: Sleep for 2 minutes
         run: sleep 120s
 
+      - name: Get docker status
+        run: docker ps
+
       - name: Run tests
         working-directory: e2eTests
         run: ${{ matrix.command }}
         env:
           NODE_OPTIONS: --max_old_space_size=12288
 
+      - name: Get node logs 
+        if: failure()
+        run: docker logs mangata-node-node-alice-1
+        
       - name: Test Report
         uses: dorny/test-reporter@v1.7.0
         continue-on-error: true

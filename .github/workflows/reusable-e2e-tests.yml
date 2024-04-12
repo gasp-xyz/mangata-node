@@ -211,9 +211,6 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=12288
 
-      - name: Get node logs 
-        if: failure()
-        run: docker logs mangata-node-node-alice-1
         
       - name: Test Report
         uses: dorny/test-reporter@v1.7.0
@@ -246,7 +243,7 @@ jobs:
       - name: Prepare backup snapshots on workflow failure
         if: failure()
         env:
-          OUTPUT_DIR: devops/parachain-launch/output
+          OUTPUT_DIR: ./
         run: |
           # Set MATRIX_COMMAND_PATH to be used as a directory name to store specifc test run snapshots
           echo "MATRIX_COMMAND_PATH=$(echo ${{ matrix.command }} | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
@@ -255,33 +252,34 @@ jobs:
           tar cvzf ${OUTPUT_DIR}/logs.tgz ./logs
 
           # Generate image snapshots
-          docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
+          docker commit  $(docker ps | grep mangata-node-node-alice-1 | awk '{print $1}') mangata_test_run/mangata_alice_1
           docker save  --output=${OUTPUT_DIR}/mangata_alice_1.tar mangata_test_run/mangata_alice_1
-          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
+          docker commit  $(docker ps | grep mangata-node-node-bob-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
           docker save  --output=${OUTPUT_DIR}/mangata_bob_1.tar mangata_test_run/mangata_bob_1
 
           # Generate volume snapshots
-          docker run -v  output_parachain-2110-0:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_alice_1_volume.tar.bz2
-          docker run -v  output_parachain-2110-1:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_bob_1_volume.tar.bz2
+          docker run -v  data-alith:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_alice_1_volume.tar.bz2
+          docker run -v  data-baltathar:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_bob_1_volume.tar.bz2
 
       - uses: google-github-actions/auth@v1
         if: failure()
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          
       - name: Upload node storage data to GCP bucket
         if: failure()
         uses: google-github-actions/upload-cloud-storage@v1.0.3
         with:
           process_gcloudignore: false
-          path: devops/parachain-launch/output
           destination: mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }}
+          
       - name: Add GCP bucket URL link for stored node data on job failure
         if: failure()
         run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
 
-      - name: Stop previous parachain if running
-        working-directory: devops/parachain-launch/output
+      - name: Stop docker instance
+        if: always()
         run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v

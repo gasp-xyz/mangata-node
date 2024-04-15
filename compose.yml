@@ -3,6 +3,7 @@
 #
 # Note: You can also skip the step and let the docker-compose to build the image for you,
 # but for some reason it keeps loosing cache, so next rebuilds would take longer, than they should.
+# temp line
 name: mangata-node
 
 services:

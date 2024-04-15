@@ -50,7 +50,7 @@ pub fn eip712_payload(method: String, params: String) -> String {
 					"domain": {
 						"name": "Mangata",
 						"version": "1",
-						"chainId": "5",
+						"chainId": "170000",
 						"verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
 					},
 					"message": {

@@ -50,7 +50,7 @@ impl L1UpdateBuilder {
 				},
 				L1UpdateRequest::CancelResolution(mut c) => {
 					c.requestId.id = rid;
-					update.pendingCancelResultions.push(c);
+					update.pendingCancelResolutions.push(c);
 				},
 				L1UpdateRequest::Remove(mut r) => {
 					r.requestId.id = rid;

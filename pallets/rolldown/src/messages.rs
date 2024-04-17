@@ -179,7 +179,7 @@ impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct L1Update {
 	pub pendingDeposits: Vec<Deposit>,
-	pub pendingCancelResultions: Vec<CancelResolution>,
+	pub pendingCancelResolutions: Vec<CancelResolution>,
 	pub pendingWithdrawalResolutions: Vec<WithdrawalResolution>,
 	pub pendingL2UpdatesToRemove: Vec<L2UpdatesToRemove>,
 }
@@ -226,7 +226,7 @@ impl L1Update {
 	pub fn range(&self) -> Option<Range> {
 		let first = [
 			self.pendingDeposits.first().map(|v| v.requestId.id),
-			self.pendingCancelResultions.first().map(|v| v.requestId.id),
+			self.pendingCancelResolutions.first().map(|v| v.requestId.id),
 			self.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
 			self.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
 		]
@@ -237,7 +237,7 @@ impl L1Update {
 
 		let last = [
 			self.pendingDeposits.last().map(|v| v.requestId.id),
-			self.pendingCancelResultions.last().map(|v| v.requestId.id),
+			self.pendingCancelResolutions.last().map(|v| v.requestId.id),
 			self.pendingL2UpdatesToRemove.last().map(|v| v.requestId.id),
 			self.pendingWithdrawalResolutions.last().map(|v| v.requestId.id),
 		]
@@ -257,13 +257,13 @@ impl L1Update {
 
 		let L1Update {
 			pendingDeposits,
-			pendingCancelResultions,
+			pendingCancelResolutions,
 			pendingL2UpdatesToRemove,
 			pendingWithdrawalResolutions,
 		} = self;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
-		let mut cancel_it = pendingCancelResultions.into_iter().peekable();
+		let mut cancel_it = pendingCancelResolutions.into_iter().peekable();
 		let mut remove_it = pendingL2UpdatesToRemove.into_iter().peekable();
 		let mut withdrawal_it = pendingWithdrawalResolutions.into_iter().peekable();
 
@@ -330,8 +330,8 @@ impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
 			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
-			pendingCancelResultions: self
-				.pendingCancelResultions
+			pendingCancelResolutions: self
+				.pendingCancelResolutions
 				.into_iter()
 				.map(Into::into)
 				.collect::<Vec<_>>(),
@@ -398,7 +398,7 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 		let pending_deposits: Result<Vec<_>, _> =
 			update.pendingDeposits.into_iter().map(|d| d.try_into()).collect();
 		let pending_cancel_resultions: Result<Vec<_>, _> =
-			update.pendingCancelResultions.into_iter().map(|c| c.try_into()).collect();
+			update.pendingCancelResolutions.into_iter().map(|c| c.try_into()).collect();
 		let pending_l2_updates_to_remove: Result<Vec<_>, _> =
 			update.pendingL2UpdatesToRemove.into_iter().map(|u| u.try_into()).collect();
 		let pending_withdrawal_resolutions: Result<Vec<_>, _> =
@@ -407,8 +407,8 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 		Ok(Self {
 			pendingDeposits: pending_deposits
 				.map_err(|e| format!("Error converting pendingDeposits: {}", e))?,
-			pendingCancelResultions: pending_cancel_resultions
-				.map_err(|e| format!("Error converting pendingCancelResultions: {}", e))?,
+			pendingCancelResolutions: pending_cancel_resultions
+				.map_err(|e| format!("Error converting pendingCancelResolutions: {}", e))?,
 			pendingL2UpdatesToRemove: pending_l2_updates_to_remove
 				.map_err(|e| format!("Error converting pendingL2UpdatesToRemove: {}", e))?,
 			pendingWithdrawalResolutions: pending_withdrawal_resolutions
@@ -536,7 +536,7 @@ pub mod eth_abi {
 		#[derive(Debug)]
 		struct L1Update {
 			Deposit[] pendingDeposits;
-			CancelResolution[] pendingCancelResultions;
+			CancelResolution[] pendingCancelResolutions;
 			WithdrawalResolution[] pendingWithdrawalResolutions;
 			L2UpdatesToRemove[] pendingL2UpdatesToRemove;
 		}

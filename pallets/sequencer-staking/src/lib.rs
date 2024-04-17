@@ -106,6 +106,10 @@ pub mod pallet {
 				// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
 				assert!(T::Currency::reserve(&sender, *stake_amount).is_ok());
 			}
+
+			if let Some(seq) = ActiveSequencers::<T>::get().get(0) {
+				SelectedSequencer::<T>::put(seq.clone());
+			}
 		}
 	}
 

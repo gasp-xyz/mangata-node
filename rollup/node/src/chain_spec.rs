@@ -176,18 +176,6 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						},
 						None,
 					),
-					(
-						3,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Token3DummyLiquidity".to_vec()),
-							symbol: BoundedVec::truncate_from(b"T3DL".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-						None,
-					),
 				],
 				initial_collators_as_sequencers,
 			)

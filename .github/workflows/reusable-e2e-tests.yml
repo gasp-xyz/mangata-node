@@ -105,8 +105,8 @@ jobs:
             fast: true
           # - command: "yarn test-bootstrap"
           #   fast: false
-          # - command: "yarn test-rewards-bootstrap"
-          #   fast: false
+          - command: "yarn test-rewards-bootstrap"
+            fast: false
           # - command: "yarn test-parallel-autocompound"
           #   fast: true
           # - command: "yarn test-sequential-autocompound"

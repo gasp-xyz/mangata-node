@@ -48,6 +48,12 @@ macro_rules! log {
 	};
 }
 
+#[cfg(test)]
+mod tests;
+
+#[cfg(test)]
+mod mock;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -111,6 +117,7 @@ pub mod pallet {
 
 	// The pallet needs to be configured above session in construct_runtime!
 	// to work correctly with the on_initialize hook and the NextSequencerIndex updates
+	// This requirement may have changed due later edits (we now are doing all processing in on_finalize)
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
@@ -208,6 +215,7 @@ pub mod pallet {
 		NotEligibleToBeSequencer,
 		NotEnoughSequencerStake,
 		MaxSequencersLimitReached,
+		TestUnstakingError
 	}
 
 	#[pallet::config]

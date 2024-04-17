@@ -1383,54 +1383,54 @@ fn test_L2Update_requests_are_in_order() {
 		});
 }
 
-
 #[test]
 #[serial]
 fn test_new_sequencer_active() {
-	ExtBuilder::new_without_default_sequencers()
-		.build()
-		.execute_with(|| {
-
-			for i in 0..100{
-				Rolldown::new_sequencer_active(&i);
-				let read_rights: u128 = 1;
-				let cancel_rights: u128 = i.into();
-				assert_eq!(sequencer_count::<Test>::get(), <u64 as Into<u128>>::into(i)+1);
-				assert!(sequencer_rights::<Test>::iter().all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
-				assert_eq!(sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(), (i+1) as usize);
-			}
-			
-		});
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		for i in 0..100 {
+			Rolldown::new_sequencer_active(&i);
+			let read_rights: u128 = 1;
+			let cancel_rights: u128 = i.into();
+			assert_eq!(sequencer_count::<Test>::get(), <u64 as Into<u128>>::into(i) + 1);
+			assert!(sequencer_rights::<Test>::iter()
+				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+			assert_eq!(
+				sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(),
+				(i + 1) as usize
+			);
+		}
+	});
 }
 
 #[test]
 #[serial]
 fn test_sequencer_unstaking() {
-	ExtBuilder::new_without_default_sequencers()
-		.build()
-		.execute_with(|| {
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		let dispute_period_length = Rolldown::get_dispute_period();
+		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
+		let x = 20;
 
-			let dispute_period_length = Rolldown::get_dispute_period();
-			let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
-			let x = 20;
+		LastUpdateBySequencer::<Test>::insert(ALICE, now);
+		forward_to_block::<Test>((now + dispute_period_length).saturated_into::<u64>());
+		assert_err!(
+			Rolldown::sequencer_unstaking(&ALICE),
+			Error::<Test>::SequencerLastUpdateStillInDisputePeriod
+		);
+		forward_to_block::<Test>((now + dispute_period_length + 1).saturated_into::<u64>());
+		assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
+		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
 
-			LastUpdateBySequencer::<Test>::insert(ALICE, now);
-			forward_to_block::<Test>((now + dispute_period_length).saturated_into::<u64>());
-			assert_err!(Rolldown::sequencer_unstaking(&ALICE), Error::<Test>::SequencerLastUpdateStillInDisputePeriod);
-			forward_to_block::<Test>((now + dispute_period_length+1).saturated_into::<u64>());
-			assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
-			assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
+		AwaitingCancelResolution::<Test>::insert(ALICE, BTreeSet::from([0]));
+		assert_err!(
+			Rolldown::sequencer_unstaking(&ALICE),
+			Error::<Test>::SequencerAwaitingCancelResolution
+		);
 
-			AwaitingCancelResolution::<Test>::insert(ALICE, BTreeSet::from([0]));
-			assert_err!(Rolldown::sequencer_unstaking(&ALICE), Error::<Test>::SequencerAwaitingCancelResolution);
-
-			AwaitingCancelResolution::<Test>::remove(ALICE);
-			assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
-			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
-
-		});
+		AwaitingCancelResolution::<Test>::remove(ALICE);
+		assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
+		assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
+	});
 }
-
 
 #[test]
 #[serial]
@@ -1478,7 +1478,6 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 		});
 }
 
-
 #[test]
 #[serial]
 fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
@@ -1494,7 +1493,7 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 				.build();
 
 			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
-			
+
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -1527,33 +1526,35 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 
 			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
 			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::new());
-
 		})
 }
 
 #[test]
 #[serial]
 fn test_handle_sequencer_deactivations() {
-	ExtBuilder::new_without_default_sequencers()
-		.build()
-		.execute_with(|| {
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		let total_sequencers = 100;
+		for i in 0..total_sequencers {
+			Rolldown::new_sequencer_active(&i);
+		}
 
-			let total_sequencers = 100; 
-			for i in 0..total_sequencers{
-				Rolldown::new_sequencer_active(&i);
-			}
-
-			let n_max = 14;
-			let mut acc = 0;
-			for n in 1..n_max {
-				Rolldown::handle_sequencer_deactivations(Vec::<AccountId>::from_iter(acc..(n+acc)));
-				acc += n;
-				let read_rights: u128 = 1;
-				let cancel_rights: u128 = (total_sequencers - acc - 1).into();
-				assert_eq!(sequencer_count::<Test>::get(), <u64 as Into<u128>>::into(total_sequencers - acc));
-				assert!(sequencer_rights::<Test>::iter().all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
-				assert_eq!(sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(), (total_sequencers - acc) as usize);
-			}
-			
-		});
+		let n_max = 14;
+		let mut acc = 0;
+		for n in 1..n_max {
+			Rolldown::handle_sequencer_deactivations(Vec::<AccountId>::from_iter(acc..(n + acc)));
+			acc += n;
+			let read_rights: u128 = 1;
+			let cancel_rights: u128 = (total_sequencers - acc - 1).into();
+			assert_eq!(
+				sequencer_count::<Test>::get(),
+				<u64 as Into<u128>>::into(total_sequencers - acc)
+			);
+			assert!(sequencer_rights::<Test>::iter()
+				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+			assert_eq!(
+				sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(),
+				(total_sequencers - acc) as usize
+			);
+		}
+	});
 }

@@ -8,9 +8,9 @@ use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
-use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating, Permill};
 use mockall::automock;
+use orml_traits::parameter_type_with_key;
+use sp_runtime::{traits::ConvertBack, BuildStorage, Permill, Saturating};
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -119,7 +119,6 @@ mockall::mock! {
 	}
 }
 
-
 pub struct ExtBuilder {
 	ext: sp_io::TestExternalities,
 }
@@ -131,7 +130,12 @@ impl ExtBuilder {
 			.expect("Frame system builds valid default genesis config");
 
 		orml_tokens::GenesisConfig::<Test> {
-			tokens_endowment: vec![(consts::ALICE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED), (consts::BOB, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED), (consts::CHARLIE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED), (consts::DAVE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED)],
+			tokens_endowment: vec![
+				(consts::ALICE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::BOB, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::CHARLIE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::DAVE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+			],
 			created_tokens_for_staking: Default::default(),
 		}
 		.assimilate_storage(&mut t)
@@ -140,10 +144,13 @@ impl ExtBuilder {
 		sequencer_staking::GenesisConfig::<Test> {
 			minimal_stake_amount: consts::MINIMUM_STAKE,
 			slash_fine_amount: consts::SLASH_AMOUNT,
-			sequencers_stake: vec![(consts::ALICE, consts::MINIMUM_STAKE), (consts::BOB, consts::MINIMUM_STAKE)]
+			sequencers_stake: vec![
+				(consts::ALICE, consts::MINIMUM_STAKE),
+				(consts::BOB, consts::MINIMUM_STAKE),
+			],
 		}
-		 	.assimilate_storage(&mut t)
-			.expect("SequencerStaking storage can be assimilated");
+		.assimilate_storage(&mut t)
+		.expect("SequencerStaking storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 
@@ -172,11 +179,10 @@ impl ExtBuilder {
 
 #[macro_use]
 macro_rules! set_default_mocks {
-    () => {
-		let new_sequencer_active_mock =
-			MockRolldownProviderApi::new_sequencer_active_context();
+	() => {
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(2).returning(|_| ());
-    };
+	};
 }
 pub(crate) use set_default_mocks;
 
@@ -201,7 +207,9 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::SequencerStaking(inner) = e { Some(inner) } else { None })
+		.filter_map(
+			|e| if let RuntimeEvent::SequencerStaking(inner) = e { Some(inner) } else { None },
+		)
 		.collect::<Vec<_>>()
 }
 

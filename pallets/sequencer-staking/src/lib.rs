@@ -215,7 +215,7 @@ pub mod pallet {
 		NotEligibleToBeSequencer,
 		NotEnoughSequencerStake,
 		MaxSequencersLimitReached,
-		TestUnstakingError
+		TestUnstakingError,
 	}
 
 	#[pallet::config]

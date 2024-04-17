@@ -90,7 +90,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
-					// ETH
+					// Dummy Token
 					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alith")),
 					(
 						0u32,
@@ -156,16 +156,37 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						1,
 						AssetMetadataOf {
 							decimals: 18,
-							name: BoundedVec::truncate_from(b"Ether".to_vec()),
-							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
+							name: BoundedVec::truncate_from(b"Token1Dummy".to_vec()),
+							symbol: BoundedVec::truncate_from(b"T1D".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
-								.unwrap(),
-						)),
+						None,
+					),
+					(
+						2,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Token2Dummy".to_vec()),
+							symbol: BoundedVec::truncate_from(b"T2D".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						None,
+					),
+					(
+						3,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Token3DummyLiquidity".to_vec()),
+							symbol: BoundedVec::truncate_from(b"T3DL".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						None,
 					),
 				],
 				initial_collators_as_sequencers,

@@ -103,14 +103,6 @@ mockall::mock! {
 	}
 }
 
-mockall::mock! {
-	pub MaintenanceStatusProviderApi {}
-	impl GetMaintenanceStatusTrait for MaintenanceStatusProviderApi {
-		fn is_maintenance() -> bool;
-		fn is_upgradable() -> bool;
-	}
-}
-
 pub struct DummyAddressConverter();
 
 impl Convert<[u8; 20], AccountId> for DummyAddressConverter {
@@ -145,7 +137,6 @@ impl rolldown::Config for Test {
 	type AddressConverter = DummyAddressConverter;
 	type DisputePeriodLength = ConstU128<5>;
 	type RequestsPerBlock = ConstU128<10>;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
 }
 
 pub struct ExtBuilder {

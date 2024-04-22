@@ -1383,17 +1383,34 @@ fn test_L2Update_requests_are_in_order() {
 #[test]
 #[serial]
 fn test_maintenance_mode_blocks_extrinsics() {
-	ExtBuilder::new()
-		.build()
-		.execute_with(|| {
-			let is_maintenance_mock =
-				MockMaintenanceStatusProviderApi::is_maintenance_context();
-			is_maintenance_mock.expect().return_const(true);
+	ExtBuilder::new().build().execute_with(|| {
+		let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+		is_maintenance_mock.expect().return_const(true);
 
-			assert_err!(Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), Default::default()), Error::<Test>::BlockedByMaintenanceMode);
-			assert_err!(Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), Default::default()), Error::<Test>::BlockedByMaintenanceMode);
-			assert_err!(Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), Default::default()), Error::<Test>::BlockedByMaintenanceMode);
-			assert_err!(Rolldown::withdraw(RuntimeOrigin::signed(ALICE), Default::default(), Default::default(), Default::default()), Error::<Test>::BlockedByMaintenanceMode);
-			assert_err!(Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), Default::default()), Error::<Test>::BlockedByMaintenanceMode);
-		});
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), Default::default()),
+			Error::<Test>::BlockedByMaintenanceMode
+		);
+		assert_err!(
+			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), Default::default()),
+			Error::<Test>::BlockedByMaintenanceMode
+		);
+		assert_err!(
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), Default::default()),
+			Error::<Test>::BlockedByMaintenanceMode
+		);
+		assert_err!(
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				Default::default(),
+				Default::default(),
+				Default::default()
+			),
+			Error::<Test>::BlockedByMaintenanceMode
+		);
+		assert_err!(
+			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), Default::default()),
+			Error::<Test>::BlockedByMaintenanceMode
+		);
+	});
 }

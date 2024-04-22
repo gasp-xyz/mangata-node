@@ -35,11 +35,8 @@ pallet-multipurpose-liquidity = { path = "../../../pallets/multipurpose-liquidit
 pallet-proof-of-stake = { path = "../../../pallets/proof-of-stake" }
 pallet-sudo-origin = { path = "../../../pallets/sudo-origin" }
 pallet-xyk = { path = "../../../pallets/xyk" }
-pallet-maintenance = { path = "../../../pallets/maintenance" }
-pallet-rolldown = { path = "../../../pallets/rolldown" }
 parachain-staking = { path = "../../../pallets/parachain-staking" }
 xyk-runtime-api = { path = "../../../pallets/xyk/runtime-api" }
-rolldown-runtime-api = { path = "../../../pallets/rolldown/runtime-api" }
 
 [features]
 default = []

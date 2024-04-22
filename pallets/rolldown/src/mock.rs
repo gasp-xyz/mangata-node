@@ -205,8 +205,7 @@ impl ExtBuilder {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
-			let is_maintenance_mock =
-				MockMaintenanceStatusProviderApi::is_maintenance_context();
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 
 			f()

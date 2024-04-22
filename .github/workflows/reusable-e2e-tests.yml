@@ -119,8 +119,8 @@ jobs:
           #   fast: false
           # - command: "yarn test-experimentalStaking"
           #   fast: true
-          # - command: "yarn test-crowdloan"
-          #   fast: false
+          - command: "yarn test-crowdloan"
+            fast: false
           # - command: "yarn test-sdk"
           #   fast: true
           # - command: "yarn test-parallel-3rdPartyRewards"

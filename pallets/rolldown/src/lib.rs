@@ -16,7 +16,8 @@ use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
 use itertools::Itertools;
 use mangata_support::traits::{
-	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait, GetMaintenanceStatusTrait
+	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
+	SequencerStakingProviderTrait,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -234,7 +235,7 @@ pub mod pallet {
 		SequencerLastUpdateStillInDisputePeriod,
 		SequencerAwaitingCancelResolution,
 		MultipleUpdatesInSingleBlock,
-		BlockedByMaintenanceMode
+		BlockedByMaintenanceMode,
 	}
 
 	#[pallet::config]

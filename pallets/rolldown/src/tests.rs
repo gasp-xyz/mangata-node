@@ -1294,8 +1294,8 @@ fn test_withdrawal_resolution_works_passes_validation() {
 
 fn is_sorted<I>(data: I) -> bool
 where
-    I: IntoIterator,
-    I::Item: Ord + Clone,
+	I: IntoIterator,
+	I::Item: Ord + Clone,
 {
 	data.into_iter().tuple_windows().all(|(a, b)| a <= b)
 }
@@ -1307,7 +1307,6 @@ fn test_L2Update_requests_are_in_order() {
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.execute_with_default_mocks(|| {
-
 			forward_to_block::<Test>(10);
 			let first_update = L1UpdateBuilder::default()
 				.with_requests(vec![
@@ -1342,5 +1341,84 @@ fn test_L2Update_requests_are_in_order() {
 			let l2update = Rolldown::get_l2_update(L1::Ethereum);
 			assert!(is_sorted(l2update.results.iter().map(|x| x.requestId.id)));
 			assert!(is_sorted(l2update.withdrawals.iter().map(|x| x.requestId.id)));
+		});
+}
+
+#[test]
+#[serial]
+fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_block() {
+	ExtBuilder::single_sequencer(BOB)
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+			);
+
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::CancelRightsExhausted
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_block() {
+	ExtBuilder::single_sequencer(BOB)
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+			);
+
+			forward_to_block::<Test>(11);
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::CancelRightsExhausted
+			);
 		});
 }

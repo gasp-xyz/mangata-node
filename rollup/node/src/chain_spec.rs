@@ -53,7 +53,7 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 	rollup_runtime::SessionKeys { aura, grandpa }
 }
 
-pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
+pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: u64) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "RXL".into());
@@ -169,6 +169,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 					),
 				],
 				initial_collators_as_sequencers,
+				eth_chain_id
 			)
 		},
 		// Bootnodes
@@ -194,6 +195,7 @@ fn rollup_genesis(
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
 	initial_collators_as_sequencers: bool,
+	chain_id: u64,
 ) -> rollup_runtime::RuntimeGenesisConfig {
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
@@ -321,5 +323,11 @@ fn rollup_genesis(
 			},
 		},
 		rolldown: rollup_runtime::RolldownConfig { _phantom: Default::default() },
+		metamask: rollup_runtime::MetamaskConfig {
+			name: "Gasp".to_string(),
+			version: "0.0.1".to_string(),
+			chain_id: 17000u64,
+			_phantom: Default::default(),
+		},
 	}
 }

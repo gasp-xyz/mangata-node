@@ -99,8 +99,8 @@ jobs:
           #   fast: false
           # - command: "yarn test-sequential-no-bootstrap"
           #   fast: false
-          # - command: "yarn test-seqgasless"
-          #   fast: false
+          - command: "yarn test-seqgasless"
+            fast: false
           - command: "yarn test-maintenance"
             fast: true
           # - command: "yarn test-bootstrap"

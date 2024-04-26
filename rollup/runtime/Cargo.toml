@@ -38,6 +38,7 @@ proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api'
 pallet-rolldown = { path = "../../pallets/rolldown", default-features = false }
 pallet-sequencer-staking = { path = "../../pallets/sequencer-staking", default-features = false }
 metamask-signature-runtime-api = { path = '../../pallets/metamask-signature-runtime-api', default-features = false }
+pallet-crowdloan-rewards = { path = '../../pallets/crowdloan-rewards', default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -91,9 +92,6 @@ pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sd
 orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 orml-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 orml-traits = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-
-# Crowdloan dependencies
-pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "develop", default-features = false }
 
 [features]
 default = ["std"]

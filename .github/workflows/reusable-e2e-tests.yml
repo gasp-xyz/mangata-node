@@ -109,8 +109,8 @@ jobs:
             fast: false
           # - command: "yarn test-parallel-autocompound"
           #   fast: true
-          # - command: "yarn test-sequential-autocompound"
-          #   fast: true
+          - command: "yarn test-sequential-autocompound"
+            fast: true
           # - command: "yarn test-poolliquidity"
           #   fast: true
           # - command: "yarn test-governance"

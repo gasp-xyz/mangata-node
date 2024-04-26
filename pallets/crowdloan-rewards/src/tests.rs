@@ -22,9 +22,9 @@ use frame_support::traits::tokens::currency::MultiTokenCurrency;
 use frame_support::{assert_err, assert_noop, assert_ok, traits::MultiTokenVestingSchedule};
 use mock::*;
 use parity_scale_codec::Encode;
-use sp_core::Pair;
-use sp_runtime::{traits::Dispatchable, DispatchError, ModuleError, account::EthereumSignature};
 use sp_application_crypto::RuntimePublic;
+use sp_core::Pair;
+use sp_runtime::{account::EthereumSignature, traits::Dispatchable, DispatchError, ModuleError};
 
 type TokensOf<Test> = <Test as Config>::Tokens;
 
@@ -76,22 +76,40 @@ fn geneses() {
 		// claimed address existence
 		assert!(Crowdloan::claimed_relay_chain_ids(0, [1u8; 20]).is_some());
 		assert!(Crowdloan::claimed_relay_chain_ids(0, [2u8; 20]).is_some());
-		assert!(Crowdloan::claimed_relay_chain_ids(0, <[u8; 20]>::from(AccountId20::from(pairs[0]))).is_none());
-		assert!(Crowdloan::claimed_relay_chain_ids(0, <[u8; 20]>::from(AccountId20::from(pairs[1]))).is_none());
-		assert!(Crowdloan::claimed_relay_chain_ids(0, <[u8; 20]>::from(AccountId20::from(pairs[2]))).is_none());
+		assert!(Crowdloan::claimed_relay_chain_ids(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[0]))
+		)
+		.is_none());
+		assert!(Crowdloan::claimed_relay_chain_ids(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[1]))
+		)
+		.is_none());
+		assert!(Crowdloan::claimed_relay_chain_ids(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[2]))
+		)
+		.is_none());
 
 		// unassociated_contributions
 		assert!(Crowdloan::unassociated_contributions(0, [1u8; 20]).is_none());
 		assert!(Crowdloan::unassociated_contributions(0, [2u8; 20]).is_none());
-		assert!(
-			Crowdloan::unassociated_contributions(0, <[u8; 20]>::from(AccountId20::from(pairs[0]))).is_some()
-		);
-		assert!(
-			Crowdloan::unassociated_contributions(0, <[u8; 20]>::from(AccountId20::from(pairs[1]))).is_some()
-		);
-		assert!(
-			Crowdloan::unassociated_contributions(0, <[u8; 20]>::from(AccountId20::from(pairs[2]))).is_some()
-		);
+		assert!(Crowdloan::unassociated_contributions(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[0]))
+		)
+		.is_some());
+		assert!(Crowdloan::unassociated_contributions(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[1]))
+		)
+		.is_some());
+		assert!(Crowdloan::unassociated_contributions(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[2]))
+		)
+		.is_some());
 	});
 }
 
@@ -103,8 +121,10 @@ fn proving_assignation_works() {
 		payload.append(&mut TestSigantureNetworkIdentifier::get().to_vec());
 		payload.append(&mut 3u64.encode());
 		payload.append(&mut WRAPPED_BYTES_POSTFIX.to_vec());
-		let signature: EthereumSignature = pairs[0].sign(sp_core::testing::ECDSA, &payload).unwrap().into();
-		let alread_associated_signature: EthereumSignature = pairs[0].sign(sp_core::testing::ECDSA, &1u64.encode()).unwrap().into();
+		let signature: EthereumSignature =
+			pairs[0].sign(sp_core::testing::ECDSA, &payload).unwrap().into();
+		let alread_associated_signature: EthereumSignature =
+			pairs[0].sign(sp_core::testing::ECDSA, &1u64.encode()).unwrap().into();
 		// Insert contributors
 		let pairs = get_ecdsa_pairs(3);
 		let init_block = 1u64;
@@ -126,9 +146,7 @@ fn proving_assignation_works() {
 		// 4 is not payable first
 		assert!(Crowdloan::accounts_payable(0, 3).is_none());
 		assert_eq!(
-			Crowdloan::accounts_payable(0, 1)
-				.unwrap()
-				.contributed_relay_addresses,
+			Crowdloan::accounts_payable(0, 1).unwrap().contributed_relay_addresses,
 			vec![[1u8; 20]]
 		);
 
@@ -177,16 +195,20 @@ fn proving_assignation_works() {
 		// now three is payable
 		assert!(Crowdloan::accounts_payable(0, 3).is_some());
 		assert_eq!(
-			Crowdloan::accounts_payable(0, 3)
-				.unwrap()
-				.contributed_relay_addresses,
+			Crowdloan::accounts_payable(0, 3).unwrap().contributed_relay_addresses,
 			vec![<[u8; 20]>::from(AccountId20::from(pairs[0]))]
 		);
 
-		assert!(
-			Crowdloan::unassociated_contributions(0, <[u8; 20]>::from(AccountId20::from(pairs[0]))).is_none()
-		);
-		assert!(Crowdloan::claimed_relay_chain_ids(0, <[u8; 20]>::from(AccountId20::from(pairs[0]))).is_some());
+		assert!(Crowdloan::unassociated_contributions(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[0]))
+		)
+		.is_none());
+		assert!(Crowdloan::claimed_relay_chain_ids(
+			0,
+			<[u8; 20]>::from(AccountId20::from(pairs[0]))
+		)
+		.is_some());
 
 		let expected = vec![crate::Event::NativeIdentityAssociated(
 			AccountId20::from(pairs[0]).into(),
@@ -222,18 +244,13 @@ fn initializing_multi_relay_to_single_native_address_works() {
 		// 1 is payable
 		assert!(Crowdloan::accounts_payable(0, 1).is_some());
 		assert_eq!(
-			Crowdloan::accounts_payable(0, 1)
-				.unwrap()
-				.contributed_relay_addresses,
+			Crowdloan::accounts_payable(0, 1).unwrap().contributed_relay_addresses,
 			vec![[1u8; 20], [2u8; 20]]
 		);
 
 		roll_to(3);
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(1), None));
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward,
-			1000
-		);
+		assert_eq!(Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward, 1000);
 		assert_noop!(
 			Crowdloan::claim(RuntimeOrigin::signed(3), None),
 			Error::<Test>::NoAssociatedClaim
@@ -269,10 +286,7 @@ fn paying_works_step_by_step() {
 		// 1 is payable
 		assert!(Crowdloan::accounts_payable(0, 1).is_some());
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(1), None));
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward,
-			500
-		);
+		assert_eq!(Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward, 500);
 		assert_eq!(transferable_balance(&1, 0), 100);
 
 		roll_to(3);
@@ -332,10 +346,7 @@ fn paying_works_after_unclaimed_period() {
 		assert!(Crowdloan::accounts_payable(0, 1).is_some());
 		roll_to(3);
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(1), None));
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward,
-			500
-		);
+		assert_eq!(Crowdloan::accounts_payable(0, 1).unwrap().claimed_reward, 500);
 		assert_noop!(
 			Crowdloan::claim(RuntimeOrigin::signed(3), None),
 			Error::<Test>::NoAssociatedClaim
@@ -371,7 +382,8 @@ fn paying_late_joiner_works() {
 		payload.append(&mut TestSigantureNetworkIdentifier::get().to_vec());
 		payload.append(&mut 3u64.encode());
 		payload.append(&mut WRAPPED_BYTES_POSTFIX.to_vec());
-		let signature: EthereumSignature = pairs[0].sign(sp_core::testing::ECDSA, &payload).unwrap().into();
+		let signature: EthereumSignature =
+			pairs[0].sign(sp_core::testing::ECDSA, &payload).unwrap().into();
 		// Insert contributors
 		let pairs = get_ecdsa_pairs(3);
 		let init_block = 1u64;
@@ -399,10 +411,7 @@ fn paying_late_joiner_works() {
 			signature.clone()
 		));
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(3), None));
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 3).unwrap().claimed_reward,
-			500
-		);
+		assert_eq!(Crowdloan::accounts_payable(0, 3).unwrap().claimed_reward, 500);
 		let expected = vec![
 			crate::Event::NativeIdentityAssociated(AccountId20::from(pairs[0]).into(), 3, 500),
 			crate::Event::RewardsPaid(3, 500),
@@ -440,20 +449,14 @@ fn update_address_works() {
 			Crowdloan::claim(RuntimeOrigin::signed(8), None),
 			Error::<Test>::NoAssociatedClaim
 		);
-		assert_ok!(Crowdloan::update_reward_address(
-			RuntimeOrigin::signed(1),
-			8,
-			None,
-		));
+		assert_ok!(Crowdloan::update_reward_address(RuntimeOrigin::signed(1), 8, None,));
 		assert_eq!(transferable_balance(&1, 0), 200);
 		roll_to(5);
 
 		assert_eq!(transferable_balance(&1, 0), 300);
 		// The initial payment is not
-		let expected = vec![
-			crate::Event::RewardsPaid(1, 500),
-			crate::Event::RewardAddressUpdated(1, 8),
-		];
+		let expected =
+			vec![crate::Event::RewardsPaid(1, 500), crate::Event::RewardAddressUpdated(1, 8)];
 		assert_eq!(events(), expected);
 	});
 }
@@ -519,19 +522,9 @@ fn update_address_with_existing_with_multi_address_works() {
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(1), None));
 
 		// We make sure all rewards go to the new address
-		assert_ok!(Crowdloan::update_reward_address(
-			RuntimeOrigin::signed(1),
-			2,
-			None
-		));
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 2).unwrap().claimed_reward,
-			1000
-		);
-		assert_eq!(
-			Crowdloan::accounts_payable(0, 2).unwrap().total_reward,
-			1000
-		);
+		assert_ok!(Crowdloan::update_reward_address(RuntimeOrigin::signed(1), 2, None));
+		assert_eq!(Crowdloan::accounts_payable(0, 2).unwrap().claimed_reward, 1000);
+		assert_eq!(Crowdloan::accounts_payable(0, 2).unwrap().total_reward, 1000);
 
 		assert_noop!(
 			Crowdloan::claim(RuntimeOrigin::signed(1), None),
@@ -639,18 +632,13 @@ fn initialize_new_addresses_with_batch() {
 		));
 		assert_eq!(Crowdloan::total_contributors(), 2);
 		// Verify that the second ending block provider had no effect
-		assert_eq!(
-			Crowdloan::crowdloan_period(0),
-			Some((init_block, init_block + VESTING))
-		);
+		assert_eq!(Crowdloan::crowdloan_period(0), Some((init_block, init_block + VESTING)));
 
 		// Batch calls always succeed. We just need to check the inner event
 		assert_ok!(mock::RuntimeCall::Utility(UtilityCall::batch {
-			calls: vec![mock::RuntimeCall::Crowdloan(
-				crate::Call::initialize_reward_vec {
-					rewards: vec![([4u8; 20], Some(3), 500)]
-				}
-			)]
+			calls: vec![mock::RuntimeCall::Crowdloan(crate::Call::initialize_reward_vec {
+				rewards: vec![([4u8; 20], Some(3), 500)]
+			})]
 		})
 		.dispatch(RuntimeOrigin::root()));
 
@@ -830,7 +818,10 @@ fn test_relay_signatures_can_change_reward_addresses() {
 
 		let mut insufficient_proofs: Vec<([u8; 20], EthereumSignature)> = vec![];
 		for i in 0..2 {
-			insufficient_proofs.push((AccountId20::from(pairs[i]).into(), pairs[i].sign(sp_core::testing::ECDSA, &payload).unwrap().into()));
+			insufficient_proofs.push((
+				AccountId20::from(pairs[i]).into(),
+				pairs[i].sign(sp_core::testing::ECDSA, &payload).unwrap().into(),
+			));
 		}
 
 		// Not sufficient proofs presented
@@ -848,7 +839,10 @@ fn test_relay_signatures_can_change_reward_addresses() {
 		let mut sufficient_proofs = insufficient_proofs.clone();
 
 		// We push one more
-		sufficient_proofs.push((AccountId20::from(pairs[2]).into(), pairs[2].sign(sp_core::testing::ECDSA, &payload).unwrap().into()));
+		sufficient_proofs.push((
+			AccountId20::from(pairs[2]).into(),
+			pairs[2].sign(sp_core::testing::ECDSA, &payload).unwrap().into(),
+		));
 
 		// This time should pass
 		assert_ok!(Crowdloan::change_association_with_relay_keys(
@@ -900,10 +894,7 @@ fn test_restart_crowdloan() {
 
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(1), None));
 
-		assert_ok!(Crowdloan::set_crowdloan_allocation(
-			RuntimeOrigin::root(),
-			2500u128
-		));
+		assert_ok!(Crowdloan::set_crowdloan_allocation(RuntimeOrigin::root(), 2500u128));
 		assert_eq!(Crowdloan::get_crowdloan_id(), 1);
 
 		assert_ok!(Crowdloan::initialize_reward_vec(
@@ -916,11 +907,7 @@ fn test_restart_crowdloan() {
 			Error::<Test>::RewardVecNotFullyInitializedYet
 		);
 
-		assert_ok!(Crowdloan::complete_initialization(
-			RuntimeOrigin::root(),
-			100,
-			200
-		));
+		assert_ok!(Crowdloan::complete_initialization(RuntimeOrigin::root(), 100, 200));
 
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(3), Some(1)));
 	});
@@ -953,10 +940,7 @@ fn test_claim_rewards_from_consecutive_crowdloans_with_different_schedules() {
 		assert_eq!(transferable_balance(&ALICE, 0), 500);
 		assert_eq!(Crowdloan::get_crowdloan_id(), 0);
 
-		assert_ok!(Crowdloan::set_crowdloan_allocation(
-			RuntimeOrigin::root(),
-			2500u128
-		));
+		assert_ok!(Crowdloan::set_crowdloan_allocation(RuntimeOrigin::root(), 2500u128));
 		assert_eq!(Crowdloan::get_crowdloan_id(), 1);
 
 		assert_ok!(Crowdloan::initialize_reward_vec(
@@ -1021,10 +1005,7 @@ fn test_claim_rewards_from_consecutive_crowdloans_with_overlapping_schedules() {
 		assert_eq!(transferable_balance(&ALICE, 0), 500);
 		assert_eq!(Crowdloan::get_crowdloan_id(), 0);
 
-		assert_ok!(Crowdloan::set_crowdloan_allocation(
-			RuntimeOrigin::root(),
-			2500u128
-		));
+		assert_ok!(Crowdloan::set_crowdloan_allocation(RuntimeOrigin::root(), 2500u128));
 		assert_eq!(Crowdloan::get_crowdloan_id(), 1);
 
 		assert_ok!(Crowdloan::initialize_reward_vec(
@@ -1053,15 +1034,9 @@ fn test_claim_rewards_from_consecutive_crowdloans_with_overlapping_schedules() {
 		assert_eq!(transferable_balance(&ALICE, 0), 1000 + (2000 / 8) * 3);
 
 		roll_to(6);
-		assert_eq!(
-			transferable_balance(&ALICE, 0),
-			1000 + (2000 / 8) * 5 + (2000 / 8)
-		);
+		assert_eq!(transferable_balance(&ALICE, 0), 1000 + (2000 / 8) * 5 + (2000 / 8));
 		roll_to(7);
-		assert_eq!(
-			transferable_balance(&ALICE, 0),
-			1000 + (2000 / 8) * 6 + (2000 / 8) * 2
-		);
+		assert_eq!(transferable_balance(&ALICE, 0), 1000 + (2000 / 8) * 6 + (2000 / 8) * 2);
 		roll_to(second_crowdloan_period.1);
 		assert_eq!(transferable_balance(&ALICE, 0), 5000);
 	});
@@ -1141,10 +1116,7 @@ fn change_crowdloan_allocation_before_finalization_to_lower_value_than_initializ
 			Error::<Test>::AllocationDoesNotMatch
 		);
 
-		assert_ok!(Crowdloan::set_crowdloan_allocation(
-			RuntimeOrigin::root(),
-			2500u128
-		));
+		assert_ok!(Crowdloan::set_crowdloan_allocation(RuntimeOrigin::root(), 2500u128));
 
 		assert_err!(
 			Crowdloan::complete_initialization(
@@ -1155,10 +1127,7 @@ fn change_crowdloan_allocation_before_finalization_to_lower_value_than_initializ
 			Error::<Test>::RewardsDoNotMatchFund
 		);
 
-		assert_ok!(Crowdloan::set_crowdloan_allocation(
-			RuntimeOrigin::root(),
-			500u128
-		));
+		assert_ok!(Crowdloan::set_crowdloan_allocation(RuntimeOrigin::root(), 500u128));
 
 		assert_ok!(Crowdloan::complete_initialization(
 			RuntimeOrigin::root(),
@@ -1254,11 +1223,7 @@ fn update_rewards_address_for_past_crwdloans() {
 			Some(0),
 		));
 
-		assert_ok!(Crowdloan::update_reward_address(
-			RuntimeOrigin::signed(BOB),
-			BOB_NEW,
-			Some(1),
-		));
+		assert_ok!(Crowdloan::update_reward_address(RuntimeOrigin::signed(BOB), BOB_NEW, Some(1),));
 
 		assert!(Crowdloan::accounts_payable(0, ALICE_NEW).is_some(),);
 		assert!(Crowdloan::accounts_payable(1, BOB_NEW).is_some(),);
@@ -1322,37 +1287,21 @@ fn reproduce_mgx654_bug_report() {
 			],
 		));
 
-		assert_ok!(Crowdloan::complete_initialization(
-			RuntimeOrigin::root(),
-			10,
-			60,
-		));
+		assert_ok!(Crowdloan::complete_initialization(RuntimeOrigin::root(), 10, 60,));
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(ALICE, 0),
-			orml_tokens::AccountData {
-				free: 0u128,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: 0u128, reserved: 0u128, frozen: 0u128 }
 		);
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(BOB, 0),
-			orml_tokens::AccountData {
-				free: 0u128,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: 0u128, reserved: 0u128, frozen: 0u128 }
 		);
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(CHARLIE, 0),
-			orml_tokens::AccountData {
-				free: 0u128,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: 0u128, reserved: 0u128, frozen: 0u128 }
 		);
 
 		roll_to(8);
@@ -1362,8 +1311,8 @@ fn reproduce_mgx654_bug_report() {
 			orml_tokens::AccountData {
 				free: SINGLE_USER_REWARDS,
 				reserved: 0u128,
-				frozen: SINGLE_USER_REWARDS
-					- (<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)
+				frozen: SINGLE_USER_REWARDS -
+					(<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)
 			}
 		);
 
@@ -1374,9 +1323,9 @@ fn reproduce_mgx654_bug_report() {
 			orml_tokens::AccountData {
 				free: SINGLE_USER_REWARDS,
 				reserved: 0u128,
-				frozen: (SINGLE_USER_REWARDS
-					- (<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS))
-					* 10 / 50
+				frozen: (SINGLE_USER_REWARDS -
+					(<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)) *
+					10 / 50
 			}
 		);
 
@@ -1384,21 +1333,11 @@ fn reproduce_mgx654_bug_report() {
 		assert_ok!(Crowdloan::claim(RuntimeOrigin::signed(CHARLIE), Some(0)));
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(CHARLIE, 0),
-			orml_tokens::AccountData {
-				free: SINGLE_USER_REWARDS,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: SINGLE_USER_REWARDS, reserved: 0u128, frozen: 0u128 }
 		);
 
-		assert_ok!(pallet_vesting_mangata::Pallet::<Test>::vest(
-			RuntimeOrigin::signed(ALICE),
-			0
-		));
-		assert_ok!(pallet_vesting_mangata::Pallet::<Test>::vest(
-			RuntimeOrigin::signed(BOB),
-			0
-		));
+		assert_ok!(pallet_vesting_mangata::Pallet::<Test>::vest(RuntimeOrigin::signed(ALICE), 0));
+		assert_ok!(pallet_vesting_mangata::Pallet::<Test>::vest(RuntimeOrigin::signed(BOB), 0));
 		assert_err!(
 			pallet_vesting_mangata::Pallet::<Test>::vest(RuntimeOrigin::signed(CHARLIE), 0),
 			pallet_vesting_mangata::Error::<Test>::NotVesting
@@ -1406,29 +1345,17 @@ fn reproduce_mgx654_bug_report() {
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(ALICE, 0),
-			orml_tokens::AccountData {
-				free: SINGLE_USER_REWARDS,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: SINGLE_USER_REWARDS, reserved: 0u128, frozen: 0u128 }
 		);
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(BOB, 0),
-			orml_tokens::AccountData {
-				free: SINGLE_USER_REWARDS,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: SINGLE_USER_REWARDS, reserved: 0u128, frozen: 0u128 }
 		);
 
 		assert_eq!(
 			orml_tokens::Pallet::<Test>::accounts(CHARLIE, 0),
-			orml_tokens::AccountData {
-				free: SINGLE_USER_REWARDS,
-				reserved: 0u128,
-				frozen: 0u128
-			}
+			orml_tokens::AccountData { free: SINGLE_USER_REWARDS, reserved: 0u128, frozen: 0u128 }
 		);
 	});
 }

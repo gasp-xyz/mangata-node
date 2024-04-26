@@ -60,21 +60,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::pallet;
-use frame_support::pallet_prelude::*;
-use frame_support::traits::MultiTokenCurrency;
-use frame_support::traits::MultiTokenVestingLocks;
-use frame_support::traits::OnRuntimeUpgrade;
+use frame_support::{
+	pallet,
+	pallet_prelude::*,
+	traits::{MultiTokenCurrency, MultiTokenVestingLocks, OnRuntimeUpgrade},
+};
 use frame_system::pallet_prelude::*;
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::traits::{
-	AtLeast32BitUnsigned, BlockNumberProvider, CheckedSub, Saturating, Verify,
-};
-use sp_runtime::{account::EthereumSignature, Perbill, AccountId20};
-use sp_std::collections::btree_map::BTreeMap;
-use sp_std::vec;
-use sp_std::vec::Vec;
 use sha3::{Digest, Keccak256};
+use sp_runtime::{
+	account::EthereumSignature,
+	traits::{AtLeast32BitUnsigned, BlockNumberProvider, CheckedSub, Saturating, Verify},
+	AccountId20, Perbill,
+};
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 pub use pallet::*;
 #[cfg(feature = "try-runtime")]
@@ -150,7 +149,7 @@ pub mod pallet {
 		/// The AccountId type contributors used on the relay chain.
 		type RelayChainAccountId: Parameter
 			//TODO these AccountId20 bounds feel a little extraneous. I wonder if we can remove them.
-			// Since our "relaychain" is now ethereum 
+			// Since our "relaychain" is now ethereum
 			+ Into<AccountId20>
 			+ From<AccountId20>
 			+ Ord;
@@ -315,10 +314,7 @@ pub mod pallet {
 			AccountsPayable::<T>::insert(CrowdloanId::<T>::get(), &reward_account, &reward_info);
 
 			// Emit Event
-			Self::deposit_event(Event::RewardAddressUpdated(
-				previous_account,
-				reward_account,
-			));
+			Self::deposit_event(Event::RewardAddressUpdated(previous_account, reward_account));
 
 			Ok(Default::default())
 		}
@@ -346,10 +342,7 @@ pub mod pallet {
 			// Calculate the veted amount on demand.
 			let mut info = AccountsPayable::<T>::get(crowdloan_id, &payee)
 				.ok_or(Error::<T>::NoAssociatedClaim)?;
-			ensure!(
-				info.claimed_reward < info.total_reward,
-				Error::<T>::RewardsAlreadyClaimed
-			);
+			ensure!(info.claimed_reward < info.total_reward, Error::<T>::RewardsAlreadyClaimed);
 
 			// Get the current block used for vesting purposes
 			let _now = T::VestingBlockProvider::current_block_number();
@@ -434,10 +427,7 @@ pub mod pallet {
 
 			// This ensures the end vesting block (when all funds are fully vested)
 			// is bigger than the init vesting block
-			ensure!(
-				lease_ending_block > lease_start_block,
-				Error::<T>::VestingPeriodNonValid
-			);
+			ensure!(lease_ending_block > lease_start_block, Error::<T>::VestingPeriodNonValid);
 
 			let total_initialized_rewards =
 				InitializedRewardAmount::<T>::get(CrowdloanId::<T>::get());
@@ -482,8 +472,8 @@ pub mod pallet {
 			}
 
 			ensure!(
-				crowdloan_allocation_amount
-					>= InitializedRewardAmount::<T>::get(CrowdloanId::<T>::get()),
+				crowdloan_allocation_amount >=
+					InitializedRewardAmount::<T>::get(CrowdloanId::<T>::get()),
 				Error::<T>::AllocationDoesNotMatch
 			);
 
@@ -520,20 +510,18 @@ pub mod pallet {
 
 			let incoming_rewards: BalanceOf<T> = rewards
 				.iter()
-				.fold(0_u32.into(), |acc: BalanceOf<T>, (_, _, reward)| {
-					acc + *reward
-				});
+				.fold(0_u32.into(), |acc: BalanceOf<T>, (_, _, reward)| acc + *reward);
 
 			// Ensure we dont go over funds
 			ensure!(
-				total_initialized_rewards + incoming_rewards
-					<= Pallet::<T>::get_crowdloan_allocation(CrowdloanId::<T>::get()),
+				total_initialized_rewards + incoming_rewards <=
+					Pallet::<T>::get_crowdloan_allocation(CrowdloanId::<T>::get()),
 				Error::<T>::BatchBeyondFundPot
 			);
 
 			for (relay_account, native_account, reward) in &rewards {
-				if ClaimedRelayChainIds::<T>::get(CrowdloanId::<T>::get(), relay_account).is_some()
-					|| UnassociatedContributions::<T>::get(CrowdloanId::<T>::get(), relay_account)
+				if ClaimedRelayChainIds::<T>::get(CrowdloanId::<T>::get(), relay_account).is_some() ||
+					UnassociatedContributions::<T>::get(CrowdloanId::<T>::get(), relay_account)
 						.is_some()
 				{
 					// Dont fail as this is supposed to be called with batch calls and we
@@ -543,7 +531,7 @@ pub mod pallet {
 						native_account.clone(),
 						*reward,
 					));
-					continue;
+					continue
 				}
 
 				total_initialized_rewards += *reward;
@@ -557,7 +545,7 @@ pub mod pallet {
 						native_account.clone(),
 						*reward,
 					));
-					continue;
+					continue
 				}
 
 				if let Some(native_account) = native_account {
@@ -625,16 +613,17 @@ pub mod pallet {
 				if voted.get(&relay_account).is_none() {
 					// Maybe I should not error here?
 					ensure!(
-						reward_info
-							.contributed_relay_addresses
-							.contains(&relay_account),
+						reward_info.contributed_relay_addresses.contains(&relay_account),
 						Error::<T>::NonContributedAddressProvided
 					);
 
 					// I am erroring here as I think it is good to know the reason in the single-case
 					// signature
 					ensure!(
-						signature.verify(Keccak256::digest(payload.clone()).as_slice(), &relay_account.clone().into()),
+						signature.verify(
+							Keccak256::digest(payload.clone()).as_slice(),
+							&relay_account.clone().into()
+						),
 						Error::<T>::InvalidClaimSignature
 					);
 					voted.insert(relay_account, ());

@@ -1,23 +1,22 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::*;
-use crate::Config;
-use crate::{Call, Pallet, WRAPPED_BYTES_POSTFIX, WRAPPED_BYTES_PREFIX};
+use crate::{Call, Config, Pallet, WRAPPED_BYTES_POSTFIX, WRAPPED_BYTES_PREFIX};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::assert_ok;
-use frame_support::traits::{Get, OnFinalize};
+use frame_support::{
+	assert_ok,
+	traits::{Get, OnFinalize},
+};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use parity_scale_codec::{Encode, alloc::string::String};
+use parity_scale_codec::{alloc::string::String, Encode};
+use sp_application_crypto::{ecdsa::Public, RuntimePublic};
 use sp_runtime::{
+	account::EthereumSignature,
 	traits::{BlockNumberProvider, One, Zero},
-	account::EthereumSignature, AccountId20
+	AccountId20,
 };
-use sp_std::vec;
-use sp_std::vec::Vec;
-use sp_application_crypto::ecdsa::Public;
-use sp_application_crypto::RuntimePublic;
-use sp_std::fmt::Write;
+use sp_std::{fmt::Write, vec, vec::Vec};
 
 /// Default balance amount is minimum contribution
 fn default_balance<T: Config>() -> BalanceOf<T> {
@@ -60,7 +59,8 @@ fn create_contributors<T: Config>(
 		let seed = SEED - seed_offset - i;
 		let mut seed_20: [u8; 20] = [0; 20];
 		seed_20[16..20].copy_from_slice(&seed.to_be_bytes());
-		let relay_chain_account: AccountId20 = <[u8; 20]>::try_from(&seed_20[..]).expect("Right len of slice").into();
+		let relay_chain_account: AccountId20 =
+			<[u8; 20]>::try_from(&seed_20[..]).expect("Right len of slice").into();
 		let user = create_funded_user::<T>("user", seed, 0u32.into());
 		let contribution: BalanceOf<T> = 100u32.into();
 		contribution_vec.push((relay_chain_account.into(), Some(user.clone()), contribution));
@@ -78,9 +78,7 @@ fn insert_contributors<T: Config>(
 	// When we reach the batch size, we insert them
 	let amount = contributors
 		.iter()
-		.fold(0u32.into(), |acc: BalanceOf<T>, (_, _, amount)| {
-			acc + *amount
-		});
+		.fold(0u32.into(), |acc: BalanceOf<T>, (_, _, amount)| acc + *amount);
 	Pallet::<T>::set_crowdloan_allocation(RawOrigin::Root.into(), amount)?;
 
 	for i in 0..contributors.len() {
@@ -342,21 +340,15 @@ benchmarks! {
 mod tests {
 	use crate::mock::Test;
 	use sp_io::TestExternalities;
-	use sp_runtime::BuildStorage;
 	use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
+	use sp_runtime::BuildStorage;
 
 	pub fn new_test_ext() -> TestExternalities {
-		let t = frame_system::GenesisConfig::<Test>::default()
-			.build_storage()
-			.unwrap();
+		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 		let mut ext = TestExternalities::new(t);
 		ext.register_extension(KeystoreExt::new(MemoryKeystore::new()));
 		ext
 	}
 }
 
-impl_benchmark_test_suite!(
-	Pallet,
-	crate::benchmarks::tests::new_test_ext(),
-	crate::mock::Test
-);
+impl_benchmark_test_suite!(Pallet, crate::benchmarks::tests::new_test_ext(), crate::mock::Test);

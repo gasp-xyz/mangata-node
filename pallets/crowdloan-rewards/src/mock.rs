@@ -26,14 +26,16 @@ use orml_traits::parameter_type_with_key;
 use sp_core::{ecdsa, Pair, H256};
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 
+use sp_application_crypto::{ecdsa::Public, RuntimePublic};
 use sp_runtime::{
+	account::AccountId20,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage, Perbill, account::AccountId20
+	BuildStorage, Perbill,
 };
-use sp_std::convert::{From, TryInto};
-use sp_application_crypto::ecdsa::Public;
-use sp_application_crypto::RuntimePublic;
-use sp_std::fmt::Write;
+use sp_std::{
+	convert::{From, TryInto},
+	fmt::Write,
+};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u64;
@@ -173,9 +175,7 @@ impl pallet_utility::Config for Test {
 }
 
 fn genesis() -> sp_io::TestExternalities {
-	let mut storage = frame_system::GenesisConfig::<Test>::default()
-		.build_storage()
-		.unwrap();
+	let mut storage = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 	orml_tokens::GenesisConfig::<Test> {
 		tokens_endowment: vec![(0u64, 0u32, 2_000_000_000)],
@@ -199,11 +199,11 @@ pub(crate) fn get_ecdsa_pairs(num: u32) -> Vec<ecdsa::Public> {
 	let seed: u128 = 12345678901234567890123456789012;
 	let mut pairs = Vec::new();
 	for i in 0..num {
-		pairs.push(
-			{let mut buffer = String::new();
+		pairs.push({
+			let mut buffer = String::new();
 			let _ = write!(&mut buffer, "//{}", seed + i as u128);
-			Public::generate_pair(sp_core::testing::ECDSA, Some(buffer.into_bytes()))}
-		)
+			Public::generate_pair(sp_core::testing::ECDSA, Some(buffer.into_bytes()))
+		})
 	}
 	pairs
 }
@@ -216,13 +216,7 @@ pub(crate) fn events() -> Vec<super::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| {
-			if let RuntimeEvent::Crowdloan(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.filter_map(|e| if let RuntimeEvent::Crowdloan(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 
@@ -230,13 +224,7 @@ pub(crate) fn batch_events() -> Vec<pallet_utility::Event> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| {
-			if let RuntimeEvent::Utility(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.filter_map(|e| if let RuntimeEvent::Utility(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 

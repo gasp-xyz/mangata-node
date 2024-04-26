@@ -103,6 +103,8 @@ jobs:
           #   fast: false
           - command: "yarn test-maintenance"
             fast: true
+          - command: "yarn test-rollupUpdate"
+            fast: false
           # - command: "yarn test-bootstrap"
           #   fast: false
           # - command: "yarn test-rewards-bootstrap"
@@ -125,6 +127,7 @@ jobs:
           #   fast: true
           # - command: "yarn test-parallel-3rdPartyRewards"
           #   fast: true
+
     
     runs-on: [e2e-gke]
     timeout-minutes: 180

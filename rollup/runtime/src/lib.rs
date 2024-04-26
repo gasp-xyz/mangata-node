@@ -423,45 +423,10 @@ use sp_runtime::{generic::ExtendedCall, AccountId20};
 use sp_std::{fmt::Write, prelude::*};
 
 impl ExtendedCall for RuntimeCall {
-	fn context(&self) -> Option<(String, String)> {
-		match self {
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id,
-				sold_asset_amount,
-				bought_asset_id,
-				min_amount_out,
-				..
-			}) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
-				let _ = write!(&mut buffer, "sold_asset_amount: {sold_asset_amount}\n");
-				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
-				let _ = write!(&mut buffer, "min_amount_out: {min_amount_out}\n");
-				Some(("xyk::sell_asset".to_string(), buffer))
-			},
-			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id,
-				bought_asset_amount,
-				bought_asset_id,
-				max_amount_in,
-				..
-			}) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
-				let _ = write!(&mut buffer, "bought_asset_amount: {bought_asset_amount}\n");
-				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
-				let _ = write!(&mut buffer, "max_amount_in: {max_amount_in}\n");
-				Some(("xyk::buy_asset".to_string(), buffer))
-			},
-			RuntimeCall::Tokens(orml_tokens::Call::transfer { dest, currency_id, amount }) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "dest: {dest:?}\n");
-				let _ = write!(&mut buffer, "currency_id: {currency_id}\n");
-				let _ = write!(&mut buffer, "amount: {amount}\n");
-				Some(("orml_tokens::transfer".to_string(), buffer))
-			},
-			_ => Some(("todo".to_string(), "todo".to_string())),
-		}
+	fn context(&self) -> Option<String> {
+		let mut buffer = String::new();
+		let _ = write!(&mut buffer, "{:#?}", self);
+		Some(buffer)
 	}
 }
 
@@ -869,8 +834,8 @@ impl_runtime_apis! {
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
 		fn get_eip712_sign_data(call: Vec<u8>) -> String{
 			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
-				if let Some((method, params)) = extrinsic.function.context() {
-					metamask_signature_runtime_api::eip712_payload(method, params)
+				if let Some(call_string) = extrinsic.function.context() {
+					metamask_signature_runtime_api::eip712_payload(call_string)
 				}else{
 					Default::default()
 				}

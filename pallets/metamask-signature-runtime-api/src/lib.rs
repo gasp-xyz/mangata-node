@@ -10,7 +10,7 @@ sp_api::decl_runtime_apis! {
 	}
 }
 
-pub fn eip712_payload(method: String, params: String) -> String {
+pub fn eip712_payload(call: String) -> String {
 	let input = r#"{
 					"types": {
 						"EIP712Domain": [
@@ -54,14 +54,12 @@ pub fn eip712_payload(method: String, params: String) -> String {
 						"verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
 					},
 					"message": {
-						"method": "",
-						"params": "",
+						"call": "",
 						"tx": ""
 					}
 				}"#;
 	if let Ok(ref mut v) = serde_json::from_str::<serde_json::Value>(input) {
-		v["message"]["method"] = serde_json::Value::String(method);
-		v["message"]["params"] = serde_json::Value::String(params);
+		v["message"]["call"] = serde_json::Value::String(call);
 		v.to_string()
 	} else {
 		Default::default()

@@ -112,7 +112,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		
+
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
@@ -152,7 +152,7 @@ benchmarks! {
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		
+
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
@@ -212,7 +212,7 @@ benchmarks! {
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		
+
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {

@@ -1244,9 +1244,11 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> Contains<(CurrencyIdOf<T>, CurrencyIdOf<T>)> for Pallet<T> {
 	fn contains(pair: &(CurrencyIdOf<T>, CurrencyIdOf<T>)) -> bool {
-		if BootstrapSchedule::<T>::get().is_some(){
+		if BootstrapSchedule::<T>::get().is_some() {
 			pair == &(Self::first_token_id(), Self::second_token_id()) ||
 				pair == &(Self::second_token_id(), Self::first_token_id())
-		} else { false }
+		} else {
+			false
+		}
 	}
 }

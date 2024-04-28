@@ -424,49 +424,12 @@ use sp_std::{fmt::Write, prelude::*};
 
 impl ExtendedCall for RuntimeCall {
 	fn context(&self) -> Option<MetamaskSigningCtx> {
-		let (method, params) = match self {
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id,
-				sold_asset_amount,
-				bought_asset_id,
-				min_amount_out,
-				..
-			}) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
-				let _ = write!(&mut buffer, "sold_asset_amount: {sold_asset_amount}\n");
-				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
-				let _ = write!(&mut buffer, "min_amount_out: {min_amount_out}\n");
-				("xyk::sell_asset".to_string(), buffer)
-			},
-			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id,
-				bought_asset_amount,
-				bought_asset_id,
-				max_amount_in,
-				..
-			}) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "sold_asset_id: {sold_asset_id}\n");
-				let _ = write!(&mut buffer, "bought_asset_amount: {bought_asset_amount}\n");
-				let _ = write!(&mut buffer, "bought_asset_id: {bought_asset_id}\n");
-				let _ = write!(&mut buffer, "max_amount_in: {max_amount_in}\n");
-				("xyk::buy_asset".to_string(), buffer)
-			},
-			RuntimeCall::Tokens(orml_tokens::Call::transfer { dest, currency_id, amount }) => {
-				let mut buffer = String::new();
-				let _ = write!(&mut buffer, "dest: {dest:?}\n");
-				let _ = write!(&mut buffer, "currency_id: {currency_id}\n");
-				let _ = write!(&mut buffer, "amount: {amount}\n");
-				("orml_tokens::transfer".to_string(), buffer)
-			},
-			_ => ("todo".to_string(), "todo".to_string()),
-		};
+		let mut call = String::new();
+		let _ = write!(&mut call, "{:#?}", self);
 		pallet_metamask_signature::Pallet::<Runtime>::get_eip_metadata()
 			.map(|eip|
 			MetamaskSigningCtx{
-				method,
-				params,
+				call,
 				eip712: eip
 			}
 		)
@@ -881,9 +844,11 @@ use frame_support::dispatch::GetDispatchInfo;
 
 impl_runtime_apis! {
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
-		fn get_eip712_sign_data(call: Vec<u8>) -> String{
-			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
+		fn get_eip712_sign_data(encoded_call: Vec<u8>) -> String{
+			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut encoded_call.as_ref()) {
+				log::info!(target: "xxx", "hello world");
 				if let Some(MetamaskSigningCtx{call, ..}) = extrinsic.function.context() {
+					log::info!(target: "xxx", "hello world2 ");
 					pallet_metamask_signature::Pallet::<Runtime>::eip712_payload(call)
 				}else{
 					Default::default()

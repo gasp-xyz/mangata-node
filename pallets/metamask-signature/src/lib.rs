@@ -147,20 +147,12 @@ pub mod pallet {
 						},
 						{
 							"name": "chainId",
-							"type": "u64"
-						},
-						{
-							"name": "verifyingContract",
-							"type": "address"
+							"type": "uint256"
 						}
 						],
 						"Message": [
 						{
-							"name": "method",
-							"type": "string"
-						},
-						{
-							"name": "params",
+							"name": "call",
 							"type": "string"
 						},
 						{
@@ -173,21 +165,23 @@ pub mod pallet {
 					"domain": {
 						"name": "",
 						"version": "",
-						"chainId": "",
+						"chainId": ""
 					},
 					"message": {
 						"call": "",
 						"tx": ""
 					}
 			}"#;
+			log::info!(target: "xxx", "hello world 88 ");
+
 			if let Ok(ref mut v) = serde_json::from_str::<serde_json::Value>(input) {
+				log::info!(target: "xxx", "hello world 99");
 
 				v["domain"]["name"] = serde_json::Value::String(String::from_utf8(Name::<T>::get().into_inner()).unwrap_or_default());
 				v["domain"]["chainId"] = serde_json::Value::Number(ChainId::<T>::get().into());
 				v["domain"]["version"] = serde_json::Value::String(String::from_utf8(Version::<T>::get().into_inner()).unwrap_or_default());
-
 				v["message"]["call"] = serde_json::Value::String(call);
-				v.to_string()
+				serde_json::to_string_pretty(v).unwrap_or_default()
 			} else {
 				Default::default()
 			}

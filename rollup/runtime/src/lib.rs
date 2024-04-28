@@ -883,8 +883,8 @@ impl_runtime_apis! {
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
 		fn get_eip712_sign_data(call: Vec<u8>) -> String{
 			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut call.as_ref()) {
-				if let Some(MetamaskSigningCtx{method, params, ..}) = extrinsic.function.context() {
-					pallet_metamask_signature::Pallet::<Runtime>::eip712_payload(method, params)
+				if let Some(MetamaskSigningCtx{call, ..}) = extrinsic.function.context() {
+					pallet_metamask_signature::Pallet::<Runtime>::eip712_payload(call)
 				}else{
 					Default::default()
 				}

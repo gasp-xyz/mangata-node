@@ -56,9 +56,15 @@ benchmarks! {
 		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
+
 		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let liquidity_asset_id = <T as Config>::Currency::get_next_currency_id();
@@ -105,9 +111,14 @@ benchmarks! {
 	update_pool_promotion {
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+		
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
 
 		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
@@ -140,9 +151,15 @@ benchmarks! {
 		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+		
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
+
 		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 		let liquidity_asset_id = <T as Config>::Currency::get_next_currency_id();
@@ -194,10 +211,15 @@ benchmarks! {
 		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
-		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+		
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
+
 		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
 		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
 		PoS::<T>::enable(liquidity_asset_id, 1u8);

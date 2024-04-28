@@ -300,7 +300,7 @@ pub mod config {
 			fn contains(token_id: &TokenId) -> bool {
 				// we dont want to allow doing anything with dummy assets previously
 				// used for testing
-				*token_id == 2 || *token_id == 3
+				false
 			}
 		}
 

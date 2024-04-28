@@ -1843,15 +1843,17 @@ pub mod pallet {
 			liquidity_token_list.dedup();
 			let liquidity_token_count: u32 = liquidity_token_list.len().try_into().unwrap();
 			for (i, liquidity_token) in liquidity_token_list.iter().enumerate() {
-				if let Err(error) = <Pallet<T>>::add_staking_liquidity_token(
-					RawOrigin::Root.into(),
-					PairedOrLiquidityToken::Liquidity(*liquidity_token),
-					i as u32,
-				) {
-					log::warn!(
-						"Adding staking liquidity token failed in genesis with error {:?}",
-						error
-					);
+				if *liquidity_token != T::NativeTokenId::get(){
+					if let Err(error) = <Pallet<T>>::add_staking_liquidity_token(
+						RawOrigin::Root.into(),
+						PairedOrLiquidityToken::Liquidity(*liquidity_token),
+						i as u32,
+					) {
+						log::warn!(
+							"Adding staking liquidity token failed in genesis with error {:?}",
+							error
+						);
+					}
 				}
 			}
 			let mut candidate_count = 0u32;

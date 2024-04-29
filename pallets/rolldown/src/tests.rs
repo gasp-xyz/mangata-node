@@ -3,13 +3,14 @@ use crate::{
 	*,
 };
 use core::future::pending;
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_ok};
 use hex_literal::hex;
 use messages::{L1Update, L1UpdateRequest};
 use mockall::predicate::eq;
 use serial_test::serial;
 use sp_io::storage::rollback_transaction;
 use sp_runtime::traits::ConvertBack;
+use sp_std::iter::FromIterator;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
 pub const ETH_TOKEN_ADDRESS_MGX: TokenId = 100_u32;
@@ -498,7 +499,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -523,6 +524,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			slash_sequencer_mock
 				.expect()
 				.withf(|a, b| *a == ALICE && b.cloned() == Some(BOB))
+				.times(1)
 				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
 		})
@@ -542,7 +544,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum) + 1;
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -567,6 +569,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 			slash_sequencer_mock
 				.expect()
 				.withf(|a, b| *a == BOB && b.cloned() == None)
+				.times(1)
 				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
 		})
@@ -1378,4 +1381,180 @@ fn test_L2Update_requests_are_in_order() {
 			assert!(is_sorted(l2update.results.iter().map(|x| x.requestId.id)));
 			assert!(is_sorted(l2update.withdrawals.iter().map(|x| x.requestId.id)));
 		});
+}
+
+#[test]
+#[serial]
+fn test_new_sequencer_active() {
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		for i in 0..100 {
+			Rolldown::new_sequencer_active(&i);
+			let read_rights: u128 = 1;
+			let cancel_rights: u128 = i.into();
+			assert_eq!(sequencer_count::<Test>::get(), <u64 as Into<u128>>::into(i) + 1);
+			assert!(sequencer_rights::<Test>::iter()
+				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+			assert_eq!(
+				sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(),
+				(i + 1) as usize
+			);
+		}
+	});
+}
+
+#[test]
+#[serial]
+fn test_sequencer_unstaking() {
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		let dispute_period_length = Rolldown::get_dispute_period();
+		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
+		let x = 20;
+
+		LastUpdateBySequencer::<Test>::insert(ALICE, now);
+		forward_to_block::<Test>((now + dispute_period_length).saturated_into::<u64>());
+		assert_err!(
+			Rolldown::sequencer_unstaking(&ALICE),
+			Error::<Test>::SequencerLastUpdateStillInDisputePeriod
+		);
+		forward_to_block::<Test>((now + dispute_period_length + 1).saturated_into::<u64>());
+		assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
+		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
+
+		AwaitingCancelResolution::<Test>::insert(ALICE, BTreeSet::from([0]));
+		assert_err!(
+			Rolldown::sequencer_unstaking(&ALICE),
+			Error::<Test>::SequencerAwaitingCancelResolution
+		);
+
+		AwaitingCancelResolution::<Test>::remove(ALICE);
+		assert_ok!(Rolldown::sequencer_unstaking(&ALICE));
+		assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
+	});
+}
+
+#[test]
+#[serial]
+fn test_last_update_by_sequencer_is_updated() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		let block = 36;
+		forward_to_block::<Test>(block);
+
+		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
+
+		let update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
+		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), block.into());
+	});
+}
+
+#[test]
+#[serial]
+fn test_cancel_updates_awaiting_cancel_resolution() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			assert!(!pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert!(pending_requests::<Test>::contains_key(15u128, L1::Ethereum));
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()).unwrap();
+
+			// Assert
+			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::from([1]));
+			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::from([1]));
+		});
+}
+
+#[test]
+#[serial]
+fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			// Arrange
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(L1::Ethereum);
+
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::CancelResolution(
+					messages::CancelResolution {
+						requestId: Default::default(),
+						l2RequestId: l2_request_id,
+						cancelJustified: true,
+						timeStamp: sp_core::U256::from(1),
+					},
+				)])
+				.with_offset(1u128)
+				.build();
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128).unwrap();
+			forward_to_block::<Test>(12);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::from([1]));
+			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::from([1]));
+			forward_to_block::<Test>(16);
+
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock
+				.expect()
+				.withf(|a, b| *a == ALICE && b.cloned() == Some(BOB))
+				.times(1)
+				.return_const(Ok(().into()));
+			forward_to_block::<Test>(17);
+
+			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
+			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::new());
+		})
+}
+
+#[test]
+#[serial]
+fn test_handle_sequencer_deactivations() {
+	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		let total_sequencers = 100;
+		for i in 0..total_sequencers {
+			Rolldown::new_sequencer_active(&i);
+		}
+
+		let n_max = 14;
+		let mut acc = 0;
+		for n in 1..n_max {
+			Rolldown::handle_sequencer_deactivations(Vec::<AccountId>::from_iter(acc..(n + acc)));
+			acc += n;
+			let read_rights: u128 = 1;
+			let cancel_rights: u128 = (total_sequencers - acc - 1).into();
+			assert_eq!(
+				sequencer_count::<Test>::get(),
+				<u64 as Into<u128>>::into(total_sequencers - acc)
+			);
+			assert!(sequencer_rights::<Test>::iter()
+				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+			assert_eq!(
+				sequencer_rights::<Test>::iter().collect::<Vec<(u64, SequencerRights)>>().len(),
+				(total_sequencers - acc) as usize
+			);
+		}
+	});
 }

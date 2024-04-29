@@ -2,14 +2,15 @@
 
 use super::*;
 
-use crate as rolldown;
+use crate as sequencer_staking;
 use core::convert::TryFrom;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
+use mockall::automock;
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
+use sp_runtime::{traits::ConvertBack, BuildStorage, Permill, Saturating};
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -21,7 +22,14 @@ pub mod consts {
 	pub const ALICE: u64 = 2;
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
-	pub const EVE: u64 = 5;
+	pub const DAVE: u64 = 5;
+	pub const EVE: u64 = 6;
+
+	pub const NATIVE_TOKEN_ID: super::TokenId = 0;
+
+	pub const TOKENS_ENDOWED: super::Balance = 10_000;
+	pub const MINIMUM_STAKE: super::Balance = 1000;
+	pub const SLASH_AMOUNT: super::Balance = 100;
 }
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -30,7 +38,7 @@ construct_runtime!(
 	pub enum Test {
 		System: frame_system,
 		Tokens: orml_tokens,
-		Rolldown: rolldown
+		SequencerStaking: sequencer_staking
 	}
 );
 
@@ -85,58 +93,30 @@ impl orml_tokens::Config for Test {
 	type CurrencyHooks = ();
 }
 
-mockall::mock! {
-	pub SequencerStakingProviderApi {}
-
-	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
-		fn is_active_sequencer(sequencer: &AccountId) -> bool;
-		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
-		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
-	}
+parameter_types! {
+	pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
+	pub const NativeTokenId: TokenId = 0;
 }
 
-mockall::mock! {
-	pub AssetRegistryProviderApi {}
-	impl AssetRegistryProviderTrait<TokenId> for AssetRegistryProviderApi {
-		fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
-		fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
-	}
-}
-
-pub struct DummyAddressConverter();
-
-impl Convert<[u8; 20], AccountId> for DummyAddressConverter {
-	fn convert(account: [u8; 20]) -> AccountId {
-		let mut bytes = [0u8; 8];
-		bytes.copy_from_slice(&account[0..8]);
-		AccountId::from_be_bytes(bytes)
-	}
-}
-
-impl ConvertBack<[u8; 20], AccountId> for DummyAddressConverter {
-	fn convert_back(account: AccountId) -> [u8; 20] {
-		let mut address = [0u8; 20];
-		let bytes: Vec<u8> = account
-			.to_be_bytes()
-			.iter()
-			.cloned()
-			.chain(std::iter::repeat(0u8).take(12))
-			.into_iter()
-			.collect();
-
-		address.copy_from_slice(&bytes[..]);
-		address
-	}
-}
-
-impl rolldown::Config for Test {
+impl sequencer_staking::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type SequencerStakingProvider = MockSequencerStakingProviderApi;
-	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type AssetRegistryProvider = MockAssetRegistryProviderApi;
-	type AddressConverter = DummyAddressConverter;
-	type DisputePeriodLength = ConstU128<5>;
-	type RequestsPerBlock = ConstU128<10>;
+	type Currency = orml_tokens::CurrencyAdapter<Test, NativeTokenId>;
+	type MinimumSequencers = frame_support::traits::ConstU32<2>;
+	type RolldownProvider = MockRolldownProviderApi;
+	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<2>;
+	type MaxSequencers = frame_support::traits::ConstU32<3>;
+	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<2>;
+	type CancellerRewardPercentage = CancellerRewardPercentage;
+}
+
+mockall::mock! {
+	pub RolldownProviderApi {}
+
+	impl RolldownProviderTrait<AccountId> for RolldownProviderApi {
+		fn new_sequencer_active(sequencer: &AccountId);
+		fn sequencer_unstaking(sequencer: &AccountId)->DispatchResult;
+		fn handle_sequencer_deactivations(deactivated_sequencers: Vec<AccountId>);
+	}
 }
 
 pub struct ExtBuilder {
@@ -149,29 +129,28 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> { _phantom: Default::default() }
-			.assimilate_storage(&mut t)
-			.expect("Tokens storage can be assimilated");
+		orml_tokens::GenesisConfig::<Test> {
+			tokens_endowment: vec![
+				(consts::ALICE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::BOB, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::CHARLIE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+				(consts::DAVE, consts::NATIVE_TOKEN_ID, consts::TOKENS_ENDOWED),
+			],
+			created_tokens_for_staking: Default::default(),
+		}
+		.assimilate_storage(&mut t)
+		.expect("Tokens storage can be assimilated");
 
-		let mut ext = sp_io::TestExternalities::new(t);
-
-		ext.execute_with(|| {
-			for s in vec![consts::ALICE, consts::BOB, consts::CHARLIE].iter() {
-				Pallet::<Test>::new_sequencer_active(s);
-			}
-		});
-
-		Self { ext }
-	}
-
-	pub fn new_without_default_sequencers() -> Self {
-		let mut t = frame_system::GenesisConfig::<Test>::default()
-			.build_storage()
-			.expect("Frame system builds valid default genesis config");
-
-		rolldown::GenesisConfig::<Test> { _phantom: Default::default() }
-			.assimilate_storage(&mut t)
-			.expect("Tokens storage can be assimilated");
+		sequencer_staking::GenesisConfig::<Test> {
+			minimal_stake_amount: consts::MINIMUM_STAKE,
+			slash_fine_amount: consts::SLASH_AMOUNT,
+			sequencers_stake: vec![
+				(consts::ALICE, consts::MINIMUM_STAKE),
+				(consts::BOB, consts::MINIMUM_STAKE),
+			],
+		}
+		.assimilate_storage(&mut t)
+		.expect("SequencerStaking storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 
@@ -196,39 +175,31 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.ext
 	}
-
-	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
-		self.ext.execute_with(|| {
-			let is_liquidity_token_mock =
-				MockSequencerStakingProviderApi::is_active_sequencer_context();
-			is_liquidity_token_mock.expect().return_const(true);
-
-			let is_selected_sequencer_mock =
-				MockSequencerStakingProviderApi::is_selected_sequencer_context();
-			is_selected_sequencer_mock.expect().return_const(true);
-
-			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
-
-			f()
-		})
-	}
 }
+
+#[macro_use]
+macro_rules! set_default_mocks {
+	() => {
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock.expect().times(2).returning(|_| ());
+	};
+}
+pub(crate) use set_default_mocks;
 
 pub fn forward_to_block<T>(n: BlockNumberFor<T>)
 where
 	T: frame_system::Config,
-	T: rolldown::Config,
+	T: sequencer_staking::Config,
 {
 	while frame_system::Pallet::<T>::block_number() < n {
-		rolldown::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
+		sequencer_staking::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
 		frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
 		let new_block_number =
 			frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
 		frame_system::Pallet::<T>::set_block_number(new_block_number);
 
 		frame_system::Pallet::<T>::on_initialize(new_block_number);
-		rolldown::Pallet::<T>::on_initialize(new_block_number);
+		sequencer_staking::Pallet::<T>::on_initialize(new_block_number);
 	}
 }
 
@@ -236,7 +207,9 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::Rolldown(inner) = e { Some(inner) } else { None })
+		.filter_map(
+			|e| if let RuntimeEvent::SequencerStaking(inner) = e { Some(inner) } else { None },
+		)
 		.collect::<Vec<_>>()
 }
 

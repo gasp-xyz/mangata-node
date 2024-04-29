@@ -793,9 +793,11 @@ impl<T: Config> Pallet<T> {
 			};
 		}
 
-		update
-			.results
-			.sort_by(|a, b| a.requestId.id.partial_cmp(&b.requestId.id).unwrap());
+		update.results.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+		update.cancels.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+
+		update.withdrawals.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
+
 		update
 	}
 
@@ -857,7 +859,7 @@ impl<T: Config> Pallet<T> {
 	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
-				!update.pendingCancelResultions.is_empty() ||
+				!update.pendingCancelResolutions.is_empty() ||
 				!update.pendingL2UpdatesToRemove.is_empty(),
 			Error::<T>::EmptyUpdate
 		);
@@ -872,7 +874,7 @@ impl<T: Config> Pallet<T> {
 		);
 		ensure!(
 			update
-				.pendingCancelResultions
+				.pendingCancelResolutions
 				.iter()
 				.map(|v| v.requestId.origin)
 				.all(|v| v == Origin::L1),
@@ -901,7 +903,7 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(
 			update
-				.pendingCancelResultions
+				.pendingCancelResolutions
 				.iter()
 				.map(|v| v.requestId.id)
 				.into_iter()
@@ -934,7 +936,7 @@ impl<T: Config> Pallet<T> {
 
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),
-			update.pendingCancelResultions.first().map(|v| v.requestId.id),
+			update.pendingCancelResolutions.first().map(|v| v.requestId.id),
 			update.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
 			update.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
 		]
@@ -954,14 +956,14 @@ impl<T: Config> Pallet<T> {
 		let last_id = lowest_id +
 			(update.pendingDeposits.len() as u128) +
 			(update.pendingWithdrawalResolutions.len() as u128) +
-			(update.pendingCancelResultions.len() as u128) +
+			(update.pendingCancelResolutions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
 
 		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut withdrawal_it = update.pendingWithdrawalResolutions.iter();
-		let mut cancel_it = update.pendingCancelResultions.iter();
+		let mut cancel_it = update.pendingCancelResolutions.iter();
 		let mut updates_it = update.pendingL2UpdatesToRemove.iter();
 		let mut withdrawal = withdrawal_it.next();
 

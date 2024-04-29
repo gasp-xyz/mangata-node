@@ -51,6 +51,7 @@ impl SubstrateCli for Cli {
 			"" | "rollup-local" =>
 				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
 			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		})

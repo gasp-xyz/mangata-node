@@ -1,22 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	dispatch::DispatchResult,
-	ensure,
-	BoundedVec,
-	pallet_prelude::*,
-	traits::{Get},
-};
-use sp_std::{convert::{TryInto, TryFrom}, prelude::*};
+use frame_support::{dispatch::DispatchResult, ensure, pallet_prelude::*, traits::Get, BoundedVec};
 pub use pallet::*;
-
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	prelude::*,
+};
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use codec::alloc::string::{String, ToString};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use codec::alloc::string::{String, ToString};
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -63,15 +59,18 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			name: Option<BoundedVec<u8, T::StringLimit>>,
 			version: Option<BoundedVec<u8, T::StringLimit>>,
-			chain_id: Option<u64>
+			chain_id: Option<u64>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			ensure!(name.is_some() || version.is_some() || chain_id.is_some(), Error::<T>::NothingToUpdate);
+			ensure!(
+				name.is_some() || version.is_some() || chain_id.is_some(),
+				Error::<T>::NothingToUpdate
+			);
 
-			let mut new_name : Option<BoundedVec<u8, T::StringLimit>> = None;
-			let mut new_version : Option<BoundedVec<u8, T::StringLimit>> = None;
-			let mut new_chain_id : Option<u64> = None;
+			let mut new_name: Option<BoundedVec<u8, T::StringLimit>> = None;
+			let mut new_version: Option<BoundedVec<u8, T::StringLimit>> = None;
+			let mut new_chain_id: Option<u64> = None;
 
 			if let Some(v) = name {
 				new_name = Some(v.clone());
@@ -105,25 +104,32 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T>{
+	pub struct GenesisConfig<T> {
 		pub name: String,
 		pub version: String,
 		pub chain_id: u64,
 		pub _phantom: PhantomData<T>,
 	}
 
-
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			Name::<T>::put(TryInto::<BoundedVec<_, T::StringLimit>>::try_into(self.name.clone().into_bytes()).expect("name is required"));
-			Version::<T>::put(TryInto::<BoundedVec<_, T::StringLimit>>::try_into(self.version.clone().into_bytes()).expect("version is required"));
+			Name::<T>::put(
+				TryInto::<BoundedVec<_, T::StringLimit>>::try_into(self.name.clone().into_bytes())
+					.expect("name is required"),
+			);
+			Version::<T>::put(
+				TryInto::<BoundedVec<_, T::StringLimit>>::try_into(
+					self.version.clone().into_bytes(),
+				)
+				.expect("version is required"),
+			);
 			ChainId::<T>::put(self.chain_id);
 		}
 	}
 
-	impl<T:Config> Pallet<T> {
-        pub fn get_eip_metadata() -> Option<sp_runtime::generic::Eip712Domain> {
+	impl<T: Config> Pallet<T> {
+		pub fn get_eip_metadata() -> Option<sp_runtime::generic::Eip712Domain> {
 			use codec::alloc::string::String;
 			let r: sp_runtime::generic::Eip712Domain = sp_runtime::generic::eip712_domain! {
 				name: String::from_utf8(Name::<T>::get().into_inner()).ok()?,
@@ -177,16 +183,18 @@ pub mod pallet {
 			if let Ok(ref mut v) = serde_json::from_str::<serde_json::Value>(input) {
 				log::info!(target: "xxx", "hello world 99");
 
-				v["domain"]["name"] = serde_json::Value::String(String::from_utf8(Name::<T>::get().into_inner()).unwrap_or_default());
+				v["domain"]["name"] = serde_json::Value::String(
+					String::from_utf8(Name::<T>::get().into_inner()).unwrap_or_default(),
+				);
 				v["domain"]["chainId"] = serde_json::Value::Number(ChainId::<T>::get().into());
-				v["domain"]["version"] = serde_json::Value::String(String::from_utf8(Version::<T>::get().into_inner()).unwrap_or_default());
+				v["domain"]["version"] = serde_json::Value::String(
+					String::from_utf8(Version::<T>::get().into_inner()).unwrap_or_default(),
+				);
 				v["message"]["call"] = serde_json::Value::String(call);
 				serde_json::to_string_pretty(v).unwrap_or_default()
 			} else {
 				Default::default()
 			}
-}
+		}
 	}
-
 }
-

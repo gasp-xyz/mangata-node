@@ -169,7 +169,7 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: 
 					),
 				],
 				initial_collators_as_sequencers,
-				eth_chain_id
+				eth_chain_id,
 			)
 		},
 		// Bootnodes

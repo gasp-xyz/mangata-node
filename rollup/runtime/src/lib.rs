@@ -419,7 +419,10 @@ impl Into<CallType> for RuntimeCall {
 }
 
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{generic::{MetamaskSigningCtx, ExtendedCall}, AccountId20};
+use sp_runtime::{
+	generic::{ExtendedCall, MetamaskSigningCtx},
+	AccountId20,
+};
 use sp_std::{fmt::Write, prelude::*};
 
 impl ExtendedCall for RuntimeCall {
@@ -427,12 +430,7 @@ impl ExtendedCall for RuntimeCall {
 		let mut call = String::new();
 		let _ = write!(&mut call, "{:#?}", self);
 		pallet_metamask_signature::Pallet::<Runtime>::get_eip_metadata()
-			.map(|eip|
-			MetamaskSigningCtx{
-				call,
-				eip712: eip
-			}
-		)
+			.map(|eip| MetamaskSigningCtx { call, eip712: eip })
 	}
 }
 
@@ -750,7 +748,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 }
 
 impl pallet_metamask_signature::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type StringLimit = frame_support::traits::ConstU32<32>;
 }
 

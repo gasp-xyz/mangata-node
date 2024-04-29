@@ -8584,7 +8584,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "log",
  "mangata-support",
  "mangata-types",

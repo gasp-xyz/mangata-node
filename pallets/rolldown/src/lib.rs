@@ -16,7 +16,8 @@ use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
 use itertools::Itertools;
 use mangata_support::traits::{
-	AssetRegistryProviderTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
+	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
+	SequencerStakingProviderTrait,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -118,7 +119,7 @@ pub mod pallet {
 		pub updateType: UpdateType,
 	}
 
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
 	pub struct Withdrawal {
 		pub requestId: RequestId,
 		pub withdrawalRecipient: [u8; 20],
@@ -234,6 +235,7 @@ pub mod pallet {
 		SequencerLastUpdateStillInDisputePeriod,
 		SequencerAwaitingCancelResolution,
 		MultipleUpdatesInSingleBlock,
+		BlockedByMaintenanceMode,
 	}
 
 	#[pallet::config]
@@ -253,6 +255,7 @@ pub mod pallet {
 		type DisputePeriodLength: Get<u128>;
 		#[pallet::constant]
 		type RequestsPerBlock: Get<u128>;
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
 	}
 
 	#[pallet::genesis_config]
@@ -282,6 +285,12 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
 			ensure!(
 				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
 				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
@@ -346,6 +355,12 @@ pub mod pallet {
 			update: messages::L1Update,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
 			let l1 = L1::Ethereum;
 			Self::validate_l1_update(L1::Ethereum, &update)?;
 			Self::schedule_requests(l1, update.into());
@@ -361,6 +376,12 @@ pub mod pallet {
 			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let canceler = ensure_signed(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
 			let l1 = L1::Ethereum;
 
 			sequencer_rights::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
@@ -413,6 +434,12 @@ pub mod pallet {
 			amount: u128,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
 			let l1 = L1::Ethereum;
 
 			let eth_asset = L1Asset::Ethereum(tokenAddress);
@@ -467,6 +494,11 @@ pub mod pallet {
 			requests_to_cancel: u128,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_root(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
 
 			let (submitter, request) =
 				pending_requests::<T>::take(requests_to_cancel, L1::Ethereum)

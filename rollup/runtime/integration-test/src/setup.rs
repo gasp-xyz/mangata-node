@@ -5,6 +5,7 @@ pub use frame_support::{
 	traits::OnInitialize,
 };
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
+pub use rollup_runtime::Get;
 pub use sp_io::TestExternalities;
 pub use sp_runtime::{codec::Encode, BoundedVec, BuildStorage, MultiAddress, Permill};
 
@@ -13,10 +14,13 @@ pub use rollup_imports::*;
 mod rollup_imports {
 	pub use rollup_runtime::{
 		consts::UNIT,
-		runtime_config::config::{orml_asset_registry::AssetMetadataOf, pallet_proxy::ProxyType},
-		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity, ProofOfStake,
-		Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, UncheckedExtrinsic,
-		Xyk, XykMetadata,
+		runtime_config::config::{
+			orml_asset_registry::AssetMetadataOf, pallet_maintenance::FoundationAccountsProvider,
+			pallet_proxy::ProxyType,
+		},
+		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity, Maintenance,
+		ProofOfStake, Proxy, Rolldown, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId,
+		Tokens, UncheckedExtrinsic, Xyk, XykMetadata,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;

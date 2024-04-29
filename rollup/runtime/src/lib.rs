@@ -734,6 +734,7 @@ impl pallet_rolldown::Config for Runtime {
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
 	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
+	type MaintenanceStatusProvider = Maintenance;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -857,10 +858,18 @@ impl_runtime_apis! {
 
 	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update> for Runtime {
 		fn get_pending_updates_hash() -> sp_core::H256 {
-			pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
+				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+			} else {
+				Default::default()
+			}
 		}
 		fn get_pending_updates() -> Vec<u8> {
-			pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
+				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+			} else {
+				Default::default()
+			}
 		}
 
 		fn get_native_l1_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {

@@ -1601,6 +1601,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_blo
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
+			Rolldown::new_sequencer_active(&BOB);
 
 			// Arrange
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
@@ -1640,6 +1641,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
+			Rolldown::new_sequencer_active(&BOB);
 
 			// Arrange
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();

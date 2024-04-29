@@ -192,10 +192,6 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		rolldown::GenesisConfig::<Test> { sequencers: vec![seq] }
-			.assimilate_storage(&mut t)
-			.expect("Tokens storage can be assimilated");
-
 		let ext = sp_io::TestExternalities::new(t);
 		Self { ext }
 	}

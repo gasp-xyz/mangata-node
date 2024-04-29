@@ -1594,7 +1594,6 @@ fn test_maintenance_mode_blocks_extrinsics() {
 	});
 }
 
-
 #[test]
 #[serial]
 fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_block() {
@@ -1673,4 +1672,3 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 			);
 		});
 }
-

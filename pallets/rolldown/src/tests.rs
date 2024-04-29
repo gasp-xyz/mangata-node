@@ -1593,4 +1593,3 @@ fn test_maintenance_mode_blocks_extrinsics() {
 		);
 	});
 }
-

@@ -326,7 +326,7 @@ fn rollup_genesis(
 		metamask: rollup_runtime::MetamaskConfig {
 			name: "Gasp".to_string(),
 			version: "0.0.1".to_string(),
-			chain_id: chain_id,
+			chain_id,
 			_phantom: Default::default(),
 		},
 	}

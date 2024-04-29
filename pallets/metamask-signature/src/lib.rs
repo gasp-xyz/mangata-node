@@ -178,11 +178,8 @@ pub mod pallet {
 						"tx": ""
 					}
 			}"#;
-			log::info!(target: "xxx", "hello world 88 ");
 
 			if let Ok(ref mut v) = serde_json::from_str::<serde_json::Value>(input) {
-				log::info!(target: "xxx", "hello world 99");
-
 				v["domain"]["name"] = serde_json::Value::String(
 					String::from_utf8(Name::<T>::get().into_inner()).unwrap_or_default(),
 				);

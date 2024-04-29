@@ -56,7 +56,7 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "RXL".into());
+	properties.insert("tokenSymbol".into(), "GASP".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
@@ -91,10 +91,19 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
 					// ETH
-					(1u32, 0u128, get_account_id_from_seed::<ecdsa::Public>("Alith")),
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<ecdsa::Public>("Alith"),
+					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+					),
+					(
+						1u32,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 					),
 					(
@@ -113,12 +122,12 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						0u32,
 						// How much mangata they pool
 						100_000_000__000_000_000_000_000_000_u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
+						// Id of the eth token,
+						1u32,
+						// How many eth tokens they pool,
 						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
-						3u32,
+						2u32,
 						// How many liquidity tokens they stake,
 						100_000_000__000_000_000_000_000_000_u128,
 					),
@@ -130,11 +139,11 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						// How much mangata they pool
 						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
+						1u32,
+						// How many eth tokens they pool,
 						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
-						3u32,
+						2u32,
 						// How many liquidity tokens they stake,
 						50_000_000__000_000_000_000_000_000_u128,
 					),
@@ -144,26 +153,29 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 						RX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
-							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
-							symbol: BoundedVec::truncate_from(b"MGXL".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-						None,
-					),
-					(
-						1,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Ether".to_vec()),
-							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
+							name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
 						},
 						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
+							array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
+								.unwrap(),
+						)),
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Gasp Ethereum".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0xce658E386fAc0646CEDAf810070f0525Af14D11d")
 								.unwrap(),
 						)),
 					),

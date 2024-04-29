@@ -28,6 +28,7 @@ pallet-fee-lock = { path = "../../pallets/fee-lock", default-features = false }
 pallet-issuance = { path = "../../pallets/issuance", default-features = false }
 pallet-maintenance = { path = "../../pallets/maintenance", default-features = false }
 pallet-multipurpose-liquidity = { path = "../../pallets/multipurpose-liquidity", default-features = false }
+pallet-metamask-signature = { path = "../../pallets/metamask-signature", default-features = false }
 pallet-proof-of-stake = { path = "../../pallets/proof-of-stake", default-features = false, version = "0.1.0" }
 pallet-sudo-origin = { path = "../../pallets/sudo-origin", default-features = false }
 pallet-xyk = { path = "../../pallets/xyk", default-features = false, version = "0.1.0" }
@@ -121,6 +122,7 @@ std = [
 	"pallet-identity/std",
 	"pallet-issuance/std",
 	"pallet-maintenance/std",
+	"pallet-metamask-signature/std",
 	"pallet-multipurpose-liquidity/std",
 	"pallet-proof-of-stake/std",
 	"pallet-proxy/std",

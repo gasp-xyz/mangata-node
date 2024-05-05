@@ -55,7 +55,8 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block, L1Update, L1> RolldownApiServer<<Block as BlockT>::Hash, L1Update, L1> for Rolldown<C, Block>
+impl<C, Block, L1Update, L1> RolldownApiServer<<Block as BlockT>::Hash, L1Update, L1>
+	for Rolldown<C, Block>
 where
 	Block: BlockT,
 	L1Update: Decode,

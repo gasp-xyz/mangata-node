@@ -7,8 +7,8 @@ mod service;
 mod benchmarking;
 mod cli;
 mod command;
-mod rpc;
 mod metrics;
+mod rpc;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()

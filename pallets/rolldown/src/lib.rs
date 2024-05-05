@@ -10,7 +10,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{SaturatedConversion, One};
+use sp_runtime::traits::{One, SaturatedConversion};
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -215,13 +215,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_deposits)]
-	pub type TotalNumberOfDeposits<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_withdrawals)]
-	pub type TotalNumberOfWithdrawals<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -637,10 +635,7 @@ impl<T: Config> Pallet<T> {
 			}),
 		);
 
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(
-			l1,
-			request.id(),
-		));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
 
 		last_processed_request_on_l2::<T>::insert(l1, request.id());
 	}
@@ -702,7 +697,7 @@ impl<T: Config> Pallet<T> {
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
 				.or(Err(Error::<T>::L1AssetCreationFailed))?,
 		};
-		TotalNumberOfDeposits::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
+		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
 
 		// ADD tokens: mint tokens for user
@@ -722,7 +717,7 @@ impl<T: Config> Pallet<T> {
 			l1,
 			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
 		);
-		TotalNumberOfWithdrawals::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
+		TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		//TODO: handle sending tokens back
 		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
 		Ok(())

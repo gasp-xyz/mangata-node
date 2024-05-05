@@ -1,7 +1,7 @@
 // Copyright (C) 2021 Mangata team
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_core::{Encode, Decode, H256};
+use sp_core::{Decode, Encode, H256};
 use sp_std::vec::Vec;
 sp_api::decl_runtime_apis! {
 	pub trait RolldownRuntimeApi<L1Update, L1> where

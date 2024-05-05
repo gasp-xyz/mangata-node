@@ -600,8 +600,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_swaps)]
-	pub type TotalNumberOfSwaps<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfSwaps<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -751,7 +750,7 @@ pub mod pallet {
 				},
 				error: err,
 			})?;
-			TotalNumberOfSwaps::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
+			TotalNumberOfSwaps::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 			Ok(Pays::No.into())
 		}
 
@@ -853,7 +852,7 @@ pub mod pallet {
 				},
 				error: err,
 			})?;
-			TotalNumberOfSwaps::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
+			TotalNumberOfSwaps::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 			Ok(Pays::No.into())
 		}
 

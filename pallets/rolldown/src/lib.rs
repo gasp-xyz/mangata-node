@@ -10,7 +10,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::SaturatedConversion;
+use sp_runtime::traits::{SaturatedConversion, One};
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -208,11 +208,28 @@ pub mod pallet {
 	pub type LastUpdateBySequencer<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_max_accepted_request_id_on_l2)]
+	pub type MaxAcceptedRequestIdOnl2<T: Config> =
+		StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_total_number_of_deposits)]
+	pub type TotalNumberOfDeposits<T: Config> =
+		StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_total_number_of_withdrawals)]
+	pub type TotalNumberOfWithdrawals<T: Config> =
+		StorageValue<_, u32, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
 		L1ReadStored((T::AccountId, u128, messages::Range, H256)),
+		// L1, request id
+		RequestProcessedOnL2(L1, u128),
 	}
 
 	#[pallet::error]
@@ -339,10 +356,13 @@ pub mod pallet {
 
 			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
 
+			let requests_range = requests.range().ok_or(Error::<T>::InvalidUpdate)?;
+			MaxAcceptedRequestIdOnl2::<T>::insert(L1::Ethereum, requests_range.end);
+
 			Pallet::<T>::deposit_event(Event::L1ReadStored((
 				sequencer,
 				dispute_period_end,
-				requests.range().ok_or(Error::<T>::InvalidUpdate)?,
+				requests_range,
 				H256::from_slice(request_hash.as_slice()),
 			)));
 
@@ -617,6 +637,11 @@ impl<T: Config> Pallet<T> {
 			}),
 		);
 
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(
+			l1,
+			request.id(),
+		));
+
 		last_processed_request_on_l2::<T>::insert(l1, request.id());
 	}
 
@@ -677,6 +702,7 @@ impl<T: Config> Pallet<T> {
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
 				.or(Err(Error::<T>::L1AssetCreationFailed))?,
 		};
+		TotalNumberOfDeposits::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
 
 		// ADD tokens: mint tokens for user
@@ -696,6 +722,7 @@ impl<T: Config> Pallet<T> {
 			l1,
 			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
 		);
+		TotalNumberOfWithdrawals::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
 		//TODO: handle sending tokens back
 		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
 		Ok(())

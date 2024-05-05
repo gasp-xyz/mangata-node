@@ -7,7 +7,7 @@ use jsonrpsee::{
 };
 
 use array_bytes::hex2bytes;
-use codec::Decode;
+use codec::{Decode, Encode};
 use rolldown_runtime_api::RolldownRuntimeApi;
 pub use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -16,7 +16,7 @@ use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
 
 #[rpc(client, server)]
-pub trait RolldownApi<BlockHash, L1Update> {
+pub trait RolldownApi<BlockHash, L1Update, L1> {
 	/// Calculates amount of available native rewards
 	///
 	/// * `account` - user account address
@@ -55,14 +55,15 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block, L1Update> RolldownApiServer<<Block as BlockT>::Hash, L1Update> for Rolldown<C, Block>
+impl<C, Block, L1Update, L1> RolldownApiServer<<Block as BlockT>::Hash, L1Update, L1> for Rolldown<C, Block>
 where
 	Block: BlockT,
 	L1Update: Decode,
+	L1: Encode,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: RolldownRuntimeApi<Block, L1Update>,
+	C::Api: RolldownRuntimeApi<Block, L1Update, L1>,
 {
 	fn pending_updates_hash(
 		&self,

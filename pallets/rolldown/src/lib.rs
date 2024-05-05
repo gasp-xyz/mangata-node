@@ -697,8 +697,6 @@ impl<T: Config> Pallet<T> {
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
 				.or(Err(Error::<T>::L1AssetCreationFailed))?,
 		};
-		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
-		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
 
 		// ADD tokens: mint tokens for user
 		T::Tokens::mint(
@@ -706,6 +704,10 @@ impl<T: Config> Pallet<T> {
 			&account,
 			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 		)?;
+
+		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
+		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
+		
 		Ok(())
 	}
 

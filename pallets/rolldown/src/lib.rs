@@ -707,7 +707,7 @@ impl<T: Config> Pallet<T> {
 
 		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
-		
+
 		Ok(())
 	}
 

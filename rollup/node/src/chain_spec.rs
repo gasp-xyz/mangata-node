@@ -53,10 +53,10 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 	rollup_runtime::SessionKeys { aura, grandpa }
 }
 
-pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
+pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: u64) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "RXL".into());
+	properties.insert("tokenSymbol".into(), "GASP".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
@@ -136,15 +136,19 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool) -> ChainSpec {
 					RX_TOKEN_ID,
 					AssetMetadataOf {
 						decimals: 18,
-						name: BoundedVec::truncate_from(b"Mangata".to_vec()),
-						symbol: BoundedVec::truncate_from(b"MGXL".to_vec()),
+						name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+						symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
 						additional: Default::default(),
 						existential_deposit: Default::default(),
 						location: None,
 					},
-					None,
+					Some(L1Asset::Ethereum(
+						array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
+							.unwrap(),
+					)),
 				)],
 				initial_collators_as_sequencers,
+				eth_chain_id,
 			)
 		},
 		// Bootnodes
@@ -173,6 +177,7 @@ fn rollup_genesis(
 	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
 	initial_collators_as_sequencers: bool,
+	chain_id: u64,
 ) -> rollup_runtime::RuntimeGenesisConfig {
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
@@ -320,5 +325,11 @@ fn rollup_genesis(
 			},
 		},
 		rolldown: rollup_runtime::RolldownConfig { _phantom: Default::default() },
+		metamask: rollup_runtime::MetamaskConfig {
+			name: "Gasp".to_string(),
+			version: "0.0.1".to_string(),
+			chain_id,
+			_phantom: Default::default(),
+		},
 	}
 }

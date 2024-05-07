@@ -187,6 +187,15 @@ impl ExtBuilder {
 		Self { ext }
 	}
 
+	pub fn single_sequencer(seq: AccountId) -> Self {
+		let mut t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
+			.expect("Frame system builds valid default genesis config");
+
+		let ext = sp_io::TestExternalities::new(t);
+		Self { ext }
+	}
+
 	fn create_if_does_not_exists(&mut self, token_id: TokenId) {
 		self.ext.execute_with(|| {
 			while token_id >= Tokens::next_asset_id() {

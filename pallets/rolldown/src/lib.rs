@@ -220,6 +220,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		OperationFailed,
 		ReadRightsExhausted,
+		CancelRightsExhausted,
 		EmptyUpdate,
 		AddressDeserializationFailure,
 		RequestDoesNotExist,
@@ -383,13 +384,18 @@ pub mod pallet {
 			);
 
 			let l1 = L1::Ethereum;
-
 			sequencer_rights::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
-					sequencer.cancelRights -= 1;
-					Ok(())
+					sequencer
+						.cancelRights
+						.checked_sub(1)
+						.and_then(|v| {
+							sequencer.cancelRights = v;
+							Some(v)
+						})
+						.ok_or(Error::<T>::CancelRightsExhausted)
 				} else {
-					Err(Error::<T>::ReadRightsExhausted)
+					Err(Error::<T>::CancelRightsExhausted)
 				}
 			})?;
 

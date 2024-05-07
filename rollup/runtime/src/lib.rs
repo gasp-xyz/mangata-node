@@ -631,7 +631,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressRelayVoteThreshold = cfg::pallet_crowdloan_rewards::RelaySignaturesThreshold;
 	type NativeTokenId = tokens::RxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RelayChainAccountId = sp_runtime::AccountId20;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
 	type SignatureNetworkIdentifier = cfg::pallet_crowdloan_rewards::SigantureNetworkIdentifier;
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;

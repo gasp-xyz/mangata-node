@@ -14,7 +14,7 @@ benchmarks=(
     "pallet_treasury"
     "pallet_collective_mangata"
     "pallet_crowdloan_rewards"
-    "pallet_utility"
+    "pallet_utility_mangata"
     "pallet_vesting_mangata"
     "pallet_issuance"
     "pallet_bootstrap"

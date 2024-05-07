@@ -20,7 +20,7 @@ pub struct RpcAssetMetadata<TokenId> {
 }
 
 sp_api::decl_runtime_apis! {
-	pub trait XykApi<Balance, TokenId, AccountId> where
+	pub trait XykRuntimeApi<Balance, TokenId, AccountId> where
 		Balance: Codec + MaybeDisplay + MaybeFromStr,
 		TokenId: Codec + MaybeDisplay + MaybeFromStr,
 		AccountId: Codec + MaybeDisplay + MaybeFromStr,{
@@ -76,5 +76,6 @@ sp_api::decl_runtime_apis! {
 			input_amount: Balance,
 		) -> Option<bool>;
 		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>>;
+		fn get_total_number_of_swaps() -> u32;
 	}
 }

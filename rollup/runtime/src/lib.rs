@@ -39,6 +39,7 @@ pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadat
 use sp_api::HeaderT;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::account::EthereumSignature;
+use sp_runtime::SaturatedConversion;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "runtime-benchmarks")]
@@ -842,6 +843,7 @@ use codec::alloc::string::ToString;
 use frame_support::dispatch::GetDispatchInfo;
 
 impl_runtime_apis! {
+
 	impl metamask_signature_runtime_api::MetamaskSignatureRuntimeApi<Block> for Runtime {
 		fn get_eip712_sign_data(encoded_call: Vec<u8>) -> String{
 			if let Ok(extrinsic) = UncheckedExtrinsic::decode(& mut encoded_call.as_ref()) {
@@ -856,7 +858,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update> for Runtime {
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::L1> for Runtime {
 		fn get_pending_updates_hash() -> sp_core::H256 {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
 				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
@@ -878,6 +880,22 @@ impl_runtime_apis! {
 
 		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
 			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
+		}
+
+		fn get_last_processed_request_on_l2(l1: pallet_rolldown::messages::L1) -> Option<u128>{
+			Some(Rolldown::get_last_processed_request_on_l2(l1))
+		}
+
+		fn get_number_of_pending_requests(l1: pallet_rolldown::messages::L1) -> Option<u128>{
+			Some(Rolldown::get_max_accepted_request_id_on_l2(l1).saturating_sub(Rolldown::get_last_processed_request_on_l2(l1)))
+		}
+
+		fn get_total_number_of_deposits() -> u32 {
+			Rolldown::get_total_number_of_deposits()
+		}
+
+		fn get_total_number_of_withdrawals() -> u32 {
+			Rolldown::get_total_number_of_withdrawals()
 		}
 	}
 
@@ -978,7 +996,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl xyk_runtime_api::XykApi<Block, Balance, TokenId, AccountId> for Runtime {
+	impl xyk_runtime_api::XykRuntimeApi<Block, Balance, TokenId, AccountId> for Runtime {
 		fn calculate_sell_price(
 			input_reserve: Balance,
 			output_reserve: Balance,
@@ -1197,6 +1215,10 @@ impl_runtime_apis! {
 				}
 			})
 			.collect::<Vec<_>>()
+		}
+
+		fn get_total_number_of_swaps() -> u32 {
+			Xyk::get_total_number_of_swaps()
 		}
 	}
 

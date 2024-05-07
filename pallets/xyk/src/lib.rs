@@ -598,6 +598,10 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_total_number_of_swaps)]
+	pub type TotalNumberOfSwaps<T: Config> = StorageValue<_, u32, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking: Vec<(
@@ -746,6 +750,7 @@ pub mod pallet {
 				},
 				error: err,
 			})?;
+			TotalNumberOfSwaps::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 			Ok(Pays::No.into())
 		}
 
@@ -847,6 +852,7 @@ pub mod pallet {
 				},
 				error: err,
 			})?;
+			TotalNumberOfSwaps::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 			Ok(Pays::No.into())
 		}
 
@@ -2566,6 +2572,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 					sold_asset_amount,
 					bought_asset_amount,
 				));
+				TotalNumberOfSwaps::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
 				Ok(bought_asset_amount)
 			},
 			Err(e) => {
@@ -2895,6 +2902,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 					sold_asset_amount,
 					bought_asset_amount,
 				));
+				TotalNumberOfSwaps::<T>::mutate(|v|{*v=v.saturating_add(One::one())});
 				Ok(sold_asset_amount)
 			},
 			Err(e) => {

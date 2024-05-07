@@ -1234,7 +1234,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn first_token_id() -> CurrencyIdOf<T> {
-		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(4_u32.into())
+		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(0_u32.into())
 	}
 
 	fn second_token_id() -> CurrencyIdOf<T> {
@@ -1244,7 +1244,11 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> Contains<(CurrencyIdOf<T>, CurrencyIdOf<T>)> for Pallet<T> {
 	fn contains(pair: &(CurrencyIdOf<T>, CurrencyIdOf<T>)) -> bool {
-		pair == &(Self::first_token_id(), Self::second_token_id()) ||
-			pair == &(Self::second_token_id(), Self::first_token_id())
+		if BootstrapSchedule::<T>::get().is_some() {
+			pair == &(Self::first_token_id(), Self::second_token_id()) ||
+				pair == &(Self::second_token_id(), Self::first_token_id())
+		} else {
+			false
+		}
 	}
 }

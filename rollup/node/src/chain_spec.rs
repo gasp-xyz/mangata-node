@@ -90,20 +90,9 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: 
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					),
-					// ETH
-					(
-						1u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alith"),
-					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
-					),
-					(
-						1u32,
-						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 					),
 					(
@@ -114,72 +103,50 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: 
 				],
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
-				vec![
-					(
+				(
+					vec![
+						(
+							// Who gets to stake initially
+							get_account_id_from_seed::<ecdsa::Public>("Alith"),
+							// Id of MGA token,
+							0u32,
+							// How much mangata they stake
+							100_000_000__000_000_000_000_000_000_u128,
+						),
+						(
+							// Who gets to stake initially
+							get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+							// Id of MGA token,
+							0u32,
+							// How much mangata they stake
+							80_000_000__000_000_000_000_000_000_u128,
+						),
+					],
+					vec![
 						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Alith"),
 						// Id of MGA token,
-						0u32,
 						// How much mangata they pool
-						100_000_000__000_000_000_000_000_000_u128,
-						// Id of the eth token,
-						1u32,
-						// How many eth tokens they pool,
-						200_000_000__000_000_000_000_000_000_u128,
-						// Id of the liquidity token that is generated
-						2u32,
-						// How many liquidity tokens they stake,
-						100_000_000__000_000_000_000_000_000_u128,
-					),
-					(
-						// Who gets to stake initially
-						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
-						1u32,
-						// How many eth tokens they pool,
-						200_000_000__000_000_000_000_000_000_u128,
+						// How many dummy tokens they pool,
 						// Id of the liquidity token that is generated
-						2u32,
 						// How many liquidity tokens they stake,
-						50_000_000__000_000_000_000_000_000_u128,
-					),
-				],
-				vec![
-					(
-						RX_TOKEN_ID,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Gasp".to_vec()),
-							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
-								.unwrap(),
-						)),
-					),
-					(
-						1,
-						AssetMetadataOf {
-							decimals: 18,
-							name: BoundedVec::truncate_from(b"Gasp Ethereum".to_vec()),
-							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0xce658E386fAc0646CEDAf810070f0525Af14D11d")
-								.unwrap(),
-						)),
-					),
-				],
+					],
+				),
+				vec![(
+					RX_TOKEN_ID,
+					AssetMetadataOf {
+						decimals: 18,
+						name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+						symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+					Some(L1Asset::Ethereum(
+						array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
+							.unwrap(),
+					)),
+				)],
 				initial_collators_as_sequencers,
 				eth_chain_id,
 			)
@@ -204,7 +171,10 @@ fn rollup_genesis(
 	initial_authorities: Vec<(AccountId, (AuraId, GrandpaId))>,
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
-	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
+	staking_accounts: (
+		Vec<(AccountId, u32, u128)>,
+		Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
+	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
 	initial_collators_as_sequencers: bool,
 	chain_id: u64,
@@ -225,6 +195,7 @@ fn rollup_genesis(
 			created_tokens_for_staking: {
 				let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> =
 					staking_accounts
+						.1
 						.iter()
 						.cloned()
 						.map(|x| {
@@ -234,6 +205,7 @@ fn rollup_genesis(
 						.collect();
 				let mut created_tokens_for_staking_token_2: Vec<(AccountId, u32, u128)> =
 					staking_accounts
+						.1
 						.iter()
 						.cloned()
 						.map(|x| {
@@ -241,19 +213,36 @@ fn rollup_genesis(
 							(who.clone(), token_id, initial_amount)
 						})
 						.collect();
+				let mut created_tokens_for_staking_token_3: Vec<(AccountId, u32, u128)> =
+					staking_accounts.0.clone();
 				created_tokens_for_staking_token_1.append(&mut created_tokens_for_staking_token_2);
+				created_tokens_for_staking_token_1.append(&mut created_tokens_for_staking_token_3);
 				created_tokens_for_staking_token_1
 			},
 		},
 		treasury: Default::default(),
 		parachain_staking: rollup_runtime::ParachainStakingConfig {
-			candidates: staking_accounts
-				.iter()
-				.map(|x| {
-					let (account_id, _, _, _, _, liquidity_token_id, liquidity_token_amount) = x;
-					(account_id.clone(), *liquidity_token_amount, *liquidity_token_id)
-				})
-				.collect(),
+			candidates: {
+				let mut parachain_staking_accounts_1: Vec<_> = staking_accounts
+					.0
+					.iter()
+					.map(|x| {
+						let (account_id, liquidity_token_id, liquidity_token_amount) = x;
+						(account_id.clone(), *liquidity_token_amount, *liquidity_token_id)
+					})
+					.collect();
+				let mut parachain_staking_accounts_2: Vec<_> = staking_accounts
+					.1
+					.iter()
+					.map(|x| {
+						let (account_id, _, _, _, _, liquidity_token_id, liquidity_token_amount) =
+							x;
+						(account_id.clone(), *liquidity_token_amount, *liquidity_token_id)
+					})
+					.collect();
+				parachain_staking_accounts_1.append(&mut parachain_staking_accounts_2);
+				parachain_staking_accounts_1
+			},
 			delegations: vec![],
 		},
 		session: rollup_runtime::SessionConfig {
@@ -275,6 +264,7 @@ fn rollup_genesis(
 		grandpa: Default::default(),
 		xyk: rollup_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
+				.1
 				.iter()
 				.map(|x| {
 					let (

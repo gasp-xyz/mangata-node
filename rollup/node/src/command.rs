@@ -46,10 +46,12 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+		const HOLESKY_CHAIN_ID: u64 = 17000u64;
 		Ok(match id {
-			"" | "rollup-local" => Box::new(chain_spec::rollup_local_config(false)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(false)),
+			"" | "rollup-local" =>
+				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		})

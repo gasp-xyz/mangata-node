@@ -1593,3 +1593,84 @@ fn test_maintenance_mode_blocks_extrinsics() {
 		);
 	});
 }
+
+#[test]
+#[serial]
+fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_block() {
+	ExtBuilder::single_sequencer(BOB)
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			Rolldown::new_sequencer_active(&BOB);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+			);
+
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::CancelRightsExhausted
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_block() {
+	ExtBuilder::single_sequencer(BOB)
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			Rolldown::new_sequencer_active(&BOB);
+
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+			);
+
+			// Act
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+
+			assert_eq!(
+				sequencer_rights::<Test>::get(BOB).unwrap(),
+				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+			);
+
+			forward_to_block::<Test>(11);
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), 15u128.into()),
+				Error::<Test>::CancelRightsExhausted
+			);
+		});
+}

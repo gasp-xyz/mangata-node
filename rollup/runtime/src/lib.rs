@@ -429,7 +429,10 @@ use sp_std::{fmt::Write, prelude::*};
 impl ExtendedCall for RuntimeCall {
 	fn context(&self) -> Option<MetamaskSigningCtx> {
 		let mut call = String::new();
-		let _ = write!(&mut call, "{:#?}", self);
+		if let Some(url) = pallet_metamask_signature::Pallet::<Runtime>::get_decode_url(){
+			let _ = write!(&mut call, "{}", url);
+		}
+		let _ = write!(&mut call, "{}", array_bytes::bytes2hex("0x", self.encode()));
 		pallet_metamask_signature::Pallet::<Runtime>::get_eip_metadata()
 			.map(|eip| MetamaskSigningCtx { call, eip712: eip })
 	}
@@ -752,6 +755,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 impl pallet_metamask_signature::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StringLimit = frame_support::traits::ConstU32<32>;
+	type UrlStringLimit = frame_support::traits::ConstU32<1024>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

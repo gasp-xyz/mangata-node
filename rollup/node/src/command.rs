@@ -49,9 +49,15 @@ impl SubstrateCli for Cli {
 		const HOLESKY_CHAIN_ID: u64 = 17000u64;
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID)),
+				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
+				None
+				)),
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID,
+				None
+			)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
+				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-testnet-rpc.gasp.xyz#/extrinsics/decode/"))
+			)),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		})

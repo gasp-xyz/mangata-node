@@ -3,17 +3,6 @@ storageSize: 20Gi
 enableServiceMonitorCollectors: false
 enablePodMonitorCollectors: false
 
-node01:
-  bootnodeAddr: ''
-  accountKeySeed: '0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a'
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
-
-node02:
-  isCollator: true
-  bootnodeAddr: /dns4/node-01-p2p/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
-  accountKeySeed: '0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89'
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
-
 resources:
   requests:
     cpu: 200m

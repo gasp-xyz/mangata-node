@@ -209,11 +209,6 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_max_accepted_request_id_on_l2)]
-	pub type MaxAcceptedRequestIdOnl2<T: Config> =
-		StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_deposits)]
 	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u32, ValueQuery>;
 
@@ -355,7 +350,6 @@ pub mod pallet {
 			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
 
 			let requests_range = requests.range().ok_or(Error::<T>::InvalidUpdate)?;
-			MaxAcceptedRequestIdOnl2::<T>::insert(L1::Ethereum, requests_range.end);
 
 			Pallet::<T>::deposit_event(Event::L1ReadStored((
 				sequencer,

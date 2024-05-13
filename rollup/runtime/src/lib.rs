@@ -429,7 +429,7 @@ use sp_std::{fmt::Write, prelude::*};
 impl ExtendedCall for RuntimeCall {
 	fn context(&self) -> Option<MetamaskSigningCtx> {
 		let mut call = String::new();
-		if let Some(url) = pallet_metamask_signature::Pallet::<Runtime>::get_decode_url(){
+		if let Some(url) = pallet_metamask_signature::Pallet::<Runtime>::get_decode_url() {
 			let _ = write!(&mut call, "{}", url);
 		}
 		let _ = write!(&mut call, "{}", array_bytes::bytes2hex("0x", self.encode()));

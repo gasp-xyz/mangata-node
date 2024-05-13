@@ -53,7 +53,11 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 	rollup_runtime::SessionKeys { aura, grandpa }
 }
 
-pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: u64, decode_url: Option<String>) -> ChainSpec {
+pub fn rollup_local_config(
+	initial_collators_as_sequencers: bool,
+	eth_chain_id: u64,
+	decode_url: Option<String>,
+) -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "GASP".into());
@@ -61,9 +65,9 @@ pub fn rollup_local_config(initial_collators_as_sequencers: bool, eth_chain_id: 
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
 
-	let decode_url = decode_url.unwrap_or(
-		String::from("https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/")
-	);
+	let decode_url = decode_url.unwrap_or(String::from(
+		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",
+	));
 
 	ChainSpec::from_genesis(
 		// Name
@@ -335,7 +339,7 @@ fn rollup_genesis(
 			name: "Gasp".to_string(),
 			version: "0.0.1".to_string(),
 			chain_id,
-			decode_url: decode_url,
+			decode_url,
 			_phantom: Default::default(),
 		},
 	}

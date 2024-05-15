@@ -7,7 +7,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, RequestId, UpdateType, L1};
+use messages::{to_eth_u256, Origin, RequestId, UpdateType, Chain};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion};
@@ -138,19 +138,19 @@ pub mod pallet {
 	#[pallet::getter(fn get_sequencer_count)]
 	pub type sequencer_count<T: Config> = StorageValue<_, u128, ValueQuery>;
 
-	//TODO: multi L1
+	//TODO: multi Chain
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
 	pub type last_processed_request_on_l2<T: Config> =
-		StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, Chain, u128, ValueQuery>;
 
-	//TODO: multi L1
+	//TODO: multi Chain
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
 	pub type l2_origin_request_id<T: Config> =
-		StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, Chain, u128, ValueQuery>;
 
-	//TODO: multi L1
+	//TODO: multi Chain
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
@@ -159,7 +159,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		u128,
 		Blake2_128Concat,
-		L1,
+		Chain,
 		(T::AccountId, messages::L1Update),
 		OptionQuery,
 	>;
@@ -167,7 +167,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	pub type request_to_execute<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, (L1, messages::L1Update), OptionQuery>;
+		StorageMap<_, Blake2_128Concat, u128, (Chain, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -183,14 +183,14 @@ pub mod pallet {
 	pub type sequencer_rights<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, SequencerRights, OptionQuery>;
 
-	//maps L1 and !!!! request origin id!!! to pending update
+	//maps Chain and !!!! request origin id!!! to pending update
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_updates)]
 	pub type pending_updates<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		L1,
+		Chain,
 		Blake2_128Concat,
 		RequestId,
 		PendingUpdate<T::AccountId>,
@@ -211,7 +211,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_max_accepted_request_id_on_l2)]
 	pub type MaxAcceptedRequestIdOnl2<T: Config> =
-		StorageMap<_, Blake2_128Concat, L1, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, Chain, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_deposits)]
@@ -226,8 +226,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
 		L1ReadStored((T::AccountId, u128, messages::Range, H256)),
-		// L1, request id
-		RequestProcessedOnL2(L1, u128),
+		// Chain, request id
+		RequestProcessedOnL2(Chain, u128),
 	}
 
 	#[pallet::error]
@@ -288,7 +288,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			l2_origin_request_id::<T>::insert(L1::Ethereum, 1);
+			l2_origin_request_id::<T>::insert(Chain::Ethereum, 1);
 		}
 	}
 
@@ -301,70 +301,7 @@ pub mod pallet {
 			requests: messages::L1Update,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
-
-			ensure!(
-				!T::MaintenanceStatusProvider::is_maintenance(),
-				Error::<T>::BlockedByMaintenanceMode
-			);
-
-			ensure!(
-				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
-				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
-			);
-			Self::validate_l1_update(L1::Ethereum, &requests)?;
-
-			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
-			let current_block_number =
-				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
-			let dispute_period_length = Self::get_dispute_period();
-			let dispute_period_end: u128 = current_block_number + dispute_period_length;
-
-			// ensure sequencer has rights to update
-			if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
-				if sequencer.readRights == 0 {
-					log!(debug, "{:?} does not have sufficient readRights", sequencer);
-					return Err(Error::<T>::OperationFailed.into())
-				}
-			} else {
-				log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
-				return Err(Error::<T>::OperationFailed.into())
-			}
-
-			// // Decrease readRights by 1
-			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-				if let Some(ref mut sequencer) = maybe_sequencer {
-					sequencer.readRights -= 1;
-				}
-			});
-
-			ensure!(
-				!pending_requests::<T>::contains_key(dispute_period_end, L1::Ethereum),
-				Error::<T>::MultipleUpdatesInSingleBlock
-			);
-
-			// insert pending_requests
-			pending_requests::<T>::insert(
-				dispute_period_end,
-				L1::Ethereum,
-				(sequencer.clone(), requests.clone()),
-			);
-
-			let update: messages::eth_abi::L1Update = requests.clone().into();
-			let request_hash = Keccak256::digest(&update.abi_encode());
-
-			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
-
-			let requests_range = requests.range().ok_or(Error::<T>::InvalidUpdate)?;
-			MaxAcceptedRequestIdOnl2::<T>::insert(L1::Ethereum, requests_range.end);
-
-			Pallet::<T>::deposit_event(Event::L1ReadStored((
-				sequencer,
-				dispute_period_end,
-				requests_range,
-				H256::from_slice(request_hash.as_slice()),
-			)));
-
-			Ok(().into())
+			Self::update_impl(sequencer, requests)
 		}
 
 		#[pallet::call_index(2)]
@@ -380,8 +317,8 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let l1 = L1::Ethereum;
-			Self::validate_l1_update(L1::Ethereum, &update)?;
+			let l1 = Chain::Ethereum;
+			Self::validate_l1_update(Chain::Ethereum, &update)?;
 			Self::schedule_requests(l1, update.into());
 			Self::process_requests();
 			Ok(().into())
@@ -401,7 +338,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let l1 = L1::Ethereum;
+			let l1 = Chain::Ethereum;
 			sequencer_rights::<T>::try_mutate_exists(canceler.clone(), |maybe_sequencer| {
 				if let Some(ref mut sequencer) = maybe_sequencer {
 					sequencer
@@ -464,7 +401,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let l1 = L1::Ethereum;
+			let l1 = Chain::Ethereum;
 
 			let eth_asset = L1Asset::Ethereum(tokenAddress);
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
@@ -525,7 +462,7 @@ pub mod pallet {
 			);
 
 			let (submitter, request) =
-				pending_requests::<T>::take(requests_to_cancel, L1::Ethereum)
+				pending_requests::<T>::take(requests_to_cancel, Chain::Ethereum)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			sequencer_rights::<T>::mutate_exists(submitter.clone(), |maybe_sequencer| {
@@ -554,7 +491,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn verify_pending_requests(hash: H256, request_id: u128) -> Option<bool> {
-		let pending_requests_to_process = pending_requests::<T>::get(request_id, L1::Ethereum);
+		let pending_requests_to_process = pending_requests::<T>::get(request_id, Chain::Ethereum);
 		if let Some((_, l1_update)) = pending_requests_to_process {
 			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
 			Some(hash == calculated_hash)
@@ -595,7 +532,7 @@ impl<T: Config> Pallet<T> {
 		Self::process_requests();
 	}
 
-	fn process_single_request(l1: L1, request: messages::L1UpdateRequest) {
+	fn process_single_request(l1: Chain, request: messages::L1UpdateRequest) {
 		if request.id() <= last_processed_request_on_l2::<T>::get(l1) {
 			return
 		}
@@ -676,7 +613,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn schedule_requests(l1: L1, update: messages::L1Update) {
+	fn schedule_requests(l1: Chain, update: messages::L1Update) {
 		let id = request_to_execute_last::<T>::get();
 		request_to_execute_last::<T>::put(id + 1);
 		request_to_execute::<T>::insert(id + 1, (l1, update));
@@ -712,7 +649,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_withdrawal_resolution(
-		l1: L1,
+		l1: Chain,
 		withdrawal_resolution: &messages::WithdrawalResolution,
 	) -> Result<(), &'static str> {
 		pending_updates::<T>::remove(
@@ -726,7 +663,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_cancel_resolution(
-		l1: L1,
+		l1: Chain,
 		cancel_resolution: &messages::CancelResolution,
 	) -> Result<(), &'static str> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
@@ -786,7 +723,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_l2_updates_to_remove(
-		l1: L1,
+		l1: Chain,
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
@@ -835,7 +772,7 @@ impl<T: Config> Pallet<T> {
 		H256::from(hash)
 	}
 
-	fn get_l2_update(l1: L1) -> messages::eth_abi::L2Update {
+	fn get_l2_update(l1: Chain) -> messages::eth_abi::L2Update {
 		let mut update = messages::eth_abi::L2Update {
 			results: Vec::new(),
 			cancels: Vec::new(),
@@ -904,7 +841,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn l2_update_encoded() -> Vec<u8> {
-		let update = Pallet::<T>::get_l2_update(L1::Ethereum);
+		let update = Pallet::<T>::get_l2_update(Chain::Ethereum);
 		update.abi_encode()
 	}
 
@@ -918,7 +855,7 @@ impl<T: Config> Pallet<T> {
 			})
 	}
 
-	pub fn validate_l1_update(l1: L1, update: &messages::L1Update) -> DispatchResult {
+	pub fn validate_l1_update(l1: Chain, update: &messages::L1Update) -> DispatchResult {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
 				!update.pendingCancelResolutions.is_empty() ||
@@ -1052,6 +989,73 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(().into())
+	}
+
+	pub fn update_impl(sequencer: T::AccountId, read: messages::L1Update) -> DispatchResult {
+			let l1 = read.chain;
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
+			ensure!(
+				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
+				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
+			);
+			Self::validate_l1_update(l1, &read)?;
+
+			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
+			let current_block_number =
+				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
+			let dispute_period_length = Self::get_dispute_period();
+			let dispute_period_end: u128 = current_block_number + dispute_period_length;
+
+			// ensure sequencer has rights to update
+			if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
+				if sequencer.readRights == 0 {
+					log!(debug, "{:?} does not have sufficient readRights", sequencer);
+					return Err(Error::<T>::OperationFailed.into())
+				}
+			} else {
+				log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
+				return Err(Error::<T>::OperationFailed.into())
+			}
+
+			// // Decrease readRights by 1
+			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+				if let Some(ref mut sequencer) = maybe_sequencer {
+					sequencer.readRights -= 1;
+				}
+			});
+
+			ensure!(
+				!pending_requests::<T>::contains_key(dispute_period_end, l1),
+				Error::<T>::MultipleUpdatesInSingleBlock
+			);
+
+			// insert pending_requests
+			pending_requests::<T>::insert(
+				dispute_period_end,
+				l1,
+				(sequencer.clone(), read.clone()),
+			);
+
+			let update: messages::eth_abi::L1Update = read.clone().into();
+			let request_hash = Keccak256::digest(&update.abi_encode());
+
+			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
+
+			let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
+			MaxAcceptedRequestIdOnl2::<T>::insert(l1, requests_range.end);
+
+			Pallet::<T>::deposit_event(Event::L1ReadStored((
+				sequencer,
+				dispute_period_end,
+				requests_range,
+				H256::from_slice(request_hash.as_slice()),
+			)));
+
+			Ok(().into())
 	}
 }
 

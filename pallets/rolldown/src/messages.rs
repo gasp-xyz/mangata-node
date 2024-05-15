@@ -20,8 +20,15 @@ use sp_std::{
 #[derive(
 	Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, Serialize,
 )]
-pub enum L1 {
+pub enum Chain {
 	Ethereum,
+	Arbitrum,
+}
+
+impl Default for Chain {
+	fn default() -> Self {
+		Chain::Ethereum
+	}
 }
 
 #[repr(u8)]
@@ -45,6 +52,16 @@ impl Into<eth_abi::Origin> for Origin {
 		}
 	}
 }
+
+impl Into<eth_abi::Chain> for Chain {
+	fn into(self) -> eth_abi::Chain {
+		match self {
+			Chain::Ethereum => eth_abi::Chain::Ethereum,
+			Chain::Arbitrum => eth_abi::Chain::Arbitrum,
+		}
+	}
+}
+
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct Range {
@@ -176,8 +193,9 @@ impl Into<eth_abi::WithdrawalResolution> for WithdrawalResolution {
 	}
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, Default, TypeInfo, Serialize)]
 pub struct L1Update {
+	pub chain: Chain,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResolutions: Vec<CancelResolution>,
 	pub pendingWithdrawalResolutions: Vec<WithdrawalResolution>,
@@ -260,6 +278,7 @@ impl L1Update {
 			pendingCancelResolutions,
 			pendingL2UpdatesToRemove,
 			pendingWithdrawalResolutions,
+			chain,
 		} = self;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
@@ -329,6 +348,8 @@ pub fn from_eth_u256(value: alloy_primitives::U256) -> U256 {
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
+			// TODO: fix
+			chain: self.chain.into(),
 			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingCancelResolutions: self
 				.pendingCancelResolutions
@@ -405,6 +426,7 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 			update.pendingWithdrawalResolutions.into_iter().map(|u| u.try_into()).collect();
 
 		Ok(Self {
+			chain: update.chain.try_into()?,
 			pendingDeposits: pending_deposits
 				.map_err(|e| format!("Error converting pendingDeposits: {}", e))?,
 			pendingCancelResolutions: pending_cancel_resultions
@@ -442,6 +464,19 @@ impl TryFrom<eth_abi::Origin> for Origin {
 		}
 	}
 }
+
+impl TryFrom<eth_abi::Chain> for Chain {
+	type Error = String;
+
+	fn try_from(origin: eth_abi::Chain) -> Result<Self, Self::Error> {
+		match origin {
+			eth_abi::Chain::Ethereum => Ok(Chain::Ethereum),
+			eth_abi::Chain::Arbitrum => Ok(Chain::Arbitrum),
+			_ => Err(String::from("Invalid origin type")),
+		}
+	}
+}
+
 
 impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
 	type Error = String;
@@ -533,8 +568,12 @@ pub mod eth_abi {
 			uint256 timeStamp;
 		}
 
+		#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
+		enum Chain{ Ethereum, Arbitrum }
+
 		#[derive(Debug)]
 		struct L1Update {
+			Chain chain;
 			Deposit[] pendingDeposits;
 			CancelResolution[] pendingCancelResolutions;
 			WithdrawalResolution[] pendingWithdrawalResolutions;

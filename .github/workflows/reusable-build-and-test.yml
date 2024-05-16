@@ -305,11 +305,13 @@ jobs:
       - name: Compile code
         run: cargo build --release --no-default-features --features=runtime-benchmarks
 
-      - name: Set full benchmark params
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
-        run: |
-          echo "STEPS=50" >> $GITHUB_ENV
-          echo "REPEATS=20" >> $GITHUB_ENV
+      # TODO!!
+      # MAKE SURE TO UNCOMMENT!
+      # - name: Set full benchmark params
+      #   if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
+      #   run: |
+      #     echo "STEPS=50" >> $GITHUB_ENV
+      #     echo "REPEATS=20" >> $GITHUB_ENV
 
       - name: Run pallet benchmarks
         run: |

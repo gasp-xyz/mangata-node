@@ -71,6 +71,23 @@ jobs:
       env: fungible
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
       cluster_name: mangata-dev-alpha
+
+  run-perf-tests-branch:
+    runs-on: ubuntu-latest
+    needs: [deploy-fungible]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy' && contains(github.event.pull_request.labels.*.name, 'full-benchmarks')) ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy') && contains(github.event.pull_request.labels.*.name, 'full-benchmarks'))
+    steps:
+      - run: echo "Running perf tests in branch"
+      
+  performance-tests:
+    name: performance tests in branch
+    needs: [run-perf-tests-branch]
+    uses: ./.github/workflows/reusable-perfomance-tests.yml
+    secrets: inherit
+    with:
+      e2eBranch: ${{ github.event.inputs.e2eBranch }}
   
   clean-up-fungible:
     name: Delete fungible environment

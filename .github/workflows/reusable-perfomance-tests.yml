@@ -90,7 +90,3 @@ jobs:
             ./e2e/performance/enqueued.txt
             ./e2e/performance/executed.txt
             ./e2e/performance/pending.txt
-
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE

@@ -73,7 +73,7 @@ jobs:
         run: |
           node --experimental-specifier-resolution=node --loader ts-node/esm --experimental-vm-modules index.ts \
           transfer \
-          nodes="wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          nodes="wss://collator-01-ws-${{ env.ENV_REF }}.mangata.online" \
           testCaseName=ConcurrentTest \
           pending=2000 \
           threadNumber=12 \

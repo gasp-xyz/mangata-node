@@ -13,8 +13,10 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{convert::TryInto, prelude::*};
+use sp_std::collections::btree_set::BTreeSet;
 
 use codec::alloc::string::{String, ToString};
+use mangata_types::ChainId;
 pub use mangata_support::traits::{
 	InformSessionDataTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
@@ -26,6 +28,7 @@ use sp_runtime::{
 	RuntimeAppPublic, Saturating,
 };
 use sp_std::collections::btree_map::Entry::{Occupied, Vacant};
+pub use sp_runtime::{BoundedVec, BoundedBTreeMap};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SequencerIndex = u32;
@@ -34,6 +37,7 @@ type RoundRefCount = RoundIndex;
 
 pub type BalanceOf<T> =
 	<<T as pallet::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub type ChainIdOf<T> = <T as pallet::Config>::ChainId;
 
 pub(crate) const LOG_TARGET: &'static str = "sequencer-staking";
 
@@ -59,7 +63,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use super::*;
+	use frame_support::BoundedBTreeSet;
+
+use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -71,7 +77,7 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub minimal_stake_amount: BalanceOf<T>,
 		pub slash_fine_amount: BalanceOf<T>,
-		pub sequencers_stake: Vec<(T::AccountId, BalanceOf<T>)>,
+		pub sequencers_stake: Vec<(T::AccountId, T::ChainId, BalanceOf<T>)>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -96,16 +102,21 @@ pub mod pallet {
 			MinimalStakeAmount::<T>::put(self.minimal_stake_amount);
 			SlashFineAmount::<T>::put(self.slash_fine_amount);
 
-			for (sender, stake_amount) in self.sequencers_stake.iter() {
-				assert!(!Pallet::<T>::is_active_sequencer(&sender));
-				assert!(ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize);
+			for (sender, chain, stake_amount) in self.sequencers_stake.iter() {
+				assert!(!Pallet::<T>::is_active_sequencer(*chain, &sender));
+				//TODO: fix other way
+				// assert!(ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize);
 				assert!(stake_amount >= &MinimalStakeAmount::<T>::get());
 
-				<SequencerStake<T>>::insert(sender, stake_amount);
+				<SequencerStake<T>>::insert((sender, &chain), stake_amount);
 
-				ActiveSequencers::<T>::mutate(|active_sequencers| {
-					active_sequencers.push(sender.clone());
-				});
+				ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+					active_sequencers
+						.get_mut(chain)
+						.and_then(|sequencers| sequencers.try_insert(sender.clone()).ok())
+						.ok_or(Error::<T>::MaxSequencersLimitReached)
+				}).expect("setting active sequencers is successfull");
+
 				T::RolldownProvider::new_sequencer_active(&sender);
 
 				// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
@@ -113,8 +124,13 @@ pub mod pallet {
 				assert!(T::Currency::reserve(&sender, *stake_amount).is_ok());
 			}
 
-			if let Some(seq) = ActiveSequencers::<T>::get().get(0) {
-				SelectedSequencer::<T>::put(seq.clone());
+
+			for chain  in self.sequencers_stake.iter().map(|(_,chain,_)| chain).collect::<BTreeSet<_>>() {
+				if let Some(seq) = ActiveSequencers::<T>::get().get(chain).and_then(|sequencers| sequencers.first()) {
+					SelectedSequencer::<T>::mutate(|selected| {
+						selected.insert(*chain, seq.clone())
+					});
+				}
 			}
 		}
 	}
@@ -129,33 +145,29 @@ pub mod pallet {
 		}
 
 		fn on_finalize(n: BlockNumberFor<T>) -> () {
+			//TODO: uncomment
+			let active_sequencers = ActiveSequencers::<T>::get();
 			if (n % T::BlocksForSequencerUpdate::get().into()).is_zero() {
-				let active_sequencers = ActiveSequencers::<T>::get();
-				let mut next_sequencer_index = NextSequencerIndex::<T>::get();
-				if active_sequencers.len().is_zero() {
-					SelectedSequencer::<T>::kill();
-					NextSequencerIndex::<T>::put(SequencerIndex::zero());
-				} else {
-					if next_sequencer_index > active_sequencers.len() as u32 {
-						log!(error, "Value of NextSequencerIndex - {:?}, greater than ActiveSequencers length - {:?}", next_sequencer_index, active_sequencers.len());
-						next_sequencer_index = SequencerIndex::zero();
-						SelectedSequencer::<T>::put(
-							active_sequencers
-								.get(next_sequencer_index as usize)
-								.expect("We checked that ActiveSequencers length is non-zero"),
-						);
-					} else if next_sequencer_index == active_sequencers.len() as u32 {
-						next_sequencer_index = SequencerIndex::zero();
-						SelectedSequencer::<T>::put(
-							active_sequencers
-								.get(next_sequencer_index as usize)
-								.expect("We checked that ActiveSequencers length is non-zero"),
-						);
-					} else {
-						SelectedSequencer::<T>::put(active_sequencers.get(next_sequencer_index as usize).expect("We checked that NextSequencerIndex is less than ActiveSequencers length"));
+
+				SelectedSequencer::<T>::mutate(|selected| {
+					for (chain, set) in active_sequencers.iter() {
+						if let Some(selected_seq) = set.iter().cycle().skip(NextSequencerIndex::<T>::get() as usize).next(){
+							selected.insert(*chain, selected_seq.clone());
+						}else{
+							selected.remove(chain);
+						}
 					}
-					NextSequencerIndex::<T>::put(next_sequencer_index.saturating_add(One::one()));
-				}
+				});
+
+				NextSequencerIndex::<T>::mutate(|idx| {
+					let next_index = idx.saturating_add(One::one());
+					if idx.saturating_add(One::one()) > T::MaxSequencers::get() {
+						*idx = SequencerIndex::zero();
+					}else{
+						*idx = next_index;
+					}
+				});
+
 			}
 		}
 	}
@@ -163,7 +175,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_sequencer_stake)]
 	pub type SequencerStake<T: Config> =
-		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, BalanceOf<T>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -174,11 +186,12 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_active_sequencers)]
-	pub type ActiveSequencers<T: Config> = StorageValue<_, Vec<AccountIdOf<T>>, ValueQuery>;
+	pub type ActiveSequencers<T: Config> = StorageValue<_, BTreeMap<T::ChainId, BoundedBTreeSet<AccountIdOf<T>,T::MaxSequencers>> , ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_selected_sequencer)]
-	pub type SelectedSequencer<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+	#[pallet::unbounded]
+	pub type SelectedSequencer<T: Config> = StorageValue<_, BTreeMap<T::ChainId, T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_current_round)]
@@ -220,6 +233,7 @@ pub mod pallet {
 		NotEnoughSequencerStake,
 		MaxSequencersLimitReached,
 		TestUnstakingError,
+		UnknownChainId,
 	}
 
 	#[pallet::config]
@@ -229,9 +243,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
 		type RolldownProvider: RolldownProviderTrait<Self::AccountId>;
+		type ChainId: Parameter + Member + Default + TypeInfo + MaybeSerializeDeserialize + MaxEncodedLen + PartialOrd + codec::Decode + codec::Encode + Ord + Copy;
 		#[pallet::constant]
 		type NoOfPastSessionsForEligibility: Get<u32>;
 		#[pallet::constant]
+		// TODO: rename 'PerChain'
 		type MaxSequencers: Get<u32>;
 		#[pallet::constant]
 		type BlocksForSequencerUpdate: Get<u32>;
@@ -245,23 +261,29 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
+			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<SequencerStake<T>>::try_mutate(&sender, |stake| -> DispatchResult {
+			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
 				if *stake >= MinimalStakeAmount::<T>::get() &&
-					!Self::is_active_sequencer(&sender) &&
-					Self::is_eligible_to_be_sequencer(&sender) &&
-					ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize
+					!Self::is_active_sequencer(chain, &sender) &&
+					Self::is_eligible_to_be_sequencer(&sender)
 				{
-					ActiveSequencers::<T>::mutate(|active_sequencers| {
-						active_sequencers.push(sender.clone());
-					});
+					ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+						active_sequencers
+							.entry(chain)
+							.or_default()
+							.try_insert(sender.clone())
+							.or(Err(Error::<T>::MaxSequencersLimitReached))
+					})?;
 					T::RolldownProvider::new_sequencer_active(&sender);
+					Ok(())
+				}else{
+					Ok(())
 				}
-				Ok(())
 			})?;
 
 			// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
@@ -273,26 +295,27 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn leave_active_sequencers(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn leave_active_sequencers(origin: OriginFor<T>, chain: T::ChainId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(Self::is_active_sequencer(&sender), Error::<T>::SequencerIsNotInActiveSet);
+			ensure!(Self::is_active_sequencer(chain, &sender), Error::<T>::SequencerIsNotInActiveSet);
 
-			Self::remove_sequencers_from_active_set(vec![sender]);
+			//TODO: uncomment
+			// Self::remove_sequencers_from_active_set(vec![sender]);
 
 			Ok(().into())
 		}
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn rejoin_active_sequencers(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn rejoin_active_sequencers(origin: OriginFor<T>, chain: T::ChainId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::SequencerAlreadyInActiveSet);
+			ensure!(!Self::is_active_sequencer(chain, &sender), Error::<T>::SequencerAlreadyInActiveSet);
 			ensure!(
 				ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize,
 				Error::<T>::MaxSequencersLimitReached
 			);
 			ensure!(
-				SequencerStake::<T>::get(&sender) >= MinimalStakeAmount::<T>::get(),
+				SequencerStake::<T>::get((&sender, &chain)) >= MinimalStakeAmount::<T>::get(),
 				Error::<T>::NotEnoughSequencerStake
 			);
 			ensure!(
@@ -300,9 +323,13 @@ pub mod pallet {
 				Error::<T>::NotEligibleToBeSequencer
 			);
 
-			ActiveSequencers::<T>::mutate(|active_sequencers| {
-				active_sequencers.push(sender.clone());
-			});
+			ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+				active_sequencers
+					.entry(chain)
+					.or_default()
+					.try_insert(sender.clone())
+			}).or(Err(Error::<T>::MaxSequencersLimitReached))?;
+
 			T::RolldownProvider::new_sequencer_active(&sender);
 
 			Ok(().into())
@@ -310,20 +337,21 @@ pub mod pallet {
 
 		#[pallet::call_index(3)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(6, 6).saturating_add(Weight::from_parts(40_000_000, 0)))]
-		pub fn unstake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn unstake(origin: OriginFor<T>,
+			chain: T::ChainId,
+		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(!Self::is_active_sequencer(&sender), Error::<T>::CantUnstakeWhileInActiveSet);
+			ensure!(!Self::is_active_sequencer(chain, &sender), Error::<T>::CantUnstakeWhileInActiveSet);
 
 			T::RolldownProvider::sequencer_unstaking(&sender)?;
 
-			let sequencer_stake = SequencerStake::<T>::get(&sender);
+			let sequencer_stake = SequencerStake::<T>::get((&sender, &chain));
 			let unreserve_remaining = T::Currency::unreserve(&sender, sequencer_stake);
 			if !unreserve_remaining.is_zero() {
 				log!(error, "unstake unreserve_remaining is non-zero - sender {:?}, sequencer {:?}, unreserve_remaining {:?}", &sender, sequencer_stake, unreserve_remaining);
 			}
 
-			SequencerStake::<T>::remove(sender);
-
+			SequencerStake::<T>::remove((&sender,&chain));
 			Ok(().into())
 		}
 
@@ -331,6 +359,7 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(2.saturating_add(T::MaxSequencers::get().into()), 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn set_sequencer_configuration(
 			origin: OriginFor<T>,
+			chain: T::ChainId,
 			minimal_stake_amount: BalanceOf<T>,
 			slash_fine_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -340,9 +369,20 @@ pub mod pallet {
 			<SlashFineAmount<T>>::put(slash_fine_amount);
 
 			let active_sequencers = ActiveSequencers::<T>::get();
+			// TODO: uncomment
 			let deactivating_sequencers = active_sequencers
+				.get(&chain)
+				.ok_or(Error::<T>::UnknownChainId)?
+				.clone()
+				.into_inner()
 				.into_iter()
-				.filter(|s| SequencerStake::<T>::get(s) < minimal_stake_amount)
+				.filter_map(|s| {
+					if SequencerStake::<T>::get((&s,&chain)) < minimal_stake_amount{
+						Some((chain,s))
+					}else{
+						None
+					}
+				})
 				.collect::<_>();
 
 			Pallet::<T>::remove_sequencers_from_active_set(deactivating_sequencers);
@@ -374,7 +414,7 @@ impl<T: Config> Pallet<T> {
 	fn process_new_session_collators(collators: Vec<T::AccountId>) {
 		let round_index = CurrentRound::<T>::get().saturating_add(One::one());
 		let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
-		let mut exiting_collators = vec![];
+		let mut exiting_collators = BTreeSet::new();
 		if round_index >= T::NoOfPastSessionsForEligibility::get() {
 			let first_round_collators_of_window = RoundCollators::<T>::take(
 				round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()),
@@ -391,7 +431,7 @@ impl<T: Config> Pallet<T> {
 					},
 					Occupied(x) if *x.get() == 1 => {
 						x.remove();
-						exiting_collators.push(col);
+						exiting_collators.insert(col);
 					},
 					Occupied(mut x) => {
 						*x.get_mut() = x
@@ -422,48 +462,30 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn maybe_remove_sequencers_from_active_set(
-		mut maybe_deactivating_sequencers: Vec<T::AccountId>,
+		exiting_collators: BTreeSet<T::AccountId>,
 	) {
-		let active_sequencers = ActiveSequencers::<T>::get();
-		maybe_deactivating_sequencers.retain(|x| active_sequencers.contains(&x));
-		Self::remove_sequencers_from_active_set(maybe_deactivating_sequencers);
+		let to_remove = ActiveSequencers::<T>::get().iter().filter_map(|(chain,active)| {
+			active.iter()
+				.find(|seq| exiting_collators.contains(seq))
+				.map(|seq| (*chain,seq.clone()))
+		}).collect::<Vec<_>>();
+
+		Self::remove_sequencers_from_active_set(to_remove);
 	}
 
 	// Caller should check if the sequencer is infact in the active set
-	fn remove_sequencers_from_active_set(deactivating_sequencers: Vec<T::AccountId>) {
+	fn remove_sequencers_from_active_set(deactivating_sequencers: Vec<(T::ChainId, T::AccountId)>) {
 		if deactivating_sequencers.is_empty() {
 			return
 		}
 
-		// At this point NextSequencerIndex should already have been updated
-		let next_sequencer_index = NextSequencerIndex::<T>::get();
-		let mut active_sequencers = ActiveSequencers::<T>::get();
-
-		let mut index: SequencerIndex = 0;
-		let mut next_sequencer_index_offset: SequencerIndex = 0;
-		active_sequencers.retain(|x| {
-			let should_remove = deactivating_sequencers.contains(x);
-			if should_remove && index < next_sequencer_index {
-				next_sequencer_index_offset =
-					next_sequencer_index_offset.saturating_add(One::one());
+		ActiveSequencers::<T>::mutate(|active_set| {
+			for (chain, seq) in deactivating_sequencers{
+				if let Some(ref mut set) = active_set.get_mut(&chain){
+					set.remove(&seq);
+				}
 			}
-			index = index.saturating_add(One::one());
-			!should_remove
 		});
-
-		NextSequencerIndex::<T>::put(
-			next_sequencer_index.defensive_saturating_sub(next_sequencer_index_offset),
-		);
-
-		if let Some(selected_sequencer) = SelectedSequencer::<T>::get() {
-			if !active_sequencers.contains(&selected_sequencer) {
-				SelectedSequencer::<T>::kill();
-			}
-		}
-
-		ActiveSequencers::<T>::put(active_sequencers);
-
-		T::RolldownProvider::handle_sequencer_deactivations(deactivating_sequencers);
 	}
 }
 
@@ -477,21 +499,27 @@ impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
 	}
 }
 
-impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for Pallet<T> {
-	fn is_active_sequencer(sequencer: &AccountIdOf<T>) -> bool {
-		ActiveSequencers::<T>::get().contains(sequencer)
+impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, ChainIdOf<T>> for Pallet<T> {
+	fn is_active_sequencer(chain: <T as pallet::Config>::ChainId, sequencer: &AccountIdOf<T>) -> bool {
+		//TODO: uncomment
+		// ActiveSequencers::<T>::get().contains(sequencer)
+		true
 	}
 
-	fn is_selected_sequencer(sequencer: &AccountIdOf<T>) -> bool {
-		SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
+	fn is_selected_sequencer(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> bool {
+		//TODO: uncomment
+		// SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
+		true
 	}
 
 	fn slash_sequencer(
+		chain: ChainIdOf<T>,
 		to_be_slashed: &T::AccountId,
 		maybe_to_reward: Option<&T::AccountId>,
 	) -> DispatchResult {
+		//TODO: uncomment
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
-		<SequencerStake<T>>::try_mutate(to_be_slashed, |stake| -> DispatchResult {
+		<SequencerStake<T>>::try_mutate((to_be_slashed,chain), |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
 			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);
 			*stake = stake.saturating_sub(slash_fine_amount_actual);
@@ -511,7 +539,9 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>> for 
 			Ok(())
 		})?;
 
-		Self::maybe_remove_sequencers_from_active_set(vec![to_be_slashed.clone()]);
+		let mut to_remove = BTreeSet::new();
+		to_remove.insert(to_be_slashed.clone());
+		Self::maybe_remove_sequencers_from_active_set(to_remove);
 
 		Ok(().into())
 	}
@@ -530,7 +560,8 @@ impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin>
 					if <Pallet<T> as SequencerStakingProviderTrait<
 						AccountIdOf<T>,
 						BalanceOf<T>,
-					>>::is_active_sequencer(&who) =>
+						ChainIdOf<T>,
+					>>::is_active_sequencer(todo!(), &who) =>
 					Ok(who.clone()),
 				r => Err(T::RuntimeOrigin::from(r)),
 			}

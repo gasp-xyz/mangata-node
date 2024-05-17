@@ -25,7 +25,7 @@ releases:
         customNodeKey: '5ad94653edf592f59d1b54960cda1334596cc3dcab8dd96adb334d3e22e912ef'
         bootnodeAddr: /dns/collator-02-p2p/tcp/30333/p2p/12D3KooWFz4zM26EKYTpX98GhLhS3KLv7mUyvpYXCdzxdrorSVCu
         extraArgs:
-          - --alice
+          - --alith
   - name: collator-02
     chart: mangata-node/node
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
@@ -35,4 +35,4 @@ releases:
         customNodeKey: 'bcaf1bb787b48156aadaf318603e5b37e637883edafb850912e364e913e2c35b'
         bootnodeAddr: /dns/collator-01-p2p/tcp/30333/p2p/12D3KooWAfm5cK7DuUa2zh9SrSoHr2fsXXYbLALWXs5ob9mTDKHJ
         extraArgs:
-          - --bob
+          - --baltathar

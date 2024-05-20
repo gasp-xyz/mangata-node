@@ -11,6 +11,7 @@ pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use mockall::automock;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Permill, Saturating};
+use mangata_types::ChainId;
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -107,6 +108,7 @@ impl sequencer_staking::Config for Test {
 	type MaxSequencers = frame_support::traits::ConstU32<3>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<2>;
 	type CancellerRewardPercentage = CancellerRewardPercentage;
+	type ChainId = ChainId;
 }
 
 mockall::mock! {
@@ -145,8 +147,8 @@ impl ExtBuilder {
 			minimal_stake_amount: consts::MINIMUM_STAKE,
 			slash_fine_amount: consts::SLASH_AMOUNT,
 			sequencers_stake: vec![
-				(consts::ALICE, consts::MINIMUM_STAKE),
-				(consts::BOB, consts::MINIMUM_STAKE),
+				(consts::ALICE, ChainId::Ethereum, consts::MINIMUM_STAKE),
+				(consts::BOB, ChainId::Ethereum, consts::MINIMUM_STAKE),
 			],
 		}
 		.assimilate_storage(&mut t)

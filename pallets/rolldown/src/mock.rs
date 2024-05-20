@@ -10,6 +10,7 @@ use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
+use mangata_types::assets::L1Asset;
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -88,7 +89,7 @@ impl orml_tokens::Config for Test {
 mockall::mock! {
 	pub SequencerStakingProviderApi {}
 
-	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
+	impl SequencerStakingProviderTrait<AccountId, Balance, L1Asset> for SequencerStakingProviderApi {
 		fn is_active_sequencer(sequencer: &AccountId) -> bool;
 		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
 		fn is_selected_sequencer(sequencer: &AccountId) -> bool;

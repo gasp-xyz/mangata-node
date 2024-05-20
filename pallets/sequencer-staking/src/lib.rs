@@ -102,6 +102,7 @@ use super::*;
 			MinimalStakeAmount::<T>::put(self.minimal_stake_amount);
 			SlashFineAmount::<T>::put(self.slash_fine_amount);
 
+
 			for (sender, chain, stake_amount) in self.sequencers_stake.iter() {
 				assert!(!Pallet::<T>::is_active_sequencer(*chain, &sender));
 				//TODO: fix other way
@@ -112,9 +113,9 @@ use super::*;
 
 				ActiveSequencers::<T>::try_mutate(|active_sequencers| {
 					active_sequencers
-						.get_mut(chain)
-						.and_then(|sequencers| sequencers.try_insert(sender.clone()).ok())
-						.ok_or(Error::<T>::MaxSequencersLimitReached)
+						.entry(*chain)
+						.or_default()
+						.try_insert(sender.clone())
 				}).expect("setting active sequencers is successfull");
 
 				T::RolldownProvider::new_sequencer_active(&sender);
@@ -299,8 +300,7 @@ use super::*;
 			let sender = ensure_signed(origin)?;
 			ensure!(Self::is_active_sequencer(chain, &sender), Error::<T>::SequencerIsNotInActiveSet);
 
-			//TODO: uncomment
-			// Self::remove_sequencers_from_active_set(vec![sender]);
+			Self::remove_sequencers_from_active_set(vec![(chain, sender)]);
 
 			Ok(().into())
 		}
@@ -464,11 +464,13 @@ impl<T: Config> Pallet<T> {
 	fn maybe_remove_sequencers_from_active_set(
 		exiting_collators: BTreeSet<T::AccountId>,
 	) {
-		let to_remove = ActiveSequencers::<T>::get().iter().filter_map(|(chain,active)| {
-			active.iter()
-				.find(|seq| exiting_collators.contains(seq))
+		let to_remove = ActiveSequencers::<T>::get().iter().map(|(chain,active)| {
+			active.clone().into_inner()
+				.intersection(&exiting_collators)
 				.map(|seq| (*chain,seq.clone()))
-		}).collect::<Vec<_>>();
+				.collect::<Vec<_>>()
+
+		}).flatten().collect::<Vec<_>>();
 
 		Self::remove_sequencers_from_active_set(to_remove);
 	}
@@ -480,12 +482,46 @@ impl<T: Config> Pallet<T> {
 		}
 
 		ActiveSequencers::<T>::mutate(|active_set| {
-			for (chain, seq) in deactivating_sequencers{
-				if let Some(ref mut set) = active_set.get_mut(&chain){
-					set.remove(&seq);
+			for (chain, seq) in deactivating_sequencers.iter(){
+				if let Some(ref mut set) = active_set.get_mut(chain){
+					set.remove(seq);
 				}
 			}
 		});
+
+		SelectedSequencer::<T>::mutate(|selected_set| {
+			for (chain, seq) in deactivating_sequencers.iter(){
+				match selected_set.get(&chain) {
+					Some(selected) if selected == seq => {
+						selected_set.remove(&chain);
+					},
+					_ => {},
+				}
+		}});
+
+
+		//TODO: pass chain parameter
+		T::RolldownProvider::handle_sequencer_deactivations(
+			deactivating_sequencers
+				.into_iter()
+				.map(|(_chain, seq)| seq)
+				.collect::<Vec<_>>()
+		);
+
+	}
+
+	fn set_active_sequencers(iter: impl IntoIterator<Item = (T::ChainId, T::AccountId)>) -> Result<(), Error<T>>{
+		ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+			for (chain, seq) in iter.into_iter() {
+				active_sequencers
+				.entry(chain)
+				.or_default()
+					.try_insert(seq)
+					.or(Err(Error::<T>::MaxSequencersLimitReached))?;
+			}
+			Ok::<_,Error<T>>(())
+		})?;
+		Ok(())
 	}
 }
 
@@ -501,15 +537,16 @@ impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, ChainIdOf<T>> for Pallet<T> {
 	fn is_active_sequencer(chain: <T as pallet::Config>::ChainId, sequencer: &AccountIdOf<T>) -> bool {
-		//TODO: uncomment
-		// ActiveSequencers::<T>::get().contains(sequencer)
-		true
+		matches!(
+			ActiveSequencers::<T>::get().get(&chain), Some(set) if set.contains(&sequencer)
+		)
 	}
 
 	fn is_selected_sequencer(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> bool {
-		//TODO: uncomment
-		// SelectedSequencer::<T>::get().as_ref() == Some(sequencer)
-		true
+		matches!(
+			SelectedSequencer::<T>::get().get(&chain),
+			Some(selected) if selected == sequencer
+		)
 	}
 
 	fn slash_sequencer(

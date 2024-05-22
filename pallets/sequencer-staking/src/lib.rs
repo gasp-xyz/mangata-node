@@ -101,8 +101,6 @@ pub mod pallet {
 
 			for (sender, chain, stake_amount) in self.sequencers_stake.iter() {
 				assert!(!Pallet::<T>::is_active_sequencer(*chain, &sender));
-				//TODO: fix other way
-				// assert!(ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize);
 				assert!(stake_amount >= &MinimalStakeAmount::<T>::get());
 
 				<SequencerStake<T>>::insert((sender, &chain), stake_amount);
@@ -399,7 +397,6 @@ pub mod pallet {
 			<SlashFineAmount<T>>::put(slash_fine_amount);
 
 			let active_sequencers = ActiveSequencers::<T>::get();
-			// TODO: uncomment
 			let deactivating_sequencers = active_sequencers
 				.get(&chain)
 				.ok_or(Error::<T>::UnknownChainId)?
@@ -516,6 +513,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let active_set = ActiveSequencers::<T>::get();
+
 		let seq_to_remove = deactivating_sequencers.iter().fold(
 			BTreeMap::<_, Vec<_>>::new(),
 			|mut acc, (chain, seq)| {
@@ -541,12 +539,6 @@ impl<T: Config> Pallet<T> {
 		);
 
 		for (chain, ids) in pos_to_remove {
-			// let selected_pos = SelectedSequencer::<T>::get()
-			// 	.get(chain)
-			// 	.and_then(|elem| active_set
-			// 		.get(chain)
-			// 		.and_then(|set| set.iter().position(|x| x == elem))
-			// );
 			if let Some(next_pos) = NextSequencerIndex::<T>::get().get(chain) {
 				let shift = ids.iter().filter(|pos| *pos < &(*next_pos as usize)).count();
 				if shift > 0 {
@@ -636,7 +628,6 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		to_be_slashed: &T::AccountId,
 		maybe_to_reward: Option<&T::AccountId>,
 	) -> DispatchResult {
-		//TODO: uncomment
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
 		<SequencerStake<T>>::try_mutate((to_be_slashed, chain), |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();

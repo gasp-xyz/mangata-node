@@ -62,7 +62,6 @@ impl Into<eth_abi::Chain> for Chain {
 	}
 }
 
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct Range {
 	pub start: u128,
@@ -476,7 +475,6 @@ impl TryFrom<eth_abi::Chain> for Chain {
 		}
 	}
 }
-
 
 impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
 	type Error = String;

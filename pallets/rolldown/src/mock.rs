@@ -8,9 +8,9 @@ use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
+use mangata_types::assets::L1Asset;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
-use mangata_types::assets::L1Asset;
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;

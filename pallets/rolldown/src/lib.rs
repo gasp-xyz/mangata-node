@@ -7,7 +7,7 @@ use frame_support::{
 	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, RequestId, UpdateType, Chain};
+use messages::{to_eth_u256, Chain, Origin, RequestId, UpdateType};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion};
@@ -992,70 +992,66 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn update_impl(sequencer: T::AccountId, read: messages::L1Update) -> DispatchResult {
-			let l1 = read.chain;
-			ensure!(
-				!T::MaintenanceStatusProvider::is_maintenance(),
-				Error::<T>::BlockedByMaintenanceMode
-			);
+		let l1 = read.chain;
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::BlockedByMaintenanceMode
+		);
 
-			ensure!(
-				T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
-				Error::<T>::OnlySelectedSequencerisAllowedToUpdate
-			);
-			Self::validate_l1_update(l1, &read)?;
+		ensure!(
+			T::SequencerStakingProvider::is_selected_sequencer(&sequencer),
+			Error::<T>::OnlySelectedSequencerisAllowedToUpdate
+		);
+		Self::validate_l1_update(l1, &read)?;
 
-			// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
-			let current_block_number =
-				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
-			let dispute_period_length = Self::get_dispute_period();
-			let dispute_period_end: u128 = current_block_number + dispute_period_length;
+		// check json length to prevent big data spam, maybe not necessary as it will be checked later and slashed
+		let current_block_number =
+			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
+		let dispute_period_length = Self::get_dispute_period();
+		let dispute_period_end: u128 = current_block_number + dispute_period_length;
 
-			// ensure sequencer has rights to update
-			if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
-				if sequencer.readRights == 0 {
-					log!(debug, "{:?} does not have sufficient readRights", sequencer);
-					return Err(Error::<T>::OperationFailed.into())
-				}
-			} else {
-				log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
+		// ensure sequencer has rights to update
+		if let Some(sequencer) = sequencer_rights::<T>::get(&sequencer) {
+			if sequencer.readRights == 0 {
+				log!(debug, "{:?} does not have sufficient readRights", sequencer);
 				return Err(Error::<T>::OperationFailed.into())
 			}
+		} else {
+			log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
+			return Err(Error::<T>::OperationFailed.into())
+		}
 
-			// // Decrease readRights by 1
-			sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
-				if let Some(ref mut sequencer) = maybe_sequencer {
-					sequencer.readRights -= 1;
-				}
-			});
+		// // Decrease readRights by 1
+		sequencer_rights::<T>::mutate_exists(sequencer.clone(), |maybe_sequencer| {
+			if let Some(ref mut sequencer) = maybe_sequencer {
+				sequencer.readRights -= 1;
+			}
+		});
 
-			ensure!(
-				!pending_requests::<T>::contains_key(dispute_period_end, l1),
-				Error::<T>::MultipleUpdatesInSingleBlock
-			);
+		ensure!(
+			!pending_requests::<T>::contains_key(dispute_period_end, l1),
+			Error::<T>::MultipleUpdatesInSingleBlock
+		);
 
-			// insert pending_requests
-			pending_requests::<T>::insert(
-				dispute_period_end,
-				l1,
-				(sequencer.clone(), read.clone()),
-			);
+		// insert pending_requests
+		pending_requests::<T>::insert(dispute_period_end, l1, (sequencer.clone(), read.clone()));
 
-			let update: messages::eth_abi::L1Update = read.clone().into();
-			let request_hash = Keccak256::digest(&update.abi_encode());
+		let update: messages::eth_abi::L1Update = read.clone().into();
+		let request_hash = Keccak256::digest(&update.abi_encode());
 
-			LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
+		LastUpdateBySequencer::<T>::insert(&sequencer, current_block_number);
 
-			let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
-			MaxAcceptedRequestIdOnl2::<T>::insert(l1, requests_range.end);
+		let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
+		MaxAcceptedRequestIdOnl2::<T>::insert(l1, requests_range.end);
 
-			Pallet::<T>::deposit_event(Event::L1ReadStored((
-				sequencer,
-				dispute_period_end,
-				requests_range,
-				H256::from_slice(request_hash.as_slice()),
-			)));
+		Pallet::<T>::deposit_event(Event::L1ReadStored((
+			sequencer,
+			dispute_period_end,
+			requests_range,
+			H256::from_slice(request_hash.as_slice()),
+		)));
 
-			Ok(().into())
+		Ok(().into())
 	}
 }
 

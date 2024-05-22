@@ -127,22 +127,18 @@ fn create_pending_update_after_dispute_period() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
 		assert_eq!(pending_updates::<Test>::iter().next(), None);
-		assert!(
-			pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)).is_none()
-		);
-		assert!(
-			pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128)).is_none()
-		);
+		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+			.is_none());
+		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
+			.is_none());
 
 		forward_to_block::<Test>(15);
-		assert!(
-			pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)).is_some()
-		);
+		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+			.is_some());
 
 		forward_to_block::<Test>(16);
-		assert!(
-			pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128)).is_some()
-		);
+		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
+			.is_some());
 	});
 }
 
@@ -773,10 +769,16 @@ fn execute_a_lot_of_requests_in_following_blocks() {
 		);
 
 		forward_to_block::<Test>(17);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), requests_count as u128);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			requests_count as u128
+		);
 
 		forward_to_block::<Test>(100);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), requests_count as u128);
+		assert_eq!(
+			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			requests_count as u128
+		);
 	});
 }
 

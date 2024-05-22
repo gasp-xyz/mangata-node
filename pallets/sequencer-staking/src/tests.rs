@@ -2,32 +2,16 @@ use crate::{
 	mock::{consts::*, *},
 	*,
 };
-use core::{future::pending, convert::TryFrom};
+use core::{convert::TryFrom, future::pending};
 use frame_support::{assert_err, assert_ok};
-use sp_runtime::BoundedBTreeSet;
 use hex_literal::hex;
 use mockall::predicate::eq;
 use orml_traits::MultiReservableCurrency;
 use serial_test::serial;
 use sp_io::storage::rollback_transaction;
+use sp_runtime::BoundedBTreeSet;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Currency;
-
-fn set_active_sequencers(iter: impl Iterator<Item = (ChainId, AccountId)>) -> Result<(), Error<Test>>{
-	ActiveSequencers::<Test>::kill();
-	ActiveSequencers::<Test>::try_mutate(|active_sequencers| {
-		for (chain, seq) in iter.into_iter() {
-			active_sequencers
-			.entry(chain)
-			.or_default()
-				.try_insert(seq)
-				.or(Err(Error::<Test>::MaxSequencersLimitReached))?;
-		}
-		Ok::<_,Error<Test>>(())
-	})?;
-	Ok(())
-}
-
 
 #[test]
 #[serial]
@@ -59,7 +43,7 @@ fn test_provide_sequencer_stake_works_and_activates() {
 
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE,ChainId::Ethereum)), 0);
+		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, ChainId::Ethereum)), 0);
 		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &CHARLIE));
 		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
 			(consts::ALICE, 1u32),
@@ -174,12 +158,18 @@ fn test_leave_active_sequencer_set() {
 		handle_sequencer_deactivations_mock.expect().times(1).return_const(());
 
 		assert_err!(
-			SequencerStaking::leave_active_sequencers(RuntimeOrigin::signed(CHARLIE), ChainId::Ethereum),
+			SequencerStaking::leave_active_sequencers(
+				RuntimeOrigin::signed(CHARLIE),
+				ChainId::Ethereum
+			),
 			Error::<Test>::SequencerIsNotInActiveSet
 		);
 
 		assert!(SequencerStaking::is_active_sequencer(ChainId::Ethereum, &ALICE));
-		assert_ok!(SequencerStaking::leave_active_sequencers(RuntimeOrigin::signed(ALICE), ChainId::Ethereum));
+		assert_ok!(SequencerStaking::leave_active_sequencers(
+			RuntimeOrigin::signed(ALICE),
+			ChainId::Ethereum
+		));
 		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &ALICE));
 	});
 }
@@ -192,7 +182,10 @@ fn test_rejoin_active_sequencer_works() {
 		forward_to_block::<Test>(10);
 
 		assert_err!(
-			SequencerStaking::rejoin_active_sequencers(RuntimeOrigin::signed(ALICE), ChainId::Ethereum),
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(ALICE),
+				ChainId::Ethereum
+			),
 			Error::<Test>::SequencerAlreadyInActiveSet
 		);
 
@@ -202,13 +195,23 @@ fn test_rejoin_active_sequencer_works() {
 			MINIMUM_STAKE - 1
 		));
 		assert_err!(
-			SequencerStaking::rejoin_active_sequencers(RuntimeOrigin::signed(CHARLIE),ChainId::Ethereum),
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(CHARLIE),
+				ChainId::Ethereum
+			),
 			Error::<Test>::NotEnoughSequencerStake
 		);
 
-		assert_ok!(SequencerStaking::provide_sequencer_stake(RuntimeOrigin::signed(CHARLIE),ChainId::Ethereum, 1));
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(CHARLIE),
+			ChainId::Ethereum,
+			1
+		));
 		assert_err!(
-			SequencerStaking::rejoin_active_sequencers(RuntimeOrigin::signed(CHARLIE), ChainId::Ethereum),
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(CHARLIE),
+				ChainId::Ethereum
+			),
 			Error::<Test>::NotEligibleToBeSequencer
 		);
 
@@ -222,14 +225,115 @@ fn test_rejoin_active_sequencer_works() {
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(1).return_const(());
 		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &CHARLIE));
-		assert_ok!(SequencerStaking::rejoin_active_sequencers(RuntimeOrigin::signed(CHARLIE),ChainId::Ethereum));
+		assert_ok!(SequencerStaking::rejoin_active_sequencers(
+			RuntimeOrigin::signed(CHARLIE),
+			ChainId::Ethereum
+		));
 		assert!(SequencerStaking::is_active_sequencer(ChainId::Ethereum, &CHARLIE));
+	});
+}
 
-		assert_err!(SequencerStaking::provide_sequencer_stake(
-			RuntimeOrigin::signed(DAVE),
+#[test]
+#[serial]
+fn test_can_not_join_set_if_full() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+		ActiveSequencers::<Test>::kill();
+		let seq_limit = <<Test as Config>::MaxSequencers as Get<u32>>::get() as AccountId;
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock.expect().times(seq_limit as usize).return_const(());
+
+		for seq in 0u64..seq_limit {
+			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
+			EligibleToBeSequencers::<Test>::mutate(|set| {
+				set.insert(seq, 1);
+			});
+			assert_ok!(SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(seq),
+				ChainId::Ethereum,
+				MINIMUM_STAKE,
+			));
+			assert!(SequencerStaking::is_active_sequencer(ChainId::Ethereum, &seq));
+		}
+
+		Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
+		EligibleToBeSequencers::<Test>::mutate(|set| {
+			set.insert(seq_limit, 1);
+		});
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(seq_limit),
 			ChainId::Ethereum,
-			MINIMUM_STAKE
-		), Error::<Test>::MaxSequencersLimitReached);
+			MINIMUM_STAKE,
+		));
+		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &seq_limit));
+		assert_err!(
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(seq_limit),
+				ChainId::Ethereum
+			),
+			Error::<Test>::MaxSequencersLimitReached
+		);
+		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &seq_limit));
+	});
+}
+
+#[test]
+#[serial]
+fn test_provide_stake_fails_on_sequencers_limit_reached() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+
+		assert_err!(
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(ALICE),
+				ChainId::Ethereum
+			),
+			Error::<Test>::SequencerAlreadyInActiveSet
+		);
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(CHARLIE),
+			ChainId::Ethereum,
+			MINIMUM_STAKE - 1
+		));
+		assert_err!(
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(CHARLIE),
+				ChainId::Ethereum
+			),
+			Error::<Test>::NotEnoughSequencerStake
+		);
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(CHARLIE),
+			ChainId::Ethereum,
+			1
+		));
+		assert_err!(
+			SequencerStaking::rejoin_active_sequencers(
+				RuntimeOrigin::signed(CHARLIE),
+				ChainId::Ethereum
+			),
+			Error::<Test>::NotEligibleToBeSequencer
+		);
+
+		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
+			(consts::ALICE, 1u32),
+			(consts::BOB, 1u32),
+			(consts::CHARLIE, 1u32),
+			(consts::DAVE, 1u32),
+		]));
+
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock.expect().times(1).return_const(());
+		assert!(!SequencerStaking::is_active_sequencer(ChainId::Ethereum, &CHARLIE));
+		assert_ok!(SequencerStaking::rejoin_active_sequencers(
+			RuntimeOrigin::signed(CHARLIE),
+			ChainId::Ethereum
+		));
+		assert!(SequencerStaking::is_active_sequencer(ChainId::Ethereum, &CHARLIE));
 	});
 }
 
@@ -250,11 +354,14 @@ fn test_sequencer_unstaking() {
 		let handle_sequencer_deactivations_mock =
 			MockRolldownProviderApi::handle_sequencer_deactivations_context();
 		handle_sequencer_deactivations_mock.expect().times(1).return_const(());
-		assert_ok!(SequencerStaking::leave_active_sequencers(RuntimeOrigin::signed(ALICE), ChainId::Ethereum));
+		assert_ok!(SequencerStaking::leave_active_sequencers(
+			RuntimeOrigin::signed(ALICE),
+			ChainId::Ethereum
+		));
 
 		assert_eq!(TokensOf::<Test>::total_balance(&ALICE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&ALICE), MINIMUM_STAKE);
-		assert_eq!(SequencerStake::<Test>::get(&(ALICE,ChainId::Ethereum)), MINIMUM_STAKE);
+		assert_eq!(SequencerStake::<Test>::get(&(ALICE, ChainId::Ethereum)), MINIMUM_STAKE);
 		assert_ok!(SequencerStaking::unstake(RuntimeOrigin::signed(ALICE), ChainId::Ethereum));
 		assert_eq!(SequencerStake::<Test>::get(&(ALICE, ChainId::Ethereum)), 0);
 		assert_eq!(TokensOf::<Test>::total_balance(&ALICE), TOKENS_ENDOWED);
@@ -294,7 +401,10 @@ fn test_set_sequencer_configuration() {
 			SLASH_AMOUNT - 1
 		));
 		assert_eq!(ActiveSequencers::<Test>::get().get(&ChainId::Ethereum).unwrap().len(), 1);
-		assert_eq!(ActiveSequencers::<Test>::get().get(&ChainId::Ethereum).unwrap().iter().next(), Some(&CHARLIE));
+		assert_eq!(
+			ActiveSequencers::<Test>::get().get(&ChainId::Ethereum).unwrap().iter().next(),
+			Some(&CHARLIE)
+		);
 		assert_eq!(MinimalStakeAmount::<Test>::get(), MINIMUM_STAKE + 1);
 		assert_eq!(SlashFineAmount::<Test>::get(), SLASH_AMOUNT - 1);
 	});
@@ -367,7 +477,7 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 		assert_eq!(TokensOf::<Test>::reserved_balance(&EVE), 0);
 		assert_eq!(TokensOf::<Test>::total_issuance(), TOKENS_ENDOWED * 4);
 
-		assert_ok!(SequencerStaking::slash_sequencer(ChainId::Ethereum,&CHARLIE,  Some(&EVE)));
+		assert_ok!(SequencerStaking::slash_sequencer(ChainId::Ethereum, &CHARLIE, Some(&EVE)));
 
 		let repatriated_amount = 10;
 		let amount_slashed = 10;
@@ -381,13 +491,17 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 		);
 
 		let amount = 10;
-		assert_ok!(SequencerStaking::provide_sequencer_stake(RuntimeOrigin::signed(DAVE), ChainId::Ethereum, amount));
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(DAVE),
+			ChainId::Ethereum,
+			amount
+		));
 
 		let total_issuance_0 = TokensOf::<Test>::total_issuance();
 		assert_eq!(TokensOf::<Test>::total_balance(&DAVE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&DAVE), amount);
 
-		assert_ok!(SequencerStaking::slash_sequencer(ChainId::Ethereum, &DAVE,  None));
+		assert_ok!(SequencerStaking::slash_sequencer(ChainId::Ethereum, &DAVE, None));
 
 		let repatriated_amount = 0;
 		let amount_slashed = 10;
@@ -431,9 +545,11 @@ fn test_slash_sequencer_when_stake_less_than_stake_but_greater_than_repatriated_
 		);
 
 		let amount = 50;
-		assert_ok!(SequencerStaking::provide_sequencer_stake(RuntimeOrigin::signed(DAVE),
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(DAVE),
 			ChainId::Ethereum,
-		amount));
+			amount
+		));
 
 		let total_issuance_0 = TokensOf::<Test>::total_issuance();
 		assert_eq!(TokensOf::<Test>::total_balance(&DAVE), TOKENS_ENDOWED);
@@ -456,11 +572,12 @@ fn test_maybe_remove_sequencers_from_active_set_works() {
 	ExtBuilder::new().build().execute_with(|| {
 		forward_to_block::<Test>(10);
 
-		set_active_sequencers([
-			(ChainId::Ethereum, ALICE),
-			(ChainId::Ethereum, BOB),
-			(ChainId::Ethereum, CHARLIE),
-		].iter().cloned()).unwrap();
+		SequencerStaking::set_active_sequencers(
+			[(ChainId::Ethereum, ALICE), (ChainId::Ethereum, BOB), (ChainId::Ethereum, CHARLIE)]
+				.iter()
+				.cloned(),
+		)
+		.unwrap();
 
 		let handle_sequencer_deactivations_mock =
 			MockRolldownProviderApi::handle_sequencer_deactivations_context();
@@ -470,98 +587,144 @@ fn test_maybe_remove_sequencers_from_active_set_works() {
 			.times(1)
 			.return_const(());
 
-		SequencerStaking::maybe_remove_sequencers_from_active_set([BOB, CHARLIE, EVE].iter().cloned().collect());
+		SequencerStaking::maybe_remove_sequencers_from_active_set(
+			[BOB, CHARLIE, EVE].iter().cloned().collect(),
+		);
 	});
 }
 
-// #[test]
-// #[serial]
-// fn test_remove_sequencers_works_correctly() {
-// 	set_default_mocks!();
-// 	ExtBuilder::new().build().execute_with(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		let handle_sequencer_deactivations_mock =
-// 			MockRolldownProviderApi::handle_sequencer_deactivations_context();
-// 		handle_sequencer_deactivations_mock.expect().return_const(());
-//
-// 		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 4));
-// 		NextSequencerIndex::<Test>::put(6);
-//
-// 		set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i))).unwrap();
-//
-// 		SequencerStaking::remove_sequencers_from_active_set([1, 4, 5, 6, 8, 11].map(|seq:AccountId | (ChainId::Ethereum, seq)).iter().cloned().collect());
-//
-// 		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), None);
-// 		assert_eq!(NextSequencerIndex::<Test>::get(), 3);
-// 		assert_eq!(
-// 			ActiveSequencers::<Test>::get().get(&ChainId::Ethereum).unwrap().clone().into_inner(),
-// 			[0, 2, 3, 7, 9, 10].iter().cloned().collect()
-// 		);
-		//
-		// SelectedSequencer::<Test>::put(4);
-		// NextSequencerIndex::<Test>::put(4);
-		// ActiveSequencers::<Test>::put(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-		//
-		// SequencerStaking::remove_sequencers_from_active_set(vec![4]);
-		//
-		// assert_eq!(SelectedSequencer::<Test>::get(), None);
-		// assert_eq!(NextSequencerIndex::<Test>::get(), 4);
-		// assert_eq!(ActiveSequencers::<Test>::get(), vec![0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]);
-		//
-		// SelectedSequencer::<Test>::put(4);
-		// NextSequencerIndex::<Test>::put(6);
-		// ActiveSequencers::<Test>::put(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-		//
-		// SequencerStaking::remove_sequencers_from_active_set(vec![2, 3, 5, 8, 11]);
-		//
-		// assert_eq!(SelectedSequencer::<Test>::get(), Some(4));
-		// assert_eq!(NextSequencerIndex::<Test>::get(), 3);
-		// assert_eq!(ActiveSequencers::<Test>::get(), vec![0, 1, 4, 6, 7, 9, 10]);
-	// });
-// }
+#[test]
+#[serial]
+fn test_remove_sequencers_works_correctly() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
 
-// #[test]
-// #[serial]
-// fn test_on_finalize_works_correctly() {
-// 	set_default_mocks!();
-// 	ExtBuilder::new().build().execute_with(|| {
-// 		forward_to_block::<Test>(10);
-//
-// 		SelectedSequencer::<Test>::put(5);
-// 		NextSequencerIndex::<Test>::put(6);
-// 		ActiveSequencers::<Test>::put(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-//
-// 		SequencerStaking::on_finalize(10);
-//
-// 		assert_eq!(SelectedSequencer::<Test>::get(), Some(6));
-// 		assert_eq!(NextSequencerIndex::<Test>::get(), 7);
-//
-// 		SelectedSequencer::<Test>::put(5);
-// 		NextSequencerIndex::<Test>::put(12);
-// 		ActiveSequencers::<Test>::put(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-//
-// 		SequencerStaking::on_finalize(10);
-//
-// 		assert_eq!(SelectedSequencer::<Test>::get(), Some(0));
-// 		assert_eq!(NextSequencerIndex::<Test>::get(), 1);
-//
-// 		SelectedSequencer::<Test>::put(5);
-// 		NextSequencerIndex::<Test>::put(13);
-// 		ActiveSequencers::<Test>::put(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-//
-// 		SequencerStaking::on_finalize(10);
-//
-// 		assert_eq!(SelectedSequencer::<Test>::get(), Some(0));
-// 		assert_eq!(NextSequencerIndex::<Test>::get(), 1);
-//
-// 		SelectedSequencer::<Test>::put(5);
-// 		NextSequencerIndex::<Test>::put(6);
-// 		ActiveSequencers::<Test>::put(Vec::<AccountId>::new());
-//
-// 		SequencerStaking::on_finalize(10);
-//
-// 		assert_eq!(SelectedSequencer::<Test>::get(), None);
-// 		assert_eq!(NextSequencerIndex::<Test>::get(), 0);
-// 	});
-// }
+		let handle_sequencer_deactivations_mock =
+			MockRolldownProviderApi::handle_sequencer_deactivations_context();
+		handle_sequencer_deactivations_mock.expect().return_const(());
+
+		// 1.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 4));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 6));
+
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::remove_sequencers_from_active_set(
+			[1, 4, 5, 6, 8, 11]
+				.map(|seq: AccountId| (ChainId::Ethereum, seq))
+				.iter()
+				.cloned()
+				.collect(),
+		);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), None);
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&3u32));
+
+		assert_eq!(
+			ActiveSequencers::<Test>::get()
+				.get(&ChainId::Ethereum)
+				.unwrap()
+				.clone()
+				.into_inner(),
+			[0, 2, 3, 7, 9, 10].iter().cloned().collect::<Vec<_>>()
+		);
+
+		// 2.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 4));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 4));
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::remove_sequencers_from_active_set([(ChainId::Ethereum, 4)].to_vec());
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), None);
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&4u32));
+		assert_eq!(
+			ActiveSequencers::<Test>::get()
+				.get(&ChainId::Ethereum)
+				.unwrap()
+				.clone()
+				.into_inner(),
+			[0, 1, 2, 3, 5, 6, 7, 8, 9, 10].iter().cloned().collect::<Vec<_>>()
+		);
+
+		// 3.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 4));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 6));
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::remove_sequencers_from_active_set(
+			[2, 3, 5, 8, 11]
+				.map(|seq: AccountId| (ChainId::Ethereum, seq))
+				.iter()
+				.cloned()
+				.collect(),
+		);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), Some(&4u64));
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&3u32));
+		assert_eq!(
+			ActiveSequencers::<Test>::get()
+				.get(&ChainId::Ethereum)
+				.unwrap()
+				.clone()
+				.into_inner(),
+			[0, 1, 4, 6, 7, 9, 10].iter().cloned().collect::<Vec<_>>()
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_on_finalize_works_correctly() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+
+		// 1.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 5));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 6));
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::on_finalize(10);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), Some(&6u64));
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&7u32));
+
+		// 2.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 5));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 12));
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::on_finalize(10);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), Some(&0u64));
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&1u32));
+
+		// // 3.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 5));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 13));
+		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (ChainId::Ethereum, i)))
+			.unwrap();
+
+		SequencerStaking::on_finalize(10);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), Some(&0u64));
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), Some(&1u32));
+
+		// 4.
+		SelectedSequencer::<Test>::mutate(|set| set.insert(ChainId::Ethereum, 5));
+		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(ChainId::Ethereum, 13));
+		SequencerStaking::set_active_sequencers(Vec::new()).unwrap();
+
+		SequencerStaking::on_finalize(10);
+
+		assert_eq!(SelectedSequencer::<Test>::get().get(&ChainId::Ethereum), None);
+		assert_eq!(NextSequencerIndex::<Test>::get().get(&ChainId::Ethereum), None);
+	});
+}

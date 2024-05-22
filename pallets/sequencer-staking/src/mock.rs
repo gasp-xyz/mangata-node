@@ -8,10 +8,10 @@ use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
+use mangata_types::ChainId;
 use mockall::automock;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Permill, Saturating};
-use mangata_types::ChainId;
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -105,7 +105,7 @@ impl sequencer_staking::Config for Test {
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = MockRolldownProviderApi;
 	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<2>;
-	type MaxSequencers = frame_support::traits::ConstU32<3>;
+	type MaxSequencers = frame_support::traits::ConstU32<11>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<2>;
 	type CancellerRewardPercentage = CancellerRewardPercentage;
 	type ChainId = ChainId;

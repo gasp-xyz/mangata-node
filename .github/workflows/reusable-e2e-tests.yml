@@ -125,8 +125,8 @@ jobs:
             fast: false
           # - command: "yarn test-sdk"
           #   fast: true
-          # - command: "yarn test-parallel-3rdPartyRewards"
-          #   fast: true
+          - command: "yarn test-parallel-3rdPartyRewards"
+            fast: true
 
     
     runs-on: [e2e-gke]

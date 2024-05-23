@@ -16,7 +16,6 @@ use codec::alloc::string::{String, ToString};
 pub use mangata_support::traits::{
 	InformSessionDataTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
 };
-use mangata_types::ChainId;
 use scale_info::prelude::format;
 use sp_core::U256;
 use sp_runtime::{
@@ -110,7 +109,7 @@ pub mod pallet {
 				})
 				.expect("setting active sequencers is successfull");
 
-				T::RolldownProvider::new_sequencer_active(&sender);
+				T::RolldownProvider::new_sequencer_active(*chain, &sender);
 
 				// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
 				// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
@@ -255,7 +254,7 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
-		type RolldownProvider: RolldownProviderTrait<Self::AccountId>;
+		type RolldownProvider: RolldownProviderTrait<Self::ChainId, Self::AccountId>;
 		type ChainId: Parameter
 			+ Member
 			+ Default
@@ -298,7 +297,7 @@ pub mod pallet {
 					if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
 						active_sequencers.entry(chain).or_default().try_push(sender.clone())
 					}) {
-						T::RolldownProvider::new_sequencer_active(&sender);
+						T::RolldownProvider::new_sequencer_active(chain, &sender);
 					}
 				}
 				Ok(())
@@ -323,7 +322,7 @@ pub mod pallet {
 				Error::<T>::SequencerIsNotInActiveSet
 			);
 
-			Self::remove_sequencers_from_active_set(vec![(chain, sender)]);
+			Self::remove_sequencers_from_active_set(chain, std::iter::once(sender).collect());
 
 			Ok(().into())
 		}
@@ -357,7 +356,7 @@ pub mod pallet {
 			})
 			.or(Err(Error::<T>::MaxSequencersLimitReached))?;
 
-			T::RolldownProvider::new_sequencer_active(&sender);
+			T::RolldownProvider::new_sequencer_active(chain, &sender);
 
 			Ok(().into())
 		}
@@ -371,7 +370,7 @@ pub mod pallet {
 				Error::<T>::CantUnstakeWhileInActiveSet
 			);
 
-			T::RolldownProvider::sequencer_unstaking(&sender)?;
+			T::RolldownProvider::sequencer_unstaking(chain, &sender)?;
 
 			let sequencer_stake = SequencerStake::<T>::get((&sender, &chain));
 			let unreserve_remaining = T::Currency::unreserve(&sender, sequencer_stake);
@@ -403,16 +402,10 @@ pub mod pallet {
 				.clone()
 				.into_inner()
 				.into_iter()
-				.filter_map(|s| {
-					if SequencerStake::<T>::get((&s, &chain)) < minimal_stake_amount {
-						Some((chain, s))
-					} else {
-						None
-					}
-				})
+				.filter(|s| SequencerStake::<T>::get((&s, &chain)) < minimal_stake_amount)
 				.collect::<_>();
 
-			Pallet::<T>::remove_sequencers_from_active_set(deactivating_sequencers);
+			Pallet::<T>::remove_sequencers_from_active_set(chain, deactivating_sequencers);
 
 			Ok(().into())
 		}
@@ -489,90 +482,68 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn maybe_remove_sequencers_from_active_set(exiting_collators: BTreeSet<T::AccountId>) {
-		let to_remove = ActiveSequencers::<T>::get()
-			.iter()
-			.map(|(chain, active)| {
+		let to_remove = ActiveSequencers::<T>::get().into_iter().map(|(chain, active)| {
+			(
+				chain,
 				active
 					.iter()
+					.filter(|seq| exiting_collators.contains(seq))
 					.cloned()
-					.collect::<BTreeSet<_>>()
-					.intersection(&exiting_collators)
-					.map(|seq| (*chain, seq.clone()))
-					.collect::<Vec<_>>()
-			})
-			.flatten()
-			.collect::<Vec<_>>();
+					.collect::<BTreeSet<_>>(),
+			)
+		});
 
-		Self::remove_sequencers_from_active_set(to_remove);
+		for (chain, sequencers_set) in to_remove {
+			Self::remove_sequencers_from_active_set(chain, sequencers_set);
+		}
 	}
 
 	// Caller should check if the sequencer is infact in the active set
-	fn remove_sequencers_from_active_set(deactivating_sequencers: Vec<(T::ChainId, T::AccountId)>) {
+	fn remove_sequencers_from_active_set(
+		chain: T::ChainId,
+		deactivating_sequencers: BTreeSet<T::AccountId>,
+	) {
 		if deactivating_sequencers.is_empty() {
 			return
 		}
 
-		let active_set = ActiveSequencers::<T>::get();
+		let active_seqs = ActiveSequencers::<T>::get();
+		let seqs_per_chain = active_seqs.get(&chain).cloned().unwrap_or_default();
+		let active_set: &[AccountIdOf<T>] = seqs_per_chain.as_ref();
 
-		let seq_to_remove = deactivating_sequencers.iter().fold(
-			BTreeMap::<_, Vec<_>>::new(),
-			|mut acc, (chain, seq)| {
-				acc.entry(chain).or_default().push(seq);
-				acc
-			},
-		);
-
-		let pos_to_remove = deactivating_sequencers.iter().fold(
-			BTreeMap::<_, Vec<_>>::new(),
-			|mut acc, (chain, seq)| {
-				if let Some(pos) = active_set
-					.clone()
-					.entry(*chain)
-					.or_default()
+		NextSequencerIndex::<T>::mutate(|idxs| {
+			if let Some(next_pos) = idxs.get_mut(&chain) {
+				let shift = deactivating_sequencers
 					.iter()
-					.position(|elem| elem == seq)
-				{
-					acc.entry(chain).or_default().push(pos);
-				}
-				acc
-			},
-		);
-
-		for (chain, ids) in pos_to_remove {
-			if let Some(next_pos) = NextSequencerIndex::<T>::get().get(chain) {
-				let shift = ids.iter().filter(|pos| *pos < &(*next_pos as usize)).count();
+					.filter_map(|seq| active_set.iter().position(|elem| elem == seq))
+					.into_iter()
+					.filter(|pos| *pos < *next_pos as usize)
+					.count();
 				if shift > 0 {
-					NextSequencerIndex::<T>::mutate(|idxs| {
-						if let Some(idx) = idxs.get_mut(chain) {
-							*idx = idx.saturating_sub(shift as u32);
-						}
-					});
-				}
-			}
-		}
-
-		ActiveSequencers::<T>::mutate(|active_set| {
-			for (chain, to_remove) in seq_to_remove.iter() {
-				if let Some(set) = active_set.get_mut(chain) {
-					set.retain(|elem| !to_remove.contains(&elem))
+					*next_pos = next_pos.saturating_sub(shift as u32);
 				}
 			}
 		});
 
+		ActiveSequencers::<T>::mutate(|active_set| {
+			if let Some(set) = active_set.get_mut(&chain) {
+				set.retain(|elem| !deactivating_sequencers.contains(&elem))
+			}
+		});
+
 		SelectedSequencer::<T>::mutate(|selected| {
-			for (chain, to_remove) in seq_to_remove.iter() {
-				if matches!(
-					selected.get(chain),
-					Some(elem) if to_remove.contains(&elem))
-				{
-					selected.remove(chain);
-				}
+			if matches!(
+				selected.get(&chain),
+				Some(elem) if deactivating_sequencers.contains(&elem))
+			{
+				selected.remove(&chain);
 			}
 		});
 
 		//TODO: pass chain parameter
 		T::RolldownProvider::handle_sequencer_deactivations(
-			deactivating_sequencers.into_iter().map(|(_chain, seq)| seq).collect::<Vec<_>>(),
+			chain,
+			deactivating_sequencers.iter().cloned().collect(),
 		);
 	}
 

@@ -567,7 +567,7 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
-	type SequencerStakingProvider = SequencerStaking;
+	// type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -739,6 +739,7 @@ impl pallet_rolldown::Config for Runtime {
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
 	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
 	type MaintenanceStatusProvider = Maintenance;
+	type ChainId = pallet_rolldown::messages::Chain;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -750,6 +751,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type MaxSequencers = frame_support::traits::ConstU32<10>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
 	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
+	type ChainId = pallet_rolldown::messages::Chain;
 }
 
 impl pallet_metamask_signature::Config for Runtime {
@@ -862,17 +864,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::L1> for Runtime {
-		fn get_pending_updates_hash() -> sp_core::H256 {
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::Chain> for Runtime {
+		fn get_pending_updates_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof(chain)
 			} else {
 				Default::default()
 			}
 		}
-		fn get_pending_updates() -> Vec<u8> {
+		fn get_pending_updates(chain: pallet_rolldown::messages::Chain) -> Vec<u8> {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded(chain)
 			} else {
 				Default::default()
 			}
@@ -882,16 +884,16 @@ impl_runtime_apis! {
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(hex_payload).ok()
 		}
 
-		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
-			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
+		fn verify_pending_requests(chain: pallet_rolldown::messages::Chain, hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(chain, hash, request_id)
 		}
 
-		fn get_last_processed_request_on_l2(l1: pallet_rolldown::messages::L1) -> Option<u128>{
-			Some(Rolldown::get_last_processed_request_on_l2(l1))
+		fn get_last_processed_request_on_l2(chain: pallet_rolldown::messages::Chain) -> Option<u128>{
+			Some(Rolldown::get_last_processed_request_on_l2(chain))
 		}
 
-		fn get_number_of_pending_requests(l1: pallet_rolldown::messages::L1) -> Option<u128>{
-			Some(Rolldown::get_max_accepted_request_id_on_l2(l1).saturating_sub(Rolldown::get_last_processed_request_on_l2(l1)))
+		fn get_number_of_pending_requests(chain: pallet_rolldown::messages::Chain) -> Option<u128>{
+			Some(Rolldown::get_max_accepted_request_id_on_l2(chain).saturating_sub(Rolldown::get_last_processed_request_on_l2(chain)))
 		}
 
 		fn get_total_number_of_deposits() -> u32 {

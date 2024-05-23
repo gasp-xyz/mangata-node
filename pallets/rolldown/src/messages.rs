@@ -7,7 +7,7 @@ use scale_info::{
 	prelude::{format, string::String},
 	TypeInfo,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sp_core::{RuntimeDebug, H256, U256};
 use sp_runtime::SaturatedConversion;
 use sp_std::{
@@ -18,7 +18,19 @@ use sp_std::{
 
 #[repr(u8)]
 #[derive(
-	Copy, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, Serialize,
+	Copy,
+	Eq,
+	PartialEq,
+	RuntimeDebug,
+	Clone,
+	Encode,
+	Decode,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+	Ord,
+	PartialOrd,
 )]
 pub enum Chain {
 	Ethereum,

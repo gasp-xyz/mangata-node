@@ -16,17 +16,18 @@ use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
 
 #[rpc(client, server)]
-pub trait RolldownApi<BlockHash, L1Update, L1> {
+pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	/// Calculates amount of available native rewards
 	///
 	/// * `account` - user account address
 	/// * `liquidity_token` - liquidity token id
 	/// * `at` - optional block hash
 	#[method(name = "rolldown_pending_updates_hash")]
-	fn pending_updates_hash(&self, at: Option<BlockHash>) -> RpcResult<sp_core::H256>;
+	fn pending_updates_hash(&self, chain: Chain, at: Option<BlockHash>)
+		-> RpcResult<sp_core::H256>;
 
 	#[method(name = "rolldown_pending_updates")]
-	fn pending_updates(&self, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
+	fn pending_updates(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
 	#[method(name = "rolldown_get_native_l1_update")]
 	fn get_native_l1_update(
@@ -37,6 +38,7 @@ pub trait RolldownApi<BlockHash, L1Update, L1> {
 	#[method(name = "rolldown_verify_pending_requests")]
 	fn verify_pending_requests(
 		&self,
+		chain: Chain,
 		hash: H256,
 		request_id: u128,
 		at: Option<BlockHash>,
@@ -55,24 +57,25 @@ impl<C, P> Rolldown<C, P> {
 }
 
 #[async_trait]
-impl<C, Block, L1Update, L1> RolldownApiServer<<Block as BlockT>::Hash, L1Update, L1>
+impl<C, Block, L1Update, Chain> RolldownApiServer<<Block as BlockT>::Hash, L1Update, Chain>
 	for Rolldown<C, Block>
 where
 	Block: BlockT,
 	L1Update: Decode,
-	L1: Encode,
+	Chain: Encode,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: RolldownRuntimeApi<Block, L1Update, L1>,
+	C::Api: RolldownRuntimeApi<Block, L1Update, Chain>,
 {
 	fn pending_updates_hash(
 		&self,
+		chain: Chain,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<sp_core::H256> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates_hash(at).map_err(|e| {
+		api.get_pending_updates_hash(at, chain).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",
@@ -81,10 +84,14 @@ where
 		})
 	}
 
-	fn pending_updates(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<u8>> {
+	fn pending_updates(
+		&self,
+		chain: Chain,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<u8>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates(at).map_err(|e| {
+		api.get_pending_updates(at, chain).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",
@@ -119,13 +126,14 @@ where
 
 	fn verify_pending_requests(
 		&self,
+		chain: Chain,
 		hash: H256,
 		request_id: u128,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<bool> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.verify_pending_requests(at, hash, request_id)
+		api.verify_pending_requests(at, chain, hash, request_id)
 			.map_err(|e| {
 				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 					1,

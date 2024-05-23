@@ -86,13 +86,9 @@ fn error_on_empty_update() {
 #[serial]
 fn test_genesis() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		assert_eq!(
-			sequencer_rights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().readRights,
-			1
-		);
+		assert_eq!(sequencer_rights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().readRights, 1);
 	});
 }
-
 
 #[test]
 #[serial]
@@ -433,7 +429,12 @@ fn test_cancel_removes_pending_requests() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			assert!(pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
-			Rolldown::cancel_requests_from_l1( RuntimeOrigin::signed(BOB), consts::CHAIN,15u128.into()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 
 			// Assert
 			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
@@ -468,7 +469,12 @@ fn test_cancel_produce_update_with_correct_hash() {
 			);
 
 			let update_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
-			Rolldown::cancel_requests_from_l1( RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 
 			assert_eq!(
 				Rolldown::get_l2_update(Chain::Ethereum),
@@ -523,7 +529,8 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			forward_to_block::<Test>(11);
-			Rolldown::cancel_requests_from_l1( RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128).unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
+				.unwrap();
 			forward_to_block::<Test>(12);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			forward_to_block::<Test>(16);
@@ -531,7 +538,9 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock
 				.expect()
-				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.cloned() == Some(BOB))
+				.withf(|chain, a, b| {
+					*chain == consts::CHAIN && *a == ALICE && b.cloned() == Some(BOB)
+				})
 				.times(1)
 				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
@@ -568,7 +577,8 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			forward_to_block::<Test>(11);
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128).unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
+				.unwrap();
 			forward_to_block::<Test>(12);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			forward_to_block::<Test>(16);
@@ -591,7 +601,11 @@ fn test_cancel_unexisting_request_fails() {
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 			assert_err!(
-				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()),
+				Rolldown::cancel_requests_from_l1(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					15u128.into()
+				),
 				Error::<Test>::RequestDoesNotExist
 			);
 		});
@@ -645,7 +659,12 @@ fn test_cancel_removes_cancel_right() {
 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
 			);
 
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 
 			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
 			assert_eq!(
@@ -744,7 +763,12 @@ fn cancel_request_as_council_executed_immadiately() {
 				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
 			);
 
-			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), consts::CHAIN, 15u128.into()).unwrap();
+			Rolldown::force_cancel_requests_from_l1(
+				RuntimeOrigin::root(),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 			assert_eq!(
 				*sequencer_rights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
@@ -1114,7 +1138,12 @@ fn test_remove_pending_updates() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update_with_deposit.clone())
 				.unwrap();
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN,  15u128.into()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 			Rolldown::withdraw(
 				RuntimeOrigin::signed(ALICE),
 				consts::CHAIN,
@@ -1415,7 +1444,10 @@ fn test_new_sequencer_active() {
 			Rolldown::new_sequencer_active(consts::CHAIN, &i);
 			let read_rights: u128 = 1;
 			let cancel_rights: u128 = i.into();
-			assert_eq!(sequencer_rights::<Test>::get(consts::CHAIN).into_values().count() as u128, <u64 as Into<u128>>::into(i) + 1);
+			assert_eq!(
+				sequencer_rights::<Test>::get(consts::CHAIN).into_values().count() as u128,
+				<u64 as Into<u128>>::into(i) + 1
+			);
 			assert!(sequencer_rights::<Test>::get(consts::CHAIN)
 				.iter()
 				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
@@ -1436,7 +1468,7 @@ fn test_sequencer_unstaking() {
 		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
 		let x = 20;
 
-		LastUpdateBySequencer::<Test>::insert(ALICE, now);
+		LastUpdateBySequencer::<Test>::insert((consts::CHAIN, ALICE), now);
 		forward_to_block::<Test>((now + dispute_period_length).saturated_into::<u64>());
 		assert_err!(
 			Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE),
@@ -1444,17 +1476,17 @@ fn test_sequencer_unstaking() {
 		);
 		forward_to_block::<Test>((now + dispute_period_length + 1).saturated_into::<u64>());
 		assert_ok!(Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE));
-		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
+		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), 0);
 
-		AwaitingCancelResolution::<Test>::insert(ALICE, BTreeSet::from([0]));
+		AwaitingCancelResolution::<Test>::insert((consts::CHAIN, ALICE), BTreeSet::from([0]));
 		assert_err!(
 			Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE),
 			Error::<Test>::SequencerAwaitingCancelResolution
 		);
 
-		AwaitingCancelResolution::<Test>::remove(ALICE);
+		AwaitingCancelResolution::<Test>::remove((consts::CHAIN, ALICE));
 		assert_ok!(Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE));
-		assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
+		assert_eq!(AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)), BTreeSet::new());
 	});
 }
 
@@ -1465,14 +1497,14 @@ fn test_last_update_by_sequencer_is_updated() {
 		let block = 36;
 		forward_to_block::<Test>(block);
 
-		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), 0);
+		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), 0);
 
 		let update = L1UpdateBuilder::default()
 			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 			.build();
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 
-		assert_eq!(LastUpdateBySequencer::<Test>::get(ALICE), block.into());
+		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), block.into());
 	});
 }
 
@@ -1496,11 +1528,22 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			assert!(pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
 
 			// Assert
-			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::from([1]));
-			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::from([1]));
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
+				BTreeSet::from([1])
+			);
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
+				BTreeSet::from([1])
+			);
 		});
 }
 
@@ -1535,23 +1578,38 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			forward_to_block::<Test>(11);
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128).unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
+				.unwrap();
 			forward_to_block::<Test>(12);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
-			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::from([1]));
-			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::from([1]));
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
+				BTreeSet::from([1])
+			);
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
+				BTreeSet::from([1])
+			);
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock
 				.expect()
-				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.cloned() == Some(BOB))
+				.withf(|chain, a, b| {
+					*chain == consts::CHAIN && *a == ALICE && b.cloned() == Some(BOB)
+				})
 				.times(1)
 				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
 
-			assert_eq!(AwaitingCancelResolution::<Test>::get(ALICE), BTreeSet::new());
-			assert_eq!(AwaitingCancelResolution::<Test>::get(BOB), BTreeSet::new());
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
+				BTreeSet::new()
+			);
+			assert_eq!(
+				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
+				BTreeSet::new()
+			);
 		})
 }
 
@@ -1567,7 +1625,10 @@ fn test_handle_sequencer_deactivations() {
 		let n_max = 14;
 		let mut acc = 0;
 		for n in 1..n_max {
-			Rolldown::handle_sequencer_deactivations(consts::CHAIN, Vec::<AccountId>::from_iter(acc..(n + acc)));
+			Rolldown::handle_sequencer_deactivations(
+				consts::CHAIN,
+				Vec::<AccountId>::from_iter(acc..(n + acc)),
+			);
 			acc += n;
 			let read_rights: u128 = 1;
 			let cancel_rights: u128 = (total_sequencers - acc - 1).into();
@@ -1602,7 +1663,11 @@ fn test_maintenance_mode_blocks_extrinsics() {
 			Error::<Test>::BlockedByMaintenanceMode
 		);
 		assert_err!(
-			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, Default::default()),
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				Default::default()
+			),
 			Error::<Test>::BlockedByMaintenanceMode
 		);
 		assert_err!(
@@ -1616,7 +1681,11 @@ fn test_maintenance_mode_blocks_extrinsics() {
 			Error::<Test>::BlockedByMaintenanceMode
 		);
 		assert_err!(
-			Rolldown::force_cancel_requests_from_l1(RuntimeOrigin::root(), consts::CHAIN, Default::default()),
+			Rolldown::force_cancel_requests_from_l1(
+				RuntimeOrigin::root(),
+				consts::CHAIN,
+				Default::default()
+			),
 			Error::<Test>::BlockedByMaintenanceMode
 		);
 	});
@@ -1656,7 +1725,11 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_blo
 			);
 
 			assert_err!(
-				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()),
+				Rolldown::cancel_requests_from_l1(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					15u128.into()
+				),
 				Error::<Test>::CancelRightsExhausted
 			);
 		});
@@ -1697,7 +1770,11 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 
 			forward_to_block::<Test>(11);
 			assert_err!(
-				Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128.into()),
+				Rolldown::cancel_requests_from_l1(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					15u128.into()
+				),
 				Error::<Test>::CancelRightsExhausted
 			);
 		});

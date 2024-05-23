@@ -55,7 +55,10 @@ fn test_provide_sequencer_stake_works_and_activates() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE
 		));
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), MINIMUM_STAKE);
+		assert_eq!(
+			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
+			MINIMUM_STAKE
+		);
 		assert!(SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
@@ -81,7 +84,10 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_eligibility()
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE
 		));
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), MINIMUM_STAKE);
+		assert_eq!(
+			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
+			MINIMUM_STAKE
+		);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
@@ -107,7 +113,10 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_insufficient_
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE - 1
 		));
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), MINIMUM_STAKE - 1);
+		assert_eq!(
+			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
+			MINIMUM_STAKE - 1
+		);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE - 1);
@@ -139,7 +148,10 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_max_seq_bound
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE
 		));
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), MINIMUM_STAKE);
+		assert_eq!(
+			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
+			MINIMUM_STAKE
+		);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
@@ -362,7 +374,10 @@ fn test_sequencer_unstaking() {
 		assert_eq!(TokensOf::<Test>::total_balance(&ALICE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&ALICE), MINIMUM_STAKE);
 		assert_eq!(SequencerStake::<Test>::get(&(ALICE, consts::DEFAULT_CHAIN_ID)), MINIMUM_STAKE);
-		assert_ok!(SequencerStaking::unstake(RuntimeOrigin::signed(ALICE), consts::DEFAULT_CHAIN_ID));
+		assert_ok!(SequencerStaking::unstake(
+			RuntimeOrigin::signed(ALICE),
+			consts::DEFAULT_CHAIN_ID
+		));
 		assert_eq!(SequencerStake::<Test>::get(&(ALICE, consts::DEFAULT_CHAIN_ID)), 0);
 		assert_eq!(TokensOf::<Test>::total_balance(&ALICE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&ALICE), 0);
@@ -400,9 +415,16 @@ fn test_set_sequencer_configuration() {
 			MINIMUM_STAKE + 1,
 			SLASH_AMOUNT - 1
 		));
-		assert_eq!(ActiveSequencers::<Test>::get().get(&consts::DEFAULT_CHAIN_ID).unwrap().len(), 1);
 		assert_eq!(
-			ActiveSequencers::<Test>::get().get(&consts::DEFAULT_CHAIN_ID).unwrap().iter().next(),
+			ActiveSequencers::<Test>::get().get(&consts::DEFAULT_CHAIN_ID).unwrap().len(),
+			1
+		);
+		assert_eq!(
+			ActiveSequencers::<Test>::get()
+				.get(&consts::DEFAULT_CHAIN_ID)
+				.unwrap()
+				.iter()
+				.next(),
 			Some(&CHARLIE)
 		);
 		assert_eq!(MinimalStakeAmount::<Test>::get(), MINIMUM_STAKE + 1);
@@ -477,7 +499,11 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 		assert_eq!(TokensOf::<Test>::reserved_balance(&EVE), 0);
 		assert_eq!(TokensOf::<Test>::total_issuance(), TOKENS_ENDOWED * 4);
 
-		assert_ok!(SequencerStaking::slash_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE, Some(&EVE)));
+		assert_ok!(SequencerStaking::slash_sequencer(
+			consts::DEFAULT_CHAIN_ID,
+			&CHARLIE,
+			Some(&EVE)
+		));
 
 		let repatriated_amount = 10;
 		let amount_slashed = 10;
@@ -531,7 +557,11 @@ fn test_slash_sequencer_when_stake_less_than_stake_but_greater_than_repatriated_
 		assert_eq!(TokensOf::<Test>::reserved_balance(&EVE), 0);
 		assert_eq!(TokensOf::<Test>::total_issuance(), TOKENS_ENDOWED * 4);
 
-		assert_ok!(SequencerStaking::slash_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE, Some(&EVE)));
+		assert_ok!(SequencerStaking::slash_sequencer(
+			consts::DEFAULT_CHAIN_ID,
+			&CHARLIE,
+			Some(&EVE)
+		));
 
 		let repatriated_amount = 20;
 		let amount_slashed = 50;
@@ -573,9 +603,13 @@ fn test_maybe_remove_sequencers_from_active_set_works() {
 		forward_to_block::<Test>(10);
 
 		SequencerStaking::set_active_sequencers(
-			[(consts::DEFAULT_CHAIN_ID, ALICE), (consts::DEFAULT_CHAIN_ID, BOB), (consts::DEFAULT_CHAIN_ID, CHARLIE)]
-				.iter()
-				.cloned(),
+			[
+				(consts::DEFAULT_CHAIN_ID, ALICE),
+				(consts::DEFAULT_CHAIN_ID, BOB),
+				(consts::DEFAULT_CHAIN_ID, CHARLIE),
+			]
+			.iter()
+			.cloned(),
 		)
 		.unwrap();
 
@@ -608,12 +642,14 @@ fn test_remove_sequencers_works_correctly() {
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 4));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 6));
 
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::remove_sequencers_from_active_set(
 			consts::DEFAULT_CHAIN_ID,
-			[1, 4, 5, 6, 8, 11].iter().cloned().collect()
+			[1, 4, 5, 6, 8, 11].iter().cloned().collect(),
 		);
 
 		assert_eq!(SelectedSequencer::<Test>::get().get(&consts::DEFAULT_CHAIN_ID), None);
@@ -631,12 +667,14 @@ fn test_remove_sequencers_works_correctly() {
 		// 2.
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 4));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 4));
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::remove_sequencers_from_active_set(
 			consts::DEFAULT_CHAIN_ID,
-			std::iter::once(4).collect()
+			std::iter::once(4).collect(),
 		);
 
 		assert_eq!(SelectedSequencer::<Test>::get().get(&consts::DEFAULT_CHAIN_ID), None);
@@ -653,15 +691,14 @@ fn test_remove_sequencers_works_correctly() {
 		// 3.
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 4));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 6));
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::remove_sequencers_from_active_set(
 			consts::DEFAULT_CHAIN_ID,
-			[2, 3, 5, 8, 11]
-				.iter()
-				.cloned()
-				.collect(),
+			[2, 3, 5, 8, 11].iter().cloned().collect(),
 		);
 
 		assert_eq!(SelectedSequencer::<Test>::get().get(&consts::DEFAULT_CHAIN_ID), Some(&4u64));
@@ -687,8 +724,10 @@ fn test_on_finalize_works_correctly() {
 		// 1.
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 5));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 6));
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::on_finalize(10);
 
@@ -698,8 +737,10 @@ fn test_on_finalize_works_correctly() {
 		// 2.
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 5));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 12));
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::on_finalize(10);
 
@@ -709,8 +750,10 @@ fn test_on_finalize_works_correctly() {
 		// // 3.
 		SelectedSequencer::<Test>::mutate(|set| set.insert(consts::DEFAULT_CHAIN_ID, 5));
 		NextSequencerIndex::<Test>::mutate(|ids| ids.insert(consts::DEFAULT_CHAIN_ID, 13));
-		SequencerStaking::set_active_sequencers((0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)))
-			.unwrap();
+		SequencerStaking::set_active_sequencers(
+			(0u64..11u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		SequencerStaking::on_finalize(10);
 

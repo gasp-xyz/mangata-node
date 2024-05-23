@@ -186,7 +186,7 @@ impl ExtBuilder {
 macro_rules! set_default_mocks {
 	() => {
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
-		new_sequencer_active_mock.expect().times(2).returning(|_,_| ());
+		new_sequencer_active_mock.expect().times(2).returning(|_, _| ());
 	};
 }
 pub(crate) use set_default_mocks;

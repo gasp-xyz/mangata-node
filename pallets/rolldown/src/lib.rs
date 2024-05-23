@@ -137,10 +137,6 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_sequencer_count)]
-	pub type sequencer_count<T: Config> = StorageValue<_, u128, ValueQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
 	pub type last_processed_request_on_l2<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
@@ -356,9 +352,10 @@ pub mod pallet {
 			);
 
 			sequencer_rights::<T>::try_mutate(chain, |sequencers| {
-				sequencers
-					.get(&canceler)
-					.and_then(|rights| rights.cancelRights.checked_sub(1))
+				let rights = sequencers
+					.get_mut(&canceler)
+					.ok_or(Error::<T>::CancelRightsExhausted)?;
+				rights.cancelRights = rights.cancelRights.checked_sub(1)
 					.ok_or(Error::<T>::CancelRightsExhausted)?;
 				Ok::<_, Error<T>>(())
 			})?;
@@ -709,14 +706,14 @@ impl<T: Config> Pallet<T> {
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &updater) {
 			sequencer_rights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&updater) {
-					rights.readRights = 1;
+					rights.readRights.saturating_inc();
 				}
 			});
 		}
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &canceler) {
 			sequencer_rights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&canceler) {
-					rights.readRights = 1;
+					rights.cancelRights.saturating_inc();
 				}
 			});
 		}
@@ -819,10 +816,6 @@ impl<T: Config> Pallet<T> {
 		deactivated_sequencers: BTreeSet<T::AccountId>,
 	) {
 		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
-		// lower sequencer count
-		sequencer_count::<T>::put(
-			Self::get_sequencer_count().saturating_sub(deactivated_sequencers_len.into()),
-		);
 
 		// remove all rights of deactivated sequencer
 		sequencer_rights::<T>::mutate(chain, |sequencers_set| {

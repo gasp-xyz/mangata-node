@@ -1415,13 +1415,13 @@ fn test_new_sequencer_active() {
 			Rolldown::new_sequencer_active(consts::CHAIN, &i);
 			let read_rights: u128 = 1;
 			let cancel_rights: u128 = i.into();
-			assert_eq!(sequencer_count::<Test>::get(), <u64 as Into<u128>>::into(i) + 1);
+			assert_eq!(sequencer_rights::<Test>::get(consts::CHAIN).into_values().count() as u128, <u64 as Into<u128>>::into(i) + 1);
 			assert!(sequencer_rights::<Test>::get(consts::CHAIN)
 				.iter()
 				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
 
 			assert_eq!(
-				sequencer_rights::<Test>::get(consts::CHAIN).keys().count(),
+				sequencer_rights::<Test>::get(consts::CHAIN).into_values().count(),
 				(i + 1) as usize
 			);
 		}
@@ -1572,7 +1572,7 @@ fn test_handle_sequencer_deactivations() {
 			let read_rights: u128 = 1;
 			let cancel_rights: u128 = (total_sequencers - acc - 1).into();
 			assert_eq!(
-				sequencer_count::<Test>::get(),
+				sequencer_rights::<Test>::get(consts::CHAIN).into_values().count() as u128,
 				<u64 as Into<u128>>::into(total_sequencers - acc)
 			);
 			assert!(sequencer_rights::<Test>::get(consts::CHAIN)

@@ -10,7 +10,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Chain, Origin, RequestId, UpdateType};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{One, SaturatedConversion};
+use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::collections::btree_map::BTreeMap;
 
 use alloy_sol_types::SolValue;
@@ -148,7 +148,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
 	pub type l2_origin_request_id<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery, frame_support::traits::ConstU128<1>>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -207,6 +207,7 @@ pub mod pallet {
 	pub type AwaitingCancelResolution<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, BTreeSet<u128>, ValueQuery>;
 
+	//TODO: MAKE Multi chain
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_update_by_sequencer)]
 	pub type LastUpdateBySequencer<T: Config> =
@@ -1063,24 +1064,20 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {
 	fn new_sequencer_active(chain: T::ChainId, sequencer: &AccountIdOf<T>) {
 		// raise sequencer count
-		sequencer_count::<T>::put(Self::get_sequencer_count() + 1);
-		// add rights to new sequencer
 		sequencer_rights::<T>::mutate(chain, |sequencer_set| {
-			if let Some(rights) = sequencer_set.get_mut(sequencer) {
-				*rights = SequencerRights {
-					readRights: RIGHTS_MULTIPLIER,
-					cancelRights: RIGHTS_MULTIPLIER *
-						(sequencer_count::<T>::get().saturating_sub(2)),
-				};
-			}
-		});
 
-		sequencer_rights::<T>::mutate(chain, |sequencers_set| {
-			if !sequencers_set.is_empty() {
-				sequencers_set.iter_mut().for_each(|(seq, rights)| {
-					rights.cancelRights += RIGHTS_MULTIPLIER;
-				});
+			let count = sequencer_set.len() as u128;
+
+			sequencer_set.insert(sequencer.clone(),
+				SequencerRights {
+				readRights: RIGHTS_MULTIPLIER,
+				cancelRights: count.saturating_mul(RIGHTS_MULTIPLIER),
+			});
+
+			for (_, rights) in sequencer_set.iter_mut().filter(|(s,_)| *s != sequencer){
+				rights.cancelRights.saturating_accrue(RIGHTS_MULTIPLIER)
 			}
+
 		});
 	}
 

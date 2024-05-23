@@ -23,6 +23,7 @@ pub mod consts {
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
 	pub const EVE: u64 = 5;
+	pub const CHAIN: crate::messages::Chain = crate::messages::Chain::Ethereum;
 }
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -89,10 +90,10 @@ impl orml_tokens::Config for Test {
 mockall::mock! {
 	pub SequencerStakingProviderApi {}
 
-	impl SequencerStakingProviderTrait<AccountId, Balance, L1Asset> for SequencerStakingProviderApi {
-		fn is_active_sequencer(sequencer: &AccountId) -> bool;
-		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
-		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
+	impl SequencerStakingProviderTrait<AccountId, Balance, messages::Chain> for SequencerStakingProviderApi {
+		fn is_active_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn slash_sequencer<'a>(chain: messages::Chain, to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
+		fn is_selected_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
 	}
 }
 
@@ -147,6 +148,7 @@ impl rolldown::Config for Test {
 	type DisputePeriodLength = ConstU128<5>;
 	type RequestsPerBlock = ConstU128<10>;
 	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
+	type ChainId = messages::Chain;
 }
 
 pub struct ExtBuilder {
@@ -167,7 +169,7 @@ impl ExtBuilder {
 
 		ext.execute_with(|| {
 			for s in vec![consts::ALICE, consts::BOB, consts::CHARLIE].iter() {
-				Pallet::<Test>::new_sequencer_active(s);
+				Pallet::<Test>::new_sequencer_active(consts::CHAIN, s);
 			}
 		});
 

@@ -150,6 +150,7 @@ impl rolldown::Config for Test {
 	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
 	type ChainId = messages::Chain;
 	type RightsMultiplier = ConstU128<1>;
+	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
 }
 
 pub struct ExtBuilder {

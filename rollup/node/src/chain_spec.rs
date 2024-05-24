@@ -328,7 +328,9 @@ fn rollup_genesis(
 					.iter()
 					.rev()
 					.take(1)
-					.map(|(acc, _)| (acc.clone(), 10_000_000_u128))
+					.map(|(acc, _)| {
+						(acc.clone(), pallet_rolldown::messages::Chain::Ethereum, 10_000_000_u128)
+					})
 					.collect()
 			} else {
 				Default::default()

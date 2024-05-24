@@ -1,4 +1,5 @@
 use crate::{
+	messages::Chain,
 	mock::{consts::*, *},
 	*,
 };
@@ -11,7 +12,6 @@ use serial_test::serial;
 use sp_io::storage::rollback_transaction;
 use sp_runtime::traits::ConvertBack;
 use sp_std::iter::FromIterator;
-use crate::messages::Chain;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
 pub const ETH_TOKEN_ADDRESS_MGX: TokenId = 100_u32;
@@ -87,7 +87,10 @@ fn error_on_empty_update() {
 #[serial]
 fn test_genesis() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		assert_eq!(SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().read_rights, 1);
+		assert_eq!(
+			SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().read_rights,
+			1
+		);
 	});
 }
 
@@ -136,18 +139,22 @@ fn create_pending_update_after_dispute_period() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
 		assert_eq!(L2Requests::<Test>::iter().next(), None);
-		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
-			.is_none());
-		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
-			.is_none());
+		assert!(
+			L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)).is_none()
+		);
+		assert!(
+			L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128)).is_none()
+		);
 
 		forward_to_block::<Test>(15);
-		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
-			.is_some());
+		assert!(
+			L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)).is_some()
+		);
 
 		forward_to_block::<Test>(16);
-		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
-			.is_some());
+		assert!(
+			L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128)).is_some()
+		);
 	});
 }
 
@@ -805,16 +812,10 @@ fn execute_a_lot_of_requests_in_following_blocks() {
 		);
 
 		forward_to_block::<Test>(17);
-		assert_eq!(
-			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
-			requests_count as u128
-		);
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), requests_count as u128);
 
 		forward_to_block::<Test>(100);
-		assert_eq!(
-			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
-			requests_count as u128
-		);
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), requests_count as u128);
 	});
 }
 

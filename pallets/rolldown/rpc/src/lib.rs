@@ -23,8 +23,11 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	/// * `liquidity_token` - liquidity token id
 	/// * `at` - optional block hash
 	#[method(name = "rolldown_pending_l2_requests_proof_hash")]
-	fn pending_l2_requests_proof_hash(&self, chain: Chain, at: Option<BlockHash>)
-		-> RpcResult<sp_core::H256>;
+	fn pending_l2_requests_proof_hash(
+		&self,
+		chain: Chain,
+		at: Option<BlockHash>,
+	) -> RpcResult<sp_core::H256>;
 
 	#[method(name = "rolldown_pending_l2_requests_proof")]
 	fn pending_l2_requests_proof(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;

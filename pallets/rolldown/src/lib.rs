@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_std::iter::Iterator;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -10,7 +9,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType};
 use scale_info::prelude::{format, string::String};
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap, iter::Iterator};
 
 use alloy_sol_types::SolValue;
 use frame_support::traits::WithdrawReasons;
@@ -23,7 +22,10 @@ use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
-use sp_runtime::{serde::Serialize, traits::Convert};
+use sp_runtime::{
+	serde::Serialize,
+	traits::{Convert, MaybeConvert},
+};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
@@ -134,13 +136,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
-    // Id of the last request originating on other chain that has been executed
+	// Id of the last request originating on other chain that has been executed
 	pub type LastProcessedRequestOnL2<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
-    // Id of the next request that will originate on this chain
+	// Id of the next request that will originate on this chain
 	pub type L2OriginRequestId<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -153,7 +155,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
-    // Stores requests brought by sequencer that are under dispute period.
+	// Stores requests brought by sequencer that are under dispute period.
 	pub type PendingSequencerUpdates<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -166,16 +168,16 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-    // queue of all updates that went through dispute period and are ready to be processed
+	// queue of all updates that went through dispute period and are ready to be processed
 	pub type UpdatesExecutionQueue<T: Config> =
 		StorageMap<_, Blake2_128Concat, u128, (T::ChainId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
-    // Id of the next update to be executed
+	// Id of the next update to be executed
 	pub type UpdatesExecutionQueueNextId<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
-    // Id of the last update that has been executed
+	// Id of the last update that has been executed
 	pub type LastScheduledUpdateIdInExecutionQueue<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
@@ -257,6 +259,7 @@ pub mod pallet {
 		SequencerAwaitingCancelResolution,
 		MultipleUpdatesInSingleBlock,
 		BlockedByMaintenanceMode,
+		UnsupportedAsset,
 	}
 
 	#[pallet::config]
@@ -292,6 +295,7 @@ pub mod pallet {
 			+ codec::Encode
 			+ Ord
 			+ Copy;
+		type AssetAddressConverter: Convert<(ChainIdOf<Self>, [u8; 20]), L1Asset>;
 	}
 
 	#[pallet::genesis_config]
@@ -365,13 +369,14 @@ pub mod pallet {
 				Ok::<_, Error<T>>(())
 			})?;
 
-			let (submitter, request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
-				.ok_or(Error::<T>::RequestDoesNotExist)?;
+			let (submitter, request) =
+				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
+					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
 			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
+			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
 
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
@@ -409,8 +414,8 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let eth_asset = L1Asset::Ethereum(token_address);
-			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
+			let eth_asset = T::AssetAddressConverter::convert((chain, token_address));
+			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset)
 				.ok_or(Error::<T>::MathOverflow)?;
 
 			// fail will occur if user has not enough balance
@@ -431,7 +436,7 @@ pub mod pallet {
 			)?;
 
 			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
+			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
 
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
@@ -441,11 +446,7 @@ pub mod pallet {
 				amount: U256::from(amount),
 			};
 			// add cancel request to pending updates
-			L2Requests::<T>::insert(
-				chain,
-				request_id,
-				L2Request::Withdrawal(withdrawal_update),
-			);
+			L2Requests::<T>::insert(chain, request_id, L2Request::Withdrawal(withdrawal_update));
 
 			Ok(().into())
 		}
@@ -464,8 +465,9 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let (submitter, _request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
-				.ok_or(Error::<T>::RequestDoesNotExist)?;
+			let (submitter, _request) =
+				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
+					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			if T::SequencerStakingProvider::is_active_sequencer(chain, &submitter) {
 				SequencersRights::<T>::mutate(chain, |sequencers| {
@@ -507,7 +509,9 @@ impl<T: Config> Pallet<T> {
 	fn end_dispute_period() {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
-		for (l1, pending_requests_to_process) in PendingSequencerUpdates::<T>::iter_prefix(block_number) {
+		for (l1, pending_requests_to_process) in
+			PendingSequencerUpdates::<T>::iter_prefix(block_number)
+		{
 			log!(debug, "dispute end {:?}", block_number);
 
 			let sequencer = &pending_requests_to_process.0;
@@ -538,7 +542,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let id = L2OriginRequestId::<T>::get(l1);
-		L2OriginRequestId::<T>::mutate(l1, |request_id| { request_id.saturating_inc(); });
+		L2OriginRequestId::<T>::mutate(l1, |request_id| {
+			request_id.saturating_inc();
+		});
 
 		let l2_request_id = RequestId { origin: Origin::L2, id };
 
@@ -580,7 +586,8 @@ impl<T: Config> Pallet<T> {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) = UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
+			if let Some((l1, r)) =
+				UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
 				for req in r
 					.into_requests()
@@ -600,7 +607,9 @@ impl<T: Config> Pallet<T> {
 					}
 				}
 			} else {
-				if UpdatesExecutionQueue::<T>::contains_key(UpdatesExecutionQueueNextId::<T>::get() + 1) {
+				if UpdatesExecutionQueue::<T>::contains_key(
+					UpdatesExecutionQueueNextId::<T>::get() + 1,
+				) {
 					UpdatesExecutionQueueNextId::<T>::mutate(|v| *v += 1);
 				} else {
 					break
@@ -1024,7 +1033,11 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// insert pending_requests
-		PendingSequencerUpdates::<T>::insert(dispute_period_end, l1, (sequencer.clone(), read.clone()));
+		PendingSequencerUpdates::<T>::insert(
+			dispute_period_end,
+			l1,
+			(sequencer.clone(), read.clone()),
+		);
 
 		let update: messages::eth_abi::L1Update = read.clone().into();
 		let request_hash = Keccak256::digest(&update.abi_encode());
@@ -1089,5 +1102,15 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 			chain,
 			deactivated_sequencers.into_iter().collect(),
 		);
+	}
+}
+
+pub struct MultiEvmChainAddressConverter;
+impl Convert<(messages::Chain, [u8; 20]), L1Asset> for MultiEvmChainAddressConverter {
+	fn convert((chain, address): (messages::Chain, [u8; 20])) -> L1Asset {
+		match chain {
+			messages::Chain::Ethereum => L1Asset::Ethereum(address),
+			messages::Chain::Arbitrum => L1Asset::Arbitrum(address),
+		}
 	}
 }

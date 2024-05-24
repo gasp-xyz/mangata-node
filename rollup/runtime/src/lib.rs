@@ -14,8 +14,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
-		IdentifyAccount, IdentityLookup, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
-		SignedExtension, StaticLookup, Verify, Zero,
+		IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor, PostDispatchInfoOf,
+		Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
@@ -738,16 +738,13 @@ impl pallet_rolldown::Config for Runtime {
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
 	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
+	// We havent spent any time considering rights multiplier being > 1. There might be some corner
+	// cases that should be investigated.
 	type RightsMultiplier = frame_support::traits::ConstU128<1>;
 	type MaintenanceStatusProvider = Maintenance;
 	type ChainId = pallet_rolldown::messages::Chain;
+	type AssetAddressConverter = pallet_rolldown::MultiEvmChainAddressConverter;
 }
-
-// We havent spent any time considering rights multiplier being > 1. There might be some corner
-// cases that should be investigated.
-const_assert!(
-	<<Runtime as pallet_rolldown::Config>::RightsMultiplier as Get<u128>>::get() == 1u128
-);
 
 impl pallet_sequencer_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

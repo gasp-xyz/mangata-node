@@ -132,7 +132,7 @@ pub mod pallet {
 	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub enum PendingUpdate<AccountId> {
+	pub enum L2Request<AccountId> {
 		RequestResult(RequestResult),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
@@ -186,7 +186,6 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	#[pallet::getter(fn get_SequencerRights)]
 	pub type SequencersRights<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -205,7 +204,7 @@ pub mod pallet {
 		T::ChainId,
 		Blake2_128Concat,
 		RequestId,
-		PendingUpdate<T::AccountId>,
+		L2Request<T::AccountId>,
 		OptionQuery,
 	>;
 
@@ -392,7 +391,7 @@ pub mod pallet {
 			pending_updates::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				PendingUpdate::Cancel(cancel_request),
+				L2Request::Cancel(cancel_request),
 			);
 
 			Ok(().into())
@@ -449,7 +448,7 @@ pub mod pallet {
 			pending_updates::<T>::insert(
 				chain,
 				request_id,
-				PendingUpdate::Withdrawal(withdrawal_update),
+				L2Request::Withdrawal(withdrawal_update),
 			);
 
 			Ok(().into())
@@ -565,7 +564,7 @@ impl<T: Config> Pallet<T> {
 		pending_updates::<T>::insert(
 			l1,
 			request.request_id(),
-			PendingUpdate::RequestResult(RequestResult {
+			L2Request::RequestResult(RequestResult {
 				requestId: l2_request_id,
 				originRequestId: request.id(),
 				status,
@@ -688,7 +687,7 @@ impl<T: Config> Pallet<T> {
 
 		let cancel_update =
 			match pending_updates::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
-				Some(PendingUpdate::Cancel(cancel)) => Some(cancel),
+				Some(L2Request::Cancel(cancel)) => Some(cancel),
 				_ => None,
 			}
 			.ok_or("NoCancelRequest")?;
@@ -790,12 +789,12 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in pending_updates::<T>::iter_prefix(l1) {
 			match req {
-				PendingUpdate::RequestResult(result) =>
+				L2Request::RequestResult(result) =>
 					update.results.push(Self::to_eth_request_result(result)),
-				PendingUpdate::Cancel(cancel) => {
+				L2Request::Cancel(cancel) => {
 					update.cancels.push(Self::to_eth_cancel(cancel));
 				},
-				PendingUpdate::Withdrawal(withdrawal) => {
+				L2Request::Withdrawal(withdrawal) => {
 					update.withdrawals.push(Self::to_eth_withdrawal(withdrawal));
 				},
 			};

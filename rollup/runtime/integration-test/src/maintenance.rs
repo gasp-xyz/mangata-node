@@ -76,7 +76,7 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 		pallet_rolldown::pending_updates::<Runtime>::insert(
 			pallet_rolldown::messages::L1::Ethereum,
 			pallet_rolldown::messages::RequestId::default(),
-			pallet_rolldown::PendingUpdate::Withdrawal(Default::default()),
+			pallet_rolldown::L2Request::Withdrawal(Default::default()),
 		);
 
 		assert!(!Runtime::get_pending_updates().is_empty());

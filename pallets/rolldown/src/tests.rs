@@ -789,30 +789,30 @@ fn execute_a_lot_of_requests_in_following_blocks() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 		forward_to_block::<Test>(14);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 0u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 		assert_eq!(request_to_execute_cnt::<Test>::get(), 0u128);
 
 		forward_to_block::<Test>(15);
 		assert_eq!(
-			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
 			Rolldown::get_max_requests_per_block().into()
 		);
 
 		forward_to_block::<Test>(16);
 		assert_eq!(
-			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
 			(2u128 * Rolldown::get_max_requests_per_block()).into()
 		);
 
 		forward_to_block::<Test>(17);
 		assert_eq!(
-			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
 			requests_count as u128
 		);
 
 		forward_to_block::<Test>(100);
 		assert_eq!(
-			last_processed_request_on_l2::<Test>::get(Chain::Ethereum),
+			LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum),
 			requests_count as u128
 		);
 	});
@@ -835,13 +835,13 @@ fn ignore_duplicated_requests_when_already_executed() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
 
 		forward_to_block::<Test>(14);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 0u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 
 		forward_to_block::<Test>(15);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 5u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 5u128.into());
 
 		forward_to_block::<Test>(16);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 6u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 6u128.into());
 	});
 }
 
@@ -863,13 +863,13 @@ fn process_l1_reads_in_order() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
 
 		forward_to_block::<Test>(14);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 0u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 
 		forward_to_block::<Test>(15);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 10u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 10u128.into());
 
 		forward_to_block::<Test>(16);
-		assert_eq!(last_processed_request_on_l2::<Test>::get(Chain::Ethereum), 20u128.into());
+		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 20u128.into());
 	});
 }
 
@@ -1377,7 +1377,7 @@ fn test_withdrawal_resolution_works_passes_validation() {
 				])
 				.build();
 
-			last_processed_request_on_l2::<Test>::insert(Chain::Ethereum, 29);
+			LastProcessedRequestOnL2::<Test>::insert(Chain::Ethereum, 29);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 		});
 }

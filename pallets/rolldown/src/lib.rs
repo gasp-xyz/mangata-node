@@ -138,7 +138,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
-	pub type last_processed_request_on_l2<T: Config> =
+	pub type LastProcessedRequestOnL2<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
 
 	#[pallet::storage]
@@ -541,7 +541,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn process_single_request(l1: T::ChainId, request: messages::L1UpdateRequest) {
-		if request.id() <= last_processed_request_on_l2::<T>::get(l1) {
+		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
 			return
 		}
 
@@ -582,7 +582,7 @@ impl<T: Config> Pallet<T> {
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
 
-		last_processed_request_on_l2::<T>::insert(l1, request.id());
+		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
 
 	fn process_requests() {
@@ -597,7 +597,7 @@ impl<T: Config> Pallet<T> {
 				for req in r
 					.into_requests()
 					.into_iter()
-					.filter(|request| request.id() > last_processed_request_on_l2::<T>::get(l1))
+					.filter(|request| request.id() > LastProcessedRequestOnL2::<T>::get(l1))
 					.map(|val| Some(val))
 					.chain(sp_std::iter::repeat(None))
 					.take(limit.try_into().unwrap())
@@ -952,7 +952,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(lowest_id > 0u128, Error::<T>::WrongRequestId);
 
 		ensure!(
-			lowest_id <= last_processed_request_on_l2::<T>::get(l1) + 1,
+			lowest_id <= LastProcessedRequestOnL2::<T>::get(l1) + 1,
 			Error::<T>::WrongRequestId
 		);
 
@@ -962,7 +962,7 @@ impl<T: Config> Pallet<T> {
 			(update.pendingCancelResolutions.len() as u128) +
 			(update.pendingL2UpdatesToRemove.len() as u128);
 
-		ensure!(last_id > last_processed_request_on_l2::<T>::get(l1), Error::<T>::WrongRequestId);
+		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut withdrawal_it = update.pendingWithdrawalResolutions.iter();

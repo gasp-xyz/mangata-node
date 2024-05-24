@@ -7,7 +7,7 @@ use frame_support::{
 	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Chain, Origin, RequestId, UpdateType};
+use messages::{to_eth_u256, Origin, RequestId, UpdateType};
 use scale_info::prelude::{format, string::String};
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::collections::btree_map::BTreeMap;
@@ -1046,7 +1046,6 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {
 	fn new_sequencer_active(chain: T::ChainId, sequencer: &AccountIdOf<T>) {
-		// raise sequencer count
 		SequencersRights::<T>::mutate(chain, |sequencer_set| {
 			let count = sequencer_set.len() as u128;
 

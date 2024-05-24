@@ -11,6 +11,7 @@ use serial_test::serial;
 use sp_io::storage::rollback_transaction;
 use sp_runtime::traits::ConvertBack;
 use sp_std::iter::FromIterator;
+use crate::messages::Chain;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
 pub const ETH_TOKEN_ADDRESS_MGX: TokenId = 100_u32;

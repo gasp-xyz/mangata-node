@@ -498,7 +498,6 @@ pub(crate) fn roll_to(n: u64) {
 		System::on_initialize(System::block_number());
 		Tokens::on_initialize(System::block_number());
 		Stake::on_initialize(System::block_number());
-		println!("BLOCK NR: {} ", System::block_number());
 		if <Stake as pallet_session::ShouldEndSession<_>>::should_end_session(System::block_number())
 		{
 			if System::block_number().is_zero() {

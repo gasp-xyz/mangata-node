@@ -746,7 +746,7 @@ impl pallet_rolldown::Config for Runtime {
 // We havent spent any time considering rights multiplier being > 1. There might be some corner
 // cases that should be investigated.
 const_assert!(
-	<Runtime as pallet_rolldown::Config>::RightsMultiplier::get() == 1u128
+	<<Runtime as pallet_rolldown::Config>::RightsMultiplier as Get<u128>>::get() == 1u128
 );
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -887,12 +887,12 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_native_l1_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
+		fn get_native_sequencer_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(hex_payload).ok()
 		}
 
-		fn verify_pending_requests(chain: pallet_rolldown::messages::Chain, hash: sp_core::H256, request_id: u128) -> Option<bool> {
-			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(chain, hash, request_id)
+		fn verify_sequencer_update(chain: pallet_rolldown::messages::Chain, hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_sequencer_update(chain, hash, request_id)
 		}
 
 		fn get_last_processed_request_on_l2(chain: pallet_rolldown::messages::Chain) -> Option<u128>{

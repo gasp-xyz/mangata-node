@@ -29,14 +29,14 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	#[method(name = "rolldown_pending_l2_requests_proof")]
 	fn pending_l2_requests_proof(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
-	#[method(name = "rolldown_get_native_l1_update")]
-	fn get_native_l1_update(
+	#[method(name = "rolldown_get_native_sequencer_update")]
+	fn get_native_sequencer_update(
 		&self,
 		hex_payload: String,
 		at: Option<BlockHash>,
 	) -> RpcResult<Option<L1Update>>;
-	#[method(name = "rolldown_verify_pending_requests")]
-	fn verify_pending_requests(
+	#[method(name = "rolldown_verify_sequencer_update")]
+	fn verify_sequencer_update(
 		&self,
 		chain: Chain,
 		hash: H256,
@@ -99,7 +99,7 @@ where
 			)))
 		})
 	}
-	fn get_native_l1_update(
+	fn get_native_sequencer_update(
 		&self,
 		hex_payload: String,
 		at: Option<<Block as BlockT>::Hash>,
@@ -115,7 +115,7 @@ where
 			)))
 		})?;
 
-		api.get_native_l1_update(at, payload).map_err(|e| {
+		api.get_native_sequencer_update(at, payload).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",
@@ -124,7 +124,7 @@ where
 		})
 	}
 
-	fn verify_pending_requests(
+	fn verify_sequencer_update(
 		&self,
 		chain: Chain,
 		hash: H256,
@@ -133,7 +133,7 @@ where
 	) -> RpcResult<bool> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.verify_pending_requests(at, chain, hash, request_id)
+		api.verify_sequencer_update(at, chain, hash, request_id)
 			.map_err(|e| {
 				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 					1,

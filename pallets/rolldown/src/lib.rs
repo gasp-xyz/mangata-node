@@ -489,7 +489,7 @@ impl<T: Config> Pallet<T> {
 		T::RequestsPerBlock::get()
 	}
 
-	pub fn verify_pending_requests(
+	pub fn verify_sequencer_update(
 		chain: T::ChainId,
 		hash: H256,
 		request_id: u128,

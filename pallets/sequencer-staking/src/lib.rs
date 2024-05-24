@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
 	ensure,
@@ -322,7 +323,7 @@ pub mod pallet {
 				Error::<T>::SequencerIsNotInActiveSet
 			);
 
-			Self::remove_sequencers_from_active_set(chain, std::iter::once(sender).collect());
+			Self::remove_sequencers_from_active_set(chain, sp_std::iter::once(sender).collect());
 
 			Ok(().into())
 		}

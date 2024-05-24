@@ -181,7 +181,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	pub type request_to_execute_last<T: Config> = StorageValue<_, u128, ValueQuery>;
+	pub type LastExecutedUpdate<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -630,8 +630,8 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		let id = request_to_execute_last::<T>::get();
-		request_to_execute_last::<T>::put(id + 1);
+		let id = LastExecutedUpdate::<T>::get();
+		LastExecutedUpdate::<T>::put(id + 1);
 		request_to_execute::<T>::insert(id + 1, (chain, update));
 	}
 

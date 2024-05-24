@@ -75,7 +75,7 @@ where
 	) -> RpcResult<sp_core::H256> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates_hash(at, chain).map_err(|e| {
+		api.get_l2_request_hash(at, chain).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",
@@ -91,7 +91,7 @@ where
 	) -> RpcResult<Vec<u8>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_pending_updates(at, chain).map_err(|e| {
+		api.get_l2_request(at, chain).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

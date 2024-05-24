@@ -197,7 +197,7 @@ pub mod pallet {
 	//maps Chain and !!!! request origin id!!! to pending update
 	#[pallet::storage]
 	#[pallet::unbounded]
-	#[pallet::getter(fn get_pending_updates)]
+	#[pallet::getter(fn get_l2_request)]
 	pub type pending_updates<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

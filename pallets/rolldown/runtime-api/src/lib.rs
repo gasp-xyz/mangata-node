@@ -8,8 +8,8 @@ sp_api::decl_runtime_apis! {
 		L1Update: Decode,
 		Chain: Encode
 	{
-		fn get_pending_updates_hash(chain: Chain) -> H256;
-		fn get_pending_updates(chain: Chain) -> Vec<u8>;
+		fn get_l2_request_hash(chain: Chain) -> H256;
+		fn get_l2_request(chain: Chain) -> Vec<u8>;
 		fn get_native_l1_update(hex_payload: Vec<u8>) -> Option<L1Update>;
 		fn verify_pending_requests(chain: Chain, hash: H256, request_id: u128) -> Option<bool>;
 		fn get_last_processed_request_on_l2(chain: Chain) -> Option<u128>;

@@ -865,14 +865,14 @@ impl_runtime_apis! {
 	}
 
 	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::Chain> for Runtime {
-		fn get_pending_updates_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
+		fn get_l2_request_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
 				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof(chain)
 			} else {
 				Default::default()
 			}
 		}
-		fn get_pending_updates(chain: pallet_rolldown::messages::Chain) -> Vec<u8> {
+		fn get_l2_request(chain: pallet_rolldown::messages::Chain) -> Vec<u8> {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
 				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded(chain)
 			} else {

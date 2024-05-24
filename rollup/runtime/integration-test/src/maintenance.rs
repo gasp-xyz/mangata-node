@@ -79,8 +79,8 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 			pallet_rolldown::L2Request::Withdrawal(Default::default()),
 		);
 
-		assert!(!Runtime::get_pending_updates().is_empty());
-		assert!(!Runtime::get_pending_updates_hash().is_zero());
+		assert!(!Runtime::get_l2_request().is_empty());
+		assert!(!Runtime::get_l2_request_hash().is_zero());
 
 		assert_ok!(Maintenance::switch_maintenance_mode_on(
 			RuntimeOrigin::signed(
@@ -90,8 +90,8 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 			)
 			.into()
 		));
-		assert!(Runtime::get_pending_updates().is_empty());
-		assert!(Runtime::get_pending_updates_hash().is_zero());
+		assert!(Runtime::get_l2_request().is_empty());
+		assert!(Runtime::get_l2_request_hash().is_zero());
 
 		assert_ok!(Maintenance::switch_maintenance_mode_off(
 			RuntimeOrigin::signed(
@@ -101,7 +101,7 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 			)
 			.into()
 		));
-		assert!(!Runtime::get_pending_updates().is_empty());
-		assert!(!Runtime::get_pending_updates_hash().is_zero());
+		assert!(!Runtime::get_l2_request().is_empty());
+		assert!(!Runtime::get_l2_request_hash().is_zero());
 	});
 }

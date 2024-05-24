@@ -1,17 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::future::Pending;
-
+use sp_std::iter::Iterator;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion},
-	StorageHasher,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Chain, Origin, RequestId, UpdateType};
 use scale_info::prelude::{format, string::String};
-use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -38,9 +35,6 @@ pub type BalanceOf<T> =
 pub type ChainIdOf<T> = <T as pallet::Config>::ChainId;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-
-const DISPUTE_PERIOD_LENGTH: u128 = 5;
-const RIGHTS_MULTIPLIER: u128 = 1;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
 
@@ -102,8 +96,8 @@ pub mod pallet {
 		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default,
 	)]
 	pub struct SequencerRights {
-		pub readRights: u128,
-		pub cancelRights: u128,
+		pub read_rights: u128,
+		pub cancel_rights: u128,
 	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
@@ -282,6 +276,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type DisputePeriodLength: Get<u128>;
 		#[pallet::constant]
+		type RightsMultiplier: Get<u128>;
+		#[pallet::constant]
 		type RequestsPerBlock: Get<u128>;
 		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
 		type ChainId: From<messages::Chain>
@@ -364,8 +360,8 @@ pub mod pallet {
 			SequencersRights::<T>::try_mutate(chain, |sequencers| {
 				let rights =
 					sequencers.get_mut(&canceler).ok_or(Error::<T>::CancelRightsExhausted)?;
-				rights.cancelRights =
-					rights.cancelRights.checked_sub(1).ok_or(Error::<T>::CancelRightsExhausted)?;
+				rights.cancel_rights =
+					rights.cancel_rights.checked_sub(1).ok_or(Error::<T>::CancelRightsExhausted)?;
 				Ok::<_, Error<T>>(())
 			})?;
 
@@ -402,8 +398,8 @@ pub mod pallet {
 		pub fn withdraw(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
-			withdrawalRecipient: [u8; 20],
-			tokenAddress: [u8; 20],
+			recipient: [u8; 20],
+			token_address: [u8; 20],
 			amount: u128,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
@@ -413,7 +409,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let eth_asset = L1Asset::Ethereum(tokenAddress);
+			let eth_asset = L1Asset::Ethereum(token_address);
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone())
 				.ok_or(Error::<T>::MathOverflow)?;
 
@@ -440,8 +436,8 @@ pub mod pallet {
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
 				requestId: request_id.clone(),
-				withdrawalRecipient,
-				tokenAddress,
+				withdrawalRecipient: recipient,
+				tokenAddress: token_address,
 				amount: U256::from(amount),
 			};
 			// add cancel request to pending updates
@@ -468,13 +464,13 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let (submitter, request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
+			let (submitter, _request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			if T::SequencerStakingProvider::is_active_sequencer(chain, &submitter) {
 				SequencersRights::<T>::mutate(chain, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(&submitter) {
-						rights.readRights = 1;
+						rights.read_rights = 1;
 					}
 				});
 			}
@@ -520,7 +516,7 @@ impl<T: Config> Pallet<T> {
 			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
 				SequencersRights::<T>::mutate(l1, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(sequencer) {
-						rights.readRights = 1;
+						rights.read_rights = 1;
 					}
 				});
 			}
@@ -703,14 +699,14 @@ impl<T: Config> Pallet<T> {
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &updater) {
 			SequencersRights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&updater) {
-					rights.readRights.saturating_inc();
+					rights.read_rights.saturating_inc();
 				}
 			});
 		}
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &canceler) {
 			SequencersRights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&canceler) {
-					rights.cancelRights.saturating_inc();
+					rights.cancel_rights.saturating_inc();
 				}
 			});
 		}
@@ -812,21 +808,18 @@ impl<T: Config> Pallet<T> {
 		chain: T::ChainId,
 		deactivated_sequencers: BTreeSet<T::AccountId>,
 	) {
-		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
-
-		// remove all rights of deactivated sequencer
 		SequencersRights::<T>::mutate(chain, |sequencers_set| {
 			let mut removed: usize = 0;
 			for seq in deactivated_sequencers.iter() {
 				if sequencers_set.remove(seq).is_some() {
-					removed += 1;
+					removed.saturating_inc();
 				}
 			}
 
 			for (_, rights) in sequencers_set.iter_mut() {
-				rights.cancelRights = rights
-					.cancelRights
-					.saturating_sub(RIGHTS_MULTIPLIER.saturating_mul(removed as u128));
+				rights.cancel_rights = rights
+					.cancel_rights
+					.saturating_sub(T::RightsMultiplier::get().saturating_mul(removed as u128));
 			}
 		});
 	}
@@ -1009,8 +1002,8 @@ impl<T: Config> Pallet<T> {
 
 		// ensure sequencer has rights to update
 		if let Some(rights) = SequencersRights::<T>::get(&l1).get(&sequencer) {
-			if rights.readRights == 0u128 {
-				log!(debug, "{:?} does not have sufficient readRights", sequencer);
+			if rights.read_rights == 0u128 {
+				log!(debug, "{:?} does not have sufficient read_rights", sequencer);
 				return Err(Error::<T>::OperationFailed.into())
 			}
 		} else {
@@ -1018,10 +1011,10 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::OperationFailed.into())
 		}
 
-		// // Decrease readRights by 1
+		// // Decrease read_rights by 1
 		SequencersRights::<T>::mutate(l1, |sequencers_set| {
 			if let Some(rights) = sequencers_set.get_mut(&sequencer) {
-				rights.readRights -= 1;
+				rights.read_rights -= 1;
 			}
 		});
 
@@ -1060,13 +1053,13 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 			sequencer_set.insert(
 				sequencer.clone(),
 				SequencerRights {
-					readRights: RIGHTS_MULTIPLIER,
-					cancelRights: count.saturating_mul(RIGHTS_MULTIPLIER),
+					read_rights: T::RightsMultiplier::get(),
+					cancel_rights: count.saturating_mul(T::RightsMultiplier::get()),
 				},
 			);
 
 			for (_, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
-				rights.cancelRights.saturating_accrue(RIGHTS_MULTIPLIER)
+				rights.cancel_rights.saturating_accrue(T::RightsMultiplier::get())
 			}
 		});
 	}

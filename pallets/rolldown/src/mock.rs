@@ -149,6 +149,7 @@ impl rolldown::Config for Test {
 	type RequestsPerBlock = ConstU128<10>;
 	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
 	type ChainId = messages::Chain;
+	type RightsMultiplier = ConstU128<1>;
 }
 
 pub struct ExtBuilder {
@@ -185,13 +186,13 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Tokens storage can be assimilated");
 
-		let mut ext = sp_io::TestExternalities::new(t);
+		let ext = sp_io::TestExternalities::new(t);
 
 		Self { ext }
 	}
 
 	pub fn single_sequencer(seq: AccountId) -> Self {
-		let mut t = frame_system::GenesisConfig::<Test>::default()
+		let t = frame_system::GenesisConfig::<Test>::default()
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 

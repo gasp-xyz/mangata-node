@@ -738,9 +738,16 @@ impl pallet_rolldown::Config for Runtime {
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
 	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
 	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
+	type RightsMultiplier = frame_support::traits::ConstU128<1>;
 	type MaintenanceStatusProvider = Maintenance;
 	type ChainId = pallet_rolldown::messages::Chain;
 }
+
+// We havent spent any time considering rights multiplier being > 1. There might be some corner
+// cases that should be investigated.
+const_assert!(
+	<Runtime as pallet_rolldown::Config>::RightsMultiplier::get() == 1u128
+);
 
 impl pallet_sequencer_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

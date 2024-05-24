@@ -86,7 +86,7 @@ fn error_on_empty_update() {
 #[serial]
 fn test_genesis() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		assert_eq!(SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().readRights, 1);
+		assert_eq!(SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap().read_rights, 1);
 	});
 }
 
@@ -641,22 +641,22 @@ fn test_cancel_removes_cancel_right() {
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
 			);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 
 			Rolldown::cancel_requests_from_l1(
@@ -669,28 +669,28 @@ fn test_cancel_removes_cancel_right() {
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
 			);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 1u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
 			);
 
 			forward_to_block::<Test>(11);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 1u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 1u128 }
 			);
 
 			forward_to_block::<Test>(16);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 		});
 }
@@ -754,12 +754,12 @@ fn cancel_request_as_council_executed_immadiately() {
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
 			);
 
 			Rolldown::force_cancel_requests_from_l1(
@@ -770,7 +770,7 @@ fn cancel_request_as_council_executed_immadiately() {
 			.unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 2u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 		});
 }
@@ -1447,7 +1447,7 @@ fn test_new_sequencer_active() {
 			);
 			assert!(SequencersRights::<Test>::get(consts::CHAIN)
 				.iter()
-				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+				.all(|(_, x)| x.read_rights == read_rights && x.cancel_rights == cancel_rights));
 
 			assert_eq!(
 				SequencersRights::<Test>::get(consts::CHAIN).into_values().count(),
@@ -1635,7 +1635,7 @@ fn test_handle_sequencer_deactivations() {
 			);
 			assert!(SequencersRights::<Test>::get(consts::CHAIN)
 				.iter()
-				.all(|(_, x)| x.readRights == read_rights && x.cancelRights == cancel_rights));
+				.all(|(_, x)| x.read_rights == read_rights && x.cancel_rights == cancel_rights));
 			assert_eq!(
 				SequencersRights::<Test>::get(consts::CHAIN).keys().count(),
 				(total_sequencers - acc) as usize
@@ -1710,7 +1710,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_blo
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 0u128 }
 			);
 
 			// Act
@@ -1718,7 +1718,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_blo
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 0u128 }
 			);
 
 			assert_err!(
@@ -1754,7 +1754,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 1u128, cancelRights: 0u128 }
+				SequencerRights { read_rights: 1u128, cancel_rights: 0u128 }
 			);
 
 			// Act
@@ -1762,7 +1762,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
-				SequencerRights { readRights: 0u128, cancelRights: 0u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 0u128 }
 			);
 
 			forward_to_block::<Test>(11);

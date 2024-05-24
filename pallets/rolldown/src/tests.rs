@@ -134,18 +134,18 @@ fn create_pending_update_after_dispute_period() {
 		forward_to_block::<Test>(11);
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
 
-		assert_eq!(pending_updates::<Test>::iter().next(), None);
-		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+		assert_eq!(L2Requests::<Test>::iter().next(), None);
+		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
 			.is_none());
-		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
+		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
 			.is_none());
 
 		forward_to_block::<Test>(15);
-		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
 			.is_some());
 
 		forward_to_block::<Test>(16);
-		assert!(pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
+		assert!(L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 2u128))
 			.is_some());
 	});
 }
@@ -199,7 +199,7 @@ fn deposit_executed_after_dispute_period() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 0u128)
 			));
@@ -207,7 +207,7 @@ fn deposit_executed_after_dispute_period() {
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
 				Some(L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
@@ -238,7 +238,7 @@ fn deposit_fail_creates_update_with_status_false() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 0u128)
 			));
@@ -246,7 +246,7 @@ fn deposit_fail_creates_update_with_status_false() {
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
 				Some(L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
@@ -275,12 +275,12 @@ fn l1_upate_executed_immaidately_if_force_submitted() {
 				.build();
 
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 1u128)
 			));
 			Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), update).unwrap();
-			assert!(pending_updates::<Test>::contains_key(
+			assert!(L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 1u128)
 			));
@@ -310,7 +310,7 @@ fn each_request_executed_only_once() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
 
 			forward_to_block::<Test>(14);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 0u128)
 			));
@@ -354,14 +354,14 @@ fn updates_to_remove_executed_after_dispute_period() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 			forward_to_block::<Test>(15);
-			assert!(pending_updates::<Test>::contains_key(
+			assert!(L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 1u128)
 			));
 
 			forward_to_block::<Test>(100);
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
 				Some(L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
@@ -373,21 +373,21 @@ fn updates_to_remove_executed_after_dispute_period() {
 				.unwrap();
 
 			forward_to_block::<Test>(104);
-			assert!(pending_updates::<Test>::contains_key(
+			assert!(L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 1u128)
 			));
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 2u128)
 			));
 
 			forward_to_block::<Test>(105);
-			assert!(pending_updates::<Test>::contains_key(
+			assert!(L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 2u128)
 			));
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L1, 1u128)
 			));
@@ -974,7 +974,7 @@ fn accept_consecutive_update_split_into_two() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 		forward_to_block::<Test>(15);
-		let mut expected_updates = pending_updates::<Test>::iter_prefix(Chain::Ethereum)
+		let mut expected_updates = L2Requests::<Test>::iter_prefix(Chain::Ethereum)
 			.map(|(k, _)| k.id)
 			.collect::<Vec<_>>();
 		expected_updates.sort();
@@ -985,7 +985,7 @@ fn accept_consecutive_update_split_into_two() {
 		);
 
 		forward_to_block::<Test>(16);
-		let mut expected_updates = pending_updates::<Test>::iter_prefix(Chain::Ethereum)
+		let mut expected_updates = L2Requests::<Test>::iter_prefix(Chain::Ethereum)
 			.map(|(k, _)| k.id)
 			.collect::<Vec<_>>();
 		expected_updates.sort();
@@ -1085,7 +1085,7 @@ fn test_withdraw() {
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), 0_u128);
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
 				Some(L2Request::Withdrawal(withdrawal_update))
 			);
 			assert_eq!(Rolldown::get_l2_origin_updates_counter(Chain::Ethereum), 2);
@@ -1113,7 +1113,7 @@ fn error_on_withdraw_too_much() {
 
 #[test]
 #[serial]
-fn test_remove_pending_updates() {
+fn test_remove_pending_l2_requests_proof() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
@@ -1168,11 +1168,11 @@ fn test_remove_pending_updates() {
 				)),
 			};
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
 				Some(L2Request::Cancel(cancel_update))
 			);
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 2u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 2u128)),
 				Some(L2Request::Withdrawal(withdrawal_update))
 			);
 
@@ -1180,7 +1180,7 @@ fn test_remove_pending_updates() {
 			forward_to_block::<Test>(20);
 
 			assert_eq!(
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
 				Some(L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 3u128),
 					originRequestId: 1u128,
@@ -1196,7 +1196,7 @@ fn test_remove_pending_updates() {
 				timeStamp: sp_core::U256::from(1),
 			};
 
-			let remove_pending_updates_request = messages::L2UpdatesToRemove {
+			let remove_pending_l2_requests_proof_request = messages::L2UpdatesToRemove {
 				requestId: RequestId { origin: Origin::L1, id: 3u128 },
 				l2UpdatesToRemove: vec![1u128],
 				timeStamp: sp_core::U256::from(1),
@@ -1204,7 +1204,7 @@ fn test_remove_pending_updates() {
 
 			let update_with_remove_and_resolution = L1UpdateBuilder::new()
 				.with_requests(vec![
-					L1UpdateRequest::Remove(remove_pending_updates_request),
+					L1UpdateRequest::Remove(remove_pending_l2_requests_proof_request),
 					L1UpdateRequest::CancelResolution(cancel_resolution_request),
 				])
 				.build();
@@ -1217,14 +1217,14 @@ fn test_remove_pending_updates() {
 
 			forward_to_block::<Test>(30);
 			assert_eq!(
-				pending_updates::<Test>::get(
+				L2Requests::<Test>::get(
 					Chain::Ethereum,
 					RequestId { origin: Origin::L1, id: 1u128 }
 				),
 				None
 			);
 			assert_eq!(
-				pending_updates::<Test>::get(
+				L2Requests::<Test>::get(
 					Chain::Ethereum,
 					RequestId { origin: Origin::L2, id: 1u128 }
 				),
@@ -1289,7 +1289,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 			forward_to_block::<Test>(20);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L2, 3u128)
 			));
@@ -1301,12 +1301,12 @@ fn test_reproduce_bug_with_incremental_updates() {
 				10u128,
 			)
 			.unwrap();
-			assert!(pending_updates::<Test>::contains_key(
+			assert!(L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L2, 3u128)
 			));
 			let withdrawal_update =
-				pending_updates::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 3u128));
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 3u128));
 			assert!(matches!(withdrawal_update, Some(L2Request::Withdrawal(_))));
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), second_update).unwrap();
@@ -1315,7 +1315,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), third_update).unwrap();
 
 			forward_to_block::<Test>(40);
-			assert!(!pending_updates::<Test>::contains_key(
+			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
 				RequestId::new(Origin::L2, 3u128)
 			));

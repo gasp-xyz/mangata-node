@@ -198,7 +198,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_l2_request)]
-	pub type pending_updates<T: Config> = StorageDoubleMap<
+	pub type L2Requests<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		T::ChainId,
@@ -388,7 +388,7 @@ pub mod pallet {
 			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| v.insert(l2_request_id));
 			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| v.insert(l2_request_id));
 
-			pending_updates::<T>::insert(
+			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
 				L2Request::Cancel(cancel_request),
@@ -445,7 +445,7 @@ pub mod pallet {
 				amount: U256::from(amount),
 			};
 			// add cancel request to pending updates
-			pending_updates::<T>::insert(
+			L2Requests::<T>::insert(
 				chain,
 				request_id,
 				L2Request::Withdrawal(withdrawal_update),
@@ -561,7 +561,7 @@ impl<T: Config> Pallet<T> {
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
 		};
 
-		pending_updates::<T>::insert(
+		L2Requests::<T>::insert(
 			l1,
 			request.request_id(),
 			L2Request::RequestResult(RequestResult {
@@ -668,7 +668,7 @@ impl<T: Config> Pallet<T> {
 		l1: T::ChainId,
 		withdrawal_resolution: &messages::WithdrawalResolution,
 	) -> Result<(), &'static str> {
-		pending_updates::<T>::remove(
+		L2Requests::<T>::remove(
 			l1,
 			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
 		);
@@ -686,7 +686,7 @@ impl<T: Config> Pallet<T> {
 		let cancel_justified = cancel_resolution.cancelJustified;
 
 		let cancel_update =
-			match pending_updates::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
+			match L2Requests::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
 				Some(L2Request::Cancel(cancel)) => Some(cancel),
 				_ => None,
 			}
@@ -715,7 +715,7 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		pending_updates::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
+		L2Requests::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
 
 		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| v.remove(&cancel_request_id));
 		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| v.remove(&cancel_request_id));
@@ -735,7 +735,7 @@ impl<T: Config> Pallet<T> {
 		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
 	) -> Result<(), &'static str> {
 		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			pending_updates::<T>::remove(l1, RequestId { origin: Origin::L1, id: *requestId });
+			L2Requests::<T>::remove(l1, RequestId { origin: Origin::L1, id: *requestId });
 		}
 
 		log!(
@@ -787,7 +787,7 @@ impl<T: Config> Pallet<T> {
 			withdrawals: Vec::new(),
 		};
 
-		for (request_id, req) in pending_updates::<T>::iter_prefix(l1) {
+		for (request_id, req) in L2Requests::<T>::iter_prefix(l1) {
 			match req {
 				L2Request::RequestResult(result) =>
 					update.results.push(Self::to_eth_request_result(result)),
@@ -831,7 +831,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub fn pending_updates_proof(chain: T::ChainId) -> sp_core::H256 {
+	pub fn pending_l2_requests_proof_proof(chain: T::ChainId) -> sp_core::H256 {
 		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
 		hash.into()
 	}

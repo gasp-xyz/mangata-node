@@ -73,7 +73,7 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 	use rolldown_runtime_api::runtime_decl_for_rolldown_runtime_api::RolldownRuntimeApiV1;
 	test_env().execute_with(|| {
 		System::set_block_number(1);
-		pallet_rolldown::pending_updates::<Runtime>::insert(
+		pallet_rolldown::L2Requests::<Runtime>::insert(
 			pallet_rolldown::messages::L1::Ethereum,
 			pallet_rolldown::messages::RequestId::default(),
 			pallet_rolldown::L2Request::Withdrawal(Default::default()),

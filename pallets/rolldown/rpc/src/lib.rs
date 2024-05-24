@@ -22,12 +22,12 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	/// * `account` - user account address
 	/// * `liquidity_token` - liquidity token id
 	/// * `at` - optional block hash
-	#[method(name = "rolldown_pending_updates_hash")]
-	fn pending_updates_hash(&self, chain: Chain, at: Option<BlockHash>)
+	#[method(name = "rolldown_pending_l2_requests_proof_hash")]
+	fn pending_l2_requests_proof_hash(&self, chain: Chain, at: Option<BlockHash>)
 		-> RpcResult<sp_core::H256>;
 
-	#[method(name = "rolldown_pending_updates")]
-	fn pending_updates(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
+	#[method(name = "rolldown_pending_l2_requests_proof")]
+	fn pending_l2_requests_proof(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
 	#[method(name = "rolldown_get_native_l1_update")]
 	fn get_native_l1_update(
@@ -68,7 +68,7 @@ where
 	C: HeaderBackend<Block>,
 	C::Api: RolldownRuntimeApi<Block, L1Update, Chain>,
 {
-	fn pending_updates_hash(
+	fn pending_l2_requests_proof_hash(
 		&self,
 		chain: Chain,
 		at: Option<<Block as BlockT>::Hash>,
@@ -84,7 +84,7 @@ where
 		})
 	}
 
-	fn pending_updates(
+	fn pending_l2_requests_proof(
 		&self,
 		chain: Chain,
 		at: Option<<Block as BlockT>::Hash>,

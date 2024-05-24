@@ -111,8 +111,8 @@ pub mod pallet {
 
 				T::RolldownProvider::new_sequencer_active(*chain, &sender);
 
-				// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
-				// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
+				// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
+				// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
 				assert!(T::Currency::reserve(&sender, *stake_amount).is_ok());
 			}
 
@@ -303,8 +303,8 @@ pub mod pallet {
 				Ok(())
 			})?;
 
-			// add full rights to sequencer (create whole entry in sequencer_rights @ rolldown)
-			// add +1 cancel right to all other sequencers (non active are deleted from sequencer_rights @ rolldown)
+			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
+			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
 			T::Currency::reserve(&sender, stake_amount)?;
 
 			Ok(().into())

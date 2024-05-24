@@ -172,21 +172,22 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	pub type request_to_execute<T: Config> =
+    // queue of all updates that went through dispute period and are ready to be processed
+	pub type UpdatesExecutionQueue<T: Config> =
 		StorageMap<_, Blake2_128Concat, u128, (T::ChainId, messages::L1Update), OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::unbounded]
-	pub type UpdateToExecuteNextId<T: Config> = StorageValue<_, u128, ValueQuery>;
+    // Id of the next update to be executed
+	pub type UpdatesExecutionQueueNextId<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	#[pallet::storage]
+    // Id of the last update that has been executed
+	pub type LastScheduledUpdateIdInExecutionQueue<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	pub type LastExecutedUpdate<T: Config> = StorageValue<_, u128, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_sequencer_rights)]
-	pub type sequencer_rights<T: Config> = StorageMap<
+	#[pallet::getter(fn get_SequencerRights)]
+	pub type SequencersRights<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::ChainId,
@@ -361,7 +362,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			sequencer_rights::<T>::try_mutate(chain, |sequencers| {
+			SequencersRights::<T>::try_mutate(chain, |sequencers| {
 				let rights =
 					sequencers.get_mut(&canceler).ok_or(Error::<T>::CancelRightsExhausted)?;
 				rights.cancelRights =
@@ -472,7 +473,7 @@ pub mod pallet {
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			if T::SequencerStakingProvider::is_active_sequencer(chain, &submitter) {
-				sequencer_rights::<T>::mutate(chain, |sequencers| {
+				SequencersRights::<T>::mutate(chain, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(&submitter) {
 						rights.readRights = 1;
 					}
@@ -518,7 +519,7 @@ impl<T: Config> Pallet<T> {
 			let requests = pending_requests_to_process.1.clone();
 
 			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
-				sequencer_rights::<T>::mutate(l1, |sequencers| {
+				SequencersRights::<T>::mutate(l1, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(sequencer) {
 						rights.readRights = 1;
 					}
@@ -584,7 +585,7 @@ impl<T: Config> Pallet<T> {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) = request_to_execute::<T>::get(UpdateToExecuteNextId::<T>::get())
+			if let Some((l1, r)) = UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
 				for req in r
 					.into_requests()
@@ -598,14 +599,14 @@ impl<T: Config> Pallet<T> {
 						Self::process_single_request(l1, request);
 						limit -= 1;
 					} else {
-						request_to_execute::<T>::remove(UpdateToExecuteNextId::<T>::get());
-						UpdateToExecuteNextId::<T>::mutate(|v| *v += 1);
+						UpdatesExecutionQueue::<T>::remove(UpdatesExecutionQueueNextId::<T>::get());
+						UpdatesExecutionQueueNextId::<T>::mutate(|v| *v += 1);
 						break
 					}
 				}
 			} else {
-				if request_to_execute::<T>::contains_key(UpdateToExecuteNextId::<T>::get() + 1) {
-					UpdateToExecuteNextId::<T>::mutate(|v| *v += 1);
+				if UpdatesExecutionQueue::<T>::contains_key(UpdatesExecutionQueueNextId::<T>::get() + 1) {
+					UpdatesExecutionQueueNextId::<T>::mutate(|v| *v += 1);
 				} else {
 					break
 				}
@@ -630,9 +631,9 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		let id = LastExecutedUpdate::<T>::get();
-		LastExecutedUpdate::<T>::put(id + 1);
-		request_to_execute::<T>::insert(id + 1, (chain, update));
+		let id = LastScheduledUpdateIdInExecutionQueue::<T>::get();
+		LastScheduledUpdateIdInExecutionQueue::<T>::put(id + 1);
+		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
 	}
 
 	fn process_deposit(deposit_request_details: &messages::Deposit) -> Result<(), &'static str> {
@@ -701,14 +702,14 @@ impl<T: Config> Pallet<T> {
 		};
 
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &updater) {
-			sequencer_rights::<T>::mutate(l1, |sequencers| {
+			SequencersRights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&updater) {
 					rights.readRights.saturating_inc();
 				}
 			});
 		}
 		if T::SequencerStakingProvider::is_active_sequencer(l1, &canceler) {
-			sequencer_rights::<T>::mutate(l1, |sequencers| {
+			SequencersRights::<T>::mutate(l1, |sequencers| {
 				if let Some(rights) = sequencers.get_mut(&canceler) {
 					rights.cancelRights.saturating_inc();
 				}
@@ -815,7 +816,7 @@ impl<T: Config> Pallet<T> {
 		let deactivated_sequencers_len = deactivated_sequencers.len() as u32;
 
 		// remove all rights of deactivated sequencer
-		sequencer_rights::<T>::mutate(chain, |sequencers_set| {
+		SequencersRights::<T>::mutate(chain, |sequencers_set| {
 			let mut removed: usize = 0;
 			for seq in deactivated_sequencers.iter() {
 				if sequencers_set.remove(seq).is_some() {
@@ -1008,7 +1009,7 @@ impl<T: Config> Pallet<T> {
 		let dispute_period_end: u128 = current_block_number + dispute_period_length;
 
 		// ensure sequencer has rights to update
-		if let Some(rights) = sequencer_rights::<T>::get(&l1).get(&sequencer) {
+		if let Some(rights) = SequencersRights::<T>::get(&l1).get(&sequencer) {
 			if rights.readRights == 0u128 {
 				log!(debug, "{:?} does not have sufficient readRights", sequencer);
 				return Err(Error::<T>::OperationFailed.into())
@@ -1019,7 +1020,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		// // Decrease readRights by 1
-		sequencer_rights::<T>::mutate(l1, |sequencers_set| {
+		SequencersRights::<T>::mutate(l1, |sequencers_set| {
 			if let Some(rights) = sequencers_set.get_mut(&sequencer) {
 				rights.readRights -= 1;
 			}
@@ -1054,7 +1055,7 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {
 	fn new_sequencer_active(chain: T::ChainId, sequencer: &AccountIdOf<T>) {
 		// raise sequencer count
-		sequencer_rights::<T>::mutate(chain, |sequencer_set| {
+		SequencersRights::<T>::mutate(chain, |sequencer_set| {
 			let count = sequencer_set.len() as u128;
 
 			sequencer_set.insert(

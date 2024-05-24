@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::future::Pending;
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -155,7 +157,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
-	pub type pending_requests<T: Config> = StorageDoubleMap<
+	pub type PendingSequencerUpdates<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		u128,
@@ -364,7 +366,7 @@ pub mod pallet {
 				Ok::<_, Error<T>>(())
 			})?;
 
-			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, chain)
+			let (submitter, request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
@@ -463,7 +465,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let (submitter, request) = pending_requests::<T>::take(requests_to_cancel, chain)
+			let (submitter, request) = PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 				.ok_or(Error::<T>::RequestDoesNotExist)?;
 
 			if T::SequencerStakingProvider::is_active_sequencer(chain, &submitter) {
@@ -493,7 +495,7 @@ impl<T: Config> Pallet<T> {
 		hash: H256,
 		request_id: u128,
 	) -> Option<bool> {
-		let pending_requests_to_process = pending_requests::<T>::get(request_id, chain);
+		let pending_requests_to_process = PendingSequencerUpdates::<T>::get(request_id, chain);
 		if let Some((_, l1_update)) = pending_requests_to_process {
 			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
 			Some(hash == calculated_hash)
@@ -506,7 +508,7 @@ impl<T: Config> Pallet<T> {
 	fn end_dispute_period() {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
-		for (l1, pending_requests_to_process) in pending_requests::<T>::iter_prefix(block_number) {
+		for (l1, pending_requests_to_process) in PendingSequencerUpdates::<T>::iter_prefix(block_number) {
 			log!(debug, "dispute end {:?}", block_number);
 
 			let sequencer = &pending_requests_to_process.0;
@@ -523,7 +525,7 @@ impl<T: Config> Pallet<T> {
 			Self::schedule_requests(l1, requests.clone());
 		}
 
-		let _ = pending_requests::<T>::clear_prefix(
+		let _ = PendingSequencerUpdates::<T>::clear_prefix(
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
 			u32::MAX,
 			None,
@@ -1021,12 +1023,12 @@ impl<T: Config> Pallet<T> {
 		});
 
 		ensure!(
-			!pending_requests::<T>::contains_key(dispute_period_end, l1),
+			!PendingSequencerUpdates::<T>::contains_key(dispute_period_end, l1),
 			Error::<T>::MultipleUpdatesInSingleBlock
 		);
 
 		// insert pending_requests
-		pending_requests::<T>::insert(dispute_period_end, l1, (sequencer.clone(), read.clone()));
+		PendingSequencerUpdates::<T>::insert(dispute_period_end, l1, (sequencer.clone(), read.clone()));
 
 		let update: messages::eth_abi::L1Update = read.clone().into();
 		let request_hash = Keccak256::digest(&update.abi_encode());

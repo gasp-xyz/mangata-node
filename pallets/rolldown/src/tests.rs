@@ -424,11 +424,11 @@ fn test_cancel_removes_pending_requests() {
 				)])
 				.build();
 
-			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-			assert!(pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
@@ -437,7 +437,7 @@ fn test_cancel_removes_pending_requests() {
 			.unwrap();
 
 			// Assert
-			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 		});
 }
 
@@ -457,7 +457,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 			let req: messages::eth_abi::L1Update =
-				pending_requests::<Test>::get(15u128, Chain::Ethereum).unwrap().1.into();
+				PendingSequencerUpdates::<Test>::get(15u128, Chain::Ethereum).unwrap().1.into();
 
 			assert_eq!(
 				Rolldown::get_l2_update(Chain::Ethereum),
@@ -666,7 +666,7 @@ fn test_cancel_removes_cancel_right() {
 			)
 			.unwrap();
 
-			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 			assert_eq!(
 				*sequencer_rights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { readRights: 0u128, cancelRights: 2u128 }
@@ -1520,11 +1520,11 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 				])
 				.build();
 
-			assert!(!pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-			assert!(pending_requests::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,

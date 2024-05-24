@@ -177,7 +177,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::unbounded]
-	pub type request_to_execute_cnt<T: Config> = StorageValue<_, u128, ValueQuery>;
+	pub type UpdateToExecuteNextId<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -584,7 +584,7 @@ impl<T: Config> Pallet<T> {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) = request_to_execute::<T>::get(request_to_execute_cnt::<T>::get())
+			if let Some((l1, r)) = request_to_execute::<T>::get(UpdateToExecuteNextId::<T>::get())
 			{
 				for req in r
 					.into_requests()
@@ -598,14 +598,14 @@ impl<T: Config> Pallet<T> {
 						Self::process_single_request(l1, request);
 						limit -= 1;
 					} else {
-						request_to_execute::<T>::remove(request_to_execute_cnt::<T>::get());
-						request_to_execute_cnt::<T>::mutate(|v| *v += 1);
+						request_to_execute::<T>::remove(UpdateToExecuteNextId::<T>::get());
+						UpdateToExecuteNextId::<T>::mutate(|v| *v += 1);
 						break
 					}
 				}
 			} else {
-				if request_to_execute::<T>::contains_key(request_to_execute_cnt::<T>::get() + 1) {
-					request_to_execute_cnt::<T>::mutate(|v| *v += 1);
+				if request_to_execute::<T>::contains_key(UpdateToExecuteNextId::<T>::get() + 1) {
+					UpdateToExecuteNextId::<T>::mutate(|v| *v += 1);
 				} else {
 					break
 				}

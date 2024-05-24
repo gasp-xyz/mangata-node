@@ -789,7 +789,7 @@ fn execute_a_lot_of_requests_in_following_blocks() {
 
 		forward_to_block::<Test>(14);
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
-		assert_eq!(request_to_execute_cnt::<Test>::get(), 0u128);
+		assert_eq!(UpdateToExecuteNextId::<Test>::get(), 0u128);
 
 		forward_to_block::<Test>(15);
 		assert_eq!(

@@ -1507,11 +1507,6 @@ pub mod pallet {
 		type StakingIssuanceVault: Get<Self::AccountId>;
 		/// The module that provides the set of fallback accounts
 		type FallbackProvider: GetMembers<Self::AccountId>;
-		/// The module that provides the info and processing for the sequencer stakes
-		// type SequencerStakingProvider: SequencerStakingProviderTrait<
-		// 	Self::AccountId,
-		// 	BalanceOf<Self>,
-		// >;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}

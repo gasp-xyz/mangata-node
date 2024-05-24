@@ -140,11 +140,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
+    // Id of the last request originating on other chain that has been executed
 	pub type LastProcessedRequestOnL2<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
+    // Id of the next request that will originate on this chain
 	pub type L2OriginRequestId<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -157,6 +159,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
+    // Stores requests brought by sequencer that are under dispute period.
 	pub type PendingSequencerUpdates<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,

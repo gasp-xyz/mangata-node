@@ -143,7 +143,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_l2_origin_updates_counter)]
-	pub type l2_origin_request_id<T: Config> = StorageMap<
+	pub type L2OriginRequestId<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::ChainId,
@@ -369,8 +369,8 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
-			let l2_request_id = l2_origin_request_id::<T>::get(chain);
-			l2_origin_request_id::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
+			let l2_request_id = L2OriginRequestId::<T>::get(chain);
+			L2OriginRequestId::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
 
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
@@ -429,8 +429,8 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let l2_request_id = l2_origin_request_id::<T>::get(chain);
-			l2_origin_request_id::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
+			let l2_request_id = L2OriginRequestId::<T>::get(chain);
+			L2OriginRequestId::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
 
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
@@ -536,8 +536,8 @@ impl<T: Config> Pallet<T> {
 			return
 		}
 
-		let id = l2_origin_request_id::<T>::get(l1);
-		l2_origin_request_id::<T>::mutate(l1, |request_id| { request_id.saturating_inc(); });
+		let id = L2OriginRequestId::<T>::get(l1);
+		L2OriginRequestId::<T>::mutate(l1, |request_id| { request_id.saturating_inc(); });
 
 		let l2_request_id = RequestId { origin: Origin::L2, id };
 

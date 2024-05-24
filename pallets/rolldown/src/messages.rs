@@ -359,7 +359,6 @@ pub fn from_eth_u256(value: alloy_primitives::U256) -> U256 {
 impl Into<eth_abi::L1Update> for L1Update {
 	fn into(self) -> eth_abi::L1Update {
 		eth_abi::L1Update {
-			// TODO: fix
 			chain: self.chain.into(),
 			pendingDeposits: self.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingCancelResolutions: self

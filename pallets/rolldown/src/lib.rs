@@ -209,7 +209,6 @@ pub mod pallet {
 	pub type AwaitingCancelResolution<T: Config> =
 		StorageMap<_, Blake2_128Concat, (T::ChainId, T::AccountId), BTreeSet<u128>, ValueQuery>;
 
-	//TODO: MAKE Multi chain
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_update_by_sequencer)]
 	pub type LastUpdateBySequencer<T: Config> =
@@ -370,13 +369,9 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
-			let l2_request_id = l2_origin_request_id::<T>::mutate(chain, |request_id| {
-				let current = request_id.clone();
-				// TODO: safe math
-				*request_id += 1;
-				current
-			});
-			// create cancel request
+			let l2_request_id = l2_origin_request_id::<T>::get(chain);
+			l2_origin_request_id::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
+
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
 				updater: submitter.clone(),
@@ -434,12 +429,8 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let l2_request_id = l2_origin_request_id::<T>::mutate(chain, |request_id| {
-				let current = request_id.clone();
-				// TODO: safe math
-				*request_id += 1;
-				current
-			});
+			let l2_request_id = l2_origin_request_id::<T>::get(chain);
+			l2_origin_request_id::<T>::mutate(chain, |request_id| { request_id.saturating_inc() });
 
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
@@ -545,12 +536,8 @@ impl<T: Config> Pallet<T> {
 			return
 		}
 
-		let id = l2_origin_request_id::<T>::mutate(l1, |request_id| {
-			let current = request_id.clone();
-			// TODO: safe math
-			*request_id += 1;
-			current
-		});
+		let id = l2_origin_request_id::<T>::get(l1);
+		l2_origin_request_id::<T>::mutate(l1, |request_id| { request_id.saturating_inc(); });
 
 		let l2_request_id = RequestId { origin: Origin::L2, id };
 

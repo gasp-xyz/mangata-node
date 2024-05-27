@@ -23,6 +23,7 @@ chains
 ./docker-cargo/*
 
 !target/release/rollup-node
+!target/release/wbuild/rollup-runtime/*.wasm
 !docker-cargo/release/rollup-node
 
 # dotfiles in the repo root

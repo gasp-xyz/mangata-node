@@ -307,7 +307,6 @@ impl Config for Test {
 	type StakingLiquidityTokenValuator = TestTokenValuator;
 	type Issuance = MockIssuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
-	type SequencerStakingProvider = ();
 	type FallbackProvider = ();
 	type WeightInfo = ();
 }

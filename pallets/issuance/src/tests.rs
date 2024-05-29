@@ -23,8 +23,6 @@ fn init_issuance_config_works() {
 				cap: 4_000_000_000u128,
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
-				liquidity_mining_split: Perbill::from_parts(555555556),
-				staking_split: Perbill::from_parts(444444444),
 				total_crowdloan_allocation: 200_000_000u128,
 			})
 		);
@@ -73,8 +71,6 @@ fn cannot_init_issuance_config_when_already_init() {
 				cap: 4_000_000_000u128,
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
-				liquidity_mining_split: Perbill::from_parts(555555556),
-				staking_split: Perbill::from_parts(444444444),
 				total_crowdloan_allocation: 200_000_000u128,
 			})
 		);

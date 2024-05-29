@@ -8,6 +8,7 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{ecdsa, ByteArray, Encode, Pair, Public};
 use sp_keyring::EthereumKeyring;
 use sp_runtime::{
+	Perbill,
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
@@ -158,6 +159,12 @@ pub fn rollup_local_config(
 				initial_collators_as_sequencers,
 				eth_chain_id,
 				decode_url.clone(),
+				// issuance split
+				(
+					Perbill::from_parts(455555556), // LiquidityMiningSplit
+					Perbill::from_parts(344444444), // StakingSplit
+					Perbill::from_parts(200000000), // SequencingSplit
+				)
 			)
 		},
 		// Bootnodes
@@ -188,6 +195,7 @@ fn rollup_genesis(
 	initial_collators_as_sequencers: bool,
 	chain_id: u64,
 	decode_url: String,
+	issuance_split: (Perbill, Perbill, Perbill),
 ) -> rollup_runtime::RuntimeGenesisConfig {
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
@@ -195,6 +203,10 @@ fn rollup_genesis(
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			..Default::default()
+		},
+		issuance: rollup_runtime::IssuanceConfig {
+			issuance_split: issuance_split,
+			_phantom: Default::default()
 		},
 		tokens: rollup_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment

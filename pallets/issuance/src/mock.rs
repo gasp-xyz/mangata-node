@@ -112,6 +112,8 @@ parameter_types! {
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+	pub const SequencingIssuanceVaultId: PalletId = PalletId(*b"py/seqiv");
+	pub SequencingIssuanceVault: AccountId = SequencingIssuanceVaultId::get().into_account_truncating();
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
@@ -146,11 +148,10 @@ impl pallet_issuance::Config for Test {
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
+	type SequencingIssuanceVault = SequencingIssuanceVault;
 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
 	type IssuanceCap = IssuanceCap;
 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-	type LiquidityMiningSplit = LiquidityMiningSplit;
-	type StakingSplit = StakingSplit;
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
@@ -203,6 +204,14 @@ pub fn new_test_ext_without_issuance_config() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.expect("Tokens storage can be assimilated");
 
+
+	pallet_issuance::GenesisConfig::<Test> {
+		issuance_split: (Perbill::from_parts(555555556), Perbill::from_parts(444444444), Perbill::from_parts(0)),
+		_phantom: Default::default()
+	}
+	.assimilate_storage(&mut t)
+	.expect("Issuance storage can be assimilated");
+
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
@@ -227,6 +236,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.expect("Tokens storage can be assimilated");
+
+	pallet_issuance::GenesisConfig::<Test> {
+		issuance_split: (Perbill::from_parts(555555556), Perbill::from_parts(444444444), Perbill::from_parts(0)),
+		_phantom: Default::default()
+	}
+	.assimilate_storage(&mut t)
+	.expect("Issuance storage can be assimilated");
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
@@ -253,7 +269,7 @@ pub type StakeCurrency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
 	let mut session_number: u32;
-	let mut session_issuance: (Balance, Balance);
+	let mut session_issuance: (Balance, Balance, Balance);
 	let mut block_issuance: Balance;
 	while System::block_number() < n {
 		System::on_finalize(System::block_number());
@@ -262,7 +278,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		session_issuance = <Issuance as GetIssuance<_>>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1) /
+		block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2) /
 			(BlocksPerRound::get().saturated_into::<u128>());
 
 		if let Some(x) = expected_amount_minted {

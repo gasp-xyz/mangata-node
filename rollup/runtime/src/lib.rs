@@ -599,11 +599,10 @@ impl pallet_issuance::Config for Runtime {
 	type HistoryLimit = cfg::pallet_issuance::HistoryLimit;
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = cfg::pallet_issuance::StakingIssuanceVault;
+	type SequencingIssuanceVault = cfg::pallet_issuance::SequencingIssuanceVault;
 	type TotalCrowdloanAllocation = cfg::pallet_issuance::TotalCrowdloanAllocation;
 	type IssuanceCap = cfg::pallet_issuance::IssuanceCap;
 	type LinearIssuanceBlocks = cfg::pallet_issuance::LinearIssuanceBlocks;
-	type LiquidityMiningSplit = cfg::pallet_issuance::LiquidityMiningSplit;
-	type StakingSplit = cfg::pallet_issuance::StakingSplit;
 	type ImmediateTGEReleasePercent = cfg::pallet_issuance::ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = cfg::pallet_issuance::TGEReleasePeriod;
 	type TGEReleaseBegin = cfg::pallet_issuance::TGEReleaseBegin;

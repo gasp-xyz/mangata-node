@@ -3475,6 +3475,7 @@ pub mod pallet {
 		}
 	}
 
+	Hook into this from a impl in runtime that calls this then calls seq rewards distribution
 	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 		fn new_session(_: SessionIndex) -> Option<Vec<T::AccountId>> {
 			let selected_canidates = Self::selected_candidates();

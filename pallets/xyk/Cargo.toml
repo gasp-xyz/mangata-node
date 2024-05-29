@@ -68,7 +68,7 @@ std = [
 	"sp-core/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "pallet-proof-of-stake/runtime-benchmarks", "pallet-issuance/runtime-benchmarks"]
 
 try-runtime = [
 	"frame-executive/try-runtime",

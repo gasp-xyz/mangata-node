@@ -833,7 +833,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub fn pending_l2_requests_proof_proof(chain: T::ChainId) -> sp_core::H256 {
+	pub fn pending_l2_requests_proof(chain: T::ChainId) -> sp_core::H256 {
 		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
 		hash.into()
 	}

@@ -1115,7 +1115,7 @@ fn error_on_withdraw_too_much() {
 
 #[test]
 #[serial]
-fn test_remove_pending_l2_requests_proof() {
+fn test_remove_pending_l2_requests() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
@@ -1198,7 +1198,7 @@ fn test_remove_pending_l2_requests_proof() {
 				timeStamp: sp_core::U256::from(1),
 			};
 
-			let remove_pending_l2_requests_proof_request = messages::L2UpdatesToRemove {
+			let remove_pending_l2_requests_request = messages::L2UpdatesToRemove {
 				requestId: RequestId { origin: Origin::L1, id: 3u128 },
 				l2UpdatesToRemove: vec![1u128],
 				timeStamp: sp_core::U256::from(1),
@@ -1206,7 +1206,7 @@ fn test_remove_pending_l2_requests_proof() {
 
 			let update_with_remove_and_resolution = L1UpdateBuilder::new()
 				.with_requests(vec![
-					L1UpdateRequest::Remove(remove_pending_l2_requests_proof_request),
+					L1UpdateRequest::Remove(remove_pending_l2_requests_request),
 					L1UpdateRequest::CancelResolution(cancel_resolution_request),
 				])
 				.build();

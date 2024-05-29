@@ -871,7 +871,7 @@ impl_runtime_apis! {
 	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::Chain> for Runtime {
 		fn get_l2_request_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::pending_l2_requests_proof_proof(chain)
+				pallet_rolldown::Pallet::<Runtime>::pending_l2_requests_proof(chain)
 			} else {
 				Default::default()
 			}

@@ -108,6 +108,7 @@ fn process_single_deposit() {
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 
 		assert_event_emitted!(Event::L1ReadStored((
+			messages::Chain::Ethereum,
 			ALICE,
 			current_block_number + dispute_period,
 			(1u128, 1u128).into(),

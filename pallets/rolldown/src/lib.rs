@@ -232,7 +232,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
-		L1ReadStored((T::AccountId, u128, messages::Range, H256)),
+		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
 		// Chain, request id
 		RequestProcessedOnL2(T::ChainId, u128),
 	}
@@ -1047,6 +1047,7 @@ impl<T: Config> Pallet<T> {
 		let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
 
 		Pallet::<T>::deposit_event(Event::L1ReadStored((
+			l1,
 			sequencer,
 			dispute_period_end,
 			requests_range,

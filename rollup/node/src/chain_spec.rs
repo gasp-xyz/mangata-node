@@ -185,7 +185,7 @@ fn rollup_genesis(
 		Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
-	initial_collators_as_sequencers: bool,
+	with_default_sequencer: bool,
 	chain_id: u64,
 	decode_url: String,
 ) -> rollup_runtime::RuntimeGenesisConfig {
@@ -323,15 +323,22 @@ fn rollup_genesis(
 		sequencer_staking: rollup_runtime::SequencerStakingConfig {
 			minimal_stake_amount: 1_000_000_u128,
 			slash_fine_amount: 100_000_u128,
-			sequencers_stake: if initial_collators_as_sequencers {
-				initial_authorities
-					.iter()
-					.rev()
-					.take(1)
-					.map(|(acc, _)| {
-						(acc.clone(), pallet_rolldown::messages::Chain::Ethereum, 10_000_000_u128)
-					})
-					.collect()
+			sequencers_stake: if with_default_sequencer {
+				[
+					(
+						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+						pallet_rolldown::messages::Chain::Ethereum,
+						10_000_000_u128,
+					),
+					(
+						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
+						pallet_rolldown::messages::Chain::Arbitrum,
+						10_000_000_u128,
+					),
+				]
+				.iter()
+				.cloned()
+				.collect()
 			} else {
 				Default::default()
 			},

@@ -18,6 +18,7 @@ services:
       - --rpc-cors=all
       - --unsafe-rpc-external
       - --node-key=0000000000000000000000000000000000000000000000000000000000000001
+      - --rpc-methods=unsafe    
     ports:
       - 9944:9944
       - 30333:30333
@@ -36,6 +37,7 @@ services:
       - --rpc-cors=all
       - --unsafe-rpc-external
       - --bootnodes=/dns/node-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      - --rpc-methods=unsafe
     ports:
       - 9946:9944
     volumes:

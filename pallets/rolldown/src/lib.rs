@@ -550,7 +550,7 @@ impl<T: Config> Pallet<T> {
 
 		let (status, request_type) = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) =>
-				(Self::process_deposit(&deposit).is_ok(), UpdateType::DEPOSIT),
+				(Self::process_deposit(l1, &deposit).is_ok(), UpdateType::DEPOSIT),
 			messages::L1UpdateRequest::CancelResolution(cancel) => (
 				Self::process_cancel_resolution(l1, &cancel).is_ok(),
 				UpdateType::CANCEL_RESOLUTION,
@@ -640,7 +640,10 @@ impl<T: Config> Pallet<T> {
 		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
 	}
 
-	fn process_deposit(deposit_request_details: &messages::Deposit) -> Result<(), &'static str> {
+	fn process_deposit(
+		l1: T::ChainId,
+		deposit_request_details: &messages::Deposit,
+	) -> Result<(), &'static str> {
 		let account: T::AccountId =
 			T::AddressConverter::convert(deposit_request_details.depositRecipient);
 
@@ -649,7 +652,9 @@ impl<T: Config> Pallet<T> {
 
 		// check ferried
 
-		let eth_asset = L1Asset::Ethereum(deposit_request_details.tokenAddress);
+		let eth_asset =
+			T::AssetAddressConverter::convert((l1, deposit_request_details.tokenAddress));
+
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)

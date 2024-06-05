@@ -1,5 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
+use self::consts::DEFAULT_CHAIN_ID;
+
 use super::*;
 
 use crate as sequencer_staking;
@@ -16,6 +18,7 @@ pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
 pub(crate) type Balance = u128;
 pub(crate) type TokenId = u32;
+pub(crate) type ChainId = u32;
 
 pub mod consts {
 	pub const MILLION: u128 = 1_000_000;
@@ -26,6 +29,7 @@ pub mod consts {
 	pub const EVE: u64 = 6;
 
 	pub const NATIVE_TOKEN_ID: super::TokenId = 0;
+	pub const DEFAULT_CHAIN_ID: u32 = 1;
 
 	pub const TOKENS_ENDOWED: super::Balance = 10_000;
 	pub const MINIMUM_STAKE: super::Balance = 1000;
@@ -104,18 +108,19 @@ impl sequencer_staking::Config for Test {
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = MockRolldownProviderApi;
 	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<2>;
-	type MaxSequencers = frame_support::traits::ConstU32<3>;
+	type MaxSequencers = frame_support::traits::ConstU32<11>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<2>;
 	type CancellerRewardPercentage = CancellerRewardPercentage;
+	type ChainId = ChainId;
 }
 
 mockall::mock! {
 	pub RolldownProviderApi {}
 
-	impl RolldownProviderTrait<AccountId> for RolldownProviderApi {
-		fn new_sequencer_active(sequencer: &AccountId);
-		fn sequencer_unstaking(sequencer: &AccountId)->DispatchResult;
-		fn handle_sequencer_deactivations(deactivated_sequencers: Vec<AccountId>);
+	impl RolldownProviderTrait<ChainId, AccountId> for RolldownProviderApi {
+		fn new_sequencer_active(chain: ChainId, sequencer: &AccountId);
+		fn sequencer_unstaking(chain: ChainId, sequencer: &AccountId)->DispatchResult;
+		fn handle_sequencer_deactivations(chain: ChainId, deactivated_sequencers: Vec<AccountId>);
 	}
 }
 
@@ -145,8 +150,8 @@ impl ExtBuilder {
 			minimal_stake_amount: consts::MINIMUM_STAKE,
 			slash_fine_amount: consts::SLASH_AMOUNT,
 			sequencers_stake: vec![
-				(consts::ALICE, consts::MINIMUM_STAKE),
-				(consts::BOB, consts::MINIMUM_STAKE),
+				(consts::ALICE, consts::DEFAULT_CHAIN_ID, consts::MINIMUM_STAKE),
+				(consts::BOB, consts::DEFAULT_CHAIN_ID, consts::MINIMUM_STAKE),
 			],
 		}
 		.assimilate_storage(&mut t)
@@ -181,7 +186,7 @@ impl ExtBuilder {
 macro_rules! set_default_mocks {
 	() => {
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
-		new_sequencer_active_mock.expect().times(2).returning(|_| ());
+		new_sequencer_active_mock.expect().times(2).returning(|_, _| ());
 	};
 }
 pub(crate) use set_default_mocks;

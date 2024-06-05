@@ -3482,7 +3482,6 @@ fn payouts_follow_delegation_changes() {
 			// fast forward to block in which delegator 6 exit executes
 			roll_to(25);
 
-			println!("BLAH: {:?}", RoundCollatorRewardInfo::<Test>::iter().collect::<Vec<_>>());
 			payout_collator_for_round(2);
 			payout_collator_for_round(3);
 
@@ -4959,7 +4958,6 @@ fn test_claiming_rewards_for_exactly_one_period_when_delegators_count_is_equal_t
 			set_author(2, 4, 1);
 			roll_to(21);
 
-			println!("rewards {:?}", RoundCollatorRewardInfo::<Test>::iter().collect::<Vec<_>>());
 			assert_eq!(2, RoundCollatorRewardInfo::<Test>::iter_prefix(1).count());
 
 			Stake::payout_collator_rewards(crate::mock::RuntimeOrigin::signed(999), 1, Some(1))
@@ -5027,7 +5025,6 @@ fn test_claiming_rewards_for_all_periods_in_pesimistic_scenario_with_max_delegat
 			set_author(2, 4, 1);
 			roll_to(21);
 
-			println!("rewards {:?}", RoundCollatorRewardInfo::<Test>::iter().collect::<Vec<_>>());
 			assert_eq!(2, RoundCollatorRewardInfo::<Test>::iter_prefix(1).count());
 
 			Stake::payout_collator_rewards(crate::mock::RuntimeOrigin::signed(999), 1, Some(2))

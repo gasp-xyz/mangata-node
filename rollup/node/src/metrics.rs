@@ -51,7 +51,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	/// Registers the `RolldownLastProccessedRequestOnL2Counter` metric whose value is
@@ -80,7 +80,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	type N = u64;
@@ -91,7 +91,7 @@ where
 			&["Ethereum"],
 			self.0
 				.runtime_api()
-				.get_last_processed_request_on_l2(at, pallet_rolldown::messages::L1::Ethereum)
+				.get_last_processed_request_on_l2(at, pallet_rolldown::messages::Chain::Ethereum)
 				.unwrap_or(None)
 				.unwrap_or_default()
 				.saturated_into::<u64>(),
@@ -115,7 +115,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	/// Registers the `RolldownNumberOfPendingRequestsGauge` metric whose value is
@@ -144,7 +144,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	type N = u64;
@@ -155,7 +155,7 @@ where
 			&["Ethereum"],
 			self.0
 				.runtime_api()
-				.get_number_of_pending_requests(at, pallet_rolldown::messages::L1::Ethereum)
+				.get_number_of_pending_requests(at, pallet_rolldown::messages::Chain::Ethereum)
 				.unwrap_or(None)
 				.unwrap_or_default()
 				.saturated_into::<u64>(),
@@ -182,7 +182,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	/// Registers the `GaspMetricsCounter` metric whose value is
@@ -210,7 +210,7 @@ where
 	C::Api: RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 {
 	type N = u64;

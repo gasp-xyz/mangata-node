@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch to create in mangata-dev-kit"
+        description: "Branch to create in gasp-dev-kit"
         type: string
         required: true
       parachainDocker:
@@ -19,7 +19,7 @@ on:
   workflow_call:
     inputs:
       branch:
-        description: "Branch to create in mangata-dev-kit"
+        description: "Branch to create in gasp-dev-kit"
         type: string
         required: true
       parachainDocker:
@@ -48,21 +48,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create branch ${{ env.BRANCH }} in mangata-dev-kit
+      - name: Create branch ${{ env.BRANCH }} in gasp-dev-kit
         uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
         with:
           repository_owner: mangata-finance
-          repository_name: mangata-dev-kit
+          repository_name: gasp-dev-kit
           new_branch_name: ${{ env.BRANCH }}
           new_branch_ref: eth-rollup-develop
           ignore_branch_exists: true
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
-      - name: Invoke workflow in mangata-dev-kit repo with inputs
+      - name: Invoke workflow in gasp-dev-kit repo with inputs
         uses: jonas-schievink/workflow-proxy@v1
         with:
           ref: ${{ env.BRANCH }}
           workflow: pr-automation-types-rollup-solochain.yml
-          repo: mangata-finance/mangata-dev-kit
+          repo: mangata-finance/gasp-dev-kit
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}", "branch": "${{ env.BRANCH }}"}'

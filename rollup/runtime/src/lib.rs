@@ -350,7 +350,7 @@ impl pallet_utility_mangata::Config for Runtime {
 }
 
 use cfg::pallet_transaction_payment_mangata::{
-	FeeHelpers, OnChargeHandler, OneCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
+	FeeHelpers, OnChargeHandler, TwoCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
 };
 
 // TODO: renaming foo causes compiler error
@@ -359,10 +359,11 @@ impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
 	T: frame_system::Config<AccountId = sp_runtime::AccountId20>,
 {
-	fn trigger(who: T::AccountId, fee: u128, tip: u128) {
+	fn trigger(who: T::AccountId, token_id: TokenId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
 			pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
 				who,
+				token_id,
 				actual_fee: fee,
 				tip,
 			},
@@ -438,10 +439,12 @@ impl ExtendedCall for RuntimeCall {
 	}
 }
 
-pub type OnChargeTransactionHandler<T> = OneCurrencyOnChargeAdapter<
+pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,
 	tokens::RxTokenId,
+	tokens::RxTokenId,
+	frame_support::traits::ConstU128<1>,
 	Foo<T>,
 >;
 

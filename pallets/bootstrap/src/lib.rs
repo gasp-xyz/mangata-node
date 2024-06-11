@@ -574,8 +574,8 @@ pub mod pallet {
 
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
 
-			ensure!(T::Currency::exists(first_token_id.into()), Error::<T>::TokenIdDoesNotExists);
-			ensure!(T::Currency::exists(second_token_id.into()), Error::<T>::TokenIdDoesNotExists);
+			ensure!(T::Currency::exists(first_token_id), Error::<T>::TokenIdDoesNotExists);
+			ensure!(T::Currency::exists(second_token_id), Error::<T>::TokenIdDoesNotExists);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),

@@ -443,8 +443,8 @@ pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,
 	tokens::RxTokenId,
-	tokens::RxTokenId,
-	frame_support::traits::ConstU128<1>,
+	tokens::EthTokenId,
+	frame_support::traits::ConstU128<10_000_000>,
 	Foo<T>,
 >;
 

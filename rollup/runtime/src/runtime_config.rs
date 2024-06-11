@@ -46,9 +46,11 @@ pub mod types {
 pub mod tokens {
 	use super::*;
 	pub const RX_TOKEN_ID: TokenId = 0;
+	pub const ETH_TOKEN_ID: TokenId = 1;
 
 	parameter_types! {
 		pub const RxTokenId: TokenId = RX_TOKEN_ID;
+		pub const EthTokenId: TokenId = ETH_TOKEN_ID;
 	}
 }
 

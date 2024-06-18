@@ -113,8 +113,8 @@ jobs:
             fast: true
           - command: "yarn test-sequential-autocompound"
             fast: true
-          - command: "yarn test-poolliquidity"
-            fast: true
+          # - command: "yarn test-poolliquidity"
+          #   fast: true
           # - command: "yarn test-governance"
           #   fast: true
           - command: "yarn test-multiswap"

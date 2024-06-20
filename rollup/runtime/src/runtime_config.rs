@@ -926,7 +926,9 @@ pub mod config {
 		}
 
 		#[derive(Encode, Decode, Clone, TypeInfo)]
-		pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>(PhantomData<(C, OU, T1, T2, SF, TE)>);
+		pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>(
+			PhantomData<(C, OU, T1, T2, SF, TE)>,
+		);
 
 		type NegativeImbalanceOf<C, T> =
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -1044,7 +1046,6 @@ pub mod config {
 					// Call someone else to handle the imbalance (fee and tip separately)
 					let (tip_imb, fee) = adjusted_paid.split(tip);
 					OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
-					
 					TE::trigger(who.clone(), token_id.into(), corrected_fee.into(), tip.into());
 				}
 				Ok(())

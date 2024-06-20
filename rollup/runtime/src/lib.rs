@@ -350,7 +350,7 @@ impl pallet_utility_mangata::Config for Runtime {
 }
 
 use cfg::pallet_transaction_payment_mangata::{
-	FeeHelpers, OnChargeHandler, TwoCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
+	FeeHelpers, OnChargeHandler, ToAuthor, TriggerEvent, TwoCurrencyOnChargeAdapter,
 };
 
 // TODO: renaming foo causes compiler error

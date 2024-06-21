@@ -180,7 +180,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '18.18.2'
+          node-version: '18.19.0'
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests

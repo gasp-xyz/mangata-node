@@ -95,8 +95,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - command: "yarn test-parallel --max-workers=10"
-          #   fast: false
+          - command: "yarn test-parallel --max-workers=10"
+            fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
           - command: "yarn test-seqgasless"

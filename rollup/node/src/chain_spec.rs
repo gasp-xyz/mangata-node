@@ -140,21 +140,38 @@ pub fn rollup_local_config(
 						// How many liquidity tokens they stake,
 					],
 				),
-				vec![(
-					RX_TOKEN_ID,
-					AssetMetadataOf {
-						decimals: 18,
-						name: BoundedVec::truncate_from(b"Gasp".to_vec()),
-						symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
-						additional: Default::default(),
-						existential_deposit: Default::default(),
-						location: None,
-					},
-					Some(L1Asset::Ethereum(
-						array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
-							.unwrap(),
-					)),
-				)],
+				vec![
+					(
+						RX_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
+								.unwrap(),
+						)),
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Gasp Ethereum".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
+								.unwrap(),
+						)),
+					),
+				],
 				initial_collators_as_sequencers,
 				eth_chain_id,
 				decode_url.clone(),

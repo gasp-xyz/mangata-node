@@ -88,7 +88,6 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         id: setTestRun
 
-
   e2e-test-matrix:
     needs: [setup-report]
     strategy:

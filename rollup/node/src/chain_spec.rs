@@ -167,7 +167,7 @@ pub fn rollup_local_config(
 							location: None,
 						},
 						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x5748395867463837537395739375937493733457")
+							array_bytes::hex2array("0x0000000000000000000000000000000000000001")
 								.unwrap(),
 						)),
 					),

@@ -1,3 +1,4 @@
+use crate::command::{EvmChain, InitialSequencersSet};
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
 	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
@@ -54,10 +55,33 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 }
 
 pub fn rollup_local_config(
-	initial_collators_as_sequencers: bool,
-	eth_chain_id: u64,
+	sequencers_set: InitialSequencersSet,
+	evm_chain: EvmChain,
 	decode_url: Option<String>,
 ) -> ChainSpec {
+	let initial_collators_as_sequencers = match sequencers_set {
+		InitialSequencersSet::Collators => true,
+		InitialSequencersSet::Empty => false,
+	};
+
+	let (gasp_token_address, eth_chain_id) = match evm_chain {
+		EvmChain::Holesky => (
+			array_bytes::hex2array("0x5620cDb94BaAaD10c20483bd8705DA711b2Bc0a3")
+				.expect("is correct address"),
+			17000u64,
+		),
+		EvmChain::Anvil => (
+			array_bytes::hex2array("0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3")
+				.expect("is correct address"),
+			31337u64,
+		),
+		EvmChain::Reth => (
+			array_bytes::hex2array("0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3")
+				.expect("is correct address"),
+			1337u64,
+		),
+	};
+
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "GASP".into());
@@ -151,10 +175,7 @@ pub fn rollup_local_config(
 							existential_deposit: Default::default(),
 							location: None,
 						},
-						Some(L1Asset::Ethereum(
-							array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
-								.unwrap(),
-						)),
+						Some(L1Asset::Ethereum(gasp_token_address)),
 					),
 					(
 						1,

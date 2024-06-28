@@ -20,6 +20,17 @@ use std::{
 	time::Duration,
 };
 
+pub enum EvmChain {
+	Holesky,
+	Anvil,
+	Reth,
+}
+
+pub enum InitialSequencersSet {
+	Collators,
+	Empty,
+}
+
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
 		"Rollup Node".into()
@@ -47,16 +58,24 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		const HOLESKY_CHAIN_ID: u64 = 17000u64;
+		const LOCAL_TESTNET: u64 = 1337;
+
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
+				Box::new(chain_spec::rollup_local_config(InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 				)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID,
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
-				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-testnet-rpc.gasp.xyz#/extrinsics/decode/"))
+			"anvil" => Box::new(chain_spec::rollup_local_config(InitialSequencersSet::Collators, EvmChain::Anvil,
+				None
+			)),
+			"reth" => Box::new(chain_spec::rollup_local_config(InitialSequencersSet::Collators, EvmChain::Reth,
+				None
+			)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(InitialSequencersSet::Collators, EvmChain::Holesky,
+				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>
 				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),

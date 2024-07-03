@@ -14,9 +14,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*};
 
 use codec::alloc::string::{String, ToString};
-pub use mangata_support::traits::{
-	RolldownProviderTrait, SequencerStakingProviderTrait,
-};
+pub use mangata_support::traits::{RolldownProviderTrait, SequencerStakingProviderTrait};
 use scale_info::prelude::format;
 use sp_core::U256;
 use sp_runtime::{

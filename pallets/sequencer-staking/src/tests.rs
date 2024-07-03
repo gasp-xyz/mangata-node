@@ -180,7 +180,6 @@ fn test_rejoin_active_sequencer_works() {
 			Error::<Test>::NotEnoughSequencerStake
 		);
 
-		
 		SequencerStaking::set_active_sequencers(
 			(20u64..31u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
 		)
@@ -274,7 +273,6 @@ fn test_provide_stake_fails_on_sequencers_limit_reached() {
 			),
 			Error::<Test>::NotEnoughSequencerStake
 		);
-
 
 		SequencerStaking::set_active_sequencers(
 			(20u64..31u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),

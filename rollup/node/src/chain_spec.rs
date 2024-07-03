@@ -115,7 +115,6 @@ pub fn rollup_local_config(
 						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
 						authority_keys_from_seed("Charleth"),
 					),
-
 				],
 				// Sudo account
 				get_account_id_from_seed::<ecdsa::Public>("Alith"),

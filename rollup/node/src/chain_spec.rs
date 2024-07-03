@@ -166,8 +166,6 @@ pub fn rollup_local_config(
 							// How much mangata they stake
 							80_000_000__000_000_000_000_000_000_u128,
 						),
-
-
 					],
 					vec![
 						// Who gets to stake initially

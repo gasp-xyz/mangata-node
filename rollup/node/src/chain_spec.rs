@@ -111,6 +111,11 @@ pub fn rollup_local_config(
 						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
 						authority_keys_from_seed("Baltathar"),
 					),
+					(
+						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
+						authority_keys_from_seed("Charleth"),
+					),
+
 				],
 				// Sudo account
 				get_account_id_from_seed::<ecdsa::Public>("Alith"),
@@ -153,6 +158,16 @@ pub fn rollup_local_config(
 							// How much mangata they stake
 							80_000_000__000_000_000_000_000_000_u128,
 						),
+						(
+							// Who gets to stake initially
+							get_account_id_from_seed::<ecdsa::Public>("Charleth"),
+							// Id of MGA token,
+							0u32,
+							// How much mangata they stake
+							80_000_000__000_000_000_000_000_000_u128,
+						),
+
+
 					],
 					vec![
 						// Who gets to stake initially

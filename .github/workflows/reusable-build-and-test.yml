@@ -22,6 +22,11 @@ on:
         description: Cache version variable to be used to invalidate cache when needed
         required: false
         type: number
+      cache-enabled:
+        default: true
+        description: Enable cargo build cache
+        required: false
+        type: boolean
 
 permissions:
   contents: read
@@ -40,24 +45,45 @@ jobs:
         DOCKER_HOST: "unix:///run/docker/docker.sock"
       volumes:
         - /run/docker:/run/docker
+    env:
+      JOB_CACHE_PREFIX: mangata-node-image-build-job-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-            ~/.cache/sccache
-          key: node-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
 
       - name: Compile code
         run: cargo build --locked --release
@@ -109,9 +135,25 @@ jobs:
             ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
             ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
       
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
 
   rustfmt-check:
     name: Formatting check
@@ -128,49 +170,136 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ inputs.builder_image }}
+    env:
+      JOB_CACHE_PREFIX: mangata-node-clippy-job-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-          key: cargo-clippy-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
       - name: Run clippy
         run: cargo clippy -p pallet-xyk
+
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
 
   unit-test:
     name: Unit tests
     runs-on: [compile-gke]
     container:
       image: ${{ inputs.builder_image }}
+    env:
+      JOB_CACHE_PREFIX: mangata-node-unit-tests-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-          key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
+      
       - name: Run unit tests
         run: cargo test -j2
       
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
@@ -181,22 +310,46 @@ jobs:
     container:
       image: ${{ inputs.builder_image }}
       options: --security-opt seccomp=unconfined
+    env:
+      JOB_CACHE_PREFIX: mangata-node-coverage-job-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-          key: cargo-coverage-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
+
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin@0.26.1 --locked
       - name: Generate coverage report with cargo-tarpaulin
@@ -207,6 +360,26 @@ jobs:
           token: ${{ secrets.ORG_CODECOV_TOKEN }}
           fail_ci_if_error: false
       
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
@@ -216,22 +389,45 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ inputs.builder_image }}
+    env:
+      JOB_CACHE_PREFIX: mangata-node-becnhmark-tests-job-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-          key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock
       - name: Run benchmarks tests
@@ -239,36 +435,97 @@ jobs:
       # NOTE: MGX-742
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake
+      
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
 
-  # Disabled since we have no live testnet running
   # build-and-run-try-runtime:
   #   name: Run try-runtime checks
   #   runs-on: [compile-gke]
   #   container:
   #     image: ${{ inputs.builder_image }}
+  #   env:
+  #     JOB_CACHE_PREFIX: mangata-node-try-runtime-job-cache-${{ inputs.cache-version }}
+  #     CACHE_ARCHIVE_NAME: cache_archive.tar.zst
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - name: Authenticate to Google Cloud
-  #       uses: google-github-actions/auth@v1
+  #     - uses: google-github-actions/auth@v2
+  #       id: auth
   #       with:
-  #         workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-  #         service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
-  #     - name: Cache the Cargo dependencies
-  #       uses: mansagroup/gcs-cache-action@v1.0.3
-  #       with:
-  #         bucket: mangata-node-ci-cache
-  #         path: |
-  #           ${{ github.workspace }}/target
-  #           /usr/local/cargo/git
-  #           /usr/local/cargo/registry
-  #           ~/.cache/sccache
-  #         key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+  #         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  #     - uses: google-github-actions/setup-gcloud@v2
 
-  #     - name: Build try-runtime Rococo & Kusama node
-  #       run: cargo build --release --features=try-runtime
+  #     - name: Download cargo build cache
+  #       if: inputs.cache-enabled
+  #       id: cache
+  #       run: |
+  #         set -x
+  #         CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_FOUND=false
+      
+  #         if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+  #           CACHE_FOUND=true
+  #         fi
+      
+  #         echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+  #         echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+  #     - name: Install sccache-cache only on non-release runs
+  #       if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+  #       uses: mozilla-actions/sccache-action@v0.0.5
+  #     - name: Set Rust caching env vars only on non-release run
+  #       if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+  #       run: |
+  #         echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+  #         echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+  #         echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+  #         echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+  #         echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
 
-  #     - name: Run try-runtime Kusama Mainnet
-  #       run: try-runtime --runtime=target/release/wbuild/rollup-runtime/rollup_runtime.wasm on-runtime-upgrade live --uri wss://rollup-rpc.mangata.online:443
+  # #     - name: Build try-runtime Rococo & Kusama node
+  # #       run: cargo build --release --features=try-runtime
+
+  # #     - name: Run try-runtime Kusama Mainnet
+  # #       run: try-runtime --runtime=target/release/wbuild/rollup-runtime/rollup_runtime.wasm on-runtime-upgrade live --uri wss://rollup-rpc.mangata.online:443
+
+  #     - name: Upload cargo build cache
+  #       if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+  #       run: |
+  #         set -x
+  #         CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_PATHS=(
+  #           "${{ github.workspace }}/target"
+  #           "/usr/local/cargo/bin/"
+  #           "/usr/local/cargo/registry/index/"
+  #           "/usr/local/cargo/registry/cache/"
+  #           "/usr/local/cargo/git/db/"
+  #         )
+      
+  #           SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+  #           echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+  #           SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+  #           echo "Upload completed in $SECONDS seconds"
 
   #     - name: Fix permissions on self-hosted runner
   #       if: always()
@@ -278,29 +535,49 @@ jobs:
     name: Run runtime benchmarks
     # `performance` self-hosted runners have 8 cores and 16GB of RAM
     runs-on: [performance-gke]
+    container:
+      image: ${{ inputs.builder_image }}
     env:
       STEPS: 2
       REPEATS: 1
-    container:
-      image: ${{ inputs.builder_image }}
+      JOB_CACHE_PREFIX: mangata-node-run-benchmarks-job-cache-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
+        id: auth
         with:
-          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1.0.3
-        with:
-          bucket: mangata-node-ci-cache
-          path: |
-            ${{ github.workspace }}/target
-            /usr/local/cargo/git
-            /usr/local/cargo/registry
-            ~/.cache/sccache
-          key: runtime-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+      
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+            CACHE_FOUND=true
+          fi
+      
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+      
+      - name: Install sccache-cache only on non-release runs
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Set Rust caching env vars only on non-release run
+        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
+          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
 
       - name: Compile code
         run: cargo build --release --no-default-features --features=runtime-benchmarks
@@ -336,6 +613,26 @@ jobs:
           name: benchmarks
           path: ./benchmarks
       
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        run: |
+          set -x
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "${{ github.workspace }}/target"
+            "/usr/local/cargo/bin/"
+            "/usr/local/cargo/registry/index/"
+            "/usr/local/cargo/registry/cache/"
+            "/usr/local/cargo/git/db/"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE

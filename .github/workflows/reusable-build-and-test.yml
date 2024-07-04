@@ -144,7 +144,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -222,7 +222,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -291,7 +291,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -372,7 +372,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -449,7 +449,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -524,7 +524,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -632,7 +632,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -718,7 +718,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"

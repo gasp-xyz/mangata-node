@@ -444,7 +444,7 @@ pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	ToAuthor<T>,
 	tokens::RxTokenId,
 	tokens::EthTokenId,
-	frame_support::traits::ConstU128<10_000_000>,
+	frame_support::traits::ConstU128<30_000>,
 	Foo<T>,
 >;
 

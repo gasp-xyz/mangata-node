@@ -138,6 +138,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -215,6 +216,7 @@ jobs:
 
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -283,6 +285,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -363,6 +366,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -439,6 +443,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -513,6 +518,7 @@ jobs:
 
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -620,6 +626,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
@@ -705,6 +712,7 @@ jobs:
       
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"

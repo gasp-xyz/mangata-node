@@ -14,9 +14,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*};
 
 use codec::alloc::string::{String, ToString};
-pub use mangata_support::traits::{
-	InformSessionDataTrait, RolldownProviderTrait, SequencerStakingProviderTrait,
-};
+pub use mangata_support::traits::{RolldownProviderTrait, SequencerStakingProviderTrait};
 use scale_info::prelude::format;
 use sp_core::U256;
 use sp_runtime::{
@@ -183,11 +181,11 @@ pub mod pallet {
 	pub type SequencerStake<T: Config> =
 		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), BalanceOf<T>, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_eligible_to_be_sequencers)]
-	pub type EligibleToBeSequencers<T: Config> =
-		StorageValue<_, BTreeMap<AccountIdOf<T>, RoundRefCount>, ValueQuery>;
+	// #[pallet::storage]
+	// #[pallet::unbounded]
+	// #[pallet::getter(fn get_eligible_to_be_sequencers)]
+	// pub type EligibleToBeSequencers<T: Config> =
+	// 	StorageValue<_, BTreeMap<AccountIdOf<T>, RoundRefCount>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -204,9 +202,9 @@ pub mod pallet {
 	pub type SelectedSequencer<T: Config> =
 		StorageValue<_, BTreeMap<T::ChainId, T::AccountId>, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_current_round)]
-	pub type CurrentRound<T: Config> = StorageValue<_, RoundIndex, ValueQuery>;
+	// #[pallet::storage]
+	// #[pallet::getter(fn get_current_round)]
+	// pub type CurrentRound<T: Config> = StorageValue<_, RoundIndex, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -214,11 +212,11 @@ pub mod pallet {
 	pub type NextSequencerIndex<T: Config> =
 		StorageValue<_, BTreeMap<T::ChainId, SequencerIndex>, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::unbounded]
-	#[pallet::getter(fn get_round_collators)]
-	pub type RoundCollators<T: Config> =
-		StorageMap<_, Blake2_128Concat, RoundIndex, Vec<T::AccountId>, ValueQuery>;
+	// #[pallet::storage]
+	// #[pallet::unbounded]
+	// #[pallet::getter(fn get_round_collators)]
+	// pub type RoundCollators<T: Config> =
+	// 	StorageMap<_, Blake2_128Concat, RoundIndex, Vec<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -242,7 +240,7 @@ pub mod pallet {
 		SequencerIsNotInActiveSet,
 		SequencerAlreadyInActiveSet,
 		CantUnstakeWhileInActiveSet,
-		NotEligibleToBeSequencer,
+		// NotEligibleToBeSequencer,
 		NotEnoughSequencerStake,
 		MaxSequencersLimitReached,
 		TestUnstakingError,
@@ -292,8 +290,7 @@ pub mod pallet {
 			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
 				if *stake >= MinimalStakeAmount::<T>::get() &&
-					!Self::is_active_sequencer(chain, &sender) &&
-					Self::is_eligible_to_be_sequencer(&sender)
+					!Self::is_active_sequencer(chain, &sender)
 				{
 					if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
 						active_sequencers.entry(chain).or_default().try_push(sender.clone())
@@ -346,10 +343,6 @@ pub mod pallet {
 			ensure!(
 				SequencerStake::<T>::get((&sender, &chain)) >= MinimalStakeAmount::<T>::get(),
 				Error::<T>::NotEnoughSequencerStake
-			);
-			ensure!(
-				Self::is_eligible_to_be_sequencer(&sender),
-				Error::<T>::NotEligibleToBeSequencer
 			);
 
 			ActiveSequencers::<T>::try_mutate(|active_sequencers| {
@@ -414,73 +407,73 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool {
-		EligibleToBeSequencers::<T>::get().contains_key(account)
-	}
+	// fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool {
+	// 	EligibleToBeSequencers::<T>::get().contains_key(account)
+	// }
 
-	fn initialize_genesis_eligible_sequencers(collators: Vec<T::AccountId>) {
-		EligibleToBeSequencers::<T>::put(BTreeMap::from(
-			collators
-				.clone()
-				.into_iter()
-				.map(|s| (s, RoundRefCount::one()))
-				.collect::<BTreeMap<AccountIdOf<T>, RoundRefCount>>(),
-		));
-		let round_index = CurrentRound::<T>::get();
-		RoundCollators::<T>::insert(round_index, collators);
-	}
+	// fn initialize_genesis_eligible_sequencers(collators: Vec<T::AccountId>) {
+	// 	EligibleToBeSequencers::<T>::put(BTreeMap::from(
+	// 		collators
+	// 			.clone()
+	// 			.into_iter()
+	// 			.map(|s| (s, RoundRefCount::one()))
+	// 			.collect::<BTreeMap<AccountIdOf<T>, RoundRefCount>>(),
+	// 	));
+	// 	let round_index = CurrentRound::<T>::get();
+	// 	RoundCollators::<T>::insert(round_index, collators);
+	// }
 
-	// we assume that the elements are UNIQUE!
-	// as they should be
-	fn process_new_session_collators(collators: Vec<T::AccountId>) {
-		let round_index = CurrentRound::<T>::get().saturating_add(One::one());
-		let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
-		let mut exiting_collators = BTreeSet::new();
-		if round_index >= T::NoOfPastSessionsForEligibility::get() {
-			let first_round_collators_of_window = RoundCollators::<T>::take(
-				round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()),
-			);
-			for col in first_round_collators_of_window {
-				match eligible_to_be_sequencers.entry(col.clone()) {
-					Vacant(x) => {
-						log!(
-							error,
-							"exiting_collator {:?} not in eligible_to_be_sequencers {:?}",
-							col,
-							eligible_to_be_sequencers
-						)
-					},
-					Occupied(x) if *x.get() == 1 => {
-						x.remove();
-						exiting_collators.insert(col);
-					},
-					Occupied(mut x) => {
-						*x.get_mut() = x
-							.get()
-							.checked_sub(One::one())
-							.expect("This is safe cause x should never be 0 ");
-					},
-				}
-			}
-		}
+	// // we assume that the elements are UNIQUE!
+	// // as they should be
+	// fn process_new_session_collators(collators: Vec<T::AccountId>) {
+	// 	let round_index = CurrentRound::<T>::get().saturating_add(One::one());
+	// 	let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
+	// 	let mut exiting_collators = BTreeSet::new();
+	// 	if round_index >= T::NoOfPastSessionsForEligibility::get() {
+	// 		let first_round_collators_of_window = RoundCollators::<T>::take(
+	// 			round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()),
+	// 		);
+	// 		for col in first_round_collators_of_window {
+	// 			match eligible_to_be_sequencers.entry(col.clone()) {
+	// 				Vacant(x) => {
+	// 					log!(
+	// 						error,
+	// 						"exiting_collator {:?} not in eligible_to_be_sequencers {:?}",
+	// 						col,
+	// 						eligible_to_be_sequencers
+	// 					)
+	// 				},
+	// 				Occupied(x) if *x.get() == 1 => {
+	// 					x.remove();
+	// 					exiting_collators.insert(col);
+	// 				},
+	// 				Occupied(mut x) => {
+	// 					*x.get_mut() = x
+	// 						.get()
+	// 						.checked_sub(One::one())
+	// 						.expect("This is safe cause x should never be 0 ");
+	// 				},
+	// 			}
+	// 		}
+	// 	}
 
-		for col in collators.clone() {
-			eligible_to_be_sequencers
-				.entry(col)
-				.and_modify(|x| *x = x.saturating_add(One::one()))
-				.or_insert(One::one());
-		}
+	// 	for col in collators.clone() {
+	// 		eligible_to_be_sequencers
+	// 			.entry(col)
+	// 			.and_modify(|x| *x = x.saturating_add(One::one()))
+	// 			.or_insert(One::one());
+	// 	}
 
-		RoundCollators::<T>::insert(round_index, collators);
-		EligibleToBeSequencers::<T>::put(eligible_to_be_sequencers);
-		CurrentRound::<T>::put(round_index);
+	// 	RoundCollators::<T>::insert(round_index, collators);
+	// 	EligibleToBeSequencers::<T>::put(eligible_to_be_sequencers);
+	// 	CurrentRound::<T>::put(round_index);
 
-		// TODO
-		// Remove from the storage item ActiveSequencers
-		// To remove rights - call handle_sequencer_deactivation?
-		// dedup maybe?
-		Self::maybe_remove_sequencers_from_active_set(exiting_collators);
-	}
+	// 	// TODO
+	// 	// Remove from the storage item ActiveSequencers
+	// 	// To remove rights - call handle_sequencer_deactivation?
+	// 	// dedup maybe?
+	// 	Self::maybe_remove_sequencers_from_active_set(exiting_collators);
+	// }
 
 	fn maybe_remove_sequencers_from_active_set(exiting_collators: BTreeSet<T::AccountId>) {
 		let to_remove = ActiveSequencers::<T>::get().into_iter().map(|(chain, active)| {
@@ -566,15 +559,15 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
-	fn inform_initialized_authorities(accounts: Vec<T::AccountId>) {
-		Self::initialize_genesis_eligible_sequencers(accounts);
-	}
+// impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
+// 	fn inform_initialized_authorities(accounts: Vec<T::AccountId>) {
+// 		Self::initialize_genesis_eligible_sequencers(accounts);
+// 	}
 
-	fn inform_on_new_session(accounts: Vec<T::AccountId>) {
-		Self::process_new_session_collators(accounts);
-	}
-}
+// 	fn inform_on_new_session(accounts: Vec<T::AccountId>) {
+// 		Self::process_new_session_collators(accounts);
+// 	}
+// }
 
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, ChainIdOf<T>>
 	for Pallet<T>

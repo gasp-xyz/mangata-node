@@ -61,6 +61,7 @@ jobs:
           process_gcloudignore: false
           
       - name: Upload cargo build cache
+        shell: bash
         run: |
           set -x
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"

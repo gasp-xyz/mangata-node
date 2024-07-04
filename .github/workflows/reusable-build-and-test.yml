@@ -143,7 +143,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -221,7 +221,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -290,7 +290,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -371,7 +371,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -448,7 +448,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"
@@ -506,25 +506,26 @@ jobs:
   #         echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
   #         echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
 
-  # #     - name: Build try-runtime Rococo & Kusama node
-  # #       run: cargo build --release --features=try-runtime
+  #     - name: Build try-runtime Rococo & Kusama node
+  #       run: cargo build --release --features=try-runtime
 
-  # #     - name: Run try-runtime Kusama Mainnet
-  # #       run: try-runtime --runtime=target/release/wbuild/rollup-runtime/rollup_runtime.wasm on-runtime-upgrade live --uri wss://rollup-rpc.mangata.online:443
+  #     - name: Run try-runtime Kusama Mainnet
+  #       run: try-runtime --runtime=target/release/wbuild/rollup-runtime/rollup_runtime.wasm on-runtime-upgrade live --uri wss://rollup-rpc.mangata.online:443
 
-  #     - name: Upload cargo build cache
-  #       if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
-  #       run: |
-  #         set -x
-  #         CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
-  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
-  #         CACHE_PATHS=(
-  #           "${{ github.workspace }}/target"
-  #           "/usr/local/cargo/bin/"
-  #           "/usr/local/cargo/registry/index/"
-  #           "/usr/local/cargo/registry/cache/"
-  #           "/usr/local/cargo/git/db/"
-  #         )
+    # - name: Upload cargo build cache
+    #   if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+    #   shell: bash
+    #   run: |
+    #     set -x
+    #     CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+    #     ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+    #     CACHE_PATHS=(
+    #       "./target"
+    #       "/usr/local/cargo/bin/"
+    #       "/usr/local/cargo/registry/index/"
+    #       "/usr/local/cargo/registry/cache/"
+    #       "/usr/local/cargo/git/db/"
+    #     )
       
   #           SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
   #           echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
@@ -626,7 +627,7 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "${{ github.workspace }}/target"
+            "./target"
             "/usr/local/cargo/bin/"
             "/usr/local/cargo/registry/index/"
             "/usr/local/cargo/registry/cache/"

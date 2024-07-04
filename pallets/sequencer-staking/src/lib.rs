@@ -110,7 +110,7 @@ pub mod pallet {
 				})
 				.expect("setting active sequencers is successfull");
 
-				T::RolldownProvider::new_sequencer_active(*chain, &sender);
+				Pallet::<T>::announce_sequencer_joined_active_set(*chain, sender.clone());
 
 				// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 				// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
@@ -232,7 +232,10 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
+		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
+	}
 
 	#[pallet::error]
 	/// Errors
@@ -298,7 +301,7 @@ pub mod pallet {
 					if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
 						active_sequencers.entry(chain).or_default().try_push(sender.clone())
 					}) {
-						T::RolldownProvider::new_sequencer_active(chain, &sender);
+						Self::announce_sequencer_joined_active_set(chain, sender.clone());
 					}
 				}
 				Ok(())
@@ -357,7 +360,8 @@ pub mod pallet {
 			})
 			.or(Err(Error::<T>::MaxSequencersLimitReached))?;
 
-			T::RolldownProvider::new_sequencer_active(chain, &sender);
+			Pallet::<T>::deposit_event(Event::SequencerJoinedActiveSet(chain, sender.clone()));
+			Self::announce_sequencer_joined_active_set(chain, sender.clone());
 
 			Ok(().into())
 		}
@@ -414,6 +418,23 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	fn announce_sequencer_joined_active_set(chain: T::ChainId, sequencer: T::AccountId) {
+		T::RolldownProvider::new_sequencer_active(chain, &sequencer);
+		Pallet::<T>::deposit_event(Event::<T>::SequencerJoinedActiveSet(chain, sequencer));
+	}
+
+	fn announce_sequencers_removed_from_active_set(
+		chain: T::ChainId,
+		sequencers: Vec<T::AccountId>,
+	) {
+		T::RolldownProvider::handle_sequencer_deactivations(chain, sequencers.clone());
+		Pallet::<T>::deposit_event(Event::<T>::SequencersRemovedFromActiveSet(chain, sequencers));
+	}
+
+	fn notify_new_sequencer(account: &T::AccountId) -> bool {
+		EligibleToBeSequencers::<T>::get().contains_key(account)
+	}
+
 	fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool {
 		EligibleToBeSequencers::<T>::get().contains_key(account)
 	}
@@ -541,8 +562,7 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 
-		//TODO: pass chain parameter
-		T::RolldownProvider::handle_sequencer_deactivations(
+		Self::announce_sequencers_removed_from_active_set(
 			chain,
 			deactivating_sequencers.iter().cloned().collect(),
 		);

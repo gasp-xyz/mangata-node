@@ -355,7 +355,7 @@ jobs:
           echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
 
       - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin@0.26.1
+        run: cargo install cargo-tarpaulin@0.26.1 --locked
       - name: Generate coverage report with cargo-tarpaulin
         run: cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Xml
       - name: Upload to codecov.io

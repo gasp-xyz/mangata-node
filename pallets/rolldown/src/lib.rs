@@ -235,6 +235,8 @@ pub mod pallet {
 		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
 		// Chain, request id
 		RequestProcessedOnL2(T::ChainId, u128),
+		// canceled request chain, canceled request id, assigned l2RequestId
+		L1ReadCanceled { canceled_sequencer_update: u128, assigned_id: RequestId },
 	}
 
 	#[pallet::error]
@@ -394,6 +396,11 @@ pub mod pallet {
 				RequestId::from((Origin::L2, l2_request_id)),
 				L2Request::Cancel(cancel_request),
 			);
+
+			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
+				canceled_sequencer_update: requests_to_cancel,
+				assigned_id: RequestId { origin: Origin::L2, id: l2_request_id },
+			});
 
 			Ok(().into())
 		}

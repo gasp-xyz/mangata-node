@@ -32,6 +32,7 @@ fn test_genesis_build() {
 	});
 }
 
+#[test]
 #[serial]
 fn test_provide_sequencer_stake_works_and_activates() {
 	set_default_mocks!();
@@ -45,11 +46,6 @@ fn test_provide_sequencer_stake_works_and_activates() {
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
 		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), 0);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
-			(consts::ALICE, 1u32),
-			(consts::BOB, 1u32),
-			(consts::CHARLIE, 1u32),
-		]));
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
@@ -60,35 +56,6 @@ fn test_provide_sequencer_stake_works_and_activates() {
 			MINIMUM_STAKE
 		);
 		assert!(SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
-		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
-	});
-}
-
-#[test]
-#[serial]
-fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_eligibility() {
-	set_default_mocks!();
-	ExtBuilder::new().build().execute_with(|| {
-		forward_to_block::<Test>(10);
-
-		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
-		new_sequencer_active_mock.expect().times(0).return_const(());
-
-		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
-		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
-		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), 0);
-		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_ok!(SequencerStaking::provide_sequencer_stake(
-			RuntimeOrigin::signed(CHARLIE),
-			consts::DEFAULT_CHAIN_ID,
-			MINIMUM_STAKE
-		));
-		assert_eq!(
-			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
-			MINIMUM_STAKE
-		);
-		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
 	});
@@ -133,11 +100,10 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_max_seq_bound
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(0).return_const(());
 
-		assert_ok!(SequencerStaking::provide_sequencer_stake(
-			RuntimeOrigin::signed(DAVE),
-			consts::DEFAULT_CHAIN_ID,
-			MINIMUM_STAKE
-		));
+		SequencerStaking::set_active_sequencers(
+			(20u64..31u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
@@ -214,25 +180,21 @@ fn test_rejoin_active_sequencer_works() {
 			Error::<Test>::NotEnoughSequencerStake
 		);
 
+		SequencerStaking::set_active_sequencers(
+			(20u64..31u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
+
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			1
 		));
-		assert_err!(
-			SequencerStaking::rejoin_active_sequencers(
-				RuntimeOrigin::signed(CHARLIE),
-				consts::DEFAULT_CHAIN_ID
-			),
-			Error::<Test>::NotEligibleToBeSequencer
-		);
 
-		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
-			(consts::ALICE, 1u32),
-			(consts::BOB, 1u32),
-			(consts::CHARLIE, 1u32),
-			(consts::DAVE, 1u32),
-		]));
+		SequencerStaking::set_active_sequencers(
+			(20u64..30u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(1).return_const(());
@@ -258,9 +220,6 @@ fn test_can_not_join_set_if_full() {
 
 		for seq in 0u64..seq_limit {
 			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
-			EligibleToBeSequencers::<Test>::mutate(|set| {
-				set.insert(seq, 1);
-			});
 			assert_ok!(SequencerStaking::provide_sequencer_stake(
 				RuntimeOrigin::signed(seq),
 				consts::DEFAULT_CHAIN_ID,
@@ -270,9 +229,6 @@ fn test_can_not_join_set_if_full() {
 		}
 
 		Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
-		EligibleToBeSequencers::<Test>::mutate(|set| {
-			set.insert(seq_limit, 1);
-		});
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(seq_limit),
 			consts::DEFAULT_CHAIN_ID,
@@ -318,25 +274,21 @@ fn test_provide_stake_fails_on_sequencers_limit_reached() {
 			Error::<Test>::NotEnoughSequencerStake
 		);
 
+		SequencerStaking::set_active_sequencers(
+			(20u64..31u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
+
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			1
 		));
-		assert_err!(
-			SequencerStaking::rejoin_active_sequencers(
-				RuntimeOrigin::signed(CHARLIE),
-				consts::DEFAULT_CHAIN_ID
-			),
-			Error::<Test>::NotEligibleToBeSequencer
-		);
 
-		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
-			(consts::ALICE, 1u32),
-			(consts::BOB, 1u32),
-			(consts::CHARLIE, 1u32),
-			(consts::DAVE, 1u32),
-		]));
+		SequencerStaking::set_active_sequencers(
+			(20u64..30u64).map(|i| (consts::DEFAULT_CHAIN_ID, i)),
+		)
+		.unwrap();
 
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(1).return_const(());
@@ -394,11 +346,6 @@ fn test_set_sequencer_configuration() {
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
 		new_sequencer_active_mock.expect().times(1).return_const(());
 
-		EligibleToBeSequencers::<Test>::put(BTreeMap::from([
-			(consts::ALICE, 1u32),
-			(consts::BOB, 1u32),
-			(consts::CHARLIE, 1u32),
-		]));
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,

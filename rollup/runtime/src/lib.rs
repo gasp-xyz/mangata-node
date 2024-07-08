@@ -494,7 +494,6 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type InformSessionData = SequencerStaking;
 
 	#[cfg(feature = "experimental")]
 	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;

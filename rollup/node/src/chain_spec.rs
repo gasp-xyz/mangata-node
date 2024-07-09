@@ -1,4 +1,5 @@
 use crate::command::{EvmChain, InitialSequencersSet};
+use rand::{thread_rng, Rng};
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
 	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
@@ -10,10 +11,9 @@ use sp_core::{ecdsa, ByteArray, Encode, Pair, Public, H256};
 use sp_keyring::EthereumKeyring;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	BoundedVec
+	BoundedVec,
 };
 use sp_std::str::FromStr;
-use rand::{thread_rng, Rng};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -85,7 +85,7 @@ pub fn rollup_local_config(
 	};
 
 	let mut chain_genesis_salt_arr = [0u8; 32];
-	if randomize_chain_genesis_salt{
+	if randomize_chain_genesis_salt {
 		thread_rng().fill(&mut chain_genesis_salt_arr[..]);
 	}
 
@@ -95,7 +95,10 @@ pub fn rollup_local_config(
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
-	properties.insert("chainGenesisSalt".into(), array_bytes::bytes2hex("0x", chain_genesis_salt_arr).into());
+	properties.insert(
+		"chainGenesisSalt".into(),
+		array_bytes::bytes2hex("0x", chain_genesis_salt_arr).into(),
+	);
 
 	let decode_url = decode_url.unwrap_or(String::from(
 		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",

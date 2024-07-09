@@ -535,13 +535,38 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 				.with_offset(1u128)
 				.build();
 
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
+			);
+
 			forward_to_block::<Test>(11);
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
 				.unwrap();
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
+			);
+
 			forward_to_block::<Test>(12);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 0u128, cancel_rights: 1u128 }
+			);
+
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
@@ -552,7 +577,12 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 				})
 				.times(1)
 				.return_const(Ok(().into()));
+
 			forward_to_block::<Test>(17);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
 		})
 }
 
@@ -583,11 +613,31 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				.with_offset(1u128)
 				.build();
 
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
+			);
 			forward_to_block::<Test>(11);
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
 				.unwrap();
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
+			);
+
 			forward_to_block::<Test>(12);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			forward_to_block::<Test>(16);
@@ -599,6 +649,15 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				.times(1)
 				.return_const(Ok(().into()));
 			forward_to_block::<Test>(17);
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
 		})
 }
 
@@ -1514,14 +1573,22 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update.clone())
+				.unwrap();
 			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
+
+			let l2_request_id = L2OriginRequestId::<Test>::get(Chain::Ethereum);
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
 				15u128.into(),
 			)
 			.unwrap();
+
+			assert_event_emitted!(Event::L1ReadCanceled {
+				canceled_sequencer_update: 15u128,
+				assigned_id: RequestId::new(Origin::L2, l2_request_id)
+			});
 
 			// Assert
 			assert_eq!(

@@ -7407,6 +7407,7 @@ dependencies = [
  "parity-scale-codec",
  "proof-of-stake-rpc",
  "proof-of-stake-runtime-api",
+ "rand 0.8.5",
  "rolldown-rpc",
  "rolldown-runtime-api",
  "rollup-runtime",

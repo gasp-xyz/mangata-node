@@ -5,11 +5,11 @@ pub struct Cli {
 	#[command(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
-    #[arg(long, env, default_value_t = false, conflicts_with_all = &["chain_genesis_salt"])]
+	#[arg(long, env, default_value_t = false, conflicts_with_all = &["chain_genesis_salt"])]
 	pub randomize_chain_genesis_salt: bool,
 
-    #[arg(long, env, conflicts_with_all = &["randomize_chain_genesis_salt"])]
-    pub chain_genesis_salt: Option<String>,
+	#[arg(long, env, conflicts_with_all = &["randomize_chain_genesis_salt"])]
+	pub chain_genesis_salt: Option<String>,
 
 	#[clap(flatten)]
 	pub run: RunCmd,

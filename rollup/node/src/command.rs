@@ -62,19 +62,22 @@ impl SubstrateCli for Cli {
 
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Anvil,
+				Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 				)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Anvil,
+			"rollup-local-random-salt" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"anvil" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Anvil,
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"reth" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Reth,
+			"anvil" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Holesky,
+			"reth" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Reth,
+				None
+			)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Holesky,
 				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>

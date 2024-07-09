@@ -62,22 +62,19 @@ impl SubstrateCli for Cli {
 
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
+				Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 				)),
-			"rollup-local-random-salt" => Box::new(chain_spec::rollup_local_config(true, InitialSequencersSet::Collators, EvmChain::Anvil,
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
+			"anvil" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), InitialSequencersSet::Collators, EvmChain::Anvil,
 				None
 			)),
-			"anvil" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Anvil,
+			"reth" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), InitialSequencersSet::Collators, EvmChain::Reth,
 				None
 			)),
-			"reth" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Reth,
-				None
-			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(false, InitialSequencersSet::Collators, EvmChain::Holesky,
+			"holesky" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), InitialSequencersSet::Collators, EvmChain::Holesky,
 				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>

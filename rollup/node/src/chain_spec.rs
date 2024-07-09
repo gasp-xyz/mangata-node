@@ -13,7 +13,7 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
-use sp_std::str::FromStr;
+use sp_std::{str::FromStr,convert::TryInto};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -57,6 +57,7 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 
 pub fn rollup_local_config(
 	randomize_chain_genesis_salt: bool,
+	chain_genesis_salt: Option<String>,
 	sequencers_set: InitialSequencersSet,
 	evm_chain: EvmChain,
 	decode_url: Option<String>,
@@ -84,9 +85,11 @@ pub fn rollup_local_config(
 		),
 	};
 
-	let mut chain_genesis_salt_arr = [0u8; 32];
+	let mut chain_genesis_salt_arr: [u8; 32] = [0u8; 32];
 	if randomize_chain_genesis_salt {
 		thread_rng().fill(&mut chain_genesis_salt_arr[..]);
+	} else if let Some(salt) = chain_genesis_salt{
+		chain_genesis_salt_arr = array_bytes::hex2bytes(salt).expect("chain_genesis_salt should be hex").iter().chain(sp_std::iter::repeat(&0u8)).take(32).cloned().collect::<Vec<_>>().try_into().expect("32 bytes");
 	}
 
 	// Give your base currency a unit name and decimal places

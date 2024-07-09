@@ -55,11 +55,11 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 }
 
 pub fn rollup_local_config(
-	sequencers_set: InitialSequencersSet,
+	eth_sequencers: Vec<AccountId>,
+	arb_sequencers: Vec<AccountId>,
 	evm_chain: EvmChain,
 	decode_url: Option<String>,
 ) -> ChainSpec {
-
 	let (gasp_token_address, eth_chain_id) = match evm_chain {
 		EvmChain::Holesky => (
 			array_bytes::hex2array("0x5620cDb94BaAaD10c20483bd8705DA711b2Bc0a3")
@@ -88,7 +88,6 @@ pub fn rollup_local_config(
 	let decode_url = decode_url.unwrap_or(String::from(
 		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",
 	));
-
 	ChainSpec::from_genesis(
 		// Name
 		"Rollup Local",
@@ -96,6 +95,24 @@ pub fn rollup_local_config(
 		"rollup_local",
 		ChainType::Local,
 		move || {
+			let eth = eth_sequencers.clone();
+			let arb = arb_sequencers.clone();
+
+			let tokens_endowment = [
+				eth_sequencers.clone(),
+				arb_sequencers.clone(),
+				vec![
+					get_account_id_from_seed::<ecdsa::Public>("Alith"),
+					get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+					get_account_id_from_seed::<ecdsa::Public>("Charleth"),
+				],
+			]
+			.iter()
+			.flatten()
+			.cloned()
+			.map(|account_id| (0u32, 300_000_000__000_000_000_000_000_000u128, account_id))
+			.collect::<Vec<_>>();
+
 			rollup_genesis(
 				// initial collators.
 				vec![
@@ -111,24 +128,7 @@ pub fn rollup_local_config(
 				// Sudo account
 				get_account_id_from_seed::<ecdsa::Public>("Alith"),
 				// Tokens endowment
-				vec![
-					// MGA
-					(
-						0u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alith"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
-					),
-				],
+				tokens_endowment,
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
 				(
@@ -189,7 +189,8 @@ pub fn rollup_local_config(
 						)),
 					),
 				],
-				sequencers_set,
+				eth,
+				arb,
 				eth_chain_id,
 				decode_url.clone(),
 			)
@@ -219,26 +220,12 @@ fn rollup_genesis(
 		Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
-	eth_initial_sequencers :InitialSequencersSet,
-	arb_initial_sequencers :InitialSequencersSet,
+	eth_initial_sequencers: Vec<AccountId>,
+	arb_initial_sequencers: Vec<AccountId>,
 	chain_id: u64,
 	decode_url: String,
 ) -> rollup_runtime::RuntimeGenesisConfig {
-
 	let initial_sequencers_stake = 10_000_000_u128;
-	let arb_sequencers = match arb_initial_sequencers{
-		InitialSequencersSet::Collators => todo!(),
-		InitialSequencersSet::Set(_) => todo!(),
-		InitialSequencersSet::Empty => todo!(),
-	};
-
-	let eth_sequencers = match arb_initial_sequencers{
-		InitialSequencersSet::Collators => todo!(),
-		InitialSequencersSet::Set(_) => todo!(),
-		InitialSequencersSet::Empty => todo!(),
-	};
-
-
 
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
@@ -374,25 +361,20 @@ fn rollup_genesis(
 		sequencer_staking: rollup_runtime::SequencerStakingConfig {
 			minimal_stake_amount: 1_000_000_u128,
 			slash_fine_amount: 100_000_u128,
-			sequencers_stake: if with_default_sequencer {
-				[
-					(
-						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
-						pallet_rolldown::messages::Chain::Ethereum,
-						10_000_000_u128,
-					),
-					(
-						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
-						pallet_rolldown::messages::Chain::Arbitrum,
-						10_000_000_u128,
-					),
-				]
-				.iter()
-				.cloned()
-				.collect()
-			} else {
-				Default::default()
-			},
+			sequencers_stake: [
+				eth_initial_sequencers
+					.into_iter()
+					.map(|seq| (seq, pallet_rolldown::messages::Chain::Ethereum, 10_000_000_u128))
+					.collect::<Vec<_>>(),
+				arb_initial_sequencers
+					.into_iter()
+					.map(|seq| (seq, pallet_rolldown::messages::Chain::Arbitrum, 10_000_000_u128))
+					.collect::<Vec<_>>(),
+			]
+			.iter()
+			.flatten()
+			.cloned()
+			.collect(),
 		},
 		rolldown: rollup_runtime::RolldownConfig { _phantom: Default::default() },
 		metamask: rollup_runtime::MetamaskConfig {

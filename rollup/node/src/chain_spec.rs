@@ -59,10 +59,6 @@ pub fn rollup_local_config(
 	evm_chain: EvmChain,
 	decode_url: Option<String>,
 ) -> ChainSpec {
-	let initial_collators_as_sequencers = match sequencers_set {
-		InitialSequencersSet::Collators => true,
-		InitialSequencersSet::Empty => false,
-	};
 
 	let (gasp_token_address, eth_chain_id) = match evm_chain {
 		EvmChain::Holesky => (
@@ -193,7 +189,7 @@ pub fn rollup_local_config(
 						)),
 					),
 				],
-				initial_collators_as_sequencers,
+				sequencers_set,
 				eth_chain_id,
 				decode_url.clone(),
 			)
@@ -223,10 +219,27 @@ fn rollup_genesis(
 		Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
-	with_default_sequencer: bool,
+	eth_initial_sequencers :InitialSequencersSet,
+	arb_initial_sequencers :InitialSequencersSet,
 	chain_id: u64,
 	decode_url: String,
 ) -> rollup_runtime::RuntimeGenesisConfig {
+
+	let initial_sequencers_stake = 10_000_000_u128;
+	let arb_sequencers = match arb_initial_sequencers{
+		InitialSequencersSet::Collators => todo!(),
+		InitialSequencersSet::Set(_) => todo!(),
+		InitialSequencersSet::Empty => todo!(),
+	};
+
+	let eth_sequencers = match arb_initial_sequencers{
+		InitialSequencersSet::Collators => todo!(),
+		InitialSequencersSet::Set(_) => todo!(),
+		InitialSequencersSet::Empty => todo!(),
+	};
+
+
+
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
 			code: rollup_runtime::WASM_BINARY

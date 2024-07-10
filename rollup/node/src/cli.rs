@@ -2,6 +2,12 @@ use sc_cli::RunCmd;
 
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
+	#[arg(long, env, default_value_t = false, conflicts_with_all = &["chain_genesis_salt"], global = true)]
+	pub randomize_chain_genesis_salt: bool,
+
+	#[arg(long, env, conflicts_with_all = &["randomize_chain_genesis_salt"], global = true)]
+	pub chain_genesis_salt: Option<String>,
+
 	#[command(subcommand)]
 	pub subcommand: Option<Subcommand>,
 

@@ -84,19 +84,19 @@ impl SubstrateCli for Cli {
 		};
 		Ok(match id {
 			"" | "rollup-local" =>
-			Box::new(chain_spec::rollup_local_config(eth_sequencers, arb_sequencers, EvmChain::Anvil,
+				Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
+				None
+				)),
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
 				None
 			)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(eth_sequencers, arb_sequencers, EvmChain::Anvil,
+			"anvil" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
 				None
 			)),
-			"anvil" => Box::new(chain_spec::rollup_local_config(eth_sequencers, arb_sequencers, EvmChain::Anvil,
+			"reth" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Reth,
 				None
 			)),
-			"reth" => Box::new(chain_spec::rollup_local_config(eth_sequencers, arb_sequencers, EvmChain::Reth,
-				None
-			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(eth_sequencers, arb_sequencers, EvmChain::Holesky,
+			"holesky" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Holesky,
 				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>

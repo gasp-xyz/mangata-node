@@ -5,10 +5,10 @@ pub struct Cli {
 	#[command(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
-	#[arg(long, value_parser, value_delimiter = ',')]
+	#[arg(long, value_parser, value_delimiter = ',', global = true)]
 	pub override_eth_sequencers: Vec<String>,
 
-	#[arg(long, value_parser, value_delimiter = ',')]
+	#[arg(long, value_parser, value_delimiter = ',', global = true)]
 	pub override_arb_sequencers: Vec<String>,
 
 	#[clap(flatten)]

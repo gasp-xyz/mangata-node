@@ -492,20 +492,11 @@ impl<T: Config> Pallet<T> {
 	// 	Self::maybe_remove_sequencers_from_active_set(exiting_collators);
 	// }
 
-	fn maybe_remove_sequencers_from_active_set(exiting_collators: BTreeSet<T::AccountId>) {
-		let to_remove = ActiveSequencers::<T>::get().into_iter().map(|(chain, active)| {
-			(
-				chain,
-				active
-					.iter()
-					.filter(|seq| exiting_collators.contains(seq))
-					.cloned()
-					.collect::<BTreeSet<_>>(),
-			)
-		});
-
-		for (chain, sequencers_set) in to_remove {
-			Self::remove_sequencers_from_active_set(chain, sequencers_set);
+	fn maybe_remove_sequencer_from_active_set(chain: T::ChainId, sequencer: T::AccountId) {
+		if <SequencerStake<T>>::get((sequencer.clone(), chain)) < MinimalStakeAmount::<T>::get() &&
+			Self::is_active_sequencer(chain, &sequencer)
+		{
+			Self::remove_sequencers_from_active_set(chain, [sequencer].iter().cloned().collect());
 		}
 	}
 
@@ -610,7 +601,8 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		maybe_to_reward: Option<&T::AccountId>,
 	) -> DispatchResult {
 		// Use slashed amount partially to reward canceler, partially to vault to pay for l1 fees
-		<SequencerStake<T>>::try_mutate((to_be_slashed, chain), |stake| -> DispatchResult {
+		let maybe_leaving_sequencer = to_be_slashed.clone();
+		<SequencerStake<T>>::mutate((to_be_slashed, chain), |stake| -> DispatchResult {
 			let slash_fine_amount = SlashFineAmount::<T>::get();
 			let slash_fine_amount_actual = (*stake).min(slash_fine_amount);
 			*stake = stake.saturating_sub(slash_fine_amount_actual);
@@ -628,11 +620,9 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 			}
 			let _ = T::Currency::slash_reserved(to_be_slashed, burned_amount);
 			Ok(())
-		})?;
+		});
 
-		let mut to_remove = BTreeSet::new();
-		to_remove.insert(to_be_slashed.clone());
-		Self::maybe_remove_sequencers_from_active_set(to_remove);
+		Self::maybe_remove_sequencer_from_active_set(chain, maybe_leaving_sequencer);
 
 		Ok(().into())
 	}

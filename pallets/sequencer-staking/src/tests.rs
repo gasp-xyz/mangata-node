@@ -417,11 +417,14 @@ fn test_slash_sequencer() {
 		let total_issuance_0 = TokensOf::<Test>::total_issuance();
 		assert_eq!(TokensOf::<Test>::total_balance(&BOB), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&BOB), MINIMUM_STAKE);
-
 		assert_ok!(SequencerStaking::slash_sequencer(consts::DEFAULT_CHAIN_ID, &BOB, None));
 
 		assert_eq!(TokensOf::<Test>::total_balance(&BOB), TOKENS_ENDOWED - SLASH_AMOUNT);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&BOB), MINIMUM_STAKE - SLASH_AMOUNT);
+		assert_eq!(
+			<SequencerStake<Test>>::get((BOB, DEFAULT_CHAIN_ID)),
+			MINIMUM_STAKE - SLASH_AMOUNT
+		);
 		assert_eq!(total_issuance_0 - TokensOf::<Test>::total_issuance(), SLASH_AMOUNT);
 	});
 }
@@ -431,8 +434,10 @@ fn test_slash_sequencer() {
 fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 	set_default_mocks!();
 	ExtBuilder::new().build().execute_with(|| {
+		println!("STAKE: {:?}", <SequencerStake<Test>>::get((CHARLIE, DEFAULT_CHAIN_ID)));
 		forward_to_block::<Test>(10);
 
+		println!("STAKE: {:?}", <SequencerStake<Test>>::get((CHARLIE, DEFAULT_CHAIN_ID)));
 		let amount = 10;
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
@@ -446,6 +451,7 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 		assert_eq!(TokensOf::<Test>::reserved_balance(&EVE), 0);
 		assert_eq!(TokensOf::<Test>::total_issuance(), TOKENS_ENDOWED * 4);
 
+		println!("STAKE: {:?}", <SequencerStake<Test>>::get((CHARLIE, DEFAULT_CHAIN_ID)));
 		assert_ok!(SequencerStaking::slash_sequencer(
 			consts::DEFAULT_CHAIN_ID,
 			&CHARLIE,
@@ -550,13 +556,9 @@ fn test_maybe_remove_sequencers_from_active_set_works() {
 		forward_to_block::<Test>(10);
 
 		SequencerStaking::set_active_sequencers(
-			[
-				(consts::DEFAULT_CHAIN_ID, ALICE),
-				(consts::DEFAULT_CHAIN_ID, BOB),
-				(consts::DEFAULT_CHAIN_ID, CHARLIE),
-			]
-			.iter()
-			.cloned(),
+			[(consts::DEFAULT_CHAIN_ID, ALICE), (consts::DEFAULT_CHAIN_ID, BOB)]
+				.iter()
+				.cloned(),
 		)
 		.unwrap();
 
@@ -564,13 +566,15 @@ fn test_maybe_remove_sequencers_from_active_set_works() {
 			MockRolldownProviderApi::handle_sequencer_deactivations_context();
 		handle_sequencer_deactivations_mock
 			.expect()
-			.with(eq(consts::DEFAULT_CHAIN_ID), eq(vec![BOB, CHARLIE]))
+			.with(eq(consts::DEFAULT_CHAIN_ID), eq(vec![BOB]))
 			.times(1)
 			.return_const(());
 
-		SequencerStaking::maybe_remove_sequencers_from_active_set(
-			[BOB, CHARLIE, EVE].iter().cloned().collect(),
-		);
+		assert_ok!(SequencerStaking::slash_sequencer(consts::DEFAULT_CHAIN_ID, &BOB, None));
+
+		SequencerStaking::maybe_remove_sequencer_from_active_set(consts::DEFAULT_CHAIN_ID, ALICE);
+		SequencerStaking::maybe_remove_sequencer_from_active_set(consts::DEFAULT_CHAIN_ID, BOB);
+		SequencerStaking::maybe_remove_sequencer_from_active_set(consts::DEFAULT_CHAIN_ID, CHARLIE);
 	});
 }
 

@@ -1511,6 +1511,7 @@ fn test_new_sequencer_active() {
 #[serial]
 fn test_sequencer_unstaking() {
 	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		forward_to_block::<Test>(1);
 		let dispute_period_length = Rolldown::get_dispute_period();
 		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
 		let x = 20;
@@ -1525,7 +1526,10 @@ fn test_sequencer_unstaking() {
 		assert_ok!(Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE));
 		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), 0);
 
-		AwaitingCancelResolution::<Test>::insert((consts::CHAIN, ALICE), BTreeSet::from([0]));
+		AwaitingCancelResolution::<Test>::insert(
+			(consts::CHAIN, ALICE),
+			BTreeSet::from([(0, DisputeRole::Canceler)]),
+		);
 		assert_err!(
 			Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE),
 			Error::<Test>::SequencerAwaitingCancelResolution
@@ -1593,11 +1597,11 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 			// Assert
 			assert_eq!(
 				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
-				BTreeSet::from([1])
+				BTreeSet::from([(1, DisputeRole::Submitter)])
 			);
 			assert_eq!(
 				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
-				BTreeSet::from([1])
+				BTreeSet::from([(1, DisputeRole::Canceler)])
 			);
 		});
 }
@@ -1639,11 +1643,11 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
 			assert_eq!(
 				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
-				BTreeSet::from([1])
+				BTreeSet::from([(1, DisputeRole::Submitter)])
 			);
 			assert_eq!(
 				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
-				BTreeSet::from([1])
+				BTreeSet::from([(1, DisputeRole::Canceler)])
 			);
 			forward_to_block::<Test>(16);
 
@@ -1972,7 +1976,7 @@ fn consider_awaiting_l1_READ_update_in_dispute_period_when_assigning_initial_rea
 			Rolldown::new_sequencer_active(consts::CHAIN, &ALICE);
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
 			);
 
 			// at this point ALICE is sequencer again and her update provided at block 13 gets executed
@@ -2062,39 +2066,5 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
-
-			//
-			// // then lets pretned that alice provided more stake and got approved as active sequencer
-			// Rolldown::new_sequencer_active(
-			// 	consts::CHAIN,
-			// 	&ALICE,
-			// );
-			//
-			// // resolve previous cancel disputes
-			// Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), L1UpdateBuilder::default()
-			//           .with_requests(vec![
-			// 		L1UpdateRequest::CancelResolution(
-			// 			messages::CancelResolution {
-			// 				requestId: Default::default(),
-			// 				l2RequestId: 1u128,
-			// 				cancelJustified: false,
-			// 				timeStamp: sp_core::U256::from(1),
-			// 			},
-			// 		),
-			// 		L1UpdateRequest::CancelResolution(
-			// 			messages::CancelResolution {
-			// 				requestId: Default::default(),
-			// 				l2RequestId: 2u128,
-			// 				cancelJustified: false,
-			// 				timeStamp: sp_core::U256::from(1),
-			// 			},
-			// 		)
-			//           ])
-			//           .build()).unwrap();
-			//
-			// assert_eq!(
-			// 	*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
-			// 	SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
-			// );
 		});
 }

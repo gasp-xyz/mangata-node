@@ -1834,3 +1834,267 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initial_cancel_rights_to_sequencer(
+) {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock
+				.expect()
+				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.cloned() == None)
+				.times(2)
+				.return_const(Ok(().into()));
+
+			// honest update
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				15u128.into(),
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(11);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(CHARLIE), honest_update.clone())
+				.unwrap();
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				16u128.into(),
+			)
+			.unwrap();
+
+			// lets pretned that alice misbehaved and got slashed, as a result her stake dropped below
+			// active sequencer threshold and she got immadietely removed from sequencers set
+			Rolldown::handle_sequencer_deactivations(consts::CHAIN, vec![ALICE]);
+
+			// then lets pretned that alice provided more stake and got approved as active sequencer
+			Rolldown::new_sequencer_active(consts::CHAIN, &ALICE);
+
+			// resolve previous cancel disputes
+			Rolldown::force_update_l2_from_l1(
+				RuntimeOrigin::root(),
+				L1UpdateBuilder::default()
+					.with_requests(vec![
+						L1UpdateRequest::CancelResolution(messages::CancelResolution {
+							requestId: Default::default(),
+							l2RequestId: 1u128,
+							cancelJustified: false,
+							timeStamp: sp_core::U256::from(1),
+						}),
+						L1UpdateRequest::CancelResolution(messages::CancelResolution {
+							requestId: Default::default(),
+							l2RequestId: 2u128,
+							cancelJustified: false,
+							timeStamp: sp_core::U256::from(1),
+						}),
+					])
+					.build(),
+			)
+			.unwrap();
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn consider_awaiting_l1_READ_update_in_dispute_period_when_assigning_initial_read_rights_to_sequencer(
+) {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock
+				.expect()
+				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.cloned() == None)
+				.times(1)
+				.return_const(Ok(().into()));
+
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
+
+			// accidently canceling honest update
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, 15u128)
+				.unwrap();
+
+			forward_to_block::<Test>(12);
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::CancelResolution(messages::CancelResolution {
+						requestId: Default::default(),
+						l2RequestId: 1u128,
+						cancelJustified: false,
+						timeStamp: sp_core::U256::from(1),
+					}),
+				])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(CHARLIE), honest_update).unwrap();
+
+			forward_to_block::<Test>(15);
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::CancelResolution(messages::CancelResolution {
+						requestId: Default::default(),
+						l2RequestId: 1u128,
+						cancelJustified: false,
+						timeStamp: sp_core::U256::from(1),
+					}),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), honest_update).unwrap();
+
+			forward_to_block::<Test>(17);
+			// at this point alice will be slashed by cancel resolution provided by CHALIE in block 12
+			Rolldown::handle_sequencer_deactivations(consts::CHAIN, vec![ALICE]);
+			// then lets pretned that alice provided more stake and got approved as active sequencer
+			Rolldown::new_sequencer_active(consts::CHAIN, &ALICE);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+
+			// at this point ALICE is sequencer again and her update provided at block 13 gets executed
+			forward_to_block::<Test>(20);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initial_read_rights_to_sequencer(
+) {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().return_const(Ok(().into()));
+
+			// honest update
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, 15u128)
+				.unwrap();
+
+			forward_to_block::<Test>(15);
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), honest_update.clone())
+				.unwrap();
+			// lets assume single person controls multiple sequencers (alice&charlie) and charlie intentionally cancels honest update
+			Rolldown::cancel_requests_from_l1(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::CHAIN,
+				20u128,
+			)
+			.unwrap();
+
+			// and then CHARLIE provbides honest update - as a result ALICE will be slashed
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(CHARLIE),
+				L1UpdateBuilder::default()
+					.with_requests(vec![
+						L1UpdateRequest::Deposit(Default::default()),
+						L1UpdateRequest::CancelResolution(messages::CancelResolution {
+							requestId: Default::default(),
+							l2RequestId: 1u128,
+							cancelJustified: false,
+							timeStamp: sp_core::U256::from(1),
+						}),
+					])
+					.build(),
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(20);
+			// alice is slashed for her first malicious cancel but then she got slashed with honest update but that has not been yet processed
+			Rolldown::handle_sequencer_deactivations(consts::CHAIN, vec![ALICE]);
+
+			Rolldown::update_l2_from_l1(
+				RuntimeOrigin::signed(CHARLIE),
+				L1UpdateBuilder::default()
+					.with_requests(vec![L1UpdateRequest::CancelResolution(
+						messages::CancelResolution {
+							requestId: Default::default(),
+							l2RequestId: 2u128,
+							cancelJustified: false,
+							timeStamp: sp_core::U256::from(1),
+						},
+					)])
+					.with_offset(3u128)
+					.build(),
+			)
+			.unwrap();
+
+			forward_to_block::<Test>(24);
+			// lets consider alice provided more stake and just got into the active set of sequencers
+			Rolldown::new_sequencer_active(consts::CHAIN, &ALICE);
+
+			forward_to_block::<Test>(25);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			);
+
+			//
+			// // then lets pretned that alice provided more stake and got approved as active sequencer
+			// Rolldown::new_sequencer_active(
+			// 	consts::CHAIN,
+			// 	&ALICE,
+			// );
+			//
+			// // resolve previous cancel disputes
+			// Rolldown::force_update_l2_from_l1(RuntimeOrigin::root(), L1UpdateBuilder::default()
+			//           .with_requests(vec![
+			// 		L1UpdateRequest::CancelResolution(
+			// 			messages::CancelResolution {
+			// 				requestId: Default::default(),
+			// 				l2RequestId: 1u128,
+			// 				cancelJustified: false,
+			// 				timeStamp: sp_core::U256::from(1),
+			// 			},
+			// 		),
+			// 		L1UpdateRequest::CancelResolution(
+			// 			messages::CancelResolution {
+			// 				requestId: Default::default(),
+			// 				l2RequestId: 2u128,
+			// 				cancelJustified: false,
+			// 				timeStamp: sp_core::U256::from(1),
+			// 			},
+			// 		)
+			//           ])
+			//           .build()).unwrap();
+			//
+			// assert_eq!(
+			// 	*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
+			// 	SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
+			// );
+		});
+}

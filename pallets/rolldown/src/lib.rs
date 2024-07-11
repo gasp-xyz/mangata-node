@@ -527,7 +527,7 @@ impl<T: Config> Pallet<T> {
 			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
 				SequencersRights::<T>::mutate(l1, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(sequencer) {
-						rights.read_rights = 1;
+						rights.read_rights.saturating_accrue(T::RightsMultiplier::get());
 					}
 				});
 			}
@@ -547,7 +547,6 @@ impl<T: Config> Pallet<T> {
 		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
 			return
 		}
-
 		let id = L2OriginRequestId::<T>::get(l1);
 		L2OriginRequestId::<T>::mutate(l1, |request_id| {
 			request_id.saturating_inc();

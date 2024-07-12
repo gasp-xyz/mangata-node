@@ -24,7 +24,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::Serialize,
-	traits::{Convert, MaybeConvert},
+	traits::{Convert, MaybeConvert, Zero},
 };
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -1089,20 +1089,25 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
-	fn has_read_rights_under_dispute(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> bool {
+	fn count_of_read_rights_under_dispute(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> u128 {
+		let mut read_rights = 0u128;
 		let last_update = LastUpdateBySequencer::<T>::get((chain, sequencer));
 
-		let has_read_rights_locked_in_dispute_period = last_update != 0 &&
+		if last_update != 0 &&
 			last_update.saturating_add(T::DisputePeriodLength::get()) >=
-				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
+				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>()
+		{
+			read_rights += 1;
+		}
 
-		let has_read_rights_locked_in_cancel_resolution =
+		read_rights.saturating_accrue(
 			AwaitingCancelResolution::<T>::get((chain, sequencer))
 				.iter()
 				.filter(|(_, role)| *role == DisputeRole::Submitter)
-				.count() > 0;
+				.count() as u128,
+		);
 
-		has_read_rights_locked_in_cancel_resolution || has_read_rights_locked_in_dispute_period
+		read_rights
 	}
 
 	fn count_of_cancel_rights_under_dispute(
@@ -1124,11 +1129,9 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 			sequencer_set.insert(
 				sequencer.clone(),
 				SequencerRights {
-					read_rights: if Pallet::<T>::has_read_rights_under_dispute(chain, sequencer) {
-						0u128
-					} else {
-						T::RightsMultiplier::get()
-					},
+					read_rights: T::RightsMultiplier::get().saturating_sub(
+						Pallet::<T>::count_of_read_rights_under_dispute(chain, sequencer),
+					),
 					cancel_rights: count.saturating_mul(T::RightsMultiplier::get()).saturating_sub(
 						Pallet::<T>::count_of_cancel_rights_under_dispute(chain, sequencer) as u128,
 					),
@@ -1143,12 +1146,12 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 
 	fn sequencer_unstaking(chain: T::ChainId, sequencer: &AccountIdOf<T>) -> DispatchResult {
 		ensure!(
-			!Pallet::<T>::has_read_rights_under_dispute(chain, sequencer),
+			Pallet::<T>::count_of_read_rights_under_dispute(chain, sequencer).is_zero(),
 			Error::<T>::SequencerLastUpdateStillInDisputePeriod
 		);
 
 		ensure!(
-			Pallet::<T>::count_of_cancel_rights_under_dispute(chain, sequencer) == 0,
+			Pallet::<T>::count_of_cancel_rights_under_dispute(chain, sequencer).is_zero(),
 			Error::<T>::SequencerAwaitingCancelResolution
 		);
 

@@ -24,7 +24,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::Serialize,
-	traits::{Convert, MaybeConvert},
+	traits::{Convert, MaybeConvert, Zero},
 };
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -134,6 +134,14 @@ pub mod pallet {
 		Withdrawal(Withdrawal),
 	}
 
+	#[derive(
+		PartialOrd, Ord, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
+	)]
+	pub enum DisputeRole {
+		Canceler,
+		Submitter,
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
 	// Id of the last request originating on other chain that has been executed
@@ -207,8 +215,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_awaiting_cancel_resolution)]
-	pub type AwaitingCancelResolution<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::ChainId, T::AccountId), BTreeSet<u128>, ValueQuery>;
+	pub type AwaitingCancelResolution<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(T::ChainId, T::AccountId),
+		BTreeSet<(u128, DisputeRole)>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_update_by_sequencer)]
@@ -388,8 +401,12 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| v.insert(l2_request_id));
-			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| v.insert(l2_request_id));
+			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| {
+				v.insert((l2_request_id, DisputeRole::Submitter))
+			});
+			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| {
+				v.insert((l2_request_id, DisputeRole::Canceler))
+			});
 
 			L2Requests::<T>::insert(
 				chain,
@@ -527,7 +544,7 @@ impl<T: Config> Pallet<T> {
 			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
 				SequencersRights::<T>::mutate(l1, |sequencers| {
 					if let Some(rights) = sequencers.get_mut(sequencer) {
-						rights.read_rights = 1;
+						rights.read_rights.saturating_accrue(T::RightsMultiplier::get());
 					}
 				});
 			}
@@ -547,7 +564,6 @@ impl<T: Config> Pallet<T> {
 		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
 			return
 		}
-
 		let id = L2OriginRequestId::<T>::get(l1);
 		L2OriginRequestId::<T>::mutate(l1, |request_id| {
 			request_id.saturating_inc();
@@ -734,8 +750,12 @@ impl<T: Config> Pallet<T> {
 
 		L2Requests::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
 
-		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| v.remove(&cancel_request_id));
-		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| v.remove(&cancel_request_id));
+		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
+			v.remove(&(cancel_request_id, DisputeRole::Submitter))
+		});
+		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| {
+			v.remove(&(cancel_request_id, DisputeRole::Canceler))
+		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
 		T::SequencerStakingProvider::slash_sequencer(l1, &to_be_slashed, to_reward.as_ref())?;
@@ -1068,6 +1088,37 @@ impl<T: Config> Pallet<T> {
 
 		Ok(().into())
 	}
+
+	fn count_of_read_rights_under_dispute(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> u128 {
+		let mut read_rights = 0u128;
+		let last_update = LastUpdateBySequencer::<T>::get((chain, sequencer));
+
+		if last_update != 0 &&
+			last_update.saturating_add(T::DisputePeriodLength::get()) >=
+				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>()
+		{
+			read_rights += 1;
+		}
+
+		read_rights.saturating_accrue(
+			AwaitingCancelResolution::<T>::get((chain, sequencer))
+				.iter()
+				.filter(|(_, role)| *role == DisputeRole::Submitter)
+				.count() as u128,
+		);
+
+		read_rights
+	}
+
+	fn count_of_cancel_rights_under_dispute(
+		chain: ChainIdOf<T>,
+		sequencer: &AccountIdOf<T>,
+	) -> usize {
+		AwaitingCancelResolution::<T>::get((chain, sequencer))
+			.iter()
+			.filter(|(_, role)| *role == DisputeRole::Canceler)
+			.count()
+	}
 }
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {
@@ -1078,8 +1129,12 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 			sequencer_set.insert(
 				sequencer.clone(),
 				SequencerRights {
-					read_rights: T::RightsMultiplier::get(),
-					cancel_rights: count.saturating_mul(T::RightsMultiplier::get()),
+					read_rights: T::RightsMultiplier::get().saturating_sub(
+						Pallet::<T>::count_of_read_rights_under_dispute(chain, sequencer),
+					),
+					cancel_rights: count.saturating_mul(T::RightsMultiplier::get()).saturating_sub(
+						Pallet::<T>::count_of_cancel_rights_under_dispute(chain, sequencer) as u128,
+					),
 				},
 			);
 
@@ -1091,18 +1146,16 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 
 	fn sequencer_unstaking(chain: T::ChainId, sequencer: &AccountIdOf<T>) -> DispatchResult {
 		ensure!(
-			LastUpdateBySequencer::<T>::get((chain, sequencer))
-				.saturating_add(T::DisputePeriodLength::get()) <
-				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>(),
+			Pallet::<T>::count_of_read_rights_under_dispute(chain, sequencer).is_zero(),
 			Error::<T>::SequencerLastUpdateStillInDisputePeriod
 		);
+
 		ensure!(
-			AwaitingCancelResolution::<T>::get((chain, &sequencer)).is_empty(),
+			Pallet::<T>::count_of_cancel_rights_under_dispute(chain, sequencer).is_zero(),
 			Error::<T>::SequencerAwaitingCancelResolution
 		);
 
 		LastUpdateBySequencer::<T>::remove((chain, &sequencer));
-		AwaitingCancelResolution::<T>::remove((chain, &sequencer));
 
 		Ok(())
 	}

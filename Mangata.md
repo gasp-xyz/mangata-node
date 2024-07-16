@@ -2,10 +2,10 @@
 Mangata implements front-running bots prevention on automated market maker crypto exchange. For that reason it was decided to split block production and block execution into two following blocks. Execution of the transaction included in block N is delayed by 1 block comparing to origin substrate implementation. It is following block producer (N+1) who calculates the order of transactions execution from the previous block. This way none is able to foresee in what order transactions will be performed. 
 
 Affected creates:
-- [sc-block-builder](https://docs.rs/sc-block-builder/0.8.0/sc_block_builder/index.html) - execution of extrisnics from previous block on block creation
+- [sc-block-builder](https://docs.rs/sc-block-builder/0.8.0/sc_block_builder/index.html) - execution of extrinsics from previous block on block creation
 
 # Shuffling
-Extrinsics are randomly shuffled but still preservers original order per every account - motivation for such algorithm was the fact that following transactions from a given account may depend on other transactions from the same account.
+Extrinsics are randomly shuffled but still preserve original order per every account - motivation for such algorithm was the fact that following transactions from a given account may depend on other transactions from the same account.
 
 
 Origin order:
@@ -32,7 +32,7 @@ Seed value is injected into the block as [InherentData](https://docs.rs/sp-inher
 Affected crates
 - [sc-block-builder](https://docs.rs/sc-block-builder/0.8.0/sc_block_builder/index.html) - extracting seed value on inherents creation
 - [sc-basic-authorship](https://docs.rs/sc-basic-authorship/0.8.0/sc_basic_authorship/index.html) - shuffling extrinsics before passing them to block builder
-- [sc-consensus-babe](https://docs.rs/sc-basic-authorship/0.8.0/sc_basic_authorship/index.html) - calcuating and injecting shuffling seed value into InherentData, shuffling seed verification
+- [sc-consensus-babe](https://docs.rs/sc-basic-authorship/0.8.0/sc_basic_authorship/index.html) - calculating and injecting shuffling seed value into InherentData, shuffling seed verification
 - [sc-service](https://docs.rs/sc-service/0.8.0/sc_service/index.html) - fetching seed value and extrinsic shuffling for 'following nodes'
 #Tokens
 
@@ -48,7 +48,7 @@ Because of shuffled delayed transaction execution same applies to events trigger
 1. API waits for notification that it has been included in block N
 2. API fetches block N and N+1
 3. API stores information about list of events produced in block N+1
-3. API reads seed from block N+1 and calculate execution order of extrinsics from block N
+3. API reads seed from block N+1 and calculates execution order of extrinsics from block N
 4. API maps events to shuffled extrinsics list
 
 from API client perspective it's as easy as 

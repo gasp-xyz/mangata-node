@@ -19,7 +19,7 @@
 
 ## Description
 
-Mangata operates as a cross-chain liquidity protocol, facilitating seamless transactions between Ethereum and various other blockchains through a omnichain zk-rollup Infrastructure. We leverage the power of ZK-rollup, a second-layer (L2) solution, to ensure universal connectivity with first-layer (L1) blockchains. Additionally, our decentralized exchange platform is designed to provide robust protection against Miner Extractable Value (MEV) and frontrunning attempts, thereby safeguarding the interests of our users.
+Mangata operates as a cross-chain liquidity protocol, facilitating seamless transactions between Ethereum and various other blockchains through an omnichain zk-rollup Infrastructure. We leverage the power of ZK-rollup, a second-layer (L2) solution, to ensure universal connectivity with first-layer (L1) blockchains. Additionally, our decentralized exchange platform is designed to provide robust protection against Miner Extractable Value (MEV) and frontrunning attempts, thereby safeguarding the interests of our users.
 
 ## API
 
@@ -65,11 +65,11 @@ This will generate new local docker image `mangatasolutions/mangata-node:dev`
 
 ## Run
 
-In order to run mangata-parachain locally one need to set up both:
+In order to run mangata-parachain locally one needs to set up both:
 - local relay network
 - local parachain network
 
-Because of number of parameters is quite troublesome thats why we came up with dedicated dockerized environment.
+Because of number of parameters is quite troublesome that's why we came up with dedicated dockerized environment.
 
 ### Set up network using parachain-launch
 
@@ -102,7 +102,7 @@ yarn down
 
 ## Mangata node configuration
 
-There is number of chain configurations available for both development and production environements:
+There are number of chain configurations available for both development and production environments:
 
 | chainspec (`--chain`)         |      Sudo      |  Description                     |
 |-------------------------------|----------------|----------------------------------|

@@ -16,5 +16,6 @@ sp_api::decl_runtime_apis! {
 		fn get_number_of_pending_requests(chain: Chain) -> Option<u128>;
 		fn get_total_number_of_deposits() -> u32;
 		fn get_total_number_of_withdrawals() -> u32;
+		fn get_l2_requests_proof(chain: Chain, range : (u128, u128)) -> H256;
 	}
 }

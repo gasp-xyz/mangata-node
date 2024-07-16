@@ -38,6 +38,7 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 		hex_payload: String,
 		at: Option<BlockHash>,
 	) -> RpcResult<Option<L1Update>>;
+
 	#[method(name = "rolldown_verify_sequencer_update")]
 	fn verify_sequencer_update(
 		&self,
@@ -46,6 +47,14 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 		request_id: u128,
 		at: Option<BlockHash>,
 	) -> RpcResult<bool>;
+
+	#[method(name = "rolldown_get_proof")]
+	fn get_l2_requests_proof(
+		&self,
+		chain: Chain,
+		range: (u128, u128),
+		at: Option<BlockHash>,
+	) -> RpcResult<H256>;
 }
 
 pub struct Rolldown<C, M> {
@@ -152,5 +161,23 @@ where
 					Some("Request does not exist".to_string()),
 				)))),
 			})
+	}
+
+	fn get_l2_requests_proof(
+		&self,
+		chain: Chain,
+		range: (u128, u128),
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<H256> {
+		let api = self.client.runtime_api();
+		let at = at.unwrap_or(self.client.info().best_hash);
+
+		api.get_l2_requests_proof(at, chain, range).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 }

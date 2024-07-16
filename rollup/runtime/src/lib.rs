@@ -909,6 +909,10 @@ impl_runtime_apis! {
 		fn get_total_number_of_withdrawals() -> u32 {
 			Rolldown::get_total_number_of_withdrawals()
 		}
+
+		fn get_l2_requests_proof(chain: pallet_rolldown::messages::Chain, range : (u128, u128)) -> sp_core::H256{
+			todo!()
+		}
 	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{

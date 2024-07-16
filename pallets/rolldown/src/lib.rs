@@ -1119,6 +1119,11 @@ impl<T: Config> Pallet<T> {
 			.filter(|(_, role)| *role == DisputeRole::Canceler)
 			.count()
 	}
+
+	fn get_l2_requests_proof(chain: ChainIdOf<T>, range:(u128, u128)) -> H256 {
+		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
+		hash.into()
+	}
 }
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {

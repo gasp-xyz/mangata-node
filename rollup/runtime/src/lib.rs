@@ -910,8 +910,12 @@ impl_runtime_apis! {
 			Rolldown::get_total_number_of_withdrawals()
 		}
 
-		fn get_l2_requests_proof(chain: pallet_rolldown::messages::Chain, range : (u128, u128)) -> sp_core::H256{
-			todo!()
+		fn get_merkle_root(chain: pallet_rolldown::messages::Chain, range : (u128, u128)) -> sp_core::H256{
+			Rolldown::get_merkle_root(chain, range)
+		}
+
+		fn get_merkle_proof_for_tx(chain: pallet_rolldown::messages::Chain, range : (u128, u128), tx_id: u128) -> Vec<sp_core::H256>{
+			Rolldown::get_merkle_proof_for_tx(chain, range, tx_id)
 		}
 	}
 

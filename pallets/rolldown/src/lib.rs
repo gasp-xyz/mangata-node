@@ -1172,13 +1172,13 @@ impl<T: Config> Pallet<T> {
 		chain: ChainIdOf<T>,
 		range: (u128, u128),
 		tx_id: u128,
-	) -> Vec<u8> {
+	) -> Vec<H256> {
 		let tree = Self::create_merkle_tree(chain, range);
 		if let Some(merkle_tree) = tree {
 			let idx = tx_id as usize - range.0 as usize;
 			let indices_to_prove = vec![idx];
 			let merkle_proof = merkle_tree.proof(&indices_to_prove);
-			merkle_proof.to_bytes()
+			merkle_proof.proof_hashes().iter().map(|hash| H256::from(hash)).collect()
 		} else {
 			Default::default()
 		}

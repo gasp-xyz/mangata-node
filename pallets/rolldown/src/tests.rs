@@ -2088,8 +2088,9 @@ fn test_merkle_proof_works() {
 
 			let range = (1u128, 300u128);
 			let root_hash = Pallet::<Test>::get_merkle_root(consts::CHAIN, range);
-			let proof_bytes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 257);
-			let proof = MerkleProof::<Sha256>::from_bytes(proof_bytes.as_ref()).unwrap();
+			let proof_hashes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 257);
+			let proof =
+				MerkleProof::<Sha256>::new(proof_hashes.into_iter().map(Into::into).collect());
 
 			let tx_hash = {
 				let request_to_proof: Withdrawal = L2Requests::<Test>::get(

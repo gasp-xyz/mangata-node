@@ -48,13 +48,22 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 		at: Option<BlockHash>,
 	) -> RpcResult<bool>;
 
-	#[method(name = "rolldown_get_proof")]
-	fn get_l2_requests_proof(
+	#[method(name = "rolldown_get_merkle_root")]
+	fn get_merkle_root(
 		&self,
 		chain: Chain,
 		range: (u128, u128),
 		at: Option<BlockHash>,
 	) -> RpcResult<H256>;
+
+	#[method(name = "rolldown_get_merkle_proof")]
+	fn get_merkle_proof(
+		&self,
+		chain: Chain,
+		range: (u128, u128),
+		tx_id: u128,
+		at: Option<BlockHash>,
+	) -> RpcResult<Vec<H256>>;
 }
 
 pub struct Rolldown<C, M> {
@@ -163,7 +172,7 @@ where
 			})
 	}
 
-	fn get_l2_requests_proof(
+	fn get_merkle_root(
 		&self,
 		chain: Chain,
 		range: (u128, u128),
@@ -172,7 +181,26 @@ where
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 
-		api.get_l2_requests_proof(at, chain, range).map_err(|e| {
+		api.get_merkle_root(at, chain, range).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn get_merkle_proof(
+		&self,
+		chain: Chain,
+		range: (u128, u128),
+		tx_id: u128,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<H256>> {
+		let api = self.client.runtime_api();
+		let at = at.unwrap_or(self.client.info().best_hash);
+
+		api.get_merkle_proof_for_tx(at, chain, range, tx_id).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

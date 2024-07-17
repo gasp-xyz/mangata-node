@@ -7,7 +7,9 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType};
+use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
+use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, iter::Iterator};
 
@@ -132,6 +134,16 @@ pub mod pallet {
 		RequestResult(RequestResult),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
+	}
+
+	impl<AccountId> TryInto<Withdrawal> for L2Request<AccountId> {
+		type Error = &'static str;
+		fn try_into(self) -> Result<Withdrawal, Self::Error> {
+			match self {
+				L2Request::Withdrawal(withdrawal) => Ok(withdrawal),
+				_ => Err("not a withdrawal"),
+			}
+		}
 	}
 
 	#[derive(
@@ -1123,6 +1135,53 @@ impl<T: Config> Pallet<T> {
 	fn get_l2_requests_proof(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
 		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
 		hash.into()
+	}
+
+	pub fn create_merkle_tree(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+	) -> Option<MerkleTree<Sha256>> {
+		let l2_requests = (range.0..=range.1)
+			.into_iter()
+			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
+				Some(L2Request::Withdrawal(withdrawal)) => {
+					let eth_withdrawal = Self::to_eth_withdrawal(withdrawal);
+					let eth_withdrawal_id = eth_withdrawal.requestId.id;
+					let eth_withdrawal_hashed =
+						rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..]);
+					Some(eth_withdrawal_hashed)
+				},
+				Some(L2Request::RequestResult(_)) | Some(L2Request::Cancel(_)) => Some([0u8; 32]),
+				None => None,
+			})
+			.collect::<Option<Vec<_>>>();
+
+		l2_requests.map(|txs| MerkleTree::<Sha256>::from_leaves(txs.as_ref()))
+	}
+
+	//TODO: error handling
+	pub fn get_merkle_root(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
+		if let Some(tree) = Self::create_merkle_tree(chain, range) {
+			H256::from(tree.root().unwrap_or_default())
+		} else {
+			H256::from([0u8; 32])
+		}
+	}
+
+	pub fn get_merkle_proof_for_tx(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		tx_id: u128,
+	) -> Vec<u8> {
+		let tree = Self::create_merkle_tree(chain, range);
+		if let Some(merkle_tree) = tree {
+			let idx = tx_id as usize - range.0 as usize;
+			let indices_to_prove = vec![idx];
+			let merkle_proof = merkle_tree.proof(&indices_to_prove);
+			merkle_proof.to_bytes()
+		} else {
+			Default::default()
+		}
 	}
 }
 

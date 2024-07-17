@@ -2068,3 +2068,41 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn test_merkle_proof_works() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			for i in 0..500 {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					i as u128,
+				)
+				.unwrap();
+			}
+
+			let range = (1u128, 300u128);
+			let root_hash = Pallet::<Test>::get_merkle_root(consts::CHAIN, range);
+			let proof_bytes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 257);
+			let proof = MerkleProof::<Sha256>::from_bytes(proof_bytes.as_ref()).unwrap();
+
+			let tx_hash = {
+				let request_to_proof: Withdrawal = L2Requests::<Test>::get(
+					consts::CHAIN,
+					RequestId { origin: Origin::L2, id: 257 },
+				)
+				.unwrap()
+				.try_into()
+				.unwrap();
+				let eth_withdrawal = Pallet::<Test>::to_eth_withdrawal(request_to_proof);
+				rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..])
+			};
+
+			assert!(proof.verify(root_hash.into(), &[256usize], &[tx_hash], 300));
+		});
+}

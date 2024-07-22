@@ -248,7 +248,7 @@ pub mod pallet {
 		MaxSequencersLimitReached,
 		TestUnstakingError,
 		UnknownChainId,
-		NoStakeToUnStake
+		NoStakeToUnStake,
 	}
 
 	#[pallet::config]
@@ -369,10 +369,7 @@ pub mod pallet {
 				Error::<T>::CantUnstakeWhileInActiveSet
 			);
 			let sequencer_stake = SequencerStake::<T>::get((&sender, &chain));
-			ensure!(
-				!sequencer_stake.is_zero(),
-				Error::<T>::NoStakeToUnStake
-			);
+			ensure!(!sequencer_stake.is_zero(), Error::<T>::NoStakeToUnStake);
 
 			T::RolldownProvider::sequencer_unstaking(chain, &sender)?;
 

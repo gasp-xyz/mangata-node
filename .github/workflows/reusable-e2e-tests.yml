@@ -126,6 +126,8 @@ jobs:
             fast: true
           - command: "yarn test-parallel-3rdPartyRewards"
             fast: true
+          - command: "yarn test-sequencerStaking"
+            fast: true
 
 
     runs-on: [e2e-gke]

@@ -1183,6 +1183,20 @@ impl<T: Config> Pallet<T> {
 			Default::default()
 		}
 	}
+
+	pub fn max_id(chain: ChainIdOf<T>, range: (u128, u128)) -> u128 {
+		let mut max_id = 0u128;
+		for id in (range.0..=range.1) {
+			if let Some(L2Request::Withdrawal(withdrawal)) =
+				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id })
+			{
+				if withdrawal.requestId.id > max_id {
+					max_id = withdrawal.requestId.id;
+				}
+			}
+		}
+		max_id
+	}
 }
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {

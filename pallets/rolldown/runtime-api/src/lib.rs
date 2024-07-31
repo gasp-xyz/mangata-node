@@ -18,5 +18,6 @@ sp_api::decl_runtime_apis! {
 		fn get_total_number_of_withdrawals() -> u32;
 		fn get_merkle_root(chain: Chain, range : (u128, u128)) -> H256;
 		fn get_merkle_proof_for_tx(chain: Chain, range : (u128, u128), tx_id: u128) -> Vec<H256>;
+		fn get_foo(chain: Chain, range : (u128, u128)) -> u128;
 	}
 }

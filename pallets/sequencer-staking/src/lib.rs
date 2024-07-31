@@ -181,6 +181,10 @@ pub mod pallet {
 	pub type SequencerStake<T: Config> =
 		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	pub type UpdaterAccount<T: Config> =
+		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), AccountIdOf<T>, OptionQuery>;
+
 	// #[pallet::storage]
 	// #[pallet::unbounded]
 	// #[pallet::getter(fn get_eligible_to_be_sequencers)]
@@ -248,6 +252,7 @@ pub mod pallet {
 		MaxSequencersLimitReached,
 		TestUnstakingError,
 		UnknownChainId,
+		UpdaterAddressUnchanged,
 	}
 
 	#[pallet::config]
@@ -287,6 +292,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
+			updater_account: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -303,6 +309,12 @@ pub mod pallet {
 				}
 				Ok(())
 			})?;
+
+			if let Some(updater) = updater_account {
+				UpdaterAccount::<T>::insert((sender.clone(), chain), &updater);
+			} else {
+				UpdaterAccount::<T>::insert((sender.clone(), chain), &sender);
+			}
 
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
@@ -407,6 +419,32 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2.saturating_add(T::MaxSequencers::get().into()), 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn set_updater_account_for_sequencer(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			updater_account: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let sequencer = ensure_signed(origin)?;
+
+			ensure!(
+				Self::is_active_sequencer(chain, &sequencer),
+				Error::<T>::SequencerIsNotInActiveSet
+			);
+
+			UpdaterAccount::<T>::try_mutate((sequencer, chain), |acc| {
+				if *acc == Some(updater_account.clone()) {
+					Err(Error::<T>::UpdaterAddressUnchanged)
+				} else {
+					*acc = Some(updater_account.clone());
+					Ok(updater_account.clone())
+				}
+			})?;
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -423,74 +461,6 @@ impl<T: Config> Pallet<T> {
 		T::RolldownProvider::handle_sequencer_deactivations(chain, sequencers.clone());
 		Pallet::<T>::deposit_event(Event::<T>::SequencersRemovedFromActiveSet(chain, sequencers));
 	}
-
-	// fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool {
-	// 	EligibleToBeSequencers::<T>::get().contains_key(account)
-	// }
-
-	// fn initialize_genesis_eligible_sequencers(collators: Vec<T::AccountId>) {
-	// 	EligibleToBeSequencers::<T>::put(BTreeMap::from(
-	// 		collators
-	// 			.clone()
-	// 			.into_iter()
-	// 			.map(|s| (s, RoundRefCount::one()))
-	// 			.collect::<BTreeMap<AccountIdOf<T>, RoundRefCount>>(),
-	// 	));
-	// 	let round_index = CurrentRound::<T>::get();
-	// 	RoundCollators::<T>::insert(round_index, collators);
-	// }
-
-	// // we assume that the elements are UNIQUE!
-	// // as they should be
-	// fn process_new_session_collators(collators: Vec<T::AccountId>) {
-	// 	let round_index = CurrentRound::<T>::get().saturating_add(One::one());
-	// 	let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
-	// 	let mut exiting_collators = BTreeSet::new();
-	// 	if round_index >= T::NoOfPastSessionsForEligibility::get() {
-	// 		let first_round_collators_of_window = RoundCollators::<T>::take(
-	// 			round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()),
-	// 		);
-	// 		for col in first_round_collators_of_window {
-	// 			match eligible_to_be_sequencers.entry(col.clone()) {
-	// 				Vacant(x) => {
-	// 					log!(
-	// 						error,
-	// 						"exiting_collator {:?} not in eligible_to_be_sequencers {:?}",
-	// 						col,
-	// 						eligible_to_be_sequencers
-	// 					)
-	// 				},
-	// 				Occupied(x) if *x.get() == 1 => {
-	// 					x.remove();
-	// 					exiting_collators.insert(col);
-	// 				},
-	// 				Occupied(mut x) => {
-	// 					*x.get_mut() = x
-	// 						.get()
-	// 						.checked_sub(One::one())
-	// 						.expect("This is safe cause x should never be 0 ");
-	// 				},
-	// 			}
-	// 		}
-	// 	}
-
-	// 	for col in collators.clone() {
-	// 		eligible_to_be_sequencers
-	// 			.entry(col)
-	// 			.and_modify(|x| *x = x.saturating_add(One::one()))
-	// 			.or_insert(One::one());
-	// 	}
-
-	// 	RoundCollators::<T>::insert(round_index, collators);
-	// 	EligibleToBeSequencers::<T>::put(eligible_to_be_sequencers);
-	// 	CurrentRound::<T>::put(round_index);
-
-	// 	// TODO
-	// 	// Remove from the storage item ActiveSequencers
-	// 	// To remove rights - call handle_sequencer_deactivation?
-	// 	// dedup maybe?
-	// 	Self::maybe_remove_sequencers_from_active_set(exiting_collators);
-	// }
 
 	fn maybe_remove_sequencer_from_active_set(chain: T::ChainId, sequencer: T::AccountId) {
 		if <SequencerStake<T>>::get((sequencer.clone(), chain)) < MinimalStakeAmount::<T>::get() &&
@@ -566,16 +536,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
-// 	fn inform_initialized_authorities(accounts: Vec<T::AccountId>) {
-// 		Self::initialize_genesis_eligible_sequencers(accounts);
-// 	}
-
-// 	fn inform_on_new_session(accounts: Vec<T::AccountId>) {
-// 		Self::process_new_session_collators(accounts);
-// 	}
-// }
-
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, ChainIdOf<T>>
 	for Pallet<T>
 {
@@ -625,6 +585,14 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		Self::maybe_remove_sequencer_from_active_set(chain, maybe_leaving_sequencer);
 
 		Ok(().into())
+	}
+
+	fn selected_updater(chain: ChainIdOf<T>) -> Option<AccountIdOf<T>> {
+		if let Some(selected) = SelectedSequencer::<T>::get().get(&chain) {
+			UpdaterAccount::<T>::get((selected, chain)).or(Some(selected.clone()))
+		} else {
+			None
+		}
 	}
 }
 

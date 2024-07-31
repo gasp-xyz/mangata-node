@@ -293,6 +293,15 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// provides stake for the purpose of becoming sequencers
+		/// if stake amount is greater than `MinimalStakeAmount` and limit of active sequencres is not
+		/// reached, sequencer automatically joins active set, otherwise sequencer can call `rejoin_active_sequencers` when there are free seats
+		/// - `chain` - chain for which to assign stake_amount
+		/// - `stake_amont` - amount of stake
+		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
+		///                     of updates in pallet-rolldown. Alias account can not be set to another
+		///                     active sequencer or to some account that is already used as
+		///                     alias_account for another sequencer
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
@@ -434,6 +443,13 @@ pub mod pallet {
 
 		#[pallet::call_index(5)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2.saturating_add(T::MaxSequencers::get().into()), 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// Allows to configure alias_account for active sequencer. This extrinisic can only be called
+		/// by active sequencer
+		/// - `chain` -
+		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
+		///                     of updates in pallet-rolldown. Alias account can not be set to another
+		///                     active sequencer or to some account that is already used as
+		///                     alias_account for another sequencer
 		pub fn set_updater_account_for_sequencer(
 			origin: OriginFor<T>,
 			chain: T::ChainId,

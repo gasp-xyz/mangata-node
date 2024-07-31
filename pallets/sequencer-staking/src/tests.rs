@@ -764,7 +764,7 @@ fn test_provide_sequencer_stake_sets_updater_account_to_same_address_as_sequence
 
 		assert_eq!(
 			Some(CHARLIE),
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::selected_updater(
+			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::selected_sequencer(
 				consts::DEFAULT_CHAIN_ID
 			),
 		);
@@ -773,7 +773,7 @@ fn test_provide_sequencer_stake_sets_updater_account_to_same_address_as_sequence
 
 #[test]
 #[serial]
-fn test_provide_sequencer_stake_sets_updater_account_to_chosen_address() {
+fn test_sequencer_can_set_alias_address() {
 	set_default_mocks!();
 	ExtBuilder::new().build().execute_with(|| {
 		forward_to_block::<Test>(10);
@@ -788,26 +788,19 @@ fn test_provide_sequencer_stake_sets_updater_account_to_chosen_address() {
 			Some(EVE)
 		));
 
-		forward_to_block::<Test>(100);
-
 		assert!(
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::is_selected_sequencer(
+			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::is_active_sequencer_alias(
 				consts::DEFAULT_CHAIN_ID,
-				&consts::CHARLIE
+				&CHARLIE,
+				&EVE
 			)
-		);
-		assert_eq!(
-			Some(EVE),
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::selected_updater(
-				consts::DEFAULT_CHAIN_ID
-			),
 		);
 	});
 }
 
 #[test]
 #[serial]
-fn test_override_updater_account_for_sequencer() {
+fn test_sequencer_can_update_alias_address() {
 	set_default_mocks!();
 	ExtBuilder::new().build().execute_with(|| {
 		forward_to_block::<Test>(10);
@@ -819,78 +812,106 @@ fn test_override_updater_account_for_sequencer() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			None
+			None,
 		));
 
-		forward_to_block::<Test>(100);
-
-		assert!(
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::is_selected_sequencer(
-				consts::DEFAULT_CHAIN_ID,
-				&consts::CHARLIE
-			)
-		);
-		assert_eq!(
-			Some(consts::CHARLIE),
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::selected_updater(
-				consts::DEFAULT_CHAIN_ID
-			),
-		);
-
-		assert_ok!(SequencerStaking::set_updater_account_for_sequencer(
+		SequencerStaking::set_updater_account_for_sequencer(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
-			consts::EVE,
-		));
-
-		assert_eq!(
 			Some(consts::EVE),
-			<SequencerStaking as SequencerStakingProviderTrait<_, _, _>>::selected_updater(
-				consts::DEFAULT_CHAIN_ID
+		)
+		.unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn test_sequencer_can_not_set_another_sequencer_address_as_alias() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock.expect().return_const(());
+		SequencerStaking::set_active_sequencers(Vec::new()).unwrap();
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(ALICE),
+			consts::DEFAULT_CHAIN_ID,
+			MINIMUM_STAKE,
+			None,
+		));
+
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				MINIMUM_STAKE,
+				Some(ALICE),
 			),
+			Error::<Test>::AliasAccountIsActiveSequencer
+		);
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(CHARLIE),
+			consts::DEFAULT_CHAIN_ID,
+			MINIMUM_STAKE,
+			None,
+		));
+
+		assert_err!(
+			SequencerStaking::set_updater_account_for_sequencer(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				Some(ALICE),
+			),
+			Error::<Test>::AliasAccountIsActiveSequencer
 		);
 	});
 }
 
 #[test]
 #[serial]
-fn test_cannot_set_updater_address_to_same_address_as_it_was() {
+fn test_sequencer_can_not_set_use_already_used_alias() {
 	set_default_mocks!();
 	ExtBuilder::new().build().execute_with(|| {
 		forward_to_block::<Test>(10);
 
 		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
-		new_sequencer_active_mock.expect().times(1).return_const(());
+		new_sequencer_active_mock.expect().return_const(());
 		SequencerStaking::set_active_sequencers(Vec::new()).unwrap();
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(ALICE),
+			consts::DEFAULT_CHAIN_ID,
+			MINIMUM_STAKE,
+			Some(EVE),
+		));
+
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				MINIMUM_STAKE,
+				Some(EVE),
+			),
+			Error::<Test>::AddressInUse
+		);
+
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			None
+			None,
 		));
 
 		assert_err!(
 			SequencerStaking::set_updater_account_for_sequencer(
 				RuntimeOrigin::signed(CHARLIE),
 				consts::DEFAULT_CHAIN_ID,
-				consts::CHARLIE,
+				Some(EVE),
 			),
-			Error::<Test>::UpdaterAddressUnchanged
-		);
-
-		assert_ok!(SequencerStaking::set_updater_account_for_sequencer(
-			RuntimeOrigin::signed(CHARLIE),
-			consts::DEFAULT_CHAIN_ID,
-			consts::EVE,
-		));
-
-		assert_err!(
-			SequencerStaking::set_updater_account_for_sequencer(
-				RuntimeOrigin::signed(CHARLIE),
-				consts::DEFAULT_CHAIN_ID,
-				consts::EVE,
-			),
-			Error::<Test>::UpdaterAddressUnchanged
+			Error::<Test>::AddressInUse
 		);
 	});
 }

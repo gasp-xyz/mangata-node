@@ -182,8 +182,12 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
-	pub type UpdaterAccount<T: Config> =
+	pub type AliasAccount<T: Config> =
 		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), AccountIdOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	pub type AliasAccountInUse<T: Config> =
+		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, (), OptionQuery>;
 
 	// #[pallet::storage]
 	// #[pallet::unbounded]
@@ -252,7 +256,8 @@ pub mod pallet {
 		MaxSequencersLimitReached,
 		TestUnstakingError,
 		UnknownChainId,
-		UpdaterAddressUnchanged,
+		AddressInUse,
+		AliasAccountIsActiveSequencer,
 	}
 
 	#[pallet::config]
@@ -292,7 +297,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
-			updater_account: Option<T::AccountId>,
+			alias_account: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -310,10 +315,17 @@ pub mod pallet {
 				Ok(())
 			})?;
 
-			if let Some(updater) = updater_account {
-				UpdaterAccount::<T>::insert((sender.clone(), chain), &updater);
-			} else {
-				UpdaterAccount::<T>::insert((sender.clone(), chain), &sender);
+			if let Some(alias_account) = alias_account {
+				ensure!(
+					!AliasAccountInUse::<T>::contains_key(alias_account.clone()),
+					Error::<T>::AddressInUse
+				);
+				ensure!(
+					!Self::is_active_sequencer(chain, &alias_account),
+					Error::<T>::AliasAccountIsActiveSequencer
+				);
+				AliasAccount::<T>::insert((sender.clone(), chain), alias_account.clone());
+				AliasAccountInUse::<T>::insert(alias_account.clone(), ());
 			}
 
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
@@ -425,7 +437,7 @@ pub mod pallet {
 		pub fn set_updater_account_for_sequencer(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
-			updater_account: T::AccountId,
+			alias_account: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sequencer = ensure_signed(origin)?;
 
@@ -434,14 +446,22 @@ pub mod pallet {
 				Error::<T>::SequencerIsNotInActiveSet
 			);
 
-			UpdaterAccount::<T>::try_mutate((sequencer, chain), |acc| {
-				if *acc == Some(updater_account.clone()) {
-					Err(Error::<T>::UpdaterAddressUnchanged)
-				} else {
-					*acc = Some(updater_account.clone());
-					Ok(updater_account.clone())
+			if let Some(alias) = alias_account {
+				ensure!(
+					!Self::is_active_sequencer(chain, &alias),
+					Error::<T>::AliasAccountIsActiveSequencer
+				);
+				ensure!(
+					!AliasAccountInUse::<T>::contains_key(alias.clone()),
+					Error::<T>::AddressInUse
+				);
+				AliasAccount::<T>::insert((sequencer.clone(), chain), alias.clone());
+				AliasAccountInUse::<T>::insert(alias, ());
+			} else {
+				if let Some(alias) = AliasAccount::<T>::take((sequencer, chain)) {
+					AliasAccountInUse::<T>::remove(alias);
 				}
-			})?;
+			}
 
 			Ok(().into())
 		}
@@ -548,6 +568,17 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		)
 	}
 
+	fn is_active_sequencer_alias(
+		chain: <T as pallet::Config>::ChainId,
+		sequencer_acount: &AccountIdOf<T>,
+		alias_account: &AccountIdOf<T>,
+	) -> bool {
+		matches!(
+			AliasAccount::<T>::get((sequencer_acount, chain)),
+			Some(alias) if alias == *alias_account
+		)
+	}
+
 	fn is_selected_sequencer(chain: ChainIdOf<T>, sequencer: &AccountIdOf<T>) -> bool {
 		matches!(
 			SelectedSequencer::<T>::get().get(&chain),
@@ -587,12 +618,8 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		Ok(().into())
 	}
 
-	fn selected_updater(chain: ChainIdOf<T>) -> Option<AccountIdOf<T>> {
-		if let Some(selected) = SelectedSequencer::<T>::get().get(&chain) {
-			UpdaterAccount::<T>::get((selected, chain)).or(Some(selected.clone()))
-		} else {
-			None
-		}
+	fn selected_sequencer(chain: ChainIdOf<T>) -> Option<AccountIdOf<T>> {
+		SelectedSequencer::<T>::get().get(&chain).cloned()
 	}
 }
 

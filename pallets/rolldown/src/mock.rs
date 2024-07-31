@@ -92,9 +92,10 @@ mockall::mock! {
 
 	impl SequencerStakingProviderTrait<AccountId, Balance, messages::Chain> for SequencerStakingProviderApi {
 		fn is_active_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn is_active_sequencer_alias(chain: messages::Chain, sequencer: &AccountId, alias: &AccountId) -> bool;
 		fn slash_sequencer<'a>(chain: messages::Chain, to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
 		fn is_selected_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
-		fn selected_updater(chain: messages::Chain) -> Option<AccountId>;
+		fn selected_sequencer(chain: messages::Chain) -> Option<AccountId>;
 	}
 }
 

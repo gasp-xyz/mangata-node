@@ -103,7 +103,7 @@ pub mod pallet {
 					.unwrap_or_default();
 
 				if last_id >= last_id_in_batch + Self::automatic_update_batch_size() {
-					if let Some(updater) = T::SequencerStakingProvider::selected_updater(*chain) {
+					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
 						let batch_id = last_batch_id.saturating_add(1);
 						let range_start = last_id_in_batch.saturating_add(1);
 						let range_end = range_start.saturating_add(batch_size);

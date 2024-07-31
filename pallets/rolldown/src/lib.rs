@@ -91,6 +91,36 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			let batch_size = Self::automatic_update_batch_size();
+
+			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
+				let last_id = next_id.saturating_sub(1);
+
+				let (last_batch_id, last_id_in_batch) = L2RequestsBatchLast::<T>::get()
+					.get(&chain)
+					.cloned()
+					.map(|(batch_id, (_, last_reqeust_id))| (batch_id, last_reqeust_id))
+					.unwrap_or_default();
+
+				if last_id >= last_id_in_batch + Self::automatic_update_batch_size() {
+					if let Some(updater) = T::SequencerStakingProvider::selected_updater(*chain) {
+						let batch_id = last_batch_id.saturating_add(1);
+						let range_start = last_id_in_batch.saturating_add(1);
+						let range_end = range_start.saturating_add(batch_size);
+						L2RequestsBatch::<T>::insert(
+							(chain, batch_id),
+							((range_start, range_end), updater),
+						);
+						L2RequestsBatchLast::<T>::mutate(|batches| {
+							batches.insert(chain.clone(), (batch_id, (range_start, range_end)));
+						});
+						break
+					} else {
+						continue
+					}
+				}
+			}
+
 			Self::end_dispute_period();
 			T::DbWeight::get().reads_writes(20, 20)
 		}
@@ -161,16 +191,9 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_l2_origin_updates_counter)]
+	#[pallet::unbounded]
 	// Id of the next request that will originate on this chain
-	pub type L2OriginRequestId<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::ChainId,
-		u128,
-		ValueQuery,
-		frame_support::traits::ConstU128<1>,
-	>;
+	pub type L2OriginRequestId<T: Config> = StorageValue<_, BTreeMap<T::ChainId, u128>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -253,6 +276,27 @@ pub mod pallet {
 	#[pallet::getter(fn get_total_number_of_withdrawals)]
 	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	#[pallet::storage]
+	pub type L2RequestsBatch<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(ChainIdOf<T>, u128),
+		((u128, u128), AccountIdOf<T>),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	/// For each supported chain stores:
+	/// - last batch id
+	/// - range of the reqeusts in last batch
+	pub type L2RequestsBatchLast<T: Config> =
+		StorageValue<_, BTreeMap<T::ChainId, (u128, (u128, u128))>, ValueQuery>;
+
+	// #[pallet::storage]
+	// pub type L2RequestsBatchLast<T: Config> =
+	// 	StorageMap<_, Blake2_128Concat, u128, (u128, u128, AccountIdOf<T>), ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -323,6 +367,8 @@ pub mod pallet {
 			+ Ord
 			+ Copy;
 		type AssetAddressConverter: Convert<(ChainIdOf<Self>, [u8; 20]), L1Asset>;
+		#[pallet::constant]
+		type AutomaticUpdateBatchSize: Get<u128>;
 	}
 
 	#[pallet::genesis_config]
@@ -402,8 +448,7 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
-			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
+			let l2_request_id = Self::acquire_l2_request_id(chain);
 
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
@@ -471,8 +516,7 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
+			let l2_request_id = Self::acquire_l2_request_id(chain);
 
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
@@ -576,11 +620,8 @@ impl<T: Config> Pallet<T> {
 		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
 			return
 		}
-		let id = L2OriginRequestId::<T>::get(l1);
-		L2OriginRequestId::<T>::mutate(l1, |request_id| {
-			request_id.saturating_inc();
-		});
 
+		let id = Self::acquire_l2_request_id(l1);
 		let l2_request_id = RequestId { origin: Origin::L2, id };
 
 		let (status, request_type) = match request.clone() {
@@ -1186,7 +1227,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn max_id(chain: ChainIdOf<T>, range: (u128, u128)) -> u128 {
 		let mut max_id = 0u128;
-		for id in (range.0..=range.1) {
+		for id in range.0..=range.1 {
 			if let Some(L2Request::Withdrawal(withdrawal)) =
 				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id })
 			{
@@ -1196,6 +1237,24 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		max_id
+	}
+
+	pub fn automatic_update_batch_size() -> u128 {
+		<T as Config>::AutomaticUpdateBatchSize::get()
+	}
+
+	fn acquire_l2_request_id(chain: ChainIdOf<T>) -> u128 {
+		L2OriginRequestId::<T>::mutate(|val| {
+			// request ids start from id == 1
+			val.entry(chain).or_insert(1u128);
+			let id = val[&chain];
+			val.entry(chain).and_modify(|v| v.saturating_inc());
+			id
+		})
+	}
+
+	fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
+		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
 	}
 }
 

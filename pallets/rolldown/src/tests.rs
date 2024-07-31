@@ -1581,7 +1581,7 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 				.unwrap();
 			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
-			let l2_request_id = L2OriginRequestId::<Test>::get(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
@@ -2105,5 +2105,32 @@ fn test_merkle_proof_works() {
 			};
 
 			assert!(proof.verify(root_hash.into(), &[256usize], &[tx_hash], 300));
+		});
+}
+
+#[test]
+#[serial]
+fn test_batch_is_created_automatically_when_l2requests_count_exceeds_AutomaticUpdateBatchSize() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			for i in 0..Rolldown::automatic_update_batch_size() {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1000u128,
+				)
+				.unwrap();
+			}
+			forward_to_block::<Test>(10);
+
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(1u128, (0, 10)))
+			);
 		});
 }

@@ -94,6 +94,7 @@ mockall::mock! {
 		fn is_active_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
 		fn slash_sequencer<'a>(chain: messages::Chain, to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
 		fn is_selected_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn selected_updater(chain: messages::Chain) -> Option<AccountId>;
 	}
 }
 
@@ -151,6 +152,7 @@ impl rolldown::Config for Test {
 	type ChainId = messages::Chain;
 	type RightsMultiplier = ConstU128<1>;
 	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
+	type AutomaticUpdateBatchSize = ConstU128<10>;
 }
 
 pub struct ExtBuilder {

@@ -153,7 +153,8 @@ impl rolldown::Config for Test {
 	type ChainId = messages::Chain;
 	type RightsMultiplier = ConstU128<1>;
 	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
-	type AutomaticUpdateBatchSize = ConstU128<10>;
+	type MerkleRootAutomaticBatchSize = ConstU128<10>;
+	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
 }
 
 pub struct ExtBuilder {

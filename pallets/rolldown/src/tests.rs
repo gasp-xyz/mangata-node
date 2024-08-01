@@ -846,6 +846,8 @@ fn cancel_request_as_council_executed_immadiately() {
 #[serial]
 fn execute_a_lot_of_requests_in_following_blocks() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
+		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
+		selected_sequencer_mock.expect().return_const(None);
 		forward_to_block::<Test>(10);
 
 		let requests_count = 25;
@@ -909,6 +911,9 @@ fn ignore_duplicated_requests_when_already_executed() {
 #[serial]
 fn process_l1_reads_in_order() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
+		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
+		selected_sequencer_mock.expect().return_const(None);
+
 		let dummy_request = L1UpdateRequest::Deposit(Default::default());
 		let first_update = L1UpdateBuilder::default()
 			.with_requests(vec![dummy_request.clone(); 11])
@@ -1017,6 +1022,9 @@ fn reject_second_update_in_the_same_block() {
 #[serial]
 fn accept_consecutive_update_split_into_two() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
+		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
+		selected_sequencer_mock.expect().return_const(None);
+
 		forward_to_block::<Test>(10);
 
 		// imagine that there are 20 request on L1 waiting to be processed
@@ -1444,6 +1452,10 @@ fn test_L2Update_requests_are_in_order() {
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(None);
+
 			forward_to_block::<Test>(10);
 			let first_update = L1UpdateBuilder::default()
 				.with_requests(vec![
@@ -2110,10 +2122,15 @@ fn test_merkle_proof_works() {
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when_l2requests_count_exceeds_AutomaticUpdateBatchSize() {
+fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootAutomaticBatchSize()
+{
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
 
 			for i in 0..Rolldown::automatic_update_batch_size() {
@@ -2126,11 +2143,48 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_AutomaticUp
 				)
 				.unwrap();
 			}
+
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
 			forward_to_block::<Test>(10);
 
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(1u128, (0, 10)))
+				Some(&(1u128, (1, 10)))
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_batch_is_created_automatically_when() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			for i in 0..Rolldown::automatic_update_batch_size() {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1000u128,
+				)
+				.unwrap();
+			}
+
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			forward_to_block::<Test>(10);
+
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(1u128, (1, 10)))
 			);
 		});
 }

@@ -106,7 +106,7 @@ pub mod pallet {
 					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
 						let batch_id = last_batch_id.saturating_add(1);
 						let range_start = last_id_in_batch.saturating_add(1);
-						let range_end = range_start.saturating_add(batch_size);
+						let range_end = range_start.saturating_add(batch_size.saturating_sub(1));
 						L2RequestsBatch::<T>::insert(
 							(chain, batch_id),
 							((range_start, range_end), updater),
@@ -367,8 +367,14 @@ pub mod pallet {
 			+ Ord
 			+ Copy;
 		type AssetAddressConverter: Convert<(ChainIdOf<Self>, [u8; 20]), L1Asset>;
+		// How many L2 requests needs to be created so they are grouped and assigned
+		// to active sequencer
 		#[pallet::constant]
-		type AutomaticUpdateBatchSize: Get<u128>;
+		type MerkleRootAutomaticBatchSize: Get<u128>;
+		// How many blocks since last batch needs to be create so the batch is created and assigned to
+		// active sequencer
+		#[pallet::constant]
+		type MerkleRootAutomaticBatchPeriod: Get<u128>;
 	}
 
 	#[pallet::genesis_config]
@@ -1240,7 +1246,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn automatic_update_batch_size() -> u128 {
-		<T as Config>::AutomaticUpdateBatchSize::get()
+		<T as Config>::MerkleRootAutomaticBatchSize::get()
 	}
 
 	fn acquire_l2_request_id(chain: ChainIdOf<T>) -> u128 {

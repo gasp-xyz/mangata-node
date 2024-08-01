@@ -915,3 +915,34 @@ fn test_sequencer_can_not_set_use_already_used_alias() {
 		);
 	});
 }
+
+#[test]
+#[serial]
+fn test_sequencer_cannot_join_if_its_account_is_used_as_sequencer_alias() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock.expect().return_const(());
+
+		SequencerStaking::set_active_sequencers(Vec::new()).unwrap();
+
+		assert_ok!(SequencerStaking::provide_sequencer_stake(
+			RuntimeOrigin::signed(CHARLIE),
+			consts::DEFAULT_CHAIN_ID,
+			MINIMUM_STAKE,
+			Some(consts::ALICE),
+		));
+
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(ALICE),
+				consts::DEFAULT_CHAIN_ID,
+				MINIMUM_STAKE,
+				None,
+			),
+			Error::<Test>::SequencerAccountIsActiveSequencerAlias
+		);
+	});
+}

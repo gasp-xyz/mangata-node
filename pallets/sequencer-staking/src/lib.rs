@@ -258,6 +258,7 @@ pub mod pallet {
 		UnknownChainId,
 		AddressInUse,
 		AliasAccountIsActiveSequencer,
+		SequencerAccountIsActiveSequencerAlias,
 	}
 
 	#[pallet::config]
@@ -309,6 +310,11 @@ pub mod pallet {
 			alias_account: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!AliasAccountInUse::<T>::contains_key(sender.clone()),
+				Error::<T>::SequencerAccountIsActiveSequencerAlias
+			);
 
 			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;

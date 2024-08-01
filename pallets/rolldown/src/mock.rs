@@ -240,6 +240,10 @@ impl ExtBuilder {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(None);
+
 			f()
 		})
 	}

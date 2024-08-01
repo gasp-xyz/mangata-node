@@ -90,31 +90,45 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			let batch_size = Self::automatic_update_batch_size();
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			let batch_size = Self::automatic_batch_size();
+			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
 
 			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
 				let last_id = next_id.saturating_sub(1);
 
-				let (last_batch_id, last_id_in_batch) = L2RequestsBatchLast::<T>::get()
-					.get(&chain)
-					.cloned()
-					.map(|(batch_id, (_, last_reqeust_id))| (batch_id, last_reqeust_id))
-					.unwrap_or_default();
+				let (last_batch_block_number, last_batch_id, last_id_in_batch) =
+					L2RequestsBatchLast::<T>::get()
+						.get(&chain)
+						.cloned()
+						.map(|(block_number, batch_id, (_, last_reqeust_id))| {
+							(block_number, batch_id, last_reqeust_id)
+						})
+						.unwrap_or_default();
 
-				if last_id >= last_id_in_batch + Self::automatic_update_batch_size() {
+				if last_id >= last_id_in_batch + batch_size ||
+					now >= last_batch_block_number + batch_period
+				{
 					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
 						let batch_id = last_batch_id.saturating_add(1);
 						let range_start = last_id_in_batch.saturating_add(1);
-						let range_end = range_start.saturating_add(batch_size.saturating_sub(1));
-						L2RequestsBatch::<T>::insert(
-							(chain, batch_id),
-							((range_start, range_end), updater),
+						let range_end = sp_std::cmp::min(
+							range_start.saturating_add(batch_size.saturating_sub(1)),
+							last_id,
 						);
-						L2RequestsBatchLast::<T>::mutate(|batches| {
-							batches.insert(chain.clone(), (batch_id, (range_start, range_end)));
-						});
-						break
+						if range_end >= range_start {
+							L2RequestsBatch::<T>::insert(
+								(chain, batch_id),
+								(now, (range_start, range_end), updater),
+							);
+							L2RequestsBatchLast::<T>::mutate(|batches| {
+								batches.insert(
+									chain.clone(),
+									(now, batch_id, (range_start, range_end)),
+								);
+							});
+							break
+						}
 					} else {
 						continue
 					}
@@ -281,7 +295,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		(ChainIdOf<T>, u128),
-		((u128, u128), AccountIdOf<T>),
+		(BlockNumberFor<T>, (u128, u128), AccountIdOf<T>),
 		OptionQuery,
 	>;
 
@@ -291,11 +305,7 @@ pub mod pallet {
 	/// - last batch id
 	/// - range of the reqeusts in last batch
 	pub type L2RequestsBatchLast<T: Config> =
-		StorageValue<_, BTreeMap<T::ChainId, (u128, (u128, u128))>, ValueQuery>;
-
-	// #[pallet::storage]
-	// pub type L2RequestsBatchLast<T: Config> =
-	// 	StorageMap<_, Blake2_128Concat, u128, (u128, u128, AccountIdOf<T>), ValueQuery>;
+		StorageValue<_, BTreeMap<T::ChainId, (BlockNumberFor<T>, u128, (u128, u128))>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -1245,8 +1255,12 @@ impl<T: Config> Pallet<T> {
 		max_id
 	}
 
-	pub fn automatic_update_batch_size() -> u128 {
+	pub(crate) fn automatic_batch_size() -> u128 {
 		<T as Config>::MerkleRootAutomaticBatchSize::get()
+	}
+
+	pub(crate) fn automatic_batch_period() -> u128 {
+		<T as Config>::MerkleRootAutomaticBatchPeriod::get()
 	}
 
 	fn acquire_l2_request_id(chain: ChainIdOf<T>) -> u128 {
@@ -1259,7 +1273,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
+	pub(crate) fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
 	}
 }

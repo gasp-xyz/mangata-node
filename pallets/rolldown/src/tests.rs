@@ -846,8 +846,6 @@ fn cancel_request_as_council_executed_immadiately() {
 #[serial]
 fn execute_a_lot_of_requests_in_following_blocks() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
-		selected_sequencer_mock.expect().return_const(None);
 		forward_to_block::<Test>(10);
 
 		let requests_count = 25;
@@ -911,9 +909,6 @@ fn ignore_duplicated_requests_when_already_executed() {
 #[serial]
 fn process_l1_reads_in_order() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
-		selected_sequencer_mock.expect().return_const(None);
-
 		let dummy_request = L1UpdateRequest::Deposit(Default::default());
 		let first_update = L1UpdateBuilder::default()
 			.with_requests(vec![dummy_request.clone(); 11])
@@ -1022,9 +1017,6 @@ fn reject_second_update_in_the_same_block() {
 #[serial]
 fn accept_consecutive_update_split_into_two() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		let selected_sequencer_mock = MockSequencerStakingProviderApi::selected_sequencer_context();
-		selected_sequencer_mock.expect().return_const(None);
-
 		forward_to_block::<Test>(10);
 
 		// imagine that there are 20 request on L1 waiting to be processed
@@ -1452,10 +1444,6 @@ fn test_L2Update_requests_are_in_order() {
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
 		.execute_with_default_mocks(|| {
-			let selected_sequencer_mock =
-				MockSequencerStakingProviderApi::selected_sequencer_context();
-			selected_sequencer_mock.expect().return_const(None);
-
 			forward_to_block::<Test>(10);
 			let first_update = L1UpdateBuilder::default()
 				.with_requests(vec![
@@ -2126,14 +2114,51 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootA
 {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
+		.build()
+		.execute_with(|| {
 			let selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
 			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
 
+			forward_to_block::<Test>(10);
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
 
-			for i in 0..Rolldown::automatic_update_batch_size() {
+			for _ in 0..Rolldown::automatic_batch_size() - 1 {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1000u128,
+				)
+				.unwrap();
+			}
+			forward_to_block::<Test>(11);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			forward_to_block::<Test>(12);
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(12u64.into(), 1u128, (1, 10)))
+			);
+
+			for _ in 0..Rolldown::automatic_batch_size() - 1 {
 				Rolldown::withdraw(
 					RuntimeOrigin::signed(ALICE),
 					consts::CHAIN,
@@ -2144,30 +2169,117 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootA
 				.unwrap();
 			}
 
-			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+			forward_to_block::<Test>(13);
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(12u64.into(), 1u128, (1, 10)))
+			);
 
-			forward_to_block::<Test>(10);
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
 
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(1u128, (1, 10)))
+				Some(&(12u64.into(), 1u128, (1, 10)))
+			);
+			forward_to_block::<Test>(14);
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(14u64.into(), 2u128, (11, 20)))
 			);
 		});
 }
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when() {
+fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passes() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
+		.build()
+		.execute_with(|| {
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
 			let selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
 			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
 
+			forward_to_block::<Test>(1);
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
 
-			for i in 0..Rolldown::automatic_update_batch_size() {
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64) - 1u64);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(25u64, 1u128, (1, 1)))
+			);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>((2 * Rolldown::automatic_batch_period() as u64) - 1u64);
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(25u64, 1u128, (1, 1)))
+			);
+			forward_to_block::<Test>((2 * Rolldown::automatic_batch_period() as u64));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(50u64, 2u128, (2, 2)))
+			);
+
+			forward_to_block::<Test>((10 * Rolldown::automatic_batch_period() as u64));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(50u64, 2u128, (2, 2)))
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_period_based_batch_respects_sized_batches() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+
+			forward_to_block::<Test>(10);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			for _ in 0..Rolldown::automatic_batch_size() {
 				Rolldown::withdraw(
 					RuntimeOrigin::signed(ALICE),
 					consts::CHAIN,
@@ -2177,14 +2289,30 @@ fn test_batch_is_created_automatically_when() {
 				)
 				.unwrap();
 			}
-
-			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
-
-			forward_to_block::<Test>(10);
-
+			forward_to_block::<Test>(11);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(1u128, (1, 10)))
+				Some(&(11u64.into(), 1u128, (1, 10)))
+			);
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(11u64.into(), 1u128, (1, 10)))
+			);
+
+			forward_to_block::<Test>(11 + (Rolldown::automatic_batch_period() as u64));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(36u64.into(), 2u128, (11, 11)))
 			);
 		});
 }

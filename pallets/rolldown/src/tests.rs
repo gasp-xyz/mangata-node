@@ -2089,22 +2089,13 @@ fn test_merkle_proof_works() {
 			let range = (1u128, 300u128);
 			let root_hash = Pallet::<Test>::get_merkle_root(consts::CHAIN, range);
 			let proof_hashes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 257);
-			let proof =
-				MerkleProof::<Sha256>::new(proof_hashes.into_iter().map(Into::into).collect());
-
-			let tx_hash = {
-				let request_to_proof: Withdrawal = L2Requests::<Test>::get(
-					consts::CHAIN,
-					RequestId { origin: Origin::L2, id: 257 },
-				)
-				.unwrap()
-				.try_into()
-				.unwrap();
-				let eth_withdrawal = Pallet::<Test>::to_eth_withdrawal(request_to_proof);
-				rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..])
-			};
-
-			assert!(proof.verify(root_hash.into(), &[256usize], &[tx_hash], 300));
+			Pallet::<Test>::verify_merkle_proof_for_tx(
+				consts::CHAIN,
+				range,
+				root_hash,
+				257,
+				proof_hashes,
+			);
 		});
 }
 

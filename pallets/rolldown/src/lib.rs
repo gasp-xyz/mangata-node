@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::ops::RangeInclusive;
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -1275,6 +1277,37 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
+	}
+
+	pub fn verify_merkle_proof_for_tx(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		root_hash: H256,
+		tx_id: u128,
+		proof: Vec<H256>,
+	) -> bool {
+		let proof = MerkleProof::<Sha256>::new(proof.into_iter().map(Into::into).collect());
+
+		let inclusive_range = range.0..=range.1;
+		if !inclusive_range.contains(&tx_id) {
+			return false
+		}
+
+		let tx_hash = {
+			let request_to_proof: Withdrawal =
+				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id })
+					.unwrap()
+					.try_into()
+					.unwrap();
+			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);
+			rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..])
+		};
+
+		if let Some(pos) = inclusive_range.clone().position(|elem| elem == tx_id) {
+			proof.verify(root_hash.into(), &[pos], &[tx_hash], inclusive_range.count())
+		} else {
+			false
+		}
 	}
 }
 

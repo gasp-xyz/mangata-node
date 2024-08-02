@@ -65,8 +65,15 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 		at: Option<BlockHash>,
 	) -> RpcResult<Vec<H256>>;
 
-	#[method(name = "rolldown_get_foo")]
-	fn get_foo(&self, chain: Chain, range: (u128, u128), at: Option<BlockHash>) -> RpcResult<u128>;
+	#[method(name = "rolldown_verify_merkle_proof")]
+	fn verify_merkle_proof(
+		&self,
+		chain: Chain,
+		range: (u128, u128),
+		tx_id: u128,
+		proof: Vec<H256>,
+		at: Option<BlockHash>,
+	) -> RpcResult<bool>;
 }
 
 pub struct Rolldown<C, M> {
@@ -212,16 +219,18 @@ where
 		})
 	}
 
-	fn get_foo(
+	fn verify_merkle_proof(
 		&self,
 		chain: Chain,
 		range: (u128, u128),
+		tx_id: u128,
+		proof: Vec<H256>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<u128> {
+	) -> RpcResult<bool> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 
-		api.get_foo(at, chain, range).map_err(|e| {
+		api.verify_merkle_proof_for_tx(at, chain, range, tx_id, proof).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

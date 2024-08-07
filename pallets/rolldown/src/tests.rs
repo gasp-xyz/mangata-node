@@ -2307,3 +2307,91 @@ fn test_period_based_batch_respects_sized_batches() {
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn test_create_manual_batch_fails_for_wrong_range() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			assert_err!(
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (5, 1),),
+				Error::<Test>::InvalidRange
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_create_manual_batch_fails_for_range_that_does_not_exists() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			assert_err!(
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),),
+				Error::<Test>::NonExistingRequestId
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_create_manual_batch_works() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+			assert_ok!(
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),)
+			);
+			assert_event_emitted!(Event::TxBatchCreated {
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			assert_ok!(
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),)
+			);
+			assert_event_emitted!(Event::TxBatchCreated {
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 2,
+				range: (1, 1),
+			});
+
+			assert_ok!(
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 2),)
+			);
+
+			assert_event_emitted!(Event::TxBatchCreated {
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 3,
+				range: (1, 2),
+			});
+		})
+}

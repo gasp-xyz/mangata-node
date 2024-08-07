@@ -748,6 +748,9 @@ impl pallet_rolldown::Config for Runtime {
 	type AssetAddressConverter = pallet_rolldown::MultiEvmChainAddressConverter;
 	type MerkleRootAutomaticBatchPeriod = cfg::pallet_rolldown::MerkleRootAutomaticBatchPeriod;
 	type MerkleRootAutomaticBatchSize = cfg::pallet_rolldown::MerkleRootAutomaticBatchSize;
+	type ManualBatchExtraFee = cfg::pallet_rolldown::ManualBatchExtraFee;
+	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
+	type NativeCurrencyId = tokens::RxTokenId;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {

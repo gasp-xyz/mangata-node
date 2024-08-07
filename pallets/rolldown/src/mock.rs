@@ -141,6 +141,11 @@ impl ConvertBack<[u8; 20], AccountId> for DummyAddressConverter {
 	}
 }
 
+parameter_types! {
+	pub const TreasuryPalletId: PalletId = PalletId(*b"rolldown");
+	pub const NativeCurrencyId: u32 = 0;
+}
+
 impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SequencerStakingProvider = MockSequencerStakingProviderApi;
@@ -155,6 +160,9 @@ impl rolldown::Config for Test {
 	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
 	type MerkleRootAutomaticBatchSize = ConstU128<10>;
 	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
+	type ManualBatchExtraFee = ConstU128<0>;
+	type TreasuryPalletId = TreasuryPalletId;
+	type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub struct ExtBuilder {

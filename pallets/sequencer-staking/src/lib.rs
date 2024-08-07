@@ -256,7 +256,7 @@ pub mod pallet {
 		MaxSequencersLimitReached,
 		TestUnstakingError,
 		UnknownChainId,
-		NoStakeToUnStake
+		NoStakeToUnStake,
 		AddressInUse,
 		AliasAccountIsActiveSequencer,
 		SequencerAccountIsActiveSequencerAlias,

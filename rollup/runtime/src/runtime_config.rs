@@ -1429,7 +1429,7 @@ pub mod config {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 			pub const RequestsPerBlock: u128 = 50;
 			pub const RightsMultiplier: u128 = 1;
-			pub const ManualBatchExtraFee: u128 = 0
+			pub const ManualBatchExtraFee: u128 = 0;
 		}
 
 		#[cfg(feature = "fast-runtime")]

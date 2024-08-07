@@ -1591,6 +1591,7 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 
 			assert_event_emitted!(Event::L1ReadCanceled {
 				canceled_sequencer_update: 15u128,
+				chain: consts::CHAIN,
 				assigned_id: RequestId::new(Origin::L2, l2_request_id)
 			});
 
@@ -2317,7 +2318,7 @@ fn test_create_manual_batch_fails_for_wrong_range() {
 			forward_to_block::<Test>(10);
 
 			assert_err!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (5, 1),),
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (5, 1), None),
 				Error::<Test>::InvalidRange
 			);
 		})
@@ -2332,7 +2333,7 @@ fn test_create_manual_batch_fails_for_range_that_does_not_exists() {
 			forward_to_block::<Test>(10);
 
 			assert_err!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),),
+				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1), None),
 				Error::<Test>::NonExistingRequestId
 			);
 		})
@@ -2354,10 +2355,14 @@ fn test_create_manual_batch_works() {
 				1_000u128,
 			)
 			.unwrap();
-			assert_ok!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),)
-			);
+			assert_ok!(Rolldown::create_batch(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				(1, 1),
+				None
+			));
 			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
 				source: BatchSource::Manual,
 				assignee: ALICE,
 				batch_id: 1,
@@ -2373,25 +2378,104 @@ fn test_create_manual_batch_works() {
 			)
 			.unwrap();
 
-			assert_ok!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1),)
-			);
+			assert_ok!(Rolldown::create_batch(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				(1, 1),
+				None
+			));
 			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
 				source: BatchSource::Manual,
 				assignee: ALICE,
 				batch_id: 2,
 				range: (1, 1),
 			});
 
-			assert_ok!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 2),)
-			);
+			assert_ok!(Rolldown::create_batch(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				(1, 2),
+				None
+			));
 
 			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
 				source: BatchSource::Manual,
 				assignee: ALICE,
 				batch_id: 3,
 				range: (1, 2),
 			});
+		})
+}
+
+#[test]
+#[serial]
+fn test_create_manual_batch_fails_for_invalid_alias_account() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_active_sequencer_alias_context();
+			selected_sequencer_mock.expect().return_const(false);
+
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			assert_err!(
+				Rolldown::create_batch(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					(1, 1),
+					Some(ALICE)
+				),
+				Error::<Test>::UnknownAliasAccount
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_create_manual_batch_work_for_alias_account() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_active_sequencer_alias_context();
+			selected_sequencer_mock.expect().return_const(true);
+
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE));
+			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&(10u64.into(), 1u128, (1, 1)))
+			);
 		})
 }

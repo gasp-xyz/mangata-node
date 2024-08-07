@@ -136,6 +136,7 @@ pub mod pallet {
 								);
 							});
 							Pallet::<T>::deposit_event(Event::TxBatchCreated {
+								chain: *chain,
 								source: trigger,
 								assignee: updater,
 								batch_id,
@@ -336,10 +337,12 @@ pub mod pallet {
 		// Chain, request id
 		RequestProcessedOnL2(T::ChainId, u128),
 		L1ReadCanceled {
+			chain: T::ChainId,
 			canceled_sequencer_update: u128,
 			assigned_id: RequestId,
 		},
 		TxBatchCreated {
+			chain: T::ChainId,
 			source: BatchSource,
 			assignee: T::AccountId,
 			batch_id: u128,
@@ -379,6 +382,7 @@ pub mod pallet {
 		UnsupportedAsset,
 		InvalidRange,
 		NonExistingRequestId,
+		UnknownAliasAccount,
 	}
 
 	#[pallet::config]
@@ -531,6 +535,7 @@ pub mod pallet {
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
 				canceled_sequencer_update: requests_to_cancel,
+				chain,
 				assigned_id: RequestId { origin: Origin::L2, id: l2_request_id },
 			});
 
@@ -636,8 +641,22 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			range: (u128, u128),
-		) -> DispatchResultWithPostInfo {
+			sequencer_account: Option<T::AccountId>,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+
+			let asignee = if let Some(sequencer) = sequencer_account {
+				ensure!(
+					T::SequencerStakingProvider::is_active_sequencer_alias(
+						chain, &sequencer, &sender
+					),
+					Error::<T>::UnknownAliasAccount
+				);
+				sequencer
+			} else {
+				sender.clone()
+			};
 
 			let extra_fee = T::ManualBatchExtraFee::get();
 			if !extra_fee.is_zero() {
@@ -649,6 +668,7 @@ pub mod pallet {
 					ExistenceRequirement::KeepAlive,
 				)?;
 			}
+
 			ensure!(range.0 <= range.1, Error::<T>::InvalidRange);
 
 			ensure!(
@@ -662,17 +682,15 @@ pub mod pallet {
 				.map(|(_block_number, batch_id, _range)| batch_id)
 				.unwrap_or_default();
 			let batch_id = last_batch_id.saturating_add(1u128);
-			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
 
-			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, sender.clone()));
-
+			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));
 			L2RequestsBatchLast::<T>::mutate(|batches| {
 				batches.insert(chain.clone(), (now, batch_id, range));
 			});
-
 			Pallet::<T>::deposit_event(Event::TxBatchCreated {
+				chain,
 				source: BatchSource::Manual,
-				assignee: sender.clone(),
+				assignee: asignee.clone(),
 				batch_id,
 				range,
 			});

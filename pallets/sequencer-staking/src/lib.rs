@@ -592,11 +592,11 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 
 	fn is_active_sequencer_alias(
 		chain: <T as pallet::Config>::ChainId,
-		sequencer_acount: &AccountIdOf<T>,
+		sequencer_account: &AccountIdOf<T>,
 		alias_account: &AccountIdOf<T>,
 	) -> bool {
 		matches!(
-			AliasAccount::<T>::get((sequencer_acount, chain)),
+			AliasAccount::<T>::get((sequencer_account, chain)),
 			Some(alias) if alias == *alias_account
 		)
 	}

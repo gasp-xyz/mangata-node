@@ -738,14 +738,16 @@ impl pallet_rolldown::Config for Runtime {
 	type SequencerStakingProvider = SequencerStaking;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
-	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
-	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
+	type DisputePeriodLength = cfg::pallet_rolldown::DisputePeriodLength;
+	type RequestsPerBlock = cfg::pallet_rolldown::RequestsPerBlock;
 	// We havent spent any time considering rights multiplier being > 1. There might be some corner
 	// cases that should be investigated.
-	type RightsMultiplier = frame_support::traits::ConstU128<1>;
+	type RightsMultiplier = cfg::pallet_rolldown::RightsMultiplier;
 	type MaintenanceStatusProvider = Maintenance;
 	type ChainId = pallet_rolldown::messages::Chain;
 	type AssetAddressConverter = pallet_rolldown::MultiEvmChainAddressConverter;
+	type MerkleRootAutomaticBatchPeriod = cfg::pallet_rolldown::MerkleRootAutomaticBatchPeriod;
+	type MerkleRootAutomaticBatchSize = cfg::pallet_rolldown::MerkleRootAutomaticBatchSize;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -914,12 +916,24 @@ impl_runtime_apis! {
 			Rolldown::get_merkle_root(chain, range)
 		}
 
-		fn get_foo(chain: pallet_rolldown::messages::Chain, range : (u128, u128)) -> u128{
-			Rolldown::max_id(chain, range)
-		}
-
 		fn get_merkle_proof_for_tx(chain: pallet_rolldown::messages::Chain, range : (u128, u128), tx_id: u128) -> Vec<sp_core::H256>{
 			Rolldown::get_merkle_proof_for_tx(chain, range, tx_id)
+		}
+
+		fn verify_merkle_proof_for_tx(
+			chain: pallet_rolldown::messages::Chain,
+			range: (u128, u128),
+			tx_id: u128,
+			root: sp_core::H256,
+			proof: Vec<sp_core::H256>,
+		) -> bool {
+			Rolldown::verify_merkle_proof_for_tx(
+				chain,
+				range,
+				root,
+				tx_id,
+				proof,
+			)
 		}
 	}
 

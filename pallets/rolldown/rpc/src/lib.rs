@@ -71,6 +71,7 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 		chain: Chain,
 		range: (u128, u128),
 		tx_id: u128,
+		root: H256,
 		proof: Vec<H256>,
 		at: Option<BlockHash>,
 	) -> RpcResult<bool>;
@@ -224,18 +225,20 @@ where
 		chain: Chain,
 		range: (u128, u128),
 		tx_id: u128,
+		root: H256,
 		proof: Vec<H256>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<bool> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or(self.client.info().best_hash);
 
-		api.verify_merkle_proof_for_tx(at, chain, range, tx_id, proof).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+		api.verify_merkle_proof_for_tx(at, chain, range, tx_id, root, proof)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 }

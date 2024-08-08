@@ -195,6 +195,24 @@ pub mod pallet {
 		Withdrawal(Withdrawal),
 	}
 
+	impl<AccountId> Into<L2Request<AccountId>> for RequestResult {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::RequestResult(self)
+		}
+	}
+
+	impl<AccountId> Into<L2Request<AccountId>> for Cancel<AccountId> {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::Cancel(self)
+		}
+	}
+
+	impl<AccountId> Into<L2Request<AccountId>> for Withdrawal {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::Withdrawal(self)
+		}
+	}
+
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum BatchSource {
 		Manual,
@@ -279,7 +297,7 @@ pub mod pallet {
 		T::ChainId,
 		Blake2_128Concat,
 		RequestId,
-		L2Request<T::AccountId>,
+		(L2Request<T::AccountId>, H256),
 		OptionQuery,
 	>;
 
@@ -354,6 +372,7 @@ pub mod pallet {
 			recipient: [u8; 20],
 			token_address: [u8; 20],
 			amount: u128,
+			hash: H256,
 		},
 	}
 
@@ -530,7 +549,10 @@ pub mod pallet {
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				L2Request::Cancel(cancel_request),
+				(
+					L2Request::Cancel(cancel_request.clone()),
+					Self::get_l2_request_hash(cancel_request.into()),
+				),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
@@ -592,7 +614,10 @@ pub mod pallet {
 			L2Requests::<T>::insert(
 				chain,
 				request_id.clone(),
-				L2Request::Withdrawal(withdrawal_update),
+				(
+					L2Request::Withdrawal(withdrawal_update.clone()),
+					Self::get_l2_request_hash(withdrawal_update.clone().into()),
+				),
 			);
 
 			Pallet::<T>::deposit_event(Event::WithdrawlRequestCreated {
@@ -601,6 +626,7 @@ pub mod pallet {
 				recipient,
 				token_address,
 				amount,
+				hash: Self::get_l2_request_hash(withdrawal_update.into()),
 			});
 
 			Ok(().into())
@@ -777,15 +803,16 @@ impl<T: Config> Pallet<T> {
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
 		};
 
+		let rr = RequestResult {
+			requestId: l2_request_id,
+			originRequestId: request.id(),
+			status,
+			updateType: request_type,
+		};
 		L2Requests::<T>::insert(
 			l1,
 			request.request_id(),
-			L2Request::RequestResult(RequestResult {
-				requestId: l2_request_id,
-				originRequestId: request.id(),
-				status,
-				updateType: request_type,
-			}),
+			(L2Request::RequestResult(rr.clone()), Self::get_l2_request_hash(rr.into())),
 		);
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
@@ -911,7 +938,7 @@ impl<T: Config> Pallet<T> {
 
 		let cancel_update =
 			match L2Requests::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
-				Some(L2Request::Cancel(cancel)) => Some(cancel),
+				Some((L2Request::Cancel(cancel), _)) => Some(cancel),
 				_ => None,
 			}
 			.ok_or("NoCancelRequest")?;
@@ -1008,6 +1035,26 @@ impl<T: Config> Pallet<T> {
 		H256::from(hash)
 	}
 
+	fn get_l2_request_hash(req: L2Request<T::AccountId>) -> H256 {
+		match req {
+			L2Request::RequestResult(rr) => {
+				let eth_req_result = Self::to_eth_request_result(rr);
+				let hash: [u8; 32] = Keccak256::digest(&eth_req_result.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+			L2Request::Cancel(c) => {
+				let eth_cancel = Self::to_eth_cancel(c);
+				let hash: [u8; 32] = Keccak256::digest(&eth_cancel.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+			L2Request::Withdrawal(w) => {
+				let eth_withdrawal = Self::to_eth_withdrawal(w);
+				let hash: [u8; 32] = Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+		}
+	}
+
 	fn get_l2_update(l1: T::ChainId) -> messages::eth_abi::L2Update {
 		let mut update = messages::eth_abi::L2Update {
 			results: Vec::new(),
@@ -1017,12 +1064,12 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in L2Requests::<T>::iter_prefix(l1) {
 			match req {
-				L2Request::RequestResult(result) =>
+				(L2Request::RequestResult(result), _) =>
 					update.results.push(Self::to_eth_request_result(result)),
-				L2Request::Cancel(cancel) => {
+				(L2Request::Cancel(cancel), _) => {
 					update.cancels.push(Self::to_eth_cancel(cancel));
 				},
-				L2Request::Withdrawal(withdrawal) => {
+				(L2Request::Withdrawal(withdrawal), _) => {
 					update.withdrawals.push(Self::to_eth_withdrawal(withdrawal));
 				},
 			};
@@ -1323,14 +1370,15 @@ impl<T: Config> Pallet<T> {
 		let l2_requests = (range.0..=range.1)
 			.into_iter()
 			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
-				Some(L2Request::Withdrawal(withdrawal)) => {
+				Some((L2Request::Withdrawal(withdrawal), _)) => {
 					let eth_withdrawal = Self::to_eth_withdrawal(withdrawal);
 					let eth_withdrawal_id = eth_withdrawal.requestId.id;
 					let eth_withdrawal_hashed =
 						rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..]);
 					Some(eth_withdrawal_hashed)
 				},
-				Some(L2Request::RequestResult(_)) | Some(L2Request::Cancel(_)) => Some([0u8; 32]),
+				Some((L2Request::RequestResult(_), _)) | Some((L2Request::Cancel(_), _)) =>
+					Some([0u8; 32]),
 				None => None,
 			})
 			.collect::<Option<Vec<_>>>();
@@ -1366,7 +1414,7 @@ impl<T: Config> Pallet<T> {
 	pub fn max_id(chain: ChainIdOf<T>, range: (u128, u128)) -> u128 {
 		let mut max_id = 0u128;
 		for id in range.0..=range.1 {
-			if let Some(L2Request::Withdrawal(withdrawal)) =
+			if let Some((L2Request::Withdrawal(withdrawal), _)) =
 				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id })
 			{
 				if withdrawal.requestId.id > max_id {
@@ -1417,6 +1465,7 @@ impl<T: Config> Pallet<T> {
 			let request_to_proof: Withdrawal =
 				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id })
 					.unwrap()
+					.0
 					.try_into()
 					.unwrap();
 			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);

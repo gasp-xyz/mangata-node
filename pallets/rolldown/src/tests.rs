@@ -216,13 +216,15 @@ fn deposit_executed_after_dispute_period() {
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
-				Some(L2Request::RequestResult(RequestResult {
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+					.unwrap()
+					.0,
+				L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
 					status: true,
 					updateType: UpdateType::DEPOSIT
-				}))
+				})
 			);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), MILLION);
 		});
@@ -255,13 +257,15 @@ fn deposit_fail_creates_update_with_status_false() {
 
 			forward_to_block::<Test>(15);
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
-				Some(L2Request::RequestResult(RequestResult {
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+					.unwrap()
+					.0,
+				L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
 					status: false,
 					updateType: UpdateType::DEPOSIT
-				}))
+				})
 			);
 		});
 }
@@ -370,13 +374,15 @@ fn updates_to_remove_executed_after_dispute_period() {
 
 			forward_to_block::<Test>(100);
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
-				Some(L2Request::RequestResult(RequestResult {
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+					.unwrap()
+					.0,
+				L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					originRequestId: 1u128,
 					status: true,
 					updateType: UpdateType::DEPOSIT
-				}))
+				})
 			);
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), l2_updates_to_remove)
 				.unwrap();
@@ -1146,8 +1152,10 @@ fn test_withdraw() {
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), 0_u128);
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
-				Some(L2Request::Withdrawal(withdrawal_update))
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128))
+					.unwrap()
+					.0,
+				L2Request::Withdrawal(withdrawal_update)
 			);
 			assert_eq!(Rolldown::get_l2_origin_updates_counter(Chain::Ethereum), 2);
 		});
@@ -1229,25 +1237,31 @@ fn test_remove_pending_l2_requests() {
 				)),
 			};
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)),
-				Some(L2Request::Cancel(cancel_update))
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128))
+					.unwrap()
+					.0,
+				L2Request::Cancel(cancel_update)
 			);
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 2u128)),
-				Some(L2Request::Withdrawal(withdrawal_update))
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 2u128))
+					.unwrap()
+					.0,
+				L2Request::Withdrawal(withdrawal_update)
 			);
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update_with_deposit).unwrap();
 			forward_to_block::<Test>(20);
 
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128)),
-				Some(L2Request::RequestResult(RequestResult {
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L1, 1u128))
+					.unwrap()
+					.0,
+				L2Request::RequestResult(RequestResult {
 					requestId: RequestId::new(Origin::L2, 3u128),
 					originRequestId: 1u128,
 					status: true,
 					updateType: UpdateType::DEPOSIT
-				}))
+				})
 			);
 
 			let cancel_resolution_request = messages::CancelResolution {
@@ -1368,7 +1382,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 			));
 			let withdrawal_update =
 				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 3u128));
-			assert!(matches!(withdrawal_update, Some(L2Request::Withdrawal(_))));
+			assert!(matches!(withdrawal_update, Some((L2Request::Withdrawal(_), _))));
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), second_update).unwrap();
 

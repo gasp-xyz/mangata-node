@@ -1401,6 +1401,10 @@ impl<T: Config> Pallet<T> {
 		range: (u128, u128),
 		tx_id: u128,
 	) -> Vec<H256> {
+		if tx_id < range.0 || tx_id > range.1 {
+			return Default::default()
+		}
+
 		let tree = Self::create_merkle_tree(chain, range);
 		if let Some(merkle_tree) = tree {
 			let idx = tx_id as usize - range.0 as usize;

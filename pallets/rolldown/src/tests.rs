@@ -2493,3 +2493,33 @@ fn test_create_manual_batch_work_for_alias_account() {
 			);
 		})
 }
+
+#[test]
+#[serial]
+fn test_merkle_proof_for_single_element_tree_is_empty() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1,
+			)
+			.unwrap();
+
+			let range = (1u128, 1u128);
+			let root_hash = Pallet::<Test>::get_merkle_root(consts::CHAIN, range);
+			let proof_hashes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 1);
+			println!("{:?}", proof_hashes);
+			assert!(false);
+			Pallet::<Test>::verify_merkle_proof_for_tx(
+				consts::CHAIN,
+				range,
+				root_hash,
+				1,
+				proof_hashes,
+			);
+		});
+}

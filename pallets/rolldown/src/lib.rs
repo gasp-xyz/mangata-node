@@ -696,6 +696,7 @@ pub mod pallet {
 			}
 
 			ensure!(range.0 <= range.1, Error::<T>::InvalidRange);
+			ensure!(range.0 > 0, Error::<T>::InvalidRange);
 
 			ensure!(
 				range.1 < Self::get_l2_origin_updates_counter(chain),

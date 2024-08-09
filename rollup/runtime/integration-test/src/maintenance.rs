@@ -1,4 +1,5 @@
 use crate::setup::*;
+use sp_runtime::testing::H256;
 
 fn test_env() -> TestExternalities {
 	ExtBuilder { ..ExtBuilder::default() }.build()
@@ -76,7 +77,7 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 		pallet_rolldown::L2Requests::<Runtime>::insert(
 			pallet_rolldown::messages::Chain::Ethereum,
 			pallet_rolldown::messages::RequestId::default(),
-			pallet_rolldown::L2Request::Withdrawal(Default::default()),
+			(pallet_rolldown::L2Request::Withdrawal(Default::default()), H256::from([0u8; 32])),
 		);
 
 		assert!(!Runtime::get_l2_request(pallet_rolldown::messages::Chain::Ethereum).is_empty());

@@ -2512,8 +2512,6 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 			let range = (1u128, 1u128);
 			let root_hash = Pallet::<Test>::get_merkle_root(consts::CHAIN, range);
 			let proof_hashes = Pallet::<Test>::get_merkle_proof_for_tx(consts::CHAIN, range, 1);
-			println!("{:?}", proof_hashes);
-			assert!(false);
 			Pallet::<Test>::verify_merkle_proof_for_tx(
 				consts::CHAIN,
 				range,

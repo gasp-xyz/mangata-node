@@ -9,7 +9,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType};
-use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
+use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
@@ -65,6 +65,23 @@ impl Convert<[u8; 20], sp_runtime::AccountId20>
 		eth_addr.into()
 	}
 }
+
+#[derive(Clone)]
+pub struct Keccak256Hasher {}
+
+impl Hasher for Keccak256Hasher {
+	type Hash = [u8; 32];
+
+	fn hash(data: &[u8]) -> [u8; 32] {
+		let mut output = [0u8; 32];
+		let hash = Keccak256::digest(&data[..]);
+		output.copy_from_slice(&hash[..]);
+		output
+	}
+}
+
+#[derive(Debug)]
+struct Hash32([u8; 32]);
 
 #[cfg(test)]
 mod tests;
@@ -1367,16 +1384,15 @@ impl<T: Config> Pallet<T> {
 	pub fn create_merkle_tree(
 		chain: ChainIdOf<T>,
 		range: (u128, u128),
-	) -> Option<MerkleTree<Sha256>> {
+	) -> Option<MerkleTree<Keccak256Hasher>> {
 		let l2_requests = (range.0..=range.1)
 			.into_iter()
 			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
 				Some((L2Request::Withdrawal(withdrawal), _)) => {
 					let eth_withdrawal = Self::to_eth_withdrawal(withdrawal);
 					let eth_withdrawal_id = eth_withdrawal.requestId.id;
-					let eth_withdrawal_hashed =
-						rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..]);
-					Some(eth_withdrawal_hashed)
+					let eth_withdrawal_hashed = Keccak256::digest(&eth_withdrawal.abi_encode()[..]);
+					Some(eth_withdrawal_hashed.into())
 				},
 				Some((L2Request::RequestResult(_), _)) | Some((L2Request::Cancel(_), _)) =>
 					Some([0u8; 32]),
@@ -1384,7 +1400,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.collect::<Option<Vec<_>>>();
 
-		l2_requests.map(|txs| MerkleTree::<Sha256>::from_leaves(txs.as_ref()))
+		l2_requests.map(|txs| MerkleTree::<Keccak256Hasher>::from_leaves(txs.as_ref()))
 	}
 
 	//TODO: error handling
@@ -1459,7 +1475,8 @@ impl<T: Config> Pallet<T> {
 		tx_id: u128,
 		proof: Vec<H256>,
 	) -> bool {
-		let proof = MerkleProof::<Sha256>::new(proof.into_iter().map(Into::into).collect());
+		let proof =
+			MerkleProof::<Keccak256Hasher>::new(proof.into_iter().map(Into::into).collect());
 
 		let inclusive_range = range.0..=range.1;
 		if !inclusive_range.contains(&tx_id) {
@@ -1474,7 +1491,7 @@ impl<T: Config> Pallet<T> {
 					.try_into()
 					.unwrap();
 			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);
-			rs_merkle::algorithms::Sha256::hash(&eth_withdrawal.abi_encode()[..])
+			Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into()
 		};
 
 		if let Some(pos) = inclusive_range.clone().position(|elem| elem == tx_id) {

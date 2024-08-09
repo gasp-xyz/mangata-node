@@ -1491,6 +1491,18 @@ impl<T: Config> Pallet<T> {
 	fn native_token_id() -> CurrencyIdOf<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
+
+	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
+		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
+			.map(|req| match req {
+				(L2Request::RequestResult(result), _) =>
+					Self::to_eth_request_result(result).abi_encode(),
+				(L2Request::Cancel(cancel), _) => Self::to_eth_cancel(cancel).abi_encode(),
+				(L2Request::Withdrawal(withdrawal), _) =>
+					Self::to_eth_withdrawal(withdrawal).abi_encode(),
+			})
+			.unwrap_or_default()
+	}
 }
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {

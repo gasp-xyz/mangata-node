@@ -10,6 +10,7 @@ sp_api::decl_runtime_apis! {
 	{
 		fn get_l2_request_hash(chain: Chain) -> H256;
 		fn get_l2_request(chain: Chain) -> Vec<u8>;
+		fn get_abi_encoded_l2_request(chain: Chain, requestId: u128) -> Vec<u8>;
 		fn get_native_sequencer_update(hex_payload: Vec<u8>) -> Option<L1Update>;
 		fn verify_sequencer_update(chain: Chain, hash: H256, request_id: u128) -> Option<bool>;
 		fn get_last_processed_request_on_l2(chain: Chain) -> Option<u128>;

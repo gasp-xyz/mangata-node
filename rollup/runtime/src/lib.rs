@@ -938,6 +938,13 @@ impl_runtime_apis! {
 				proof,
 			)
 		}
+
+		fn get_abi_encoded_l2_request(
+			chain: pallet_rolldown::messages::Chain,
+			request_id: u128
+		) -> Vec<u8>{
+			Rolldown::get_abi_encoded_l2_request(chain, request_id)
+		}
 	}
 
 	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{

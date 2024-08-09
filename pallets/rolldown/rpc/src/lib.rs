@@ -32,6 +32,14 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	#[method(name = "rolldown_pending_l2_requests")]
 	fn pending_l2_requests(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
+	#[method(name = "rolldown_get_abi_encoded_l2_request")]
+	fn get_abi_encoded_l2_request(
+		&self,
+		chain: Chain,
+		request_id: u128,
+		at: Option<BlockHash>,
+	) -> RpcResult<Vec<u8>>;
+
 	#[method(name = "rolldown_get_native_sequencer_update")]
 	fn get_native_sequencer_update(
 		&self,
@@ -240,5 +248,23 @@ where
 					Some(format!("{:?}", e)),
 				)))
 			})
+	}
+
+	fn get_abi_encoded_l2_request(
+		&self,
+		chain: Chain,
+		request_id: u128,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<u8>> {
+		let api = self.client.runtime_api();
+		let at = at.unwrap_or(self.client.info().best_hash);
+
+		api.get_abi_encoded_l2_request(at, chain, request_id).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 }

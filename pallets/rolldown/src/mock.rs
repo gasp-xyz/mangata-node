@@ -92,8 +92,10 @@ mockall::mock! {
 
 	impl SequencerStakingProviderTrait<AccountId, Balance, messages::Chain> for SequencerStakingProviderApi {
 		fn is_active_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn is_active_sequencer_alias(chain: messages::Chain, sequencer: &AccountId, alias: &AccountId) -> bool;
 		fn slash_sequencer<'a>(chain: messages::Chain, to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
 		fn is_selected_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn selected_sequencer(chain: messages::Chain) -> Option<AccountId>;
 	}
 }
 
@@ -139,6 +141,11 @@ impl ConvertBack<[u8; 20], AccountId> for DummyAddressConverter {
 	}
 }
 
+parameter_types! {
+	pub const TreasuryPalletId: PalletId = PalletId(*b"rolldown");
+	pub const NativeCurrencyId: u32 = 0;
+}
+
 impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SequencerStakingProvider = MockSequencerStakingProviderApi;
@@ -151,6 +158,11 @@ impl rolldown::Config for Test {
 	type ChainId = messages::Chain;
 	type RightsMultiplier = ConstU128<1>;
 	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
+	type MerkleRootAutomaticBatchSize = ConstU128<10>;
+	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
+	type ManualBatchExtraFee = ConstU128<0>;
+	type TreasuryPalletId = TreasuryPalletId;
+	type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub struct ExtBuilder {
@@ -235,6 +247,10 @@ impl ExtBuilder {
 
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
+
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(None);
 
 			f()
 		})

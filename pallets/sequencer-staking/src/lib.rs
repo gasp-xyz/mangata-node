@@ -181,6 +181,14 @@ pub mod pallet {
 	pub type SequencerStake<T: Config> =
 		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	pub type AliasAccount<T: Config> =
+		StorageMap<_, Blake2_128Concat, (AccountIdOf<T>, T::ChainId), AccountIdOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	pub type AliasAccountInUse<T: Config> =
+		StorageMap<_, Blake2_128Concat, AccountIdOf<T>, (), OptionQuery>;
+
 	// #[pallet::storage]
 	// #[pallet::unbounded]
 	// #[pallet::getter(fn get_eligible_to_be_sequencers)]
@@ -249,6 +257,9 @@ pub mod pallet {
 		TestUnstakingError,
 		UnknownChainId,
 		NoStakeToUnStake,
+		AddressInUse,
+		AliasAccountIsActiveSequencer,
+		SequencerAccountIsActiveSequencerAlias,
 	}
 
 	#[pallet::config]
@@ -284,12 +295,27 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// provides stake for the purpose of becoming sequencers
+		/// if stake amount is greater than `MinimalStakeAmount` and limit of active sequencres is not
+		/// reached, sequencer automatically joins active set, otherwise sequencer can call `rejoin_active_sequencers` when there are free seats
+		/// - `chain` - chain for which to assign stake_amount
+		/// - `stake_amont` - amount of stake
+		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
+		///                     of updates in pallet-rolldown. Alias account can not be set to another
+		///                     active sequencer or to some account that is already used as
+		///                     alias_account for another sequencer
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
+			alias_account: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!AliasAccountInUse::<T>::contains_key(sender.clone()),
+				Error::<T>::SequencerAccountIsActiveSequencerAlias
+			);
 
 			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
 				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
@@ -304,6 +330,19 @@ pub mod pallet {
 				}
 				Ok(())
 			})?;
+
+			if let Some(alias_account) = alias_account {
+				ensure!(
+					!AliasAccountInUse::<T>::contains_key(alias_account.clone()),
+					Error::<T>::AddressInUse
+				);
+				ensure!(
+					!Self::is_active_sequencer(chain, &alias_account),
+					Error::<T>::AliasAccountIsActiveSequencer
+				);
+				AliasAccount::<T>::insert((sender.clone(), chain), alias_account.clone());
+				AliasAccountInUse::<T>::insert(alias_account.clone(), ());
+			}
 
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
@@ -409,6 +448,47 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2.saturating_add(T::MaxSequencers::get().into()), 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// Allows to configure alias_account for active sequencer. This extrinisic can only be called
+		/// by active sequencer
+		/// - `chain` -
+		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
+		///                     of updates in pallet-rolldown. Alias account can not be set to another
+		///                     active sequencer or to some account that is already used as
+		///                     alias_account for another sequencer
+		pub fn set_updater_account_for_sequencer(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			alias_account: Option<T::AccountId>,
+		) -> DispatchResultWithPostInfo {
+			let sequencer = ensure_signed(origin)?;
+
+			ensure!(
+				Self::is_active_sequencer(chain, &sequencer),
+				Error::<T>::SequencerIsNotInActiveSet
+			);
+
+			if let Some(alias) = alias_account {
+				ensure!(
+					!Self::is_active_sequencer(chain, &alias),
+					Error::<T>::AliasAccountIsActiveSequencer
+				);
+				ensure!(
+					!AliasAccountInUse::<T>::contains_key(alias.clone()),
+					Error::<T>::AddressInUse
+				);
+				AliasAccount::<T>::insert((sequencer.clone(), chain), alias.clone());
+				AliasAccountInUse::<T>::insert(alias, ());
+			} else {
+				if let Some(alias) = AliasAccount::<T>::take((sequencer, chain)) {
+					AliasAccountInUse::<T>::remove(alias);
+				}
+			}
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -425,74 +505,6 @@ impl<T: Config> Pallet<T> {
 		T::RolldownProvider::handle_sequencer_deactivations(chain, sequencers.clone());
 		Pallet::<T>::deposit_event(Event::<T>::SequencersRemovedFromActiveSet(chain, sequencers));
 	}
-
-	// fn is_eligible_to_be_sequencer(account: &T::AccountId) -> bool {
-	// 	EligibleToBeSequencers::<T>::get().contains_key(account)
-	// }
-
-	// fn initialize_genesis_eligible_sequencers(collators: Vec<T::AccountId>) {
-	// 	EligibleToBeSequencers::<T>::put(BTreeMap::from(
-	// 		collators
-	// 			.clone()
-	// 			.into_iter()
-	// 			.map(|s| (s, RoundRefCount::one()))
-	// 			.collect::<BTreeMap<AccountIdOf<T>, RoundRefCount>>(),
-	// 	));
-	// 	let round_index = CurrentRound::<T>::get();
-	// 	RoundCollators::<T>::insert(round_index, collators);
-	// }
-
-	// // we assume that the elements are UNIQUE!
-	// // as they should be
-	// fn process_new_session_collators(collators: Vec<T::AccountId>) {
-	// 	let round_index = CurrentRound::<T>::get().saturating_add(One::one());
-	// 	let mut eligible_to_be_sequencers = EligibleToBeSequencers::<T>::get();
-	// 	let mut exiting_collators = BTreeSet::new();
-	// 	if round_index >= T::NoOfPastSessionsForEligibility::get() {
-	// 		let first_round_collators_of_window = RoundCollators::<T>::take(
-	// 			round_index.saturating_sub(T::NoOfPastSessionsForEligibility::get()),
-	// 		);
-	// 		for col in first_round_collators_of_window {
-	// 			match eligible_to_be_sequencers.entry(col.clone()) {
-	// 				Vacant(x) => {
-	// 					log!(
-	// 						error,
-	// 						"exiting_collator {:?} not in eligible_to_be_sequencers {:?}",
-	// 						col,
-	// 						eligible_to_be_sequencers
-	// 					)
-	// 				},
-	// 				Occupied(x) if *x.get() == 1 => {
-	// 					x.remove();
-	// 					exiting_collators.insert(col);
-	// 				},
-	// 				Occupied(mut x) => {
-	// 					*x.get_mut() = x
-	// 						.get()
-	// 						.checked_sub(One::one())
-	// 						.expect("This is safe cause x should never be 0 ");
-	// 				},
-	// 			}
-	// 		}
-	// 	}
-
-	// 	for col in collators.clone() {
-	// 		eligible_to_be_sequencers
-	// 			.entry(col)
-	// 			.and_modify(|x| *x = x.saturating_add(One::one()))
-	// 			.or_insert(One::one());
-	// 	}
-
-	// 	RoundCollators::<T>::insert(round_index, collators);
-	// 	EligibleToBeSequencers::<T>::put(eligible_to_be_sequencers);
-	// 	CurrentRound::<T>::put(round_index);
-
-	// 	// TODO
-	// 	// Remove from the storage item ActiveSequencers
-	// 	// To remove rights - call handle_sequencer_deactivation?
-	// 	// dedup maybe?
-	// 	Self::maybe_remove_sequencers_from_active_set(exiting_collators);
-	// }
 
 	fn maybe_remove_sequencer_from_active_set(chain: T::ChainId, sequencer: T::AccountId) {
 		if <SequencerStake<T>>::get((sequencer.clone(), chain)) < MinimalStakeAmount::<T>::get() &&
@@ -568,16 +580,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// impl<T: Config> InformSessionDataTrait<T::AccountId> for Pallet<T> {
-// 	fn inform_initialized_authorities(accounts: Vec<T::AccountId>) {
-// 		Self::initialize_genesis_eligible_sequencers(accounts);
-// 	}
-
-// 	fn inform_on_new_session(accounts: Vec<T::AccountId>) {
-// 		Self::process_new_session_collators(accounts);
-// 	}
-// }
-
 impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, ChainIdOf<T>>
 	for Pallet<T>
 {
@@ -587,6 +589,17 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 	) -> bool {
 		matches!(
 			ActiveSequencers::<T>::get().get(&chain), Some(set) if set.contains(&sequencer)
+		)
+	}
+
+	fn is_active_sequencer_alias(
+		chain: <T as pallet::Config>::ChainId,
+		sequencer_account: &AccountIdOf<T>,
+		alias_account: &AccountIdOf<T>,
+	) -> bool {
+		matches!(
+			AliasAccount::<T>::get((sequencer_account, chain)),
+			Some(alias) if alias == *alias_account
 		)
 	}
 
@@ -627,6 +640,10 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 		Self::maybe_remove_sequencer_from_active_set(chain, maybe_leaving_sequencer);
 
 		Ok(().into())
+	}
+
+	fn selected_sequencer(chain: ChainIdOf<T>) -> Option<AccountIdOf<T>> {
+		SelectedSequencer::<T>::get().get(&chain).cloned()
 	}
 }
 

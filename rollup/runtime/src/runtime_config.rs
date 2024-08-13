@@ -1421,4 +1421,29 @@ pub mod config {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 		}
 	}
+
+	pub mod pallet_rolldown {
+		use super::*;
+
+		parameter_types! {
+			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
+			pub const RequestsPerBlock: u128 = 50;
+			pub const RightsMultiplier: u128 = 1;
+			pub const ManualBatchExtraFee: u128 = 0;
+		}
+
+		#[cfg(feature = "fast-runtime")]
+		parameter_types! {
+			pub const DisputePeriodLength: u32 = 10;
+			pub const MerkleRootAutomaticBatchPeriod: u128 = 25;
+			pub const MerkleRootAutomaticBatchSize: u128 = 32;
+		}
+
+		#[cfg(not(feature = "fast-runtime"))]
+		parameter_types! {
+			pub const DisputePeriodLength: u32 = 300;
+			pub const MerkleRootAutomaticBatchPeriod: u128 = 1200;
+			pub const MerkleRootAutomaticBatchSize: u128 = 1024;
+		}
+	}
 }

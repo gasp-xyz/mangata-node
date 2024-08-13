@@ -537,6 +537,12 @@ pub struct Cancel<AccountId> {
 	pub hash: H256,
 }
 
+impl Into<eth_abi::Cancel> for Cancel<[u8; 20]> {
+	fn into(self) -> eth_abi::Cancel {
+		todo!()
+	}
+}
+
 pub use eth_abi::{L2Update, UpdateType};
 
 pub mod eth_abi {

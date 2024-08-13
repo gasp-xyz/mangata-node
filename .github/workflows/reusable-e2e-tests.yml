@@ -103,7 +103,7 @@ jobs:
           - command: "yarn test-maintenance"
             fast: true
           - command: "yarn test-rollupUpdate"
-            fast: false
+            fast: true
           - command: "yarn test-bootstrap"
             fast: false
           - command: "yarn test-rewards-bootstrap"

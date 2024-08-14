@@ -2479,7 +2479,8 @@ fn test_create_manual_batch_work_for_alias_account() {
 			)
 			.unwrap();
 
-			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE));
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE))
+				.unwrap();
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::Manual,
@@ -2520,4 +2521,17 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 				proof_hashes,
 			);
 		});
+}
+
+#[test]
+#[serial]
+fn test_manual_batch_fee_update() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+		let fee = 12345;
+		assert_eq!(ManualBatchExtraFee::<Test>::get(), 0);
+		Rolldown::set_manual_batch_extra_fee(RuntimeOrigin::root(), fee).unwrap();
+		assert_eq!(ManualBatchExtraFee::<Test>::get(), fee);
+		assert_event_emitted!(Event::ManualBatchExtraFeeSet(fee));
+	});
 }

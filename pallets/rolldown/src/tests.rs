@@ -2212,7 +2212,8 @@ fn test_create_manual_batch_work_for_alias_account() {
 			)
 			.unwrap();
 
-			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE));
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE))
+				.unwrap();
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::Manual,
@@ -2253,4 +2254,42 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 				proof_hashes,
 			);
 		});
+}
+
+#[test]
+#[serial]
+fn do_not_allow_for_batches_with_gaps() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_active_sequencer_alias_context();
+			selected_sequencer_mock.expect().return_const(true);
+
+			forward_to_block::<Test>(10);
+
+			for _ in 0..10 {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1_000u128,
+				)
+				.unwrap();
+			}
+
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 5), Some(ALICE))
+				.unwrap();
+			assert_err!(
+				Rolldown::create_batch(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					(7, 10),
+					Some(ALICE)
+				),
+				Error::<Test>::InvalidRange
+			);
+		})
 }

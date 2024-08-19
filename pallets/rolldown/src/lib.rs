@@ -720,11 +720,14 @@ pub mod pallet {
 				Error::<T>::NonExistingRequestId
 			);
 
-			let last_batch_id = L2RequestsBatchLast::<T>::get()
+			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
 				.get(&chain)
 				.cloned()
-				.map(|(_block_number, batch_id, _range)| batch_id)
+				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
 				.unwrap_or_default();
+
+			ensure!(range.0 <= last_request_id + 1, Error::<T>::InvalidRange);
+
 			let batch_id = last_batch_id.saturating_add(1u128);
 
 			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));

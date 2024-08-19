@@ -1388,14 +1388,7 @@ impl<T: Config> Pallet<T> {
 		let l2_requests = (range.0..=range.1)
 			.into_iter()
 			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
-				Some((L2Request::Withdrawal(withdrawal), _)) => {
-					let eth_withdrawal = Self::to_eth_withdrawal(withdrawal);
-					let eth_withdrawal_id = eth_withdrawal.requestId.id;
-					let eth_withdrawal_hashed = Keccak256::digest(&eth_withdrawal.abi_encode()[..]);
-					Some(eth_withdrawal_hashed.into())
-				},
-				Some((L2Request::RequestResult(_), _)) | Some((L2Request::Cancel(_), _)) =>
-					Some([0u8; 32]),
+				Some((_, hash)) => Some(hash.into()),
 				None => None,
 			})
 			.collect::<Option<Vec<_>>>();

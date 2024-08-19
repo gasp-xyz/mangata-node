@@ -370,7 +370,7 @@ pub mod pallet {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
 		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
 		// Chain, request id
-		RequestProcessedOnL2(T::ChainId, u128),
+		RequestProcessedOnL2(T::ChainId, u128, bool),
 		L1ReadCanceled {
 			chain: T::ChainId,
 			canceled_sequencer_update: u128,
@@ -803,9 +803,6 @@ impl<T: Config> Pallet<T> {
 			return
 		}
 
-		let id = Self::acquire_l2_request_id(l1);
-		let l2_request_id = RequestId { origin: Origin::L2, id };
-
 		let (status, request_type) = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) =>
 				(Self::process_deposit(l1, &deposit).is_ok(), UpdateType::DEPOSIT),
@@ -821,19 +818,7 @@ impl<T: Config> Pallet<T> {
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
 		};
 
-		let rr = RequestResult {
-			requestId: l2_request_id,
-			originRequestId: request.id(),
-			status,
-			updateType: request_type,
-		};
-		L2Requests::<T>::insert(
-			l1,
-			request.request_id(),
-			(L2Request::RequestResult(rr.clone()), Self::get_l2_request_hash(rr.into())),
-		);
-
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
 
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
@@ -1145,6 +1130,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
 				!update.pendingCancelResolutions.is_empty() ||
+				!update.pendingWithdrawalResolutions.is_empty() ||
 				!update.pendingL2UpdatesToRemove.is_empty(),
 			Error::<T>::EmptyUpdate
 		);

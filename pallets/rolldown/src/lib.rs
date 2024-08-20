@@ -189,7 +189,7 @@ pub mod pallet {
 
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub struct FailedDeposit {
+	pub struct FailedDepositResolution {
 		pub requestId: RequestId,
 		pub originRequestId: u128,
 	}
@@ -204,7 +204,7 @@ pub mod pallet {
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
 	pub enum L2Request<AccountId> {
-		FailedDeposit(FailedDeposit),
+		FailedDepositResolution(FailedDepositResolution),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
 	}
@@ -984,8 +984,8 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn to_eth_failed_deposit(cancel: FailedDeposit) -> messages::eth_abi::FailedDeposit {
-		messages::eth_abi::FailedDeposit {
+	fn to_eth_failed_deposit(cancel: FailedDepositResolution) -> messages::eth_abi::FailedDepositResolution {
+		messages::eth_abi::FailedDepositResolution {
 			requestId: cancel.requestId.into(),
 			originRequestId: to_eth_u256(cancel.originRequestId.into())
 		}
@@ -1008,7 +1008,7 @@ impl<T: Config> Pallet<T> {
 
 	fn get_l2_request_hash(req: L2Request<T::AccountId>) -> H256 {
 		match req {
-			L2Request::FailedDeposit(rr) => {
+			L2Request::FailedDepositResolution(rr) => {
 				let eth_req_result = Self::to_eth_failed_deposit(rr);
 				let hash: [u8; 32] = Keccak256::digest(&eth_req_result.abi_encode()[..]).into();
 				H256::from(hash)
@@ -1391,7 +1391,7 @@ impl<T: Config> Pallet<T> {
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
 			.map(|req| match req {
-				(L2Request::FailedDeposit(deposit), _) => Self::to_eth_failed_deposit(deposit).abi_encode(),
+				(L2Request::FailedDepositResolution(deposit), _) => Self::to_eth_failed_deposit(deposit).abi_encode(),
 				(L2Request::Cancel(cancel), _) => Self::to_eth_cancel(cancel).abi_encode(),
 				(L2Request::Withdrawal(withdrawal), _) =>
 					Self::to_eth_withdrawal(withdrawal).abi_encode(),

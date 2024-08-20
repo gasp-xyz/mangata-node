@@ -527,7 +527,7 @@ pub mod eth_abi {
 
 
 		#[derive(Debug, PartialEq)]
-		struct FailedDeposit {
+		struct FailedDepositResolution {
 			RequestId requestId;
 			uint256 originRequestId;
 		}

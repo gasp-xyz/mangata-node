@@ -267,6 +267,9 @@ pub mod pallet {
 	pub type L2OriginRequestId<T: Config> = StorageValue<_, BTreeMap<T::ChainId, u128>, ValueQuery>;
 
 	#[pallet::storage]
+	pub type ManualBatchExtraFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::unbounded]
 	#[pallet::getter(fn get_pending_requests)]
 	// Stores requests brought by sequencer that are under dispute period.
@@ -391,6 +394,7 @@ pub mod pallet {
 			amount: u128,
 			hash: H256,
 		},
+		ManualBatchExtraFeeSet(BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -463,8 +467,6 @@ pub mod pallet {
 		// active sequencer
 		#[pallet::constant]
 		type MerkleRootAutomaticBatchPeriod: Get<u128>;
-		#[pallet::constant]
-		type ManualBatchExtraFee: Get<BalanceOf<Self>>;
 		type TreasuryPalletId: Get<PalletId>;
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 	}
@@ -701,7 +703,7 @@ pub mod pallet {
 				sender.clone()
 			};
 
-			let extra_fee = T::ManualBatchExtraFee::get();
+			let extra_fee = ManualBatchExtraFee::<T>::get();
 			if !extra_fee.is_zero() {
 				<T as Config>::Tokens::transfer(
 					Self::native_token_id(),
@@ -742,6 +744,18 @@ pub mod pallet {
 				range,
 			});
 
+			Ok(().into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn set_manual_batch_extra_fee(
+			origin: OriginFor<T>,
+			balance: BalanceOf<T>,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+			ManualBatchExtraFee::<T>::set(balance);
+			Pallet::<T>::deposit_event(Event::ManualBatchExtraFeeSet(balance));
 			Ok(().into())
 		}
 	}

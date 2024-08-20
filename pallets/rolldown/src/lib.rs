@@ -370,7 +370,7 @@ pub mod pallet {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
 		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
 		// Chain, request id
-		RequestProcessedOnL2(T::ChainId, u128),
+		RequestProcessedOnL2(T::ChainId, u128, bool),
 		L1ReadCanceled {
 			chain: T::ChainId,
 			canceled_sequencer_update: u128,
@@ -720,11 +720,14 @@ pub mod pallet {
 				Error::<T>::NonExistingRequestId
 			);
 
-			let last_batch_id = L2RequestsBatchLast::<T>::get()
+			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
 				.get(&chain)
 				.cloned()
-				.map(|(_block_number, batch_id, _range)| batch_id)
+				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
 				.unwrap_or_default();
+
+			ensure!(range.0 <= last_request_id + 1, Error::<T>::InvalidRange);
+
 			let batch_id = last_batch_id.saturating_add(1u128);
 
 			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));
@@ -803,9 +806,6 @@ impl<T: Config> Pallet<T> {
 			return
 		}
 
-		let id = Self::acquire_l2_request_id(l1);
-		let l2_request_id = RequestId { origin: Origin::L2, id };
-
 		let (status, request_type) = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) =>
 				(Self::process_deposit(l1, &deposit).is_ok(), UpdateType::DEPOSIT),
@@ -821,19 +821,7 @@ impl<T: Config> Pallet<T> {
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
 		};
 
-		let rr = RequestResult {
-			requestId: l2_request_id,
-			originRequestId: request.id(),
-			status,
-			updateType: request_type,
-		};
-		L2Requests::<T>::insert(
-			l1,
-			request.request_id(),
-			(L2Request::RequestResult(rr.clone()), Self::get_l2_request_hash(rr.into())),
-		);
-
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
 
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
@@ -1145,6 +1133,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
 				!update.pendingCancelResolutions.is_empty() ||
+				!update.pendingWithdrawalResolutions.is_empty() ||
 				!update.pendingL2UpdatesToRemove.is_empty(),
 			Error::<T>::EmptyUpdate
 		);
@@ -1388,14 +1377,7 @@ impl<T: Config> Pallet<T> {
 		let l2_requests = (range.0..=range.1)
 			.into_iter()
 			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
-				Some((L2Request::Withdrawal(withdrawal), _)) => {
-					let eth_withdrawal = Self::to_eth_withdrawal(withdrawal);
-					let eth_withdrawal_id = eth_withdrawal.requestId.id;
-					let eth_withdrawal_hashed = Keccak256::digest(&eth_withdrawal.abi_encode()[..]);
-					Some(eth_withdrawal_hashed.into())
-				},
-				Some((L2Request::RequestResult(_), _)) | Some((L2Request::Cancel(_), _)) =>
-					Some([0u8; 32]),
+				Some((_, hash)) => Some(hash.into()),
 				None => None,
 			})
 			.collect::<Option<Vec<_>>>();

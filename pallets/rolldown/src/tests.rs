@@ -42,9 +42,9 @@ impl L1UpdateBuilder {
 		for (id, r) in self.1.into_iter().enumerate() {
 			let rid = if let Some(offset) = self.0 { (id as u128) + offset } else { r.id() };
 			match r {
-				L1UpdateRequest::WithdrawalResolution(mut w) => {
+				L1UpdateRequest::FailedWithdrawalResolution(mut w) => {
 					w.requestId.id = rid;
-					update.pendingWithdrawalResolutions.push(w);
+					update.pendingFailedWithdrawalResolutions.push(w);
 				},
 				L1UpdateRequest::Deposit(mut d) => {
 					d.requestId.id = rid;
@@ -53,10 +53,6 @@ impl L1UpdateBuilder {
 				L1UpdateRequest::CancelResolution(mut c) => {
 					c.requestId.id = rid;
 					update.pendingCancelResolutions.push(c);
-				},
-				L1UpdateRequest::Remove(mut r) => {
-					r.requestId.id = rid;
-					update.pendingL2UpdatesToRemove.push(r);
 				},
 			}
 		}
@@ -112,7 +108,7 @@ fn process_single_deposit() {
 			ALICE,
 			current_block_number + dispute_period,
 			(1u128, 1u128).into(),
-			H256::from(hex!("4b8b37cc0fbc3c0597626b545afb02d4725b9bb7e8f4d3bd7e7c9890b7b0f4b6"))
+			hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863").into()
 		)));
 	});
 }
@@ -342,19 +338,8 @@ fn test_cancel_produce_update_with_correct_hash() {
 
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
-			let req: messages::eth_abi::L1Update =
-				PendingSequencerUpdates::<Test>::get(15u128, Chain::Ethereum).unwrap().1.into();
 
-			assert_eq!(
-				Rolldown::get_l2_update(Chain::Ethereum),
-				messages::eth_abi::L2Update {
-					withdrawals: vec![],
-					cancels: vec![],
-					results: vec![]
-				}
-			);
 
-			let update_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
@@ -363,24 +348,14 @@ fn test_cancel_produce_update_with_correct_hash() {
 			.unwrap();
 
 			assert_eq!(
-				Rolldown::get_l2_update(Chain::Ethereum),
-				messages::eth_abi::L2Update {
-					cancels: vec![messages::eth_abi::Cancel {
-						requestId: messages::eth_abi::RequestId {
-							origin: messages::eth_abi::Origin::L2,
-							id: messages::to_eth_u256(U256::from(update_id))
-						},
-						range: messages::eth_abi::Range {
-							start: messages::to_eth_u256(U256::from(1)),
-							end: messages::to_eth_u256(U256::from(1))
-						},
-						hash: alloy_primitives::FixedBytes::<32>::from_slice(
-							Keccak256::digest(&req.abi_encode()[..]).as_ref()
-						),
-					}],
-					withdrawals: vec![],
-					results: vec![]
-				}
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)).unwrap().0,
+				Cancel {
+					requestId: RequestId::new(Origin::L2, 1u128),
+					updater: ALICE,
+					canceler: BOB,
+					range: (1u128, 1u128).into(),
+					hash: hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863").into()
+				}.into()
 			);
 		});
 }
@@ -660,23 +635,17 @@ fn test_l1_update_hash_compare_with_solidty() {
 					cancelJustified: true,
 					timeStamp: sp_core::U256::from(2),
 				}),
-				L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
+				L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
 					requestId: RequestId::new(Origin::L1, 9u128),
 					l2RequestId: 10u128,
-					status: true,
 					timeStamp: sp_core::U256::from(3),
-				}),
-				L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-					requestId: RequestId::new(Origin::L1, 12u128),
-					l2UpdatesToRemove: vec![13u128],
-					timeStamp: sp_core::U256::from(4),
 				}),
 			])
 			.build();
 		let hash = Rolldown::calculate_hash_of_pending_requests(update);
 		assert_eq!(
 			hash,
-			hex!("3c1e43a559da200b6b94ab0efb9f273b653242cb014efe2310807ff26d1db2d1").into()
+			hex!("64ba87c85cf50b0c6596157b5505a863c56e638d36a59cc8d84f1d0b21a07ad0").into()
 		);
 	});
 }
@@ -1070,30 +1039,16 @@ fn test_reproduce_bug_with_incremental_updates() {
 				.with_offset(1u128)
 				.build();
 
-			let second_update = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-					requestId: RequestId::new(Origin::L1, 3u128),
-					l2UpdatesToRemove: vec![1u128, 2u128],
-					timeStamp: sp_core::U256::from(1),
-				})])
-				.with_offset(3u128)
-				.build();
 
-			let third_update = L1UpdateBuilder::default()
+			let second_update = L1UpdateBuilder::default()
 				.with_requests(vec![
-					// L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-					// 	requestId: RequestId::new(Origin::L1, 3u128),
-					// 	l2UpdatesToRemove: vec![1u128, 2u128],
-					// 	timeStamp: sp_core::U256::from(1),
-					// }),
-					L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
+					L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
 						requestId: RequestId::new(Origin::L1, 4u128),
 						l2RequestId: 3u128,
-						status: false,
 						timeStamp: sp_core::U256::from(1),
 					}),
 				])
-				.with_offset(4u128)
+				.with_offset(3u128)
 				.build();
 
 			forward_to_block::<Test>(10);
@@ -1119,8 +1074,6 @@ fn test_reproduce_bug_with_incremental_updates() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), second_update).unwrap();
 
-			forward_to_block::<Test>(30);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), third_update).unwrap();
 
 			forward_to_block::<Test>(40);
 			assert!(!L2Requests::<Test>::contains_key(
@@ -1139,33 +1092,22 @@ fn test_withdrawal_resolution_works_passes_validation() {
 			let first_update = L1UpdateBuilder::new()
 				.with_requests(vec![
 					L1UpdateRequest::Deposit(messages::Deposit {
-						requestId: RequestId::new(Origin::L1, 33u128),
+						requestId: RequestId::new(Origin::L1, 31u128),
 						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
 					}),
 					L1UpdateRequest::Deposit(messages::Deposit {
-						requestId: RequestId::new(Origin::L1, 34u128),
+						requestId: RequestId::new(Origin::L1, 32u128),
 						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
 					}),
-					L1UpdateRequest::WithdrawalResolution(messages::WithdrawalResolution {
+					L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
 						requestId: RequestId::new(Origin::L1, 30u128),
 						l2RequestId: 31u128,
-						status: true,
-						timeStamp: sp_core::U256::from(1),
-					}),
-					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-						requestId: RequestId::new(Origin::L1, 31u128),
-						l2UpdatesToRemove: vec![27u128, 28u128],
-						timeStamp: sp_core::U256::from(1),
-					}),
-					L1UpdateRequest::Remove(messages::L2UpdatesToRemove {
-						requestId: RequestId::new(Origin::L1, 32u128),
-						l2UpdatesToRemove: vec![29u128],
 						timeStamp: sp_core::U256::from(1),
 					}),
 				])
@@ -1182,52 +1124,6 @@ where
 	I::Item: Ord + Clone,
 {
 	data.into_iter().tuple_windows().all(|(a, b)| a <= b)
-}
-
-#[test]
-#[serial]
-fn test_L2Update_requests_are_in_order() {
-	ExtBuilder::new()
-		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
-		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
-			let first_update = L1UpdateBuilder::default()
-				.with_requests(vec![
-					L1UpdateRequest::Deposit(Default::default()),
-					L1UpdateRequest::Deposit(Default::default()),
-					L1UpdateRequest::Deposit(Default::default()),
-					L1UpdateRequest::Deposit(Default::default()),
-					L1UpdateRequest::Deposit(Default::default()),
-				])
-				.build();
-
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
-
-			for _ in 1..20 {
-				Rolldown::withdraw(
-					RuntimeOrigin::signed(ALICE),
-					consts::CHAIN,
-					ETH_RECIPIENT_ACCOUNT,
-					ETH_TOKEN_ADDRESS,
-					1,
-				)
-				.unwrap();
-				Rolldown::withdraw(
-					RuntimeOrigin::signed(BOB),
-					consts::CHAIN,
-					ETH_RECIPIENT_ACCOUNT,
-					ETH_TOKEN_ADDRESS,
-					1,
-				)
-				.unwrap();
-			}
-
-			forward_to_block::<Test>(15);
-			let l2update = Rolldown::get_l2_update(Chain::Ethereum);
-			assert!(is_sorted(l2update.results.iter().map(|x| x.requestId.id)));
-			assert!(is_sorted(l2update.withdrawals.iter().map(|x| x.requestId.id)));
-		});
 }
 
 #[test]

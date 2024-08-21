@@ -2,6 +2,7 @@
 
 use core::ops::RangeInclusive;
 use messages::EthAbiHash;
+use messages::EthAbi;
 pub mod messages;
 
 use messages::{Cancel, FailedDepositResolution, Withdrawal};
@@ -83,8 +84,6 @@ impl Hasher for Keccak256Hasher {
 	}
 }
 
-#[derive(Debug)]
-struct Hash32([u8; 32]);
 
 #[cfg(test)]
 mod tests;
@@ -342,7 +341,7 @@ pub mod pallet {
 			batch_id: u128,
 			range: (u128, u128),
 		},
-		WithdrawlRequestCreated {
+		WithdrawalRequestCreated {
 			chain: T::ChainId,
 			request_id: RequestId,
 			recipient: [u8; 20],
@@ -503,7 +502,7 @@ pub mod pallet {
 				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
-			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
+			let hash_of_pending_request = Self::calculate_hash_of_sequencer_update(request.clone());
 
 			let l2_request_id = Self::acquire_l2_request_id(chain);
 
@@ -592,17 +591,17 @@ pub mod pallet {
 				request_id.clone(),
 				(
 					L2Request::Withdrawal(withdrawal_update.clone()),
-					Self::get_l2_request_hash(withdrawal_update.clone().into()),
+					withdrawal_update.abi_encode_hash(),
 				),
 			);
 
-			Pallet::<T>::deposit_event(Event::WithdrawlRequestCreated {
+			Pallet::<T>::deposit_event(Event::WithdrawalRequestCreated {
 				chain,
 				request_id,
 				recipient,
 				token_address,
 				amount,
-				hash: Self::get_l2_request_hash(withdrawal_update.into()),
+				hash: withdrawal_update.abi_encode_hash(),
 			});
 			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 
@@ -723,7 +722,7 @@ impl<T: Config> Pallet<T> {
 	) -> Option<bool> {
 		let pending_requests_to_process = PendingSequencerUpdates::<T>::get(request_id, chain);
 		if let Some((_, l1_update)) = pending_requests_to_process {
-			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
+			let calculated_hash = Self::calculate_hash_of_sequencer_update(l1_update);
 			Some(hash == calculated_hash)
 		} else {
 			None
@@ -942,42 +941,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
-		cancel.into()
-	}
 
-	fn to_eth_failed_deposit(deposit: FailedDepositResolution) -> messages::eth_abi::FailedDepositResolution {
-		deposit.into()
-	}
-
-	fn to_eth_withdrawal(withdrawal: Withdrawal) -> messages::eth_abi::Withdrawal {
-		withdrawal.into()
-	}
-
-	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
+	fn calculate_hash_of_sequencer_update(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
-	}
-
-	fn get_l2_request_hash(req: L2Request<T::AccountId>) -> H256 {
-		match req {
-			L2Request::FailedDepositResolution(rr) => {
-				let eth_req_result = Self::to_eth_failed_deposit(rr);
-				let hash: [u8; 32] = Keccak256::digest(&eth_req_result.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-			L2Request::Cancel(c) => {
-				let eth_cancel = Self::to_eth_cancel(c);
-				let hash: [u8; 32] = Keccak256::digest(&eth_cancel.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-			L2Request::Withdrawal(w) => {
-				let eth_withdrawal = Self::to_eth_withdrawal(w);
-				let hash: [u8; 32] = Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-		}
 	}
 
 
@@ -1316,22 +1284,14 @@ impl<T: Config> Pallet<T> {
 			return false
 		}
 
-		let tx_hash = {
-			let request_to_proof: Withdrawal =
-				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id })
-					.unwrap()
-					.0
-					.try_into()
-					.unwrap();
-			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);
-			Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into()
-		};
-
-		if let Some(pos) = inclusive_range.clone().position(|elem| elem == tx_id) {
-			proof.verify(root_hash.into(), &[pos], &[tx_hash], inclusive_range.count())
-		} else {
+		let pos = inclusive_range.clone().position(|elem| elem == tx_id);
+		let request = L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id });
+		if let (Some((req, _)), Some(pos)) = (request, pos){
+			proof.verify(root_hash.into(), &[pos], &[req.abi_encode_hash().into()], inclusive_range.count())
+		}else{
 			false
 		}
+
 	}
 
 	fn treasury_account_id() -> T::AccountId {

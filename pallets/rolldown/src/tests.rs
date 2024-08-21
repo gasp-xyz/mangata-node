@@ -295,16 +295,6 @@ fn test_cancel_removes_pending_requests() {
 				])
 				.build();
 
-			let cancel_resolution = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::CancelResolution(
-					messages::CancelResolution {
-						requestId: Default::default(),
-						l2RequestId: 1u128,
-						cancelJustified: true,
-						timeStamp: sp_core::U256::from(1),
-					},
-				)])
-				.build();
 
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
@@ -642,7 +632,7 @@ fn test_l1_update_hash_compare_with_solidty() {
 				}),
 			])
 			.build();
-		let hash = Rolldown::calculate_hash_of_pending_requests(update);
+		let hash = Rolldown::calculate_hash_of_sequencer_update(update);
 		assert_eq!(
 			hash,
 			hex!("64ba87c85cf50b0c6596157b5505a863c56e638d36a59cc8d84f1d0b21a07ad0").into()
@@ -1112,13 +1102,6 @@ fn test_withdrawal_resolution_works_passes_validation() {
 		});
 }
 
-fn is_sorted<I>(data: I) -> bool
-where
-	I: IntoIterator,
-	I::Item: Ord + Clone,
-{
-	data.into_iter().tuple_windows().all(|(a, b)| a <= b)
-}
 
 #[test]
 #[serial]
@@ -1151,7 +1134,6 @@ fn test_sequencer_unstaking() {
 		forward_to_block::<Test>(1);
 		let dispute_period_length = Rolldown::get_dispute_period();
 		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
-		let x = 20;
 
 		LastUpdateBySequencer::<Test>::insert((consts::CHAIN, ALICE), now);
 		forward_to_block::<Test>((now + dispute_period_length).saturated_into::<u64>());

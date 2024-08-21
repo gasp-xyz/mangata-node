@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::ops::RangeInclusive;
+
 use messages::EthAbiHash;
 use messages::EthAbi;
 pub mod messages;
@@ -12,10 +12,10 @@ use frame_support::{
 	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{eth_abi::to_eth_u256, Origin, RequestId};
+use messages::{Origin, RequestId};
 use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
-use sp_core::hexdisplay::HexDisplay;
+
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, iter::Iterator};
 
@@ -31,8 +31,7 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
-	serde::Serialize,
-	traits::{AccountIdConversion, ConvertBack, Convert, MaybeConvert, Zero},
+	traits::{AccountIdConversion, Convert, Zero},
 };
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -1304,7 +1303,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|(req, hash)| {
+			.map(|(req, _hash)| {
 				req.abi_encode()
 			})
 			.unwrap_or_default()

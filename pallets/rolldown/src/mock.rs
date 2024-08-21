@@ -204,7 +204,7 @@ impl ExtBuilder {
 		Self { ext }
 	}
 
-	pub fn single_sequencer(seq: AccountId) -> Self {
+	pub fn single_sequencer(_seq: AccountId) -> Self {
 		let t = frame_system::GenesisConfig::<Test>::default()
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");

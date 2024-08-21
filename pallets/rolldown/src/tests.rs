@@ -3,13 +3,13 @@ use crate::{
 	mock::{consts::*, *},
 	*,
 };
-use core::future::pending;
+
 use frame_support::{assert_err, assert_ok};
 use hex_literal::hex;
-use messages::{L1Update, L1UpdateRequest};
-use mockall::predicate::eq;
+use messages::{L1UpdateRequest};
+
 use serial_test::serial;
-use sp_io::storage::rollback_transaction;
+
 use sp_runtime::traits::ConvertBack;
 use sp_std::iter::FromIterator;
 
@@ -1734,7 +1734,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootA
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
-			let selected_sequencer_mock =
+			let _selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
 
 			forward_to_block::<Test>(10);
@@ -1836,7 +1836,7 @@ fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passe
 
 			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64) - 1u64);
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
-			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64));
+			forward_to_block::<Test>(Rolldown::automatic_batch_period() as u64);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(25u64, 1u128, (1, 1)))
@@ -1856,13 +1856,13 @@ fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passe
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(25u64, 1u128, (1, 1)))
 			);
-			forward_to_block::<Test>((2 * Rolldown::automatic_batch_period() as u64));
+			forward_to_block::<Test>(2 * Rolldown::automatic_batch_period() as u64);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(50u64, 2u128, (2, 2)))
 			);
 
-			forward_to_block::<Test>((10 * Rolldown::automatic_batch_period() as u64));
+			forward_to_block::<Test>(10 * Rolldown::automatic_batch_period() as u64);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(50u64, 2u128, (2, 2)))
@@ -1884,7 +1884,7 @@ fn test_period_based_batch_respects_sized_batches() {
 			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
-			let selected_sequencer_mock =
+			let _selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
 
 			forward_to_block::<Test>(10);

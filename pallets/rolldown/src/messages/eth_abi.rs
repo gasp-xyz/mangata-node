@@ -1,4 +1,4 @@
-use alloy_sol_types::{sol, SolType, SolValue};
+use alloy_sol_types::sol;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_core::U256;

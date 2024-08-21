@@ -8,6 +8,7 @@ use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
+use mangata_types::assets::L1Asset;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
 
@@ -22,6 +23,7 @@ pub mod consts {
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
 	pub const EVE: u64 = 5;
+	pub const CHAIN: crate::messages::Chain = crate::messages::Chain::Ethereum;
 }
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -88,10 +90,12 @@ impl orml_tokens::Config for Test {
 mockall::mock! {
 	pub SequencerStakingProviderApi {}
 
-	impl SequencerStakingProviderTrait<AccountId, Balance> for SequencerStakingProviderApi {
-		fn is_active_sequencer(sequencer: &AccountId) -> bool;
-		fn slash_sequencer<'a>(to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
-		fn is_selected_sequencer(sequencer: &AccountId) -> bool;
+	impl SequencerStakingProviderTrait<AccountId, Balance, messages::Chain> for SequencerStakingProviderApi {
+		fn is_active_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn is_active_sequencer_alias(chain: messages::Chain, sequencer: &AccountId, alias: &AccountId) -> bool;
+		fn slash_sequencer<'a>(chain: messages::Chain, to_be_slashed: &AccountId, maybe_to_reward: Option<&'a AccountId>) -> DispatchResult;
+		fn is_selected_sequencer(chain: messages::Chain, sequencer: &AccountId) -> bool;
+		fn selected_sequencer(chain: messages::Chain) -> Option<AccountId>;
 	}
 }
 
@@ -137,6 +141,11 @@ impl ConvertBack<[u8; 20], AccountId> for DummyAddressConverter {
 	}
 }
 
+parameter_types! {
+	pub const TreasuryPalletId: PalletId = PalletId(*b"rolldown");
+	pub const NativeCurrencyId: u32 = 0;
+}
+
 impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SequencerStakingProvider = MockSequencerStakingProviderApi;
@@ -146,6 +155,13 @@ impl rolldown::Config for Test {
 	type DisputePeriodLength = ConstU128<5>;
 	type RequestsPerBlock = ConstU128<10>;
 	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
+	type ChainId = messages::Chain;
+	type RightsMultiplier = ConstU128<1>;
+	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
+	type MerkleRootAutomaticBatchSize = ConstU128<10>;
+	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
+	type TreasuryPalletId = TreasuryPalletId;
+	type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub struct ExtBuilder {
@@ -166,7 +182,7 @@ impl ExtBuilder {
 
 		ext.execute_with(|| {
 			for s in vec![consts::ALICE, consts::BOB, consts::CHARLIE].iter() {
-				Pallet::<Test>::new_sequencer_active(s);
+				Pallet::<Test>::new_sequencer_active(consts::CHAIN, s);
 			}
 		});
 
@@ -182,13 +198,13 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Tokens storage can be assimilated");
 
-		let mut ext = sp_io::TestExternalities::new(t);
+		let ext = sp_io::TestExternalities::new(t);
 
 		Self { ext }
 	}
 
 	pub fn single_sequencer(seq: AccountId) -> Self {
-		let mut t = frame_system::GenesisConfig::<Test>::default()
+		let t = frame_system::GenesisConfig::<Test>::default()
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
@@ -230,6 +246,10 @@ impl ExtBuilder {
 
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
+
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(None);
 
 			f()
 		})

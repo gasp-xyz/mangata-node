@@ -2,8 +2,20 @@ use sc_cli::RunCmd;
 
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
+	#[arg(long, env, default_value_t = false, conflicts_with_all = &["chain_genesis_salt"], global = true)]
+	pub randomize_chain_genesis_salt: bool,
+
+	#[arg(long, env, conflicts_with_all = &["randomize_chain_genesis_salt"], global = true)]
+	pub chain_genesis_salt: Option<String>,
+
 	#[command(subcommand)]
 	pub subcommand: Option<Subcommand>,
+
+	#[arg(long, value_parser, value_delimiter = ',', global = true)]
+	pub override_eth_sequencers: Vec<String>,
+
+	#[arg(long, value_parser, value_delimiter = ',', global = true)]
+	pub override_arb_sequencers: Vec<String>,
 
 	#[clap(flatten)]
 	pub run: RunCmd,

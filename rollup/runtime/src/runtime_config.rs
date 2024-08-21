@@ -46,9 +46,11 @@ pub mod types {
 pub mod tokens {
 	use super::*;
 	pub const RX_TOKEN_ID: TokenId = 0;
+	pub const ETH_TOKEN_ID: TokenId = 1;
 
 	parameter_types! {
 		pub const RxTokenId: TokenId = RX_TOKEN_ID;
+		pub const EthTokenId: TokenId = ETH_TOKEN_ID;
 	}
 }
 
@@ -924,48 +926,50 @@ pub mod config {
 		}
 
 		#[derive(Encode, Decode, Clone, TypeInfo)]
-		pub struct OneCurrencyOnChargeAdapter<C, OU, T1, TE>(PhantomData<(C, OU, T1, TE)>);
+		pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>(
+			PhantomData<(C, OU, T1, T2, SF, TE)>,
+		);
 
 		type NegativeImbalanceOf<C, T> =
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 		pub trait TriggerEvent<AccountIdT> {
-			fn trigger(who: AccountIdT, fee: u128, tip: u128);
+			fn trigger(who: AccountIdT, token_id: TokenId, fee: u128, tip: u128);
 		}
 
 		/// Default implementation for a Currency and an OnUnbalanced handler.
 		///
 		/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 		/// then tip.
-		impl<T, C, OU, T1, TE> OnChargeTransaction<T> for OneCurrencyOnChargeAdapter<C, OU, T1, TE>
+		impl<T, C, OU, T1, T2, SF, TE> OnChargeTransaction<T> for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>
 		where
-		T: pallet_transaction_payment_mangata::Config,
-		// TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
-		TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
-		// <<T as pallet_transaction_payment_mangata::Config>::OnChargeTransaction as OnChargeTransaction<T>>::Balance : From<u128>,
-		T::LengthToFee: frame_support::weights::WeightToFee<
-		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		>,
-		C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
-		C::PositiveImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::NegativeImbalance,
-		>,
-		C::NegativeImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::PositiveImbalance,
-		>,
-		OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-		NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
-		scale_info::TypeInfo,
-		T1: Get<C::CurrencyId>,
-		// Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
-		// Balance: From<TokenId>,
-		// sp_runtime::AccountId20: From<<T as frame_system::Config>::AccountId>,
+			T: pallet_transaction_payment_mangata::Config,
+			TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
+			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance: From<u128>,
+			C::CurrencyId: Into<u32>,
+			T::LengthToFee: frame_support::weights::WeightToFee<
+			Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+			>,
+			C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+			C::PositiveImbalance: Imbalance<
+				<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+				Opposite = C::NegativeImbalance,
+			>,
+			C::NegativeImbalance: Imbalance<
+				<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+				Opposite = C::PositiveImbalance,
+			>,
+			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
+				scale_info::TypeInfo,
+			T1: Get<C::CurrencyId>,
+			T2: Get<C::CurrencyId>,
+			SF: Get<u128>,
 		{
 			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 			type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
 			/// Withdraw the predicted fee from the transaction origin.
 			///
 			/// Note: The `fee` already includes the `tip`.
@@ -995,7 +999,16 @@ pub mod config {
 				) {
 					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
 					// TODO make sure atleast 1 planck KSM is charged
-					Err(_) => Err(InvalidTransaction::Payment.into()),
+					Err(_) => match C::withdraw(
+						T2::get(),
+						who,
+						fee / SF::get().into(),
+						withdraw_reason,
+						ExistenceRequirement::KeepAlive,
+					) {
+						Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
+						Err(_) => Err(InvalidTransaction::Payment.into()),
+					},
 				}
 			}
 
@@ -1013,6 +1026,11 @@ pub mod config {
 				already_withdrawn: Self::LiquidityInfo,
 			) -> Result<(), TransactionValidityError> {
 				if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
+					let (corrected_fee, tip) = if token_id == T2::get() {
+						(corrected_fee / SF::get().into(), tip / SF::get().into())
+					} else {
+						(corrected_fee, tip)
+					};
 					// Calculate how much refund we should return
 					let refund_amount = paid.peek().saturating_sub(corrected_fee);
 					// refund to the the account that paid the fees. If this fails, the
@@ -1028,8 +1046,7 @@ pub mod config {
 					// Call someone else to handle the imbalance (fee and tip separately)
 					let (tip_imb, fee) = adjusted_paid.split(tip);
 					OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
-
-					TE::trigger(who.clone(), corrected_fee.into(), tip.into());
+					TE::trigger(who.clone(), token_id.into(), corrected_fee.into(), tip.into());
 				}
 				Ok(())
 			}
@@ -1402,6 +1419,30 @@ pub mod config {
 
 		parameter_types! {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
+		}
+	}
+
+	pub mod pallet_rolldown {
+		use super::*;
+
+		parameter_types! {
+			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
+			pub const RequestsPerBlock: u128 = 50;
+			pub const RightsMultiplier: u128 = 1;
+		}
+
+		#[cfg(feature = "fast-runtime")]
+		parameter_types! {
+			pub const DisputePeriodLength: u32 = 10;
+			pub const MerkleRootAutomaticBatchPeriod: u128 = 25;
+			pub const MerkleRootAutomaticBatchSize: u128 = 32;
+		}
+
+		#[cfg(not(feature = "fast-runtime"))]
+		parameter_types! {
+			pub const DisputePeriodLength: u32 = 300;
+			pub const MerkleRootAutomaticBatchPeriod: u128 = 1200;
+			pub const MerkleRootAutomaticBatchSize: u128 = 1024;
 		}
 	}
 }

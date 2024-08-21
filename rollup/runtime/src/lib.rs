@@ -14,8 +14,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
-		IdentifyAccount, IdentityLookup, Keccak256, NumberFor, PostDispatchInfoOf, Saturating,
-		SignedExtension, StaticLookup, Verify, Zero,
+		IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor, PostDispatchInfoOf,
+		Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
@@ -350,7 +350,7 @@ impl pallet_utility_mangata::Config for Runtime {
 }
 
 use cfg::pallet_transaction_payment_mangata::{
-	FeeHelpers, OnChargeHandler, OneCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
+	FeeHelpers, OnChargeHandler, ToAuthor, TriggerEvent, TwoCurrencyOnChargeAdapter,
 };
 
 // TODO: renaming foo causes compiler error
@@ -359,10 +359,11 @@ impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
 	T: frame_system::Config<AccountId = sp_runtime::AccountId20>,
 {
-	fn trigger(who: T::AccountId, fee: u128, tip: u128) {
+	fn trigger(who: T::AccountId, token_id: TokenId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
 			pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
 				who,
+				token_id,
 				actual_fee: fee,
 				tip,
 			},
@@ -438,10 +439,12 @@ impl ExtendedCall for RuntimeCall {
 	}
 }
 
-pub type OnChargeTransactionHandler<T> = OneCurrencyOnChargeAdapter<
+pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,
 	tokens::RxTokenId,
+	tokens::EthTokenId,
+	frame_support::traits::ConstU128<30_000>,
 	Foo<T>,
 >;
 
@@ -491,7 +494,6 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type InformSessionData = SequencerStaking;
 
 	#[cfg(feature = "experimental")]
 	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;
@@ -567,7 +569,7 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
-	type SequencerStakingProvider = SequencerStaking;
+	// type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
@@ -736,9 +738,18 @@ impl pallet_rolldown::Config for Runtime {
 	type SequencerStakingProvider = SequencerStaking;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type AssetRegistryProvider = cfg::orml_asset_registry::AssetRegistryProvider<Runtime>;
-	type DisputePeriodLength = frame_support::traits::ConstU128<5>;
-	type RequestsPerBlock = frame_support::traits::ConstU128<50>;
+	type DisputePeriodLength = cfg::pallet_rolldown::DisputePeriodLength;
+	type RequestsPerBlock = cfg::pallet_rolldown::RequestsPerBlock;
+	// We havent spent any time considering rights multiplier being > 1. There might be some corner
+	// cases that should be investigated.
+	type RightsMultiplier = cfg::pallet_rolldown::RightsMultiplier;
 	type MaintenanceStatusProvider = Maintenance;
+	type ChainId = pallet_rolldown::messages::Chain;
+	type AssetAddressConverter = pallet_rolldown::MultiEvmChainAddressConverter;
+	type MerkleRootAutomaticBatchPeriod = cfg::pallet_rolldown::MerkleRootAutomaticBatchPeriod;
+	type MerkleRootAutomaticBatchSize = cfg::pallet_rolldown::MerkleRootAutomaticBatchSize;
+	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
+	type NativeCurrencyId = tokens::RxTokenId;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -750,6 +761,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type MaxSequencers = frame_support::traits::ConstU32<10>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
 	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
+	type ChainId = pallet_rolldown::messages::Chain;
 }
 
 impl pallet_metamask_signature::Config for Runtime {
@@ -862,36 +874,36 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::L1> for Runtime {
-		fn get_pending_updates_hash() -> sp_core::H256 {
+	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::Chain> for Runtime {
+		fn get_l2_request_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::pending_updates_proof()
+				pallet_rolldown::Pallet::<Runtime>::pending_l2_requests_proof(chain)
 			} else {
 				Default::default()
 			}
 		}
-		fn get_pending_updates() -> Vec<u8> {
+		fn get_l2_request(chain: pallet_rolldown::messages::Chain) -> Vec<u8> {
 			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded()
+				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded(chain)
 			} else {
 				Default::default()
 			}
 		}
 
-		fn get_native_l1_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
+		fn get_native_sequencer_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(hex_payload).ok()
 		}
 
-		fn verify_pending_requests(hash: sp_core::H256, request_id: u128) -> Option<bool> {
-			pallet_rolldown::Pallet::<Runtime>::verify_pending_requests(hash, request_id)
+		fn verify_sequencer_update(chain: pallet_rolldown::messages::Chain, hash: sp_core::H256, request_id: u128) -> Option<bool> {
+			pallet_rolldown::Pallet::<Runtime>::verify_sequencer_update(chain, hash, request_id)
 		}
 
-		fn get_last_processed_request_on_l2(l1: pallet_rolldown::messages::L1) -> Option<u128>{
-			Some(Rolldown::get_last_processed_request_on_l2(l1))
+		fn get_last_processed_request_on_l2(chain: pallet_rolldown::messages::Chain) -> Option<u128>{
+			Some(Rolldown::get_last_processed_request_on_l2(chain))
 		}
 
-		fn get_number_of_pending_requests(l1: pallet_rolldown::messages::L1) -> Option<u128>{
-			Some(Rolldown::get_max_accepted_request_id_on_l2(l1).saturating_sub(Rolldown::get_last_processed_request_on_l2(l1)))
+		fn get_number_of_pending_requests(chain: pallet_rolldown::messages::Chain) -> Option<u128>{
+			Some(Rolldown::get_max_accepted_request_id_on_l2(chain).saturating_sub(Rolldown::get_last_processed_request_on_l2(chain)))
 		}
 
 		fn get_total_number_of_deposits() -> u32 {
@@ -900,6 +912,37 @@ impl_runtime_apis! {
 
 		fn get_total_number_of_withdrawals() -> u32 {
 			Rolldown::get_total_number_of_withdrawals()
+		}
+
+		fn get_merkle_root(chain: pallet_rolldown::messages::Chain, range : (u128, u128)) -> sp_core::H256{
+			Rolldown::get_merkle_root(chain, range)
+		}
+
+		fn get_merkle_proof_for_tx(chain: pallet_rolldown::messages::Chain, range : (u128, u128), tx_id: u128) -> Vec<sp_core::H256>{
+			Rolldown::get_merkle_proof_for_tx(chain, range, tx_id)
+		}
+
+		fn verify_merkle_proof_for_tx(
+			chain: pallet_rolldown::messages::Chain,
+			range: (u128, u128),
+			tx_id: u128,
+			root: sp_core::H256,
+			proof: Vec<sp_core::H256>,
+		) -> bool {
+			Rolldown::verify_merkle_proof_for_tx(
+				chain,
+				range,
+				root,
+				tx_id,
+				proof,
+			)
+		}
+
+		fn get_abi_encoded_l2_request(
+			chain: pallet_rolldown::messages::Chain,
+			request_id: u128
+		) -> Vec<u8>{
+			Rolldown::get_abi_encoded_l2_request(chain, request_id)
 		}
 	}
 

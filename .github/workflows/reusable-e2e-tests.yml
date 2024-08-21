@@ -88,15 +88,14 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         id: setTestRun
 
-
   e2e-test-matrix:
     needs: [setup-report]
     strategy:
       fail-fast: false
       matrix:
         include:
-          # - command: "yarn test-parallel --max-workers=10"
-          #   fast: false
+          - command: "yarn test-parallel --max-workers=10"
+            fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
           - command: "yarn test-seqgasless"
@@ -104,7 +103,7 @@ jobs:
           - command: "yarn test-maintenance"
             fast: true
           - command: "yarn test-rollupUpdate"
-            fast: false
+            fast: true
           - command: "yarn test-bootstrap"
             fast: false
           - command: "yarn test-rewards-bootstrap"
@@ -113,22 +112,24 @@ jobs:
             fast: true
           - command: "yarn test-sequential-autocompound"
             fast: true
-          # - command: "yarn test-poolliquidity"
-          #   fast: true
-          # - command: "yarn test-governance"
-          #   fast: true
+          - command: "yarn test-poolliquidity"
+            fast: true
+          - command: "yarn test-governance"
+            fast: true
           - command: "yarn test-multiswap"
             fast: false
-          # - command: "yarn test-experimentalStaking"
-          #   fast: true
+          - command: "yarn test-experimentalStaking"
+            fast: true
           - command: "yarn test-crowdloan"
             fast: false
           - command: "yarn test-sdk"
             fast: true
           - command: "yarn test-parallel-3rdPartyRewards"
             fast: true
+          - command: "yarn test-sequencerStaking"
+            fast: true
 
-    
+
     runs-on: [e2e-gke]
     timeout-minutes: 180
     env:
@@ -180,7 +181,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '18.18.2'
+          node-version: '18.19.0'
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
@@ -214,7 +215,7 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=12288
 
-        
+
       - name: Test Report
         uses: dorny/test-reporter@v1.7.0
         continue-on-error: true
@@ -269,14 +270,14 @@ jobs:
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-          
+
       - name: Upload node storage data to GCP bucket
         if: failure()
         uses: google-github-actions/upload-cloud-storage@v1.0.3
         with:
           process_gcloudignore: false
           destination: mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }}
-          
+
       - name: Add GCP bucket URL link for stored node data on job failure
         if: failure()
         run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY

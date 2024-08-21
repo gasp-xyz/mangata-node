@@ -7,7 +7,7 @@ use crate::{
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::executor::block_on;
-use rollup_runtime::Signer;
+use rollup_runtime::{AccountId, Signer};
 use sc_cli::SubstrateCli;
 use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::{Deref, PartialComponents};
@@ -19,6 +19,18 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
+
+pub enum EvmChain {
+	Holesky,
+	Anvil,
+	Reth,
+}
+
+pub enum InitialSequencersSet {
+	Collators,
+	Set(Vec<String>),
+	Empty,
+}
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -46,20 +58,49 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-		const HOLESKY_CHAIN_ID: u64 = 17000u64;
+		let parse_accounts = |account: &String| -> AccountId {
+			if account.starts_with("0x") {
+				let mut expected_hex_account = [0u8; 20];
+				hex::decode_to_slice(&account[2..], &mut expected_hex_account)
+					.expect("Eth sequencer account must be 20 bytes");
+				expected_hex_account.into()
+			} else {
+				crate::chain_spec::get_account_id_from_seed::<sp_core::ecdsa::Public>(account)
+			}
+		};
+
+		let eth_sequencers = if self.override_eth_sequencers.is_empty() {
+			[crate::chain_spec::get_account_id_from_seed::<sp_core::ecdsa::Public>("Baltathar")]
+				.to_vec()
+		} else {
+			self.override_eth_sequencers.iter().map(parse_accounts).collect()
+		};
+
+		let arb_sequencers = if self.override_arb_sequencers.is_empty() {
+			[crate::chain_spec::get_account_id_from_seed::<sp_core::ecdsa::Public>("Charleth")]
+				.to_vec()
+		} else {
+			self.override_arb_sequencers.iter().map(parse_accounts).collect()
+		};
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
+				Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
 				None
 				)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(true, HOLESKY_CHAIN_ID,
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
 				None
 			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(false, HOLESKY_CHAIN_ID,
-				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-testnet-rpc.gasp.xyz#/extrinsics/decode/"))
+			"anvil" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
+				None
+			)),
+			"reth" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Reth,
+				None
+			)),
+			"holesky" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Holesky,
+				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>
-				Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+			Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 		})
 	}
 }

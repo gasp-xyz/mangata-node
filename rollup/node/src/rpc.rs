@@ -53,7 +53,7 @@ where
 	C::Api: rolldown_runtime_api::RolldownRuntimeApi<
 		Block,
 		pallet_rolldown::messages::L1Update,
-		pallet_rolldown::messages::L1,
+		pallet_rolldown::messages::Chain,
 	>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerNonceApi<Block, AccountId>,

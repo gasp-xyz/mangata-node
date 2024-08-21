@@ -321,14 +321,15 @@ pub mod pallet {
 							//
 							let meta = Self::list_metadata();
 							match (meta.head, meta.tail) {
-								(Some(head), Some(tail)) if head == pos_val && head != tail =>
+								(Some(head), Some(tail)) if head == pos_val && head != tail => {
 									if let Some(next) = next {
 										// NOTE: 1W
 										SchedulesListMetadata::<T>::mutate(|s| {
 											s.head = Some(next);
 											s.count -= 1;
 										});
-									},
+									}
+								},
 								(Some(head), Some(tail)) if tail == pos_val && head == tail => {
 									// NOTE: 3W
 									SchedulesListMetadata::<T>::mutate(|s| {
@@ -338,7 +339,7 @@ pub mod pallet {
 										s.count = 0;
 									});
 								},
-								(Some(head), Some(tail)) if tail == pos_val && head != tail =>
+								(Some(head), Some(tail)) if tail == pos_val && head != tail => {
 									if let Some(last_valid) = last_valid {
 										// NOTE: 1W
 										SchedulesListMetadata::<T>::mutate(|s| {
@@ -351,8 +352,9 @@ pub mod pallet {
 												*next = None
 											}
 										});
-									},
-								(Some(_head), Some(_tail)) =>
+									}
+								},
+								(Some(_head), Some(_tail)) => {
 									if let Some(last_valid) = last_valid {
 										SchedulesListMetadata::<T>::mutate(|s| {
 											s.count -= 1;
@@ -363,7 +365,8 @@ pub mod pallet {
 												*prev_next = next
 											}
 										});
-									},
+									}
+								},
 								_ => {},
 							}
 						}

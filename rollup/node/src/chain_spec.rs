@@ -1,3 +1,5 @@
+use crate::command::{EvmChain, InitialSequencersSet};
+use rand::{thread_rng, Rng};
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
 	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
@@ -5,13 +7,13 @@ use rollup_runtime::{
 };
 use sc_service::ChainType;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::{ecdsa, ByteArray, Encode, Pair, Public};
+use sp_core::{ecdsa, ByteArray, Encode, Pair, Public, H256};
 use sp_keyring::EthereumKeyring;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	BoundedVec,
 };
-use sp_std::str::FromStr;
+use sp_std::{convert::TryInto, str::FromStr};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -54,21 +56,60 @@ pub fn rollup_session_keys(aura: AuraId, grandpa: GrandpaId) -> rollup_runtime::
 }
 
 pub fn rollup_local_config(
-	initial_collators_as_sequencers: bool,
-	eth_chain_id: u64,
+	randomize_chain_genesis_salt: bool,
+	chain_genesis_salt: Option<String>,
+	eth_sequencers: Vec<AccountId>,
+	arb_sequencers: Vec<AccountId>,
+	evm_chain: EvmChain,
 	decode_url: Option<String>,
 ) -> ChainSpec {
+	let (gasp_token_address, eth_chain_id) = match evm_chain {
+		EvmChain::Holesky => (
+			array_bytes::hex2array("0x5620cDb94BaAaD10c20483bd8705DA711b2Bc0a3")
+				.expect("is correct address"),
+			17000u64,
+		),
+		EvmChain::Anvil => (
+			array_bytes::hex2array("0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3")
+				.expect("is correct address"),
+			31337u64,
+		),
+		EvmChain::Reth => (
+			array_bytes::hex2array("0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3")
+				.expect("is correct address"),
+			1337u64,
+		),
+	};
+
+	let mut chain_genesis_salt_arr: [u8; 32] = [0u8; 32];
+	if randomize_chain_genesis_salt {
+		thread_rng().fill(&mut chain_genesis_salt_arr[..]);
+	} else if let Some(salt) = chain_genesis_salt {
+		chain_genesis_salt_arr = array_bytes::hex2bytes(salt)
+			.expect("chain_genesis_salt should be hex")
+			.iter()
+			.chain(sp_std::iter::repeat(&0u8))
+			.take(32)
+			.cloned()
+			.collect::<Vec<_>>()
+			.try_into()
+			.expect("32 bytes");
+	}
+
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "GASP".into());
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
+	properties.insert(
+		"chainGenesisSalt".into(),
+		array_bytes::bytes2hex("0x", chain_genesis_salt_arr).into(),
+	);
 
 	let decode_url = decode_url.unwrap_or(String::from(
 		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",
 	));
-
 	ChainSpec::from_genesis(
 		// Name
 		"Rollup Local",
@@ -76,6 +117,24 @@ pub fn rollup_local_config(
 		"rollup_local",
 		ChainType::Local,
 		move || {
+			let eth = eth_sequencers.clone();
+			let arb = arb_sequencers.clone();
+
+			let tokens_endowment = [
+				eth_sequencers.clone(),
+				arb_sequencers.clone(),
+				vec![
+					get_account_id_from_seed::<ecdsa::Public>("Alith"),
+					get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
+					get_account_id_from_seed::<ecdsa::Public>("Charleth"),
+				],
+			]
+			.iter()
+			.flatten()
+			.cloned()
+			.map(|account_id| (0u32, 300_000_000__000_000_000_000_000_000u128, account_id))
+			.collect::<Vec<_>>();
+
 			rollup_genesis(
 				// initial collators.
 				vec![
@@ -91,24 +150,7 @@ pub fn rollup_local_config(
 				// Sudo account
 				get_account_id_from_seed::<ecdsa::Public>("Alith"),
 				// Tokens endowment
-				vec![
-					// MGA
-					(
-						0u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Alith"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<ecdsa::Public>("Charleth"),
-					),
-				],
+				tokens_endowment,
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
 				(
@@ -140,22 +182,37 @@ pub fn rollup_local_config(
 						// How many liquidity tokens they stake,
 					],
 				),
-				vec![(
-					RX_TOKEN_ID,
-					AssetMetadataOf {
-						decimals: 18,
-						name: BoundedVec::truncate_from(b"Gasp".to_vec()),
-						symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
-						additional: Default::default(),
-						existential_deposit: Default::default(),
-						location: None,
-					},
-					Some(L1Asset::Ethereum(
-						array_bytes::hex2array("0x1317106Dd45FF0EB911e9F0aF78D63FBF9076f69")
-							.unwrap(),
-					)),
-				)],
-				initial_collators_as_sequencers,
+				vec![
+					(
+						RX_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Gasp".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						Some(L1Asset::Ethereum(gasp_token_address)),
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: BoundedVec::truncate_from(b"Gasp Ethereum".to_vec()),
+							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+						Some(L1Asset::Ethereum(
+							array_bytes::hex2array("0x0000000000000000000000000000000000000001")
+								.unwrap(),
+						)),
+					),
+				],
+				eth,
+				arb,
 				eth_chain_id,
 				decode_url.clone(),
 			)
@@ -185,10 +242,13 @@ fn rollup_genesis(
 		Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	),
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
-	initial_collators_as_sequencers: bool,
+	eth_initial_sequencers: Vec<AccountId>,
+	arb_initial_sequencers: Vec<AccountId>,
 	chain_id: u64,
 	decode_url: String,
 ) -> rollup_runtime::RuntimeGenesisConfig {
+	let initial_sequencers_stake = 10_000_000_u128;
+
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
 			code: rollup_runtime::WASM_BINARY
@@ -323,16 +383,20 @@ fn rollup_genesis(
 		sequencer_staking: rollup_runtime::SequencerStakingConfig {
 			minimal_stake_amount: 1_000_000_u128,
 			slash_fine_amount: 100_000_u128,
-			sequencers_stake: if initial_collators_as_sequencers {
-				initial_authorities
-					.iter()
-					.rev()
-					.take(1)
-					.map(|(acc, _)| (acc.clone(), 10_000_000_u128))
-					.collect()
-			} else {
-				Default::default()
-			},
+			sequencers_stake: [
+				eth_initial_sequencers
+					.into_iter()
+					.map(|seq| (seq, pallet_rolldown::messages::Chain::Ethereum, 10_000_000_u128))
+					.collect::<Vec<_>>(),
+				arb_initial_sequencers
+					.into_iter()
+					.map(|seq| (seq, pallet_rolldown::messages::Chain::Arbitrum, 10_000_000_u128))
+					.collect::<Vec<_>>(),
+			]
+			.iter()
+			.flatten()
+			.cloned()
+			.collect(),
 		},
 		rolldown: rollup_runtime::RolldownConfig { _phantom: Default::default() },
 		metamask: rollup_runtime::MetamaskConfig {

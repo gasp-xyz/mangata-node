@@ -242,7 +242,7 @@ pub mod pallet {
 					locked,
 					per_block,
 					T::TGEReleaseBegin::get().into(),
-					T::NativeCurrencyId::get().into(),
+					T::NativeCurrencyId::get(),
 				)
 				.is_ok()
 				{

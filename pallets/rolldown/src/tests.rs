@@ -2130,6 +2130,19 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 
 #[test]
 #[serial]
+fn test_manual_batch_fee_update() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(10);
+		let fee = 12345;
+		assert_eq!(ManualBatchExtraFee::<Test>::get(), 0);
+		Rolldown::set_manual_batch_extra_fee(RuntimeOrigin::root(), fee).unwrap();
+		assert_eq!(ManualBatchExtraFee::<Test>::get(), fee);
+		assert_event_emitted!(Event::ManualBatchExtraFeeSet(fee));
+	});
+}
+
+#[test]
+#[serial]
 fn do_not_allow_for_batches_with_gaps() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)

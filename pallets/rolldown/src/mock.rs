@@ -160,7 +160,6 @@ impl rolldown::Config for Test {
 	type AssetAddressConverter = crate::MultiEvmChainAddressConverter;
 	type MerkleRootAutomaticBatchSize = ConstU128<10>;
 	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
-	type ManualBatchExtraFee = ConstU128<0>;
 	type TreasuryPalletId = TreasuryPalletId;
 	type NativeCurrencyId = NativeCurrencyId;
 }

@@ -193,18 +193,8 @@ pub mod pallet {
 		PeriodReached,
 	}
 
-	// TODO: remove
-	impl<AccountId: Clone> TryInto<Withdrawal> for L2Request<AccountId> {
-		type Error = &'static str;
-		fn try_into(self) -> Result<Withdrawal, Self::Error> {
-			match self {
-				L2Request::Withdrawal(withdrawal) => Ok(withdrawal),
-				_ => Err("not a withdrawal"),
-			}
-		}
-	}
-
 	#[derive(
+
 		PartialOrd, Ord, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
 	)]
 	pub enum DisputeRole {
@@ -1217,7 +1207,6 @@ impl<T: Config> Pallet<T> {
 		l2_requests.map(|txs| MerkleTree::<Keccak256Hasher>::from_leaves(txs.as_ref()))
 	}
 
-	//TODO: error handling
 	pub fn get_merkle_root(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
 		if let Some(tree) = Self::create_merkle_tree(chain, range) {
 			H256::from(tree.root().unwrap_or_default())

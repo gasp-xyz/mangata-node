@@ -88,6 +88,9 @@ jobs:
       - name: Compile code
         run: cargo build --locked --release
 
+      - name: compile multiple targets
+        run: cargo build --locked --release --target aarch64-unknown-linux-gnu --target x86_64-unknown-linux-gnu
+
       - name: Rename wasms
         run: |
           cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm

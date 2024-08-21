@@ -17,7 +17,6 @@ pub fn from_eth_u256(value: alloy_primitives::U256) -> U256 {
 	U256::from_big_endian(&buf)
 }
 
-
 impl<AccountId: Clone> From<crate::Cancel<AccountId>> for Cancel {
 	fn from(cancel: crate::Cancel<AccountId>) -> Self {
 		Self {
@@ -32,7 +31,9 @@ impl From<crate::FailedDepositResolution> for FailedDepositResolution {
 	fn from(failed_deposit_resolution: crate::FailedDepositResolution) -> Self {
 		Self {
 			requestId: failed_deposit_resolution.requestId.into(),
-			originRequestId: crate::messages::to_eth_u256(failed_deposit_resolution.originRequestId.into()),
+			originRequestId: crate::messages::to_eth_u256(
+				failed_deposit_resolution.originRequestId.into(),
+			),
 		}
 	}
 }
@@ -67,18 +68,14 @@ impl From<crate::messages::Origin> for Origin {
 }
 
 impl From<crate::messages::Range> for Range {
-	fn from(range: crate::messages::Range) -> Range{
+	fn from(range: crate::messages::Range) -> Range {
 		Range { start: to_eth_u256(range.start.into()), end: to_eth_u256(range.end.into()) }
 	}
 }
 
-
 impl From<crate::messages::RequestId> for RequestId {
 	fn from(rid: crate::messages::RequestId) -> RequestId {
-		RequestId {
-			origin: rid.origin.into(),
-			id: to_eth_u256(U256::from(rid.id))
-		}
+		RequestId { origin: rid.origin.into(), id: to_eth_u256(U256::from(rid.id)) }
 	}
 }
 

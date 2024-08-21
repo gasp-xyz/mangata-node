@@ -2,27 +2,28 @@
 
 pub mod eth_abi;
 
+use self::eth_abi::to_eth_u256;
 use crate::L2Request;
-use sp_std::vec::Vec;
 use alloy_sol_types::SolValue;
-use sha3::{Keccak256, Digest};
-use sp_core::{U256, H256};
 use codec::{Decode, Encode, MaxEncodedLen};
+use eth_abi::from_eth_u256;
 use scale_info::{
 	prelude::{format, string::String},
 	TypeInfo,
 };
 use serde::{Deserialize, Serialize};
-use sp_core::{RuntimeDebug};
-use sp_std::convert::{TryFrom, TryInto};
-use eth_abi::from_eth_u256;
-use self::eth_abi::to_eth_u256;
+use sha3::{Digest, Keccak256};
+use sp_core::{RuntimeDebug, H256, U256};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	vec::Vec,
+};
 
 pub trait NativeToEthMapping {
-	type EthType : SolValue;
+	type EthType: SolValue;
 }
 
-pub trait EthAbi{
+pub trait EthAbi {
 	fn abi_encode(&self) -> Vec<u8>;
 }
 
@@ -30,20 +31,22 @@ pub trait EthAbiHash {
 	fn abi_encode_hash(&self) -> H256;
 }
 
-impl <T> EthAbiHash for T where
-	T: EthAbi
+impl<T> EthAbiHash for T
+where
+	T: EthAbi,
 {
-	fn abi_encode_hash(&self) -> H256{
+	fn abi_encode_hash(&self) -> H256 {
 		let encoded = self.abi_encode();
 		let hash: [u8; 32] = Keccak256::digest(&encoded[..]).into();
 		H256::from(hash)
 	}
 }
 
-impl <T> EthAbi for T where
+impl<T> EthAbi for T
+where
 	T: Clone,
 	T: NativeToEthMapping,
-	T: Into::<T::EthType>,
+	T: Into<T::EthType>,
 	T::EthType: SolValue,
 {
 	fn abi_encode(&self) -> Vec<u8> {
@@ -52,17 +55,15 @@ impl <T> EthAbi for T where
 	}
 }
 
-impl<AccountId: Clone> EthAbi for L2Request<AccountId>{
-    fn abi_encode(&self) -> Vec<u8> {
+impl<AccountId: Clone> EthAbi for L2Request<AccountId> {
+	fn abi_encode(&self) -> Vec<u8> {
 		match self {
 			L2Request::FailedDepositResolution(deposit) => deposit.abi_encode(),
 			L2Request::Cancel(cancel) => cancel.abi_encode(),
 			L2Request::Withdrawal(withdrawal) => withdrawal.abi_encode(),
 		}
-    }
-
+	}
 }
-
 
 #[repr(u8)]
 #[derive(
@@ -88,7 +89,9 @@ pub enum Chain {
 }
 
 #[repr(u8)]
-#[derive(Default, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Copy)]
+#[derive(
+	Default, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Copy,
+)]
 pub enum Origin {
 	#[default]
 	L1,
@@ -107,8 +110,9 @@ impl From<(u128, u128)> for Range {
 	}
 }
 
-
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default, Copy)]
+#[derive(
+	Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default, Copy,
+)]
 pub struct RequestId {
 	pub origin: Origin,
 	pub id: u128,
@@ -128,14 +132,15 @@ impl From<(Origin, u128)> for RequestId {
 
 // L2 to L1
 
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Copy)]
 pub struct FailedDepositResolution {
 	pub requestId: RequestId,
 	pub originRequestId: u128,
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default, Copy)]
+#[derive(
+	Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default, Copy,
+)]
 pub struct Withdrawal {
 	pub requestId: RequestId,
 	pub withdrawalRecipient: [u8; 20],
@@ -143,11 +148,11 @@ pub struct Withdrawal {
 	pub amount: U256,
 }
 
-impl NativeToEthMapping for Withdrawal{
+impl NativeToEthMapping for Withdrawal {
 	type EthType = eth_abi::Withdrawal;
 }
 
-impl<AccountId: Clone> From<Withdrawal>  for crate::L2Request<AccountId> {
+impl<AccountId: Clone> From<Withdrawal> for crate::L2Request<AccountId> {
 	fn from(w: Withdrawal) -> crate::L2Request<AccountId> {
 		crate::L2Request::Withdrawal(w)
 	}
@@ -162,15 +167,16 @@ pub struct Cancel<AccountId: Clone> {
 	pub hash: H256,
 }
 
-impl<AccountId> NativeToEthMapping for Cancel<AccountId> where
+impl<AccountId> NativeToEthMapping for Cancel<AccountId>
+where
 	Self: Clone,
-	AccountId: Clone
+	AccountId: Clone,
 {
 	type EthType = eth_abi::Cancel;
 }
 
-impl<AccountId: Clone> From<Cancel<AccountId>> for crate::L2Request<AccountId>{
-	fn from (cancel: Cancel<AccountId>) -> crate::L2Request<AccountId> {
+impl<AccountId: Clone> From<Cancel<AccountId>> for crate::L2Request<AccountId> {
+	fn from(cancel: Cancel<AccountId>) -> crate::L2Request<AccountId> {
 		crate::L2Request::Cancel(cancel)
 	}
 }
@@ -185,8 +191,6 @@ pub struct Deposit {
 	pub timeStamp: sp_core::U256,
 }
 
-
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct CancelResolution {
 	pub requestId: RequestId,
@@ -195,7 +199,6 @@ pub struct CancelResolution {
 	pub timeStamp: sp_core::U256,
 }
 
-
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
 pub struct FailedWithdrawalResolution {
 	pub requestId: RequestId,
@@ -203,12 +206,9 @@ pub struct FailedWithdrawalResolution {
 	pub timeStamp: sp_core::U256,
 }
 
-impl NativeToEthMapping for FailedDepositResolution{
+impl NativeToEthMapping for FailedDepositResolution {
 	type EthType = eth_abi::FailedDepositResolution;
 }
-
-
-
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, Default, TypeInfo, Serialize)]
 pub struct L1Update {
@@ -217,7 +217,6 @@ pub struct L1Update {
 	pub pendingCancelResolutions: Vec<CancelResolution>,
 	pub pendingFailedWithdrawalResolutions: Vec<FailedWithdrawalResolution>,
 }
-
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
@@ -239,7 +238,8 @@ impl L1UpdateRequest {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.id.clone(),
-			L1UpdateRequest::FailedWithdrawalResolution(withdrawal) => withdrawal.requestId.id.clone(),
+			L1UpdateRequest::FailedWithdrawalResolution(withdrawal) =>
+				withdrawal.requestId.id.clone(),
 		}
 	}
 
@@ -306,12 +306,7 @@ impl L1Update {
 			.filter_map(|v| v)
 			.min();
 
-			match (
-				deposits_it.peek(),
-				cancel_it.peek(),
-				withdrawal_it.peek(),
-				min,
-			) {
+			match (deposits_it.peek(), cancel_it.peek(), withdrawal_it.peek(), min) {
 				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
 					if let Some(elem) = deposits_it.next() {
 						result.push(L1UpdateRequest::Deposit(elem.clone()));
@@ -322,11 +317,10 @@ impl L1Update {
 						result.push(L1UpdateRequest::CancelResolution(elem.clone()));
 					}
 				},
-				(_, _, Some(withdrawal), Some(min)) if withdrawal.requestId.id == min => {
+				(_, _, Some(withdrawal), Some(min)) if withdrawal.requestId.id == min =>
 					if let Some(elem) = withdrawal_it.next() {
 						result.push(L1UpdateRequest::FailedWithdrawalResolution(elem.clone()));
-					}
-				},
+					},
 				_ => break,
 			}
 		}
@@ -334,25 +328,18 @@ impl L1Update {
 	}
 }
 
-
 impl TryFrom<eth_abi::FailedWithdrawalResolution> for FailedWithdrawalResolution {
 	type Error = String;
 
 	fn try_from(value: eth_abi::FailedWithdrawalResolution) -> Result<Self, Self::Error> {
-		let requestId = value
-			.requestId
-			.try_into()?;
-			// .map_err(|e| format!("Error converting requestId: {}", e))?;
+		let requestId = value.requestId.try_into()?;
+		// .map_err(|e| format!("Error converting requestId: {}", e))?;
 		let l2RequestId = value
 			.l2RequestId
 			.try_into()
 			.map_err(|e| format!("Error converting l2RequestId: {}", e))?;
 
-		Ok(Self {
-			requestId,
-			l2RequestId,
-			timeStamp: from_eth_u256(value.timeStamp),
-		})
+		Ok(Self { requestId, l2RequestId, timeStamp: from_eth_u256(value.timeStamp) })
 	}
 }
 
@@ -361,10 +348,14 @@ impl TryFrom<eth_abi::Deposit> for Deposit {
 
 	fn try_from(deposit: eth_abi::Deposit) -> Result<Self, Self::Error> {
 		let requestId = deposit.requestId.try_into()?;
-		let depositRecipient = deposit.depositRecipient.try_into()
+		let depositRecipient = deposit
+			.depositRecipient
+			.try_into()
 			.map_err(|e| format!("Error converting requestId: {}", e))?;
-		let tokenAddress = deposit.tokenAddress.try_into()
-				.map_err(|e| format!("Error converting tokenAddress: {}", e))?;
+		let tokenAddress = deposit
+			.tokenAddress
+			.try_into()
+			.map_err(|e| format!("Error converting tokenAddress: {}", e))?;
 
 		Ok(Self {
 			requestId,
@@ -384,8 +375,11 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 			update.pendingDeposits.into_iter().map(|d| d.try_into()).collect();
 		let pending_cancel_resultions: Result<Vec<_>, _> =
 			update.pendingCancelResolutions.into_iter().map(|c| c.try_into()).collect();
-		let pending_withdrawal_resolutions: Result<Vec<_>, _> =
-			update.pendingFailedWithdrawalResolutions.into_iter().map(|u| u.try_into()).collect();
+		let pending_withdrawal_resolutions: Result<Vec<_>, _> = update
+			.pendingFailedWithdrawalResolutions
+			.into_iter()
+			.map(|u| u.try_into())
+			.collect();
 
 		Ok(Self {
 			chain: update.chain.try_into()?,
@@ -393,8 +387,9 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 				.map_err(|e| format!("Error converting pendingDeposits: {}", e))?,
 			pendingCancelResolutions: pending_cancel_resultions
 				.map_err(|e| format!("Error converting pendingCancelResolutions: {}", e))?,
-			pendingFailedWithdrawalResolutions: pending_withdrawal_resolutions
-				.map_err(|e| format!("Error converting pendingFailedWithdrawalResolutions: {}", e))?,
+			pendingFailedWithdrawalResolutions: pending_withdrawal_resolutions.map_err(|e| {
+				format!("Error converting pendingFailedWithdrawalResolutions: {}", e)
+			})?,
 		})
 	}
 }
@@ -456,4 +451,3 @@ impl TryFrom<eth_abi::CancelResolution> for CancelResolution {
 		})
 	}
 }
-

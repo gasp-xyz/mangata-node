@@ -6,7 +6,7 @@ use crate::{
 
 use frame_support::{assert_err, assert_ok};
 use hex_literal::hex;
-use messages::{L1UpdateRequest};
+use messages::L1UpdateRequest;
 
 use serial_test::serial;
 
@@ -295,7 +295,6 @@ fn test_cancel_removes_pending_requests() {
 				])
 				.build();
 
-
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
@@ -329,7 +328,6 @@ fn test_cancel_produce_update_with_correct_hash() {
 			// Act
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
-
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
@@ -338,14 +336,18 @@ fn test_cancel_produce_update_with_correct_hash() {
 			.unwrap();
 
 			assert_eq!(
-				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128)).unwrap().0,
+				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128))
+					.unwrap()
+					.0,
 				Cancel {
 					requestId: RequestId::new(Origin::L2, 1u128),
 					updater: ALICE,
 					canceler: BOB,
 					range: (1u128, 1u128).into(),
-					hash: hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863").into()
-				}.into()
+					hash: hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863")
+						.into()
+				}
+				.into()
 			);
 		});
 }
@@ -936,7 +938,6 @@ fn execute_two_consecutive_incremental_reqeusts() {
 		});
 }
 
-
 #[test]
 fn test_conversion_address() {
 	let byte_address: [u8; 20] = DummyAddressConverter::convert_back(consts::CHARLIE);
@@ -1023,15 +1024,14 @@ fn test_reproduce_bug_with_incremental_updates() {
 				.with_offset(1u128)
 				.build();
 
-
 			let second_update = L1UpdateBuilder::default()
-				.with_requests(vec![
-					L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
+				.with_requests(vec![L1UpdateRequest::FailedWithdrawalResolution(
+					messages::FailedWithdrawalResolution {
 						requestId: RequestId::new(Origin::L1, 4u128),
 						l2RequestId: 3u128,
 						timeStamp: sp_core::U256::from(1),
-					}),
-				])
+					},
+				)])
 				.with_offset(3u128)
 				.build();
 
@@ -1057,7 +1057,6 @@ fn test_reproduce_bug_with_incremental_updates() {
 			assert!(matches!(withdrawal_update, Some((L2Request::Withdrawal(_), _))));
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), second_update).unwrap();
-
 
 			forward_to_block::<Test>(40);
 			assert!(!L2Requests::<Test>::contains_key(
@@ -1089,11 +1088,13 @@ fn test_withdrawal_resolution_works_passes_validation() {
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
 					}),
-					L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
-						requestId: RequestId::new(Origin::L1, 30u128),
-						l2RequestId: 31u128,
-						timeStamp: sp_core::U256::from(1),
-					}),
+					L1UpdateRequest::FailedWithdrawalResolution(
+						messages::FailedWithdrawalResolution {
+							requestId: RequestId::new(Origin::L1, 30u128),
+							l2RequestId: 31u128,
+							timeStamp: sp_core::U256::from(1),
+						},
+					),
 				])
 				.build();
 
@@ -1101,7 +1102,6 @@ fn test_withdrawal_resolution_works_passes_validation() {
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 		});
 }
-
 
 #[test]
 #[serial]

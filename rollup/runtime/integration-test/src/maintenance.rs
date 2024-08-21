@@ -81,7 +81,6 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 		);
 
 		assert!(!Runtime::get_l2_request(pallet_rolldown::messages::Chain::Ethereum).is_empty());
-		assert!(!Runtime::get_l2_request_hash(pallet_rolldown::messages::Chain::Ethereum).is_zero());
 
 		assert_ok!(Maintenance::switch_maintenance_mode_on(
 			RuntimeOrigin::signed(
@@ -92,7 +91,6 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 			.into()
 		));
 		assert!(Runtime::get_l2_request(pallet_rolldown::messages::Chain::Ethereum).is_empty());
-		assert!(Runtime::get_l2_request_hash(pallet_rolldown::messages::Chain::Ethereum).is_zero());
 
 		assert_ok!(Maintenance::switch_maintenance_mode_off(
 			RuntimeOrigin::signed(
@@ -103,6 +101,5 @@ fn rolldown_rpc_works_with_maintenance_mode() {
 			.into()
 		));
 		assert!(!Runtime::get_l2_request(pallet_rolldown::messages::Chain::Ethereum).is_empty());
-		assert!(!Runtime::get_l2_request_hash(pallet_rolldown::messages::Chain::Ethereum).is_zero());
 	});
 }

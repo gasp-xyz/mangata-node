@@ -1,18 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-
-use messages::EthAbiHash;
-use messages::EthAbi;
+use messages::{EthAbi, EthAbiHash};
 pub mod messages;
 
-use messages::{Cancel, FailedDepositResolution, Withdrawal};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{Origin, RequestId};
+use messages::{Cancel, FailedDepositResolution, Origin, RequestId, Withdrawal};
 use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
 
@@ -30,9 +27,7 @@ use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
-use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Zero},
-};
+use sp_runtime::traits::{AccountIdConversion, Convert, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
@@ -83,13 +78,11 @@ impl Hasher for Keccak256Hasher {
 	}
 }
 
-
 #[cfg(test)]
 mod tests;
 
 #[cfg(test)]
 mod mock;
-
 
 use crate::messages::L1Update;
 pub use pallet::*;
@@ -178,7 +171,6 @@ pub mod pallet {
 		pub cancel_rights: u128,
 	}
 
-
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Copy, Encode, Decode, TypeInfo)]
 	pub enum L2Request<AccountId: Clone> {
 		FailedDepositResolution(FailedDepositResolution),
@@ -194,7 +186,6 @@ pub mod pallet {
 	}
 
 	#[derive(
-
 		PartialOrd, Ord, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
 	)]
 	pub enum DisputeRole {
@@ -515,10 +506,7 @@ pub mod pallet {
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(
-					L2Request::Cancel(cancel_request.clone()),
-					cancel_request.abi_encode_hash(),
-				),
+				(L2Request::Cancel(cancel_request.clone()), cancel_request.abi_encode_hash()),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
@@ -881,9 +869,10 @@ impl<T: Config> Pallet<T> {
 		withdrawal_resolution: &messages::FailedWithdrawalResolution,
 	) -> Result<(), &'static str> {
 		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
-		if let Some((L2Request::Withdrawal{
-			..
-		}, _)) = L2Requests::<T>::get(l1, RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId))){
+		if let Some((L2Request::Withdrawal { .. }, _)) = L2Requests::<T>::get(
+			l1,
+			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
+		) {
 			//TODO: handle failed withdrawals
 		}
 
@@ -944,13 +933,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-
 	fn calculate_hash_of_sequencer_update(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
-
 
 	fn handle_sequencer_deactivation(
 		chain: T::ChainId,
@@ -1030,7 +1017,6 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::InvalidUpdate
 		);
 
-
 		ensure!(
 			update
 				.pendingFailedWithdrawalResolutions
@@ -1080,7 +1066,7 @@ impl<T: Config> Pallet<T> {
 				(Some(d), _, _) if d.requestId.id == id => {
 					deposit = deposit_it.next();
 				},
-				(_, Some(c),  _) if c.requestId.id == id => {
+				(_, Some(c), _) if c.requestId.id == id => {
 					cancel = cancel_it.next();
 				},
 				(_, _, Some(w)) if w.requestId.id == id => {
@@ -1288,12 +1274,16 @@ impl<T: Config> Pallet<T> {
 
 		let pos = inclusive_range.clone().position(|elem| elem == tx_id);
 		let request = L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id });
-		if let (Some((req, _)), Some(pos)) = (request, pos){
-			proof.verify(root_hash.into(), &[pos], &[req.abi_encode_hash().into()], inclusive_range.count())
-		}else{
+		if let (Some((req, _)), Some(pos)) = (request, pos) {
+			proof.verify(
+				root_hash.into(),
+				&[pos],
+				&[req.abi_encode_hash().into()],
+				inclusive_range.count(),
+			)
+		} else {
 			false
 		}
-
 	}
 
 	fn treasury_account_id() -> T::AccountId {
@@ -1306,9 +1296,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|(req, _hash)| {
-				req.abi_encode()
-			})
+			.map(|(req, _hash)| req.abi_encode())
 			.unwrap_or_default()
 	}
 }

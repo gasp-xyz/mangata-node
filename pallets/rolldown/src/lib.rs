@@ -1,14 +1,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::RangeInclusive;
+use messages::EthAbiHash;
+pub mod messages;
 
+use messages::{Cancel, FailedDepositResolution, Withdrawal};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, RequestId};
+use messages::{eth_abi::to_eth_u256, Origin, RequestId};
 use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
 use sp_core::hexdisplay::HexDisplay;
@@ -28,7 +31,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::Serialize,
-	traits::{AccountIdConversion, Convert, MaybeConvert, Zero},
+	traits::{AccountIdConversion, ConvertBack, Convert, MaybeConvert, Zero},
 };
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -89,7 +92,6 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-pub mod messages;
 
 use crate::messages::L1Update;
 pub use pallet::*;
@@ -178,48 +180,12 @@ pub mod pallet {
 		pub cancel_rights: u128,
 	}
 
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-	pub struct Cancel<AccountId> {
-		pub requestId: RequestId,
-		pub updater: AccountId,
-		pub canceler: AccountId,
-		pub range: messages::Range,
-		pub hash: H256,
-	}
 
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub struct FailedDepositResolution {
-		pub requestId: RequestId,
-		pub originRequestId: u128,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
-	pub struct Withdrawal {
-		pub requestId: RequestId,
-		pub withdrawalRecipient: [u8; 20],
-		pub tokenAddress: [u8; 20],
-		pub amount: U256,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub enum L2Request<AccountId> {
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Copy, Encode, Decode, TypeInfo)]
+	pub enum L2Request<AccountId: Clone> {
 		FailedDepositResolution(FailedDepositResolution),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
-	}
-
-
-	impl<AccountId> Into<L2Request<AccountId>> for Cancel<AccountId> {
-		fn into(self) -> L2Request<AccountId> {
-			L2Request::Cancel(self)
-		}
-	}
-
-	impl<AccountId> Into<L2Request<AccountId>> for Withdrawal {
-		fn into(self) -> L2Request<AccountId> {
-			L2Request::Withdrawal(self)
-		}
 	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
@@ -229,7 +195,8 @@ pub mod pallet {
 		PeriodReached,
 	}
 
-	impl<AccountId> TryInto<Withdrawal> for L2Request<AccountId> {
+	// TODO: remove
+	impl<AccountId: Clone> TryInto<Withdrawal> for L2Request<AccountId> {
 		type Error = &'static str;
 		fn try_into(self) -> Result<Withdrawal, Self::Error> {
 			match self {
@@ -560,7 +527,7 @@ pub mod pallet {
 				RequestId::from((Origin::L2, l2_request_id)),
 				(
 					L2Request::Cancel(cancel_request.clone()),
-					Self::get_l2_request_hash(cancel_request.into()),
+					cancel_request.abi_encode_hash(),
 				),
 			);
 
@@ -637,6 +604,7 @@ pub mod pallet {
 				amount,
 				hash: Self::get_l2_request_hash(withdrawal_update.into()),
 			});
+			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 
 			Ok(().into())
 		}
@@ -910,13 +878,13 @@ impl<T: Config> Pallet<T> {
 		l1: T::ChainId,
 		withdrawal_resolution: &messages::FailedWithdrawalResolution,
 	) -> Result<(), &'static str> {
-		L2Requests::<T>::remove(
-			l1,
-			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
-		);
-		TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
-		//TODO: handle sending tokens back
 		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
+		if let Some((L2Request::Withdrawal{
+			..
+		}, _)) = L2Requests::<T>::get(l1, RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId))){
+			//TODO: handle failed withdrawals
+		}
+
 		Ok(())
 	}
 
@@ -957,8 +925,6 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		L2Requests::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
-
 		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
 			v.remove(&(cancel_request_id, DisputeRole::Submitter))
 		});
@@ -977,27 +943,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
-		messages::eth_abi::Cancel {
-			requestId: cancel.requestId.into(),
-			range: cancel.range.into(),
-			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
-		}
+		cancel.into()
 	}
 
-	fn to_eth_failed_deposit(cancel: FailedDepositResolution) -> messages::eth_abi::FailedDepositResolution {
-		messages::eth_abi::FailedDepositResolution {
-			requestId: cancel.requestId.into(),
-			originRequestId: to_eth_u256(cancel.originRequestId.into())
-		}
+	fn to_eth_failed_deposit(deposit: FailedDepositResolution) -> messages::eth_abi::FailedDepositResolution {
+		deposit.into()
 	}
 
 	fn to_eth_withdrawal(withdrawal: Withdrawal) -> messages::eth_abi::Withdrawal {
-		messages::eth_abi::Withdrawal {
-			requestId: withdrawal.requestId.into(),
-			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
-			tokenAddress: withdrawal.tokenAddress.into(),
-			amount: to_eth_u256(withdrawal.amount),
-		}
+		withdrawal.into()
 	}
 
 	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
@@ -1390,11 +1344,8 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|req| match req {
-				(L2Request::FailedDepositResolution(deposit), _) => Self::to_eth_failed_deposit(deposit).abi_encode(),
-				(L2Request::Cancel(cancel), _) => Self::to_eth_cancel(cancel).abi_encode(),
-				(L2Request::Withdrawal(withdrawal), _) =>
-					Self::to_eth_withdrawal(withdrawal).abi_encode(),
+			.map(|(req, hash)| {
+				req.abi_encode()
 			})
 			.unwrap_or_default()
 	}

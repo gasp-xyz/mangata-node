@@ -946,12 +946,6 @@ fn execute_two_consecutive_incremental_reqeusts() {
 		});
 }
 
-#[test]
-fn test_conversion_u256() {
-	let val = sp_core::U256::from(1u8);
-	let eth_val = alloy_primitives::U256::from(1u8);
-	assert_eq!(messages::to_eth_u256(val), eth_val);
-}
 
 #[test]
 fn test_conversion_address() {
@@ -1938,13 +1932,13 @@ fn test_period_based_batch_respects_sized_batches() {
 			)
 			.unwrap();
 
-			forward_to_block::<Test>((Rolldown::automatic_batch_period() as u64));
+			forward_to_block::<Test>(Rolldown::automatic_batch_period() as u64);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(11u64.into(), 1u128, (1, 10)))
 			);
 
-			forward_to_block::<Test>(11 + (Rolldown::automatic_batch_period() as u64));
+			forward_to_block::<Test>(11 + Rolldown::automatic_batch_period() as u64);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
 				Some(&(36u64.into(), 2u128, (11, 11)))

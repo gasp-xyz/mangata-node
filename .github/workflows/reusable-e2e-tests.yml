@@ -128,6 +128,8 @@ jobs:
             fast: true
           - command: "yarn test-sequencerStaking"
             fast: true
+          - command: "yarn test-sequencerCancellation"
+            fast: true
 
 
     runs-on: [e2e-gke]

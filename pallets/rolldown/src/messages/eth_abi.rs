@@ -90,16 +90,6 @@ impl From<crate::messages::CancelResolution> for CancelResolution {
 	}
 }
 
-impl From<crate::messages::FailedWithdrawalResolution> for FailedWithdrawalResolution {
-	fn from(resolution: crate::messages::FailedWithdrawalResolution) -> FailedWithdrawalResolution {
-		FailedWithdrawalResolution {
-			requestId: resolution.requestId.into(),
-			l2RequestId: to_eth_u256(resolution.l2RequestId.into()),
-			timeStamp: to_eth_u256(resolution.timeStamp),
-		}
-	}
-}
-
 impl From<crate::messages::L1Update> for L1Update {
 	fn from(update: crate::messages::L1Update) -> L1Update {
 		L1Update {
@@ -107,11 +97,6 @@ impl From<crate::messages::L1Update> for L1Update {
 			pendingDeposits: update.pendingDeposits.into_iter().map(Into::into).collect::<Vec<_>>(),
 			pendingCancelResolutions: update
 				.pendingCancelResolutions
-				.into_iter()
-				.map(Into::into)
-				.collect::<Vec<_>>(),
-			pendingFailedWithdrawalResolutions: update
-				.pendingFailedWithdrawalResolutions
 				.into_iter()
 				.map(Into::into)
 				.collect::<Vec<_>>(),
@@ -142,12 +127,6 @@ sol! {
 		uint256 timeStamp;
 	}
 
-	#[derive(Debug)]
-	struct FailedWithdrawalResolution {
-		RequestId requestId;
-		uint256 l2RequestId;
-		uint256 timeStamp;
-	}
 
 	#[derive(Debug)]
 	struct CancelResolution {
@@ -165,7 +144,6 @@ sol! {
 		Chain chain;
 		Deposit[] pendingDeposits;
 		CancelResolution[] pendingCancelResolutions;
-		FailedWithdrawalResolution[] pendingFailedWithdrawalResolutions;
 	}
 
 	#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
@@ -176,7 +154,6 @@ sol! {
 		Origin origin;
 		uint256 id;
 	}
-
 
 	#[derive(Debug, PartialEq)]
 	struct FailedDepositResolution {

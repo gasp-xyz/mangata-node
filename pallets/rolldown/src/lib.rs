@@ -761,8 +761,6 @@ impl<T: Config> Pallet<T> {
 				Self::process_deposit(l1, &deposit).is_ok(),
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
 				Self::process_cancel_resolution(l1, &cancel).is_ok(),
-			messages::L1UpdateRequest::FailedWithdrawalResolution(withdrawal) =>
-				Self::process_withdrawal_resolution(l1, &withdrawal).is_ok(),
 		};
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
@@ -812,7 +810,6 @@ impl<T: Config> Pallet<T> {
 	fn schedule_requests(chain: T::ChainId, update: messages::L1Update) {
 		let max_id = [
 			update.pendingDeposits.iter().map(|r| r.requestId.id).max(),
-			update.pendingFailedWithdrawalResolutions.iter().map(|r| r.requestId.id).max(),
 			update.pendingCancelResolutions.iter().map(|r| r.requestId.id).max(),
 		]
 		.iter()
@@ -860,21 +857,6 @@ impl<T: Config> Pallet<T> {
 
 		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
-
-		Ok(())
-	}
-
-	fn process_withdrawal_resolution(
-		l1: T::ChainId,
-		withdrawal_resolution: &messages::FailedWithdrawalResolution,
-	) -> Result<(), &'static str> {
-		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
-		if let Some((L2Request::Withdrawal { .. }, _)) = L2Requests::<T>::get(
-			l1,
-			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
-		) {
-			//TODO: handle failed withdrawals
-		}
 
 		Ok(())
 	}
@@ -971,9 +953,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn validate_l1_update(l1: T::ChainId, update: &messages::L1Update) -> DispatchResult {
 		ensure!(
-			!update.pendingDeposits.is_empty() ||
-				!update.pendingCancelResolutions.is_empty() ||
-				!update.pendingFailedWithdrawalResolutions.is_empty(),
+			!update.pendingDeposits.is_empty() || !update.pendingCancelResolutions.is_empty(),
 			Error::<T>::EmptyUpdate
 		);
 
@@ -1017,21 +997,9 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::InvalidUpdate
 		);
 
-		ensure!(
-			update
-				.pendingFailedWithdrawalResolutions
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
-
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),
 			update.pendingCancelResolutions.first().map(|v| v.requestId.id),
-			update.pendingFailedWithdrawalResolutions.first().map(|v| v.requestId.id),
 		]
 		.iter()
 		.filter_map(|v| v.clone())
@@ -1048,29 +1016,23 @@ impl<T: Config> Pallet<T> {
 
 		let last_id = lowest_id +
 			(update.pendingDeposits.len() as u128) +
-			(update.pendingFailedWithdrawalResolutions.len() as u128) +
 			(update.pendingCancelResolutions.len() as u128);
 
 		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
-		let mut withdrawal_it = update.pendingFailedWithdrawalResolutions.iter();
 		let mut cancel_it = update.pendingCancelResolutions.iter();
-		let mut withdrawal = withdrawal_it.next();
 
 		let mut deposit = deposit_it.next();
 		let mut cancel = cancel_it.next();
 
 		for id in (lowest_id..last_id).into_iter() {
-			match (deposit, cancel, withdrawal) {
-				(Some(d), _, _) if d.requestId.id == id => {
+			match (deposit, cancel) {
+				(Some(d), _) if d.requestId.id == id => {
 					deposit = deposit_it.next();
 				},
-				(_, Some(c), _) if c.requestId.id == id => {
+				(_, Some(c)) if c.requestId.id == id => {
 					cancel = cancel_it.next();
-				},
-				(_, _, Some(w)) if w.requestId.id == id => {
-					withdrawal = withdrawal_it.next();
 				},
 				_ => return Err(Error::<T>::InvalidUpdate.into()),
 			}

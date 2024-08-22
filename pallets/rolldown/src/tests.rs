@@ -42,10 +42,6 @@ impl L1UpdateBuilder {
 		for (id, r) in self.1.into_iter().enumerate() {
 			let rid = if let Some(offset) = self.0 { (id as u128) + offset } else { r.id() };
 			match r {
-				L1UpdateRequest::FailedWithdrawalResolution(mut w) => {
-					w.requestId.id = rid;
-					update.pendingFailedWithdrawalResolutions.push(w);
-				},
 				L1UpdateRequest::Deposit(mut d) => {
 					d.requestId.id = rid;
 					update.pendingDeposits.push(d);
@@ -108,7 +104,7 @@ fn process_single_deposit() {
 			ALICE,
 			current_block_number + dispute_period,
 			(1u128, 1u128).into(),
-			hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863").into()
+			hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19").into()
 		)));
 	});
 }
@@ -344,7 +340,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 					updater: ALICE,
 					canceler: BOB,
 					range: (1u128, 1u128).into(),
-					hash: hex!("e533f01e84d8d54b6e5b817f59dbbda41efc2b627adc5d59c78b15445ee2d863")
+					hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19")
 						.into()
 				}
 				.into()
@@ -627,17 +623,12 @@ fn test_l1_update_hash_compare_with_solidty() {
 					cancelJustified: true,
 					timeStamp: sp_core::U256::from(2),
 				}),
-				L1UpdateRequest::FailedWithdrawalResolution(messages::FailedWithdrawalResolution {
-					requestId: RequestId::new(Origin::L1, 9u128),
-					l2RequestId: 10u128,
-					timeStamp: sp_core::U256::from(3),
-				}),
 			])
 			.build();
 		let hash = Rolldown::calculate_hash_of_sequencer_update(update);
 		assert_eq!(
 			hash,
-			hex!("64ba87c85cf50b0c6596157b5505a863c56e638d36a59cc8d84f1d0b21a07ad0").into()
+			hex!("af1c7908d0762a131c827a13d9a6afde3e6f1a4a842d96708935d57fc2a0af7a").into()
 		);
 	});
 }
@@ -1024,15 +1015,14 @@ fn test_reproduce_bug_with_incremental_updates() {
 				.with_offset(1u128)
 				.build();
 
-			let second_update = L1UpdateBuilder::default()
-				.with_requests(vec![L1UpdateRequest::FailedWithdrawalResolution(
-					messages::FailedWithdrawalResolution {
-						requestId: RequestId::new(Origin::L1, 4u128),
-						l2RequestId: 3u128,
-						timeStamp: sp_core::U256::from(1),
-					},
-				)])
-				.with_offset(3u128)
+			let second_update = L1UpdateBuilder::new()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: RequestId::new(Origin::L1, 3u128),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+					timeStamp: sp_core::U256::from(1),
+				})])
 				.build();
 
 			forward_to_block::<Test>(10);
@@ -1063,43 +1053,6 @@ fn test_reproduce_bug_with_incremental_updates() {
 				Chain::Ethereum,
 				RequestId::new(Origin::L2, 3u128)
 			));
-		});
-}
-
-#[test]
-#[serial]
-fn test_withdrawal_resolution_works_passes_validation() {
-	ExtBuilder::new()
-		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
-		.execute_with_default_mocks(|| {
-			let first_update = L1UpdateBuilder::new()
-				.with_requests(vec![
-					L1UpdateRequest::Deposit(messages::Deposit {
-						requestId: RequestId::new(Origin::L1, 31u128),
-						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-						tokenAddress: ETH_TOKEN_ADDRESS,
-						amount: sp_core::U256::from(MILLION),
-						timeStamp: sp_core::U256::from(1),
-					}),
-					L1UpdateRequest::Deposit(messages::Deposit {
-						requestId: RequestId::new(Origin::L1, 32u128),
-						depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-						tokenAddress: ETH_TOKEN_ADDRESS,
-						amount: sp_core::U256::from(MILLION),
-						timeStamp: sp_core::U256::from(1),
-					}),
-					L1UpdateRequest::FailedWithdrawalResolution(
-						messages::FailedWithdrawalResolution {
-							requestId: RequestId::new(Origin::L1, 30u128),
-							l2RequestId: 31u128,
-							timeStamp: sp_core::U256::from(1),
-						},
-					),
-				])
-				.build();
-
-			LastProcessedRequestOnL2::<Test>::insert(Chain::Ethereum, 29);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 		});
 }
 

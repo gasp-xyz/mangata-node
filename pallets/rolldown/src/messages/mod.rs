@@ -199,13 +199,6 @@ pub struct CancelResolution {
 	pub timeStamp: sp_core::U256,
 }
 
-#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Default, Serialize)]
-pub struct FailedWithdrawalResolution {
-	pub requestId: RequestId,
-	pub l2RequestId: u128,
-	pub timeStamp: sp_core::U256,
-}
-
 impl NativeToEthMapping for FailedDepositResolution {
 	type EthType = eth_abi::FailedDepositResolution;
 }
@@ -215,14 +208,12 @@ pub struct L1Update {
 	pub chain: Chain,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResolutions: Vec<CancelResolution>,
-	pub pendingFailedWithdrawalResolutions: Vec<FailedWithdrawalResolution>,
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
 	Deposit(Deposit),
 	CancelResolution(CancelResolution),
-	FailedWithdrawalResolution(FailedWithdrawalResolution),
 }
 
 impl L1UpdateRequest {
@@ -230,7 +221,6 @@ impl L1UpdateRequest {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.clone(),
-			L1UpdateRequest::FailedWithdrawalResolution(withdrawal) => withdrawal.requestId.clone(),
 		}
 	}
 
@@ -238,8 +228,6 @@ impl L1UpdateRequest {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.id.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.id.clone(),
-			L1UpdateRequest::FailedWithdrawalResolution(withdrawal) =>
-				withdrawal.requestId.id.clone(),
 		}
 	}
 
@@ -247,8 +235,6 @@ impl L1UpdateRequest {
 		match self {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
-			L1UpdateRequest::FailedWithdrawalResolution(withdrawal) =>
-				withdrawal.requestId.origin.clone(),
 		}
 	}
 }
@@ -258,7 +244,6 @@ impl L1Update {
 		let first = [
 			self.pendingDeposits.first().map(|v| v.requestId.id),
 			self.pendingCancelResolutions.first().map(|v| v.requestId.id),
-			self.pendingFailedWithdrawalResolutions.first().map(|v| v.requestId.id),
 		]
 		.iter()
 		.cloned()
@@ -268,7 +253,6 @@ impl L1Update {
 		let last = [
 			self.pendingDeposits.last().map(|v| v.requestId.id),
 			self.pendingCancelResolutions.last().map(|v| v.requestId.id),
-			self.pendingFailedWithdrawalResolutions.last().map(|v| v.requestId.id),
 		]
 		.iter()
 		.cloned()
@@ -284,62 +268,37 @@ impl L1Update {
 	pub fn into_requests(self) -> Vec<L1UpdateRequest> {
 		let mut result: Vec<L1UpdateRequest> = Default::default();
 
-		let L1Update {
-			pendingDeposits,
-			pendingCancelResolutions,
-			pendingFailedWithdrawalResolutions,
-			..
-		} = self;
+		let L1Update { chain, pendingDeposits, pendingCancelResolutions } = self;
+		let _ = chain;
 
 		let mut deposits_it = pendingDeposits.into_iter().peekable();
 		let mut cancel_it = pendingCancelResolutions.into_iter().peekable();
-		let mut withdrawal_it = pendingFailedWithdrawalResolutions.into_iter().peekable();
 
 		loop {
 			let min = [
 				deposits_it.peek().map(|v| v.requestId.id),
 				cancel_it.peek().map(|v| v.requestId.id),
-				withdrawal_it.peek().map(|v| v.requestId.id),
 			]
 			.iter()
 			.cloned()
 			.filter_map(|v| v)
 			.min();
 
-			match (deposits_it.peek(), cancel_it.peek(), withdrawal_it.peek(), min) {
-				(Some(deposit), _, _, Some(min)) if deposit.requestId.id == min => {
+			match (deposits_it.peek(), cancel_it.peek(), min) {
+				(Some(deposit), _, Some(min)) if deposit.requestId.id == min => {
 					if let Some(elem) = deposits_it.next() {
 						result.push(L1UpdateRequest::Deposit(elem.clone()));
 					}
 				},
-				(_, Some(cancel), _, Some(min)) if cancel.requestId.id == min => {
+				(_, Some(cancel), Some(min)) if cancel.requestId.id == min => {
 					if let Some(elem) = cancel_it.next() {
 						result.push(L1UpdateRequest::CancelResolution(elem.clone()));
 					}
 				},
-				(_, _, Some(withdrawal), Some(min)) if withdrawal.requestId.id == min =>
-					if let Some(elem) = withdrawal_it.next() {
-						result.push(L1UpdateRequest::FailedWithdrawalResolution(elem.clone()));
-					},
 				_ => break,
 			}
 		}
 		result
-	}
-}
-
-impl TryFrom<eth_abi::FailedWithdrawalResolution> for FailedWithdrawalResolution {
-	type Error = String;
-
-	fn try_from(value: eth_abi::FailedWithdrawalResolution) -> Result<Self, Self::Error> {
-		let requestId = value.requestId.try_into()?;
-		// .map_err(|e| format!("Error converting requestId: {}", e))?;
-		let l2RequestId = value
-			.l2RequestId
-			.try_into()
-			.map_err(|e| format!("Error converting l2RequestId: {}", e))?;
-
-		Ok(Self { requestId, l2RequestId, timeStamp: from_eth_u256(value.timeStamp) })
 	}
 }
 
@@ -375,11 +334,6 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 			update.pendingDeposits.into_iter().map(|d| d.try_into()).collect();
 		let pending_cancel_resultions: Result<Vec<_>, _> =
 			update.pendingCancelResolutions.into_iter().map(|c| c.try_into()).collect();
-		let pending_withdrawal_resolutions: Result<Vec<_>, _> = update
-			.pendingFailedWithdrawalResolutions
-			.into_iter()
-			.map(|u| u.try_into())
-			.collect();
 
 		Ok(Self {
 			chain: update.chain.try_into()?,
@@ -387,9 +341,6 @@ impl TryFrom<eth_abi::L1Update> for L1Update {
 				.map_err(|e| format!("Error converting pendingDeposits: {}", e))?,
 			pendingCancelResolutions: pending_cancel_resultions
 				.map_err(|e| format!("Error converting pendingCancelResolutions: {}", e))?,
-			pendingFailedWithdrawalResolutions: pending_withdrawal_resolutions.map_err(|e| {
-				format!("Error converting pendingFailedWithdrawalResolutions: {}", e)
-			})?,
 		})
 	}
 }

@@ -1,25 +1,4 @@
-FROM rust:1.71-buster AS builder
-
-# install tools and dependencies
-RUN set -eux && \
-		apt-get -y update; \
-		apt-get install -y --no-install-recommends \
-		libssl-dev make cmake graphviz clang libclang-dev llvm git pkg-config curl time rhash ca-certificates \
-		python3 python3-pip lsof ruby ruby-bundler git-restore-mtime xz-utils unzip gnupg protobuf-compiler && \
-		# apt clean up
-		apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-ARG RUST_TOOLCHAIN=nightly-2023-05-22
-
-RUN rustup install $RUST_TOOLCHAIN && rustup default $RUST_TOOLCHAIN && \
-	rustup target add wasm32-unknown-unknown && \
-	rustup component add rust-src rustfmt clippy && \
-	# cargo install --git https://github.com/paritytech/try-runtime-cli --tag v0.3.3 --locked && \
-	# removes compilation artifacts cargo install creates (>250M)
-	rm -rf "${CARGO_HOME}/registry" "${CARGO_HOME}/git"
-	
-# show backtraces
-ENV	RUST_BACKTRACE=1
+FROM mangatasolutions/node-builder:multi-nightly-2023-05-22 AS builder
 
 WORKDIR /app
 

@@ -205,7 +205,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type FailedL1Deposits<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -355,6 +355,10 @@ pub mod pallet {
 			hash: H256,
 		},
 		ManualBatchExtraFeeSet(BalanceOf<T>),
+		DepositRefundCreated {
+			chain: ChainIdOf<T>,
+			refunded_request_id: RequestId,
+		},
 	}
 
 	#[pallet::error]
@@ -383,6 +387,7 @@ pub mod pallet {
 		InvalidRange,
 		NonExistingRequestId,
 		UnknownAliasAccount,
+		FailedDepositDoesExists,
 	}
 
 	#[pallet::config]
@@ -714,6 +719,43 @@ pub mod pallet {
 			let _ = ensure_root(origin)?;
 			ManualBatchExtraFee::<T>::set(balance);
 			Pallet::<T>::deposit_event(Event::ManualBatchExtraFeeSet(balance));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn refund_failed_deposit(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: u128,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+
+			// NOTE: failed deposits are not reachable at this point
+			let _ = FailedL1Deposits::<T>::take((chain, request_id))
+				.ok_or(Error::<T>::FailedDepositDoesExists)?;
+
+			let l2_request_id = Self::acquire_l2_request_id(chain);
+
+			let failed_deposit_resolution = FailedDepositResolution {
+				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
+				originRequestId: request_id,
+			};
+
+			L2Requests::<T>::insert(
+				chain,
+				RequestId::from((Origin::L2, l2_request_id)),
+				(
+					L2Request::FailedDepositResolution(failed_deposit_resolution),
+					failed_deposit_resolution.abi_encode_hash(),
+				),
+			);
+
+			Self::deposit_event(Event::DepositRefundCreated {
+				refunded_request_id: RequestId { origin: Origin::L1, id: request_id },
+				chain,
+			});
+
 			Ok(().into())
 		}
 	}

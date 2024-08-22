@@ -71,7 +71,7 @@ jobs:
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_FOUND=false
 
-          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
             echo "Injecting buildkit mount cache into Docker system"
             node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
             
@@ -136,9 +136,9 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "./usr-local-cargo-registry"
-            "./usr-local-cargo-git"
-            "./app-target"
+            "usr-local-cargo-registry"
+            "usr-local-cargo-git"
+            "app-target"
           )
 
             SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"

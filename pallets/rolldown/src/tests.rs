@@ -99,13 +99,13 @@ fn process_single_deposit() {
 			.build();
 		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 
-		assert_event_emitted!(Event::L1ReadStored((
-			messages::Chain::Ethereum,
-			ALICE,
-			current_block_number + dispute_period,
-			(1u128, 1u128).into(),
-			hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19").into()
-		)));
+		assert_event_emitted!(Event::L1ReadStored {
+			chain: messages::Chain::Ethereum,
+			sequencer: ALICE,
+			dispute_period_end: current_block_number + dispute_period,
+			range: (1u128, 1u128).into(),
+			hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19").into()
+		});
 	});
 }
 
@@ -170,7 +170,6 @@ fn deposit_executed_after_dispute_period() {
 }
 
 #[test]
-#[ignore]
 #[serial]
 fn deposit_fail_creates_update_with_status_false() {
 	ExtBuilder::new()
@@ -195,13 +194,18 @@ fn deposit_fail_creates_update_with_status_false() {
 			));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
-			forward_to_block::<Test>(15);
+			assert!(!FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
 
-			assert_event_emitted!(Event::RequestProcessedOnL2(
-				messages::Chain::Ethereum,
-				1u128,
-				false
-			));
+			forward_to_block::<Test>(20);
+
+			assert_event_emitted!(Event::RequestProcessedOnL2 {
+				chain: messages::Chain::Ethereum,
+				request_id: 1u128,
+				status: Err(L1RequestProcessingError::Overflow),
+			});
+
+			assert!(FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
+
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 			//TODO: check that withdrawal is created in place of failed deposit
 		});

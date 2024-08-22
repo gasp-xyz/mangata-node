@@ -78,6 +78,16 @@ impl Hasher for Keccak256Hasher {
 	}
 }
 
+#[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum L1RequestProcessingError {
+	Overflow,
+	AssetRegistrationProblem,
+	MintError,
+	NotEnoughtCancelRights,
+	WrongCancelRequestId,
+	SequencerNotSlashed,
+}
+
 #[cfg(test)]
 mod tests;
 
@@ -194,6 +204,10 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+	pub type FailedL1Deposits<T: Config> =
+		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
 	// Id of the last request originating on other chain that has been executed
 	pub type LastProcessedRequestOnL2<T: Config> =
@@ -308,10 +322,18 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
-		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
-		// Chain, request id
-		RequestProcessedOnL2(T::ChainId, u128, bool),
+		L1ReadStored {
+			chain: T::ChainId,
+			sequencer: T::AccountId,
+			dispute_period_end: u128,
+			range: messages::Range,
+			hash: H256,
+		},
+		RequestProcessedOnL2 {
+			chain: T::ChainId,
+			request_id: u128,
+			status: Result<(), L1RequestProcessingError>,
+		},
 		L1ReadCanceled {
 			chain: T::ChainId,
 			canceled_sequencer_update: u128,
@@ -757,13 +779,22 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let status = match request.clone() {
-			messages::L1UpdateRequest::Deposit(deposit) =>
-				Self::process_deposit(l1, &deposit).is_ok(),
+			messages::L1UpdateRequest::Deposit(deposit) => {
+				let status = Self::process_deposit(l1, &deposit);
+				if let Err(_) = status.clone() {
+					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
+				}
+				status
+			},
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
-				Self::process_cancel_resolution(l1, &cancel).is_ok(),
+				Self::process_cancel_resolution(l1, &cancel),
 		};
 
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2 {
+			chain: l1,
+			request_id: request.id(),
+			status,
+		});
 
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
@@ -827,17 +858,21 @@ impl<T: Config> Pallet<T> {
 		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
 	}
 
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	/// NOTE: This function is not transactional, so even if it fails at some point that DOES NOT
+	/// REVERT PREVIOUS CHANGES TO STORAGE, whoever is modifying it should take that into account!
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_deposit(
 		l1: T::ChainId,
 		deposit_request_details: &messages::Deposit,
-	) -> Result<(), &'static str> {
+	) -> Result<(), L1RequestProcessingError> {
 		let account: T::AccountId =
 			T::AddressConverter::convert(deposit_request_details.depositRecipient);
 
-		let amount: u128 =
-			deposit_request_details.amount.try_into().or(Err(Error::<T>::BalanceOverflow))?;
-
-		// check ferried
+		let amount = TryInto::<u128>::try_into(deposit_request_details.amount)
+			.map_err(|_| L1RequestProcessingError::Overflow)?
+			.try_into()
+			.map_err(|_| L1RequestProcessingError::Overflow)?;
 
 		let eth_asset =
 			T::AssetAddressConverter::convert((l1, deposit_request_details.tokenAddress));
@@ -845,15 +880,11 @@ impl<T: Config> Pallet<T> {
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.or(Err(Error::<T>::L1AssetCreationFailed))?,
+				.map_err(|_| L1RequestProcessingError::AssetRegistrationProblem)?,
 		};
 
-		// ADD tokens: mint tokens for user
-		T::Tokens::mint(
-			asset_id,
-			&account,
-			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
-		)?;
+		T::Tokens::mint(asset_id, &account, amount)
+			.map_err(|_| L1RequestProcessingError::MintError)?;
 
 		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
@@ -861,10 +892,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	/// NOTE: This function is not transactional, so even if it fails at some point that DOES NOT
+	/// REVERT PREVIOUS CHANGES TO STORAGE, whoever is modifying it should take that into account!
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_cancel_resolution(
 		l1: T::ChainId,
 		cancel_resolution: &messages::CancelResolution,
-	) -> Result<(), &'static str> {
+	) -> Result<(), L1RequestProcessingError> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
 
@@ -873,7 +908,7 @@ impl<T: Config> Pallet<T> {
 				Some((L2Request::Cancel(cancel), _)) => Some(cancel),
 				_ => None,
 			}
-			.ok_or("NoCancelRequest")?;
+			.ok_or(L1RequestProcessingError::WrongCancelRequestId)?;
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
@@ -906,12 +941,9 @@ impl<T: Config> Pallet<T> {
 		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
-		T::SequencerStakingProvider::slash_sequencer(l1, &to_be_slashed, to_reward.as_ref())?;
+		T::SequencerStakingProvider::slash_sequencer(l1, &to_be_slashed, to_reward.as_ref())
+			.map_err(|_| L1RequestProcessingError::SequencerNotSlashed)?;
 
-		log!(debug, "SLASH for: {:?}, rewarded: {:?}", to_be_slashed, to_reward);
-
-		log!(debug, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
-		// additional checks
 		Ok(())
 	}
 
@@ -1098,13 +1130,13 @@ impl<T: Config> Pallet<T> {
 
 		let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
 
-		Pallet::<T>::deposit_event(Event::L1ReadStored((
-			l1,
+		Pallet::<T>::deposit_event(Event::L1ReadStored {
+			chain: l1,
 			sequencer,
 			dispute_period_end,
-			requests_range,
-			H256::from_slice(request_hash.as_slice()),
-		)));
+			range: requests_range,
+			hash: H256::from_slice(request_hash.as_slice()),
+		});
 
 		Ok(().into())
 	}

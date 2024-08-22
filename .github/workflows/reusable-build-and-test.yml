@@ -84,14 +84,14 @@ jobs:
           # git config --global --add safe.directory /__w/mangata-node/mangata-node
           
           docker buildx build \
+          --platform linux/amd64,linux/arm64 \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=production" \
           -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }} \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }} .
-          docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}
-          docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }} \
+          --push .
 
       - name: Build and push Docker image with fast runtime
         run: |
@@ -102,9 +102,8 @@ jobs:
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=fast" \
           -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast .
-          docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast
-          docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast \
+          --push .
      
       - name: Export WASM artifacts from built images
         run: |

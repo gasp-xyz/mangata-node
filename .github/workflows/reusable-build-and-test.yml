@@ -39,14 +39,8 @@ jobs:
   build-node-image:
     name: Build Docker image
     runs-on: [compile-gke]
-    container:
-      image: ${{ inputs.builder_image }}
-      env:
-        DOCKER_HOST: "unix:///run/docker/docker.sock"
-      volumes:
-        - /run/docker:/run/docker
     env:
-      JOB_CACHE_PREFIX: mangata-node-image-build-job-cache-${{ inputs.cache-version }}
+      JOB_CACHE_PREFIX: docker-build-cache-${{ inputs.cache-version }}
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +50,14 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Instal buildkit cache extractor CLI
+        run: |
+          curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
+          tar xvf buildkit-cache-dance-3.1.2.tar.gz
+      
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Download cargo build cache
         if: inputs.cache-enabled
@@ -67,41 +69,21 @@ jobs:
           CACHE_FOUND=false
 
           if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then
+            echo "Injecting buildkit mount cache into Docker system"
+            node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+            
             CACHE_FOUND=true
           fi
 
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
-
-      - name: Install sccache-cache only on non-release runs
-        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
-        uses: mozilla-actions/sccache-action@v0.0.5
-      - name: Set Rust caching env vars only on non-release run
-        if: github.event_name != 'release' && github.event_name != 'workflow_dispatch'
-        run: |
-          echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
-          echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
-          echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
-          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
-
-      - name: Compile code
-        run: cargo build --locked --release
-
-      - name: compile multiple targets
-        run: rustup target add aarch64-unknown-linux-gnu && cargo build --locked --release --target aarch64-unknown-linux-gnu --target x86_64-unknown-linux-gnu
-
-      - name: Rename wasms
-        run: |
-          cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
-
+        
       - name: Build and push Docker image
         run: |
-          # This is needed to fix an issue when running on self-hosted runners in GKE
-          git config --global --add safe.directory /__w/mangata-node/mangata-node
-
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker build -f devops/dockerfiles/node/Dockerfile \
+          # # This is needed to fix an issue when running on self-hosted runners in GKE
+          # git config --global --add safe.directory /__w/mangata-node/mangata-node
+          
+          docker build \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -111,17 +93,10 @@ jobs:
           docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}
           docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
 
-      - name: Compile node code with fast runtime
-        run: cargo build --release --no-default-features --features=fast-runtime
-
-      - name: Rename wasms with fast runtime
-        run: |
-          cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-
       - name: Build and push Docker image with fast runtime
         run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker build -f devops/dockerfiles/node/Dockerfile \
+          docker build \
+          --build-arg="ENABLE_FAST_RUNTIME=true"
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -130,6 +105,18 @@ jobs:
           -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast .
           docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast
           docker push ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast
+     
+      - name: Export WASM artifacts from built images
+        run: |
+          # Export WASM artifact from image with regular runtime
+          container_id=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}) && \
+            docker cp $container_id:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm && \
+            docker rm $container_id
+          
+          # Export WASM artifact from image with fast runtime
+          container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast) && \
+            docker cp $container_id_fast:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm && \
+            docker rm $container_id_fast
 
       - uses: actions/upload-artifact@v3
         with:
@@ -143,14 +130,16 @@ jobs:
         shell: bash
         run: |
           set -x
+        
+          echo "Extracting buildkit cache from Docker system"
+          node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+          
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "./target"
-            "/usr/local/cargo/bin/"
-            "/usr/local/cargo/registry/index/"
-            "/usr/local/cargo/registry/cache/"
-            "/usr/local/cargo/git/db/"
+            "usr-local-cargo-registry"
+            "usr-local-cargo-git"
+            "app-target"
           )
 
             SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"

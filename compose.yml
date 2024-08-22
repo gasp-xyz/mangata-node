@@ -7,9 +7,7 @@ name: mangata-node
 
 services:
   node-alice:
-    build:
-      context: .
-      dockerfile: local.Dockerfile
+    build: .
     image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command:
       - --alith
@@ -26,9 +24,7 @@ services:
       - data-alith:/data
 
   node-bob:
-    build:
-      context: .
-      dockerfile: local.Dockerfile
+    build: .
     image: ${NODE_IMAGE:-mangatasolutions/rollup-node:local}
     command:
       - --baltathar

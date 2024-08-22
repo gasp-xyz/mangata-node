@@ -40,7 +40,7 @@ jobs:
     name: Build Docker image
     runs-on: [compile-gke]
     env:
-      JOB_CACHE_PREFIX: docker-build-cache-${{ inputs.cache-version }}
+      JOB_CACHE_PREFIX: docker-buildx-cache-${{ inputs.cache-version }}
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
           # git config --global --add safe.directory /__w/mangata-node/mangata-node
           
           docker buildx build \
-          --platform linux/amd64,linux/arm64 \
+          --platform linux/amd64 \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -139,9 +139,9 @@ jobs:
           CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_PATHS=(
-            "usr-local-cargo-registry"
-            "usr-local-cargo-git"
-            "app-target"
+            "./usr-local-cargo-registry"
+            "./usr-local-cargo-git"
+            "./app-target"
           )
 
             SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"

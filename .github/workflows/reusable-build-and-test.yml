@@ -51,8 +51,8 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
 
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      # - uses: docker/setup-qemu-action@v3
+      # - uses: docker/setup-buildx-action@v3
       
       - name: Instal buildkit cache extractor CLI
         run: |
@@ -84,7 +84,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker buildx build \
-          --platform linux/amd64,linux/arm64 \
+          --platform linux/amd64 \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -123,6 +123,83 @@ jobs:
           path: |
             ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
             ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
+        run: |
+          set -x
+        
+          echo "Extracting buildkit cache from Docker system"
+          node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+          
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "usr-local-cargo-registry"
+            "usr-local-cargo-git"
+            "app-target"
+          )
+
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
+
+  build-node-image-arm64:
+    name: Build Docker image (ARM64)
+    runs-on: [compile-gke-arm]
+    env:
+      JOB_CACHE_PREFIX: docker-image-buildx-cache-arm64-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        id: auth
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Instal buildkit cache extractor CLI
+        run: |
+          curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
+          tar xvf buildkit-cache-dance-3.1.2.tar.gz
+      
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
+            echo "Injecting buildkit mount cache into Docker system"
+            node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+            
+            CACHE_FOUND=true
+          fi
+
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+        
+      - name: Build and push Docker image (ARM64)
+        run: |
+          docker buildx build \
+          --platform linux/arm64 \
+          --label="git_rev=$(git rev-parse HEAD)" \
+          --label="author=github" \
+          --label="git_ref=${{ github.ref_name }}" \
+          --label="session_length=production" \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }} \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }} \
+          --push .
 
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'

@@ -88,4 +88,4 @@ jobs:
           status: ${{ job.status }}
           env: ${{ steps.deployment.outputs.env }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fnode-01-ws-${{ env.ENV_REF }}.mangata.online#/explorer"
+          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fcollator-01-ws-${{ env.ENV_REF }}.mangata.online#/explorer"

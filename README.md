@@ -104,3 +104,4 @@ There is number of chain configurations available for both development and produ
 | `rollup-local`                |    *******     | development rollup local testnet                              |
 | `rollup-local-seq`            |     Alice      | development rollup local testnet with collators as sequencers |
 
+

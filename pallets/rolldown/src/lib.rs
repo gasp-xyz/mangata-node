@@ -20,8 +20,8 @@ use alloy_sol_types::SolValue;
 use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
-	AssetRegistryProviderTrait, SetMaintenanceModeOn, GetMaintenanceStatusTrait, RolldownProviderTrait,
-	SequencerStakingProviderTrait,
+	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
+	SequencerStakingProviderTrait, SetMaintenanceModeOn,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -204,6 +204,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
 	pub type FailedL1Deposits<T: Config> =
 		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), OptionQuery>;
 
@@ -821,21 +822,17 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let status = match request.clone() {
-			messages::L1UpdateRequest::Deposit(deposit) => {
-				Self::process_deposit(l1, &deposit)
-					.or_else(|err| {
+			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
+				.or_else(|err| {
 					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
 					Err(err)
-				})
-			},
+				}),
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
-				Self::process_cancel_resolution(l1, &cancel)
-				.or_else(|err| {
+				Self::process_cancel_resolution(l1, &cancel).or_else(|err| {
 					T::MaintenanceStatusProvider::trigger_maintanance_mode();
 					Err(err)
-			}),
+				}),
 		};
-
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2 {
 			chain: l1,

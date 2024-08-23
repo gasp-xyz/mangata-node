@@ -570,9 +570,8 @@ fn test_trigger_maintanance_mode_when_processing_cancel_resolution_triggers_an_e
 	ExtBuilder::new()
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
-
 			let trigger_maintanance_mode_mock =
-			MockMaintenanceStatusProviderApi::trigger_maintanance_mode_context();
+				MockMaintenanceStatusProviderApi::trigger_maintanance_mode_context();
 			trigger_maintanance_mode_mock.expect().return_const(());
 
 			forward_to_block::<Test>(10);
@@ -599,9 +598,7 @@ fn test_trigger_maintanance_mode_when_processing_cancel_resolution_triggers_an_e
 				request_id: 1u128,
 				status: Err(L1RequestProcessingError::WrongCancelRequestId),
 			});
-
 		});
-
 }
 
 #[test]

@@ -228,12 +228,12 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> SetMaintenanceModeOn for Pallet<T> {
-    fn trigger_maintanance_mode() {
-		MaintenanceStatus::<T>::mutate(|status : &mut _| {
+	fn trigger_maintanance_mode() {
+		MaintenanceStatus::<T>::mutate(|status: &mut _| {
 			status.is_maintenance = true;
 		});
 		Self::deposit_event(Event::MaintenanceModeSwitchedOnExternally);
-    }
+	}
 }
 
 impl<T: Config> GetMaintenanceStatusTrait for Pallet<T> {

@@ -245,7 +245,7 @@ fn test_refund_of_failed_withdrawal() {
 
 #[test]
 #[serial]
-fn test_fail_refunding_request_second_time() {
+fn test_withdrawal_can_be_refunded_only_once() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
 		.execute_with_default_mocks(|| {
@@ -562,6 +562,46 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 		})
+}
+
+#[test]
+#[serial]
+fn test_trigger_maintanance_mode_when_processing_cancel_resolution_triggers_an_error() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+
+			let trigger_maintanance_mode_mock =
+			MockMaintenanceStatusProviderApi::trigger_maintanance_mode_context();
+			trigger_maintanance_mode_mock.expect().return_const(());
+
+			forward_to_block::<Test>(10);
+
+			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::CancelResolution(
+					messages::CancelResolution {
+						requestId: Default::default(),
+						l2RequestId: l2_request_id,
+						cancelJustified: false,
+						timeStamp: sp_core::U256::from(1),
+					},
+				)])
+				.with_offset(1u128)
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+
+			forward_to_block::<Test>(15);
+
+			assert_event_emitted!(Event::RequestProcessedOnL2 {
+				chain: consts::CHAIN,
+				request_id: 1u128,
+				status: Err(L1RequestProcessingError::WrongCancelRequestId),
+			});
+
+		});
+
 }
 
 #[test]

@@ -20,7 +20,7 @@ use alloy_sol_types::SolValue;
 use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
-	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
+	AssetRegistryProviderTrait, SetMaintenanceModeOn, GetMaintenanceStatusTrait, RolldownProviderTrait,
 	SequencerStakingProviderTrait,
 };
 use mangata_types::assets::L1Asset;
@@ -410,7 +410,7 @@ pub mod pallet {
 		type RightsMultiplier: Get<u128>;
 		#[pallet::constant]
 		type RequestsPerBlock: Get<u128>;
-		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait + SetMaintenanceModeOn;
 		type ChainId: From<messages::Chain>
 			+ Parameter
 			+ Member
@@ -822,15 +822,20 @@ impl<T: Config> Pallet<T> {
 
 		let status = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) => {
-				let status = Self::process_deposit(l1, &deposit);
-				if let Err(_) = status.clone() {
+				Self::process_deposit(l1, &deposit)
+					.or_else(|err| {
 					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
-				}
-				status
+					Err(err)
+				})
 			},
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
-				Self::process_cancel_resolution(l1, &cancel),
+				Self::process_cancel_resolution(l1, &cancel)
+				.or_else(|err| {
+					T::MaintenanceStatusProvider::trigger_maintanance_mode();
+					Err(err)
+			}),
 		};
+
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2 {
 			chain: l1,

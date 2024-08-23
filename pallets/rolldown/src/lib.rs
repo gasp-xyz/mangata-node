@@ -1,18 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::ops::RangeInclusive;
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion},
+	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{to_eth_u256, Origin, RequestId, UpdateType};
+use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
+use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, iter::Iterator};
 
 use alloy_sol_types::SolValue;
-use frame_support::traits::WithdrawReasons;
+use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
@@ -24,7 +28,7 @@ use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::{
 	serde::Serialize,
-	traits::{Convert, MaybeConvert, Zero},
+	traits::{AccountIdConversion, Convert, MaybeConvert, Zero},
 };
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -62,6 +66,23 @@ impl Convert<[u8; 20], sp_runtime::AccountId20>
 	}
 }
 
+#[derive(Clone)]
+pub struct Keccak256Hasher {}
+
+impl Hasher for Keccak256Hasher {
+	type Hash = [u8; 32];
+
+	fn hash(data: &[u8]) -> [u8; 32] {
+		let mut output = [0u8; 32];
+		let hash = Keccak256::digest(&data[..]);
+		output.copy_from_slice(&hash[..]);
+		output
+	}
+}
+
+#[derive(Debug)]
+struct Hash32([u8; 32]);
+
 #[cfg(test)]
 mod tests;
 
@@ -88,7 +109,64 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			let batch_size = Self::automatic_batch_size();
+			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
+
+			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
+				let last_id = next_id.saturating_sub(1);
+
+				let (last_batch_block_number, last_batch_id, last_id_in_batch) =
+					L2RequestsBatchLast::<T>::get()
+						.get(&chain)
+						.cloned()
+						.map(|(block_number, batch_id, (_, last_reqeust_id))| {
+							(block_number, batch_id, last_reqeust_id)
+						})
+						.unwrap_or_default();
+
+				let trigger = if last_id >= last_id_in_batch + batch_size {
+					Some(BatchSource::AutomaticSizeReached)
+				} else if now >= last_batch_block_number + batch_period {
+					Some(BatchSource::PeriodReached)
+				} else {
+					None
+				};
+
+				if let Some(trigger) = trigger {
+					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
+						let batch_id = last_batch_id.saturating_add(1);
+						let range_start = last_id_in_batch.saturating_add(1);
+						let range_end = sp_std::cmp::min(
+							range_start.saturating_add(batch_size.saturating_sub(1)),
+							last_id,
+						);
+						if range_end >= range_start {
+							L2RequestsBatch::<T>::insert(
+								(chain, batch_id),
+								(now, (range_start, range_end), updater.clone()),
+							);
+							L2RequestsBatchLast::<T>::mutate(|batches| {
+								batches.insert(
+									chain.clone(),
+									(now, batch_id, (range_start, range_end)),
+								);
+							});
+							Pallet::<T>::deposit_event(Event::TxBatchCreated {
+								chain: *chain,
+								source: trigger,
+								assignee: updater,
+								batch_id,
+								range: (range_start, range_end),
+							});
+							break
+						}
+					} else {
+						continue
+					}
+				}
+			}
+
 			Self::end_dispute_period();
 			T::DbWeight::get().reads_writes(20, 20)
 		}
@@ -134,6 +212,41 @@ pub mod pallet {
 		Withdrawal(Withdrawal),
 	}
 
+	impl<AccountId> Into<L2Request<AccountId>> for RequestResult {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::RequestResult(self)
+		}
+	}
+
+	impl<AccountId> Into<L2Request<AccountId>> for Cancel<AccountId> {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::Cancel(self)
+		}
+	}
+
+	impl<AccountId> Into<L2Request<AccountId>> for Withdrawal {
+		fn into(self) -> L2Request<AccountId> {
+			L2Request::Withdrawal(self)
+		}
+	}
+
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
+	pub enum BatchSource {
+		Manual,
+		AutomaticSizeReached,
+		PeriodReached,
+	}
+
+	impl<AccountId> TryInto<Withdrawal> for L2Request<AccountId> {
+		type Error = &'static str;
+		fn try_into(self) -> Result<Withdrawal, Self::Error> {
+			match self {
+				L2Request::Withdrawal(withdrawal) => Ok(withdrawal),
+				_ => Err("not a withdrawal"),
+			}
+		}
+	}
+
 	#[derive(
 		PartialOrd, Ord, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
 	)]
@@ -149,16 +262,12 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::ChainId, u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_l2_origin_updates_counter)]
+	#[pallet::unbounded]
 	// Id of the next request that will originate on this chain
-	pub type L2OriginRequestId<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::ChainId,
-		u128,
-		ValueQuery,
-		frame_support::traits::ConstU128<1>,
-	>;
+	pub type L2OriginRequestId<T: Config> = StorageValue<_, BTreeMap<T::ChainId, u128>, ValueQuery>;
+
+	#[pallet::storage]
+	pub type ManualBatchExtraFee<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -208,7 +317,7 @@ pub mod pallet {
 		T::ChainId,
 		Blake2_128Concat,
 		RequestId,
-		L2Request<T::AccountId>,
+		(L2Request<T::AccountId>, H256),
 		OptionQuery,
 	>;
 
@@ -241,15 +350,51 @@ pub mod pallet {
 	#[pallet::getter(fn get_total_number_of_withdrawals)]
 	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	#[pallet::storage]
+	pub type L2RequestsBatch<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(ChainIdOf<T>, u128),
+		(BlockNumberFor<T>, (u128, u128), AccountIdOf<T>),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::unbounded]
+	/// For each supported chain stores:
+	/// - last batch id
+	/// - range of the reqeusts in last batch
+	pub type L2RequestsBatchLast<T: Config> =
+		StorageValue<_, BTreeMap<T::ChainId, (BlockNumberFor<T>, u128, (u128, u128))>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
 		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
 		// Chain, request id
-		RequestProcessedOnL2(T::ChainId, u128),
-		// canceled request chain, canceled request id, assigned l2RequestId
-		L1ReadCanceled { canceled_sequencer_update: u128, assigned_id: RequestId },
+		RequestProcessedOnL2(T::ChainId, u128, bool),
+		L1ReadCanceled {
+			chain: T::ChainId,
+			canceled_sequencer_update: u128,
+			assigned_id: RequestId,
+		},
+		TxBatchCreated {
+			chain: T::ChainId,
+			source: BatchSource,
+			assignee: T::AccountId,
+			batch_id: u128,
+			range: (u128, u128),
+		},
+		WithdrawlRequestCreated {
+			chain: T::ChainId,
+			request_id: RequestId,
+			recipient: [u8; 20],
+			token_address: [u8; 20],
+			amount: u128,
+			hash: H256,
+		},
+		ManualBatchExtraFeeSet(BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -275,6 +420,9 @@ pub mod pallet {
 		MultipleUpdatesInSingleBlock,
 		BlockedByMaintenanceMode,
 		UnsupportedAsset,
+		InvalidRange,
+		NonExistingRequestId,
+		UnknownAliasAccount,
 	}
 
 	#[pallet::config]
@@ -311,6 +459,16 @@ pub mod pallet {
 			+ Ord
 			+ Copy;
 		type AssetAddressConverter: Convert<(ChainIdOf<Self>, [u8; 20]), L1Asset>;
+		// How many L2 requests needs to be created so they are grouped and assigned
+		// to active sequencer
+		#[pallet::constant]
+		type MerkleRootAutomaticBatchSize: Get<u128>;
+		// How many blocks since last batch needs to be create so the batch is created and assigned to
+		// active sequencer
+		#[pallet::constant]
+		type MerkleRootAutomaticBatchPeriod: Get<u128>;
+		type TreasuryPalletId: Get<PalletId>;
+		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -390,8 +548,7 @@ pub mod pallet {
 
 			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
 
-			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
+			let l2_request_id = Self::acquire_l2_request_id(chain);
 
 			let cancel_request = Cancel {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
@@ -411,11 +568,15 @@ pub mod pallet {
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				L2Request::Cancel(cancel_request),
+				(
+					L2Request::Cancel(cancel_request.clone()),
+					Self::get_l2_request_hash(cancel_request.into()),
+				),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
 				canceled_sequencer_update: requests_to_cancel,
+				chain,
 				assigned_id: RequestId { origin: Origin::L2, id: l2_request_id },
 			});
 
@@ -459,18 +620,33 @@ pub mod pallet {
 				amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
 			)?;
 
-			let l2_request_id = L2OriginRequestId::<T>::get(chain);
-			L2OriginRequestId::<T>::mutate(chain, |request_id| request_id.saturating_inc());
+			let l2_request_id = Self::acquire_l2_request_id(chain);
 
 			let request_id = RequestId { origin: Origin::L2, id: l2_request_id };
 			let withdrawal_update = Withdrawal {
 				requestId: request_id.clone(),
-				withdrawalRecipient: recipient,
-				tokenAddress: token_address,
+				withdrawalRecipient: recipient.clone(),
+				tokenAddress: token_address.clone(),
 				amount: U256::from(amount),
 			};
 			// add cancel request to pending updates
-			L2Requests::<T>::insert(chain, request_id, L2Request::Withdrawal(withdrawal_update));
+			L2Requests::<T>::insert(
+				chain,
+				request_id.clone(),
+				(
+					L2Request::Withdrawal(withdrawal_update.clone()),
+					Self::get_l2_request_hash(withdrawal_update.clone().into()),
+				),
+			);
+
+			Pallet::<T>::deposit_event(Event::WithdrawlRequestCreated {
+				chain,
+				request_id,
+				recipient,
+				token_address,
+				amount,
+				hash: Self::get_l2_request_hash(withdrawal_update.into()),
+			});
 
 			Ok(().into())
 		}
@@ -501,6 +677,85 @@ pub mod pallet {
 				});
 			}
 
+			Ok(().into())
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn create_batch(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			range: (u128, u128),
+			sequencer_account: Option<T::AccountId>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+
+			let asignee = if let Some(sequencer) = sequencer_account {
+				ensure!(
+					T::SequencerStakingProvider::is_active_sequencer_alias(
+						chain, &sequencer, &sender
+					),
+					Error::<T>::UnknownAliasAccount
+				);
+				sequencer
+			} else {
+				sender.clone()
+			};
+
+			let extra_fee = ManualBatchExtraFee::<T>::get();
+			if !extra_fee.is_zero() {
+				<T as Config>::Tokens::transfer(
+					Self::native_token_id(),
+					&sender,
+					&Self::treasury_account_id(),
+					extra_fee,
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
+
+			ensure!(range.0 <= range.1, Error::<T>::InvalidRange);
+			ensure!(range.0 > 0, Error::<T>::InvalidRange);
+
+			ensure!(
+				range.1 < Self::get_l2_origin_updates_counter(chain),
+				Error::<T>::NonExistingRequestId
+			);
+
+			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
+				.get(&chain)
+				.cloned()
+				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
+				.unwrap_or_default();
+
+			ensure!(range.0 <= last_request_id + 1, Error::<T>::InvalidRange);
+
+			let batch_id = last_batch_id.saturating_add(1u128);
+
+			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));
+			L2RequestsBatchLast::<T>::mutate(|batches| {
+				batches.insert(chain.clone(), (now, batch_id, range));
+			});
+			Pallet::<T>::deposit_event(Event::TxBatchCreated {
+				chain,
+				source: BatchSource::Manual,
+				assignee: asignee.clone(),
+				batch_id,
+				range,
+			});
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn set_manual_batch_extra_fee(
+			origin: OriginFor<T>,
+			balance: BalanceOf<T>,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+			ManualBatchExtraFee::<T>::set(balance);
+			Pallet::<T>::deposit_event(Event::ManualBatchExtraFeeSet(balance));
 			Ok(().into())
 		}
 	}
@@ -564,12 +819,6 @@ impl<T: Config> Pallet<T> {
 		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
 			return
 		}
-		let id = L2OriginRequestId::<T>::get(l1);
-		L2OriginRequestId::<T>::mutate(l1, |request_id| {
-			request_id.saturating_inc();
-		});
-
-		let l2_request_id = RequestId { origin: Origin::L2, id };
 
 		let (status, request_type) = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) =>
@@ -586,18 +835,7 @@ impl<T: Config> Pallet<T> {
 				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
 		};
 
-		L2Requests::<T>::insert(
-			l1,
-			request.request_id(),
-			L2Request::RequestResult(RequestResult {
-				requestId: l2_request_id,
-				originRequestId: request.id(),
-				status,
-				updateType: request_type,
-			}),
-		);
-
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id()));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
 
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
@@ -720,7 +958,7 @@ impl<T: Config> Pallet<T> {
 
 		let cancel_update =
 			match L2Requests::<T>::get(l1, RequestId::from((Origin::L2, cancel_request_id))) {
-				Some(L2Request::Cancel(cancel)) => Some(cancel),
+				Some((L2Request::Cancel(cancel), _)) => Some(cancel),
 				_ => None,
 			}
 			.ok_or("NoCancelRequest")?;
@@ -817,6 +1055,26 @@ impl<T: Config> Pallet<T> {
 		H256::from(hash)
 	}
 
+	fn get_l2_request_hash(req: L2Request<T::AccountId>) -> H256 {
+		match req {
+			L2Request::RequestResult(rr) => {
+				let eth_req_result = Self::to_eth_request_result(rr);
+				let hash: [u8; 32] = Keccak256::digest(&eth_req_result.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+			L2Request::Cancel(c) => {
+				let eth_cancel = Self::to_eth_cancel(c);
+				let hash: [u8; 32] = Keccak256::digest(&eth_cancel.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+			L2Request::Withdrawal(w) => {
+				let eth_withdrawal = Self::to_eth_withdrawal(w);
+				let hash: [u8; 32] = Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into();
+				H256::from(hash)
+			},
+		}
+	}
+
 	fn get_l2_update(l1: T::ChainId) -> messages::eth_abi::L2Update {
 		let mut update = messages::eth_abi::L2Update {
 			results: Vec::new(),
@@ -826,12 +1084,12 @@ impl<T: Config> Pallet<T> {
 
 		for (request_id, req) in L2Requests::<T>::iter_prefix(l1) {
 			match req {
-				L2Request::RequestResult(result) =>
+				(L2Request::RequestResult(result), _) =>
 					update.results.push(Self::to_eth_request_result(result)),
-				L2Request::Cancel(cancel) => {
+				(L2Request::Cancel(cancel), _) => {
 					update.cancels.push(Self::to_eth_cancel(cancel));
 				},
-				L2Request::Withdrawal(withdrawal) => {
+				(L2Request::Withdrawal(withdrawal), _) => {
 					update.withdrawals.push(Self::to_eth_withdrawal(withdrawal));
 				},
 			};
@@ -889,6 +1147,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			!update.pendingDeposits.is_empty() ||
 				!update.pendingCancelResolutions.is_empty() ||
+				!update.pendingWithdrawalResolutions.is_empty() ||
 				!update.pendingL2UpdatesToRemove.is_empty(),
 			Error::<T>::EmptyUpdate
 		);
@@ -1118,6 +1377,144 @@ impl<T: Config> Pallet<T> {
 			.iter()
 			.filter(|(_, role)| *role == DisputeRole::Canceler)
 			.count()
+	}
+
+	fn get_l2_requests_proof(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
+		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
+		hash.into()
+	}
+
+	pub fn create_merkle_tree(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+	) -> Option<MerkleTree<Keccak256Hasher>> {
+		let l2_requests = (range.0..=range.1)
+			.into_iter()
+			.map(|id| match L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id }) {
+				Some((_, hash)) => Some(hash.into()),
+				None => None,
+			})
+			.collect::<Option<Vec<_>>>();
+
+		l2_requests.map(|txs| MerkleTree::<Keccak256Hasher>::from_leaves(txs.as_ref()))
+	}
+
+	//TODO: error handling
+	pub fn get_merkle_root(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
+		if let Some(tree) = Self::create_merkle_tree(chain, range) {
+			H256::from(tree.root().unwrap_or_default())
+		} else {
+			H256::from([0u8; 32])
+		}
+	}
+
+	pub fn get_merkle_proof_for_tx(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		tx_id: u128,
+	) -> Vec<H256> {
+		if tx_id < range.0 || tx_id > range.1 {
+			return Default::default()
+		}
+
+		let tree = Self::create_merkle_tree(chain, range);
+		if let Some(merkle_tree) = tree {
+			let idx = tx_id as usize - range.0 as usize;
+			let indices_to_prove = vec![idx];
+			let merkle_proof = merkle_tree.proof(&indices_to_prove);
+			merkle_proof.proof_hashes().iter().map(|hash| H256::from(hash)).collect()
+		} else {
+			Default::default()
+		}
+	}
+
+	pub fn max_id(chain: ChainIdOf<T>, range: (u128, u128)) -> u128 {
+		let mut max_id = 0u128;
+		for id in range.0..=range.1 {
+			if let Some((L2Request::Withdrawal(withdrawal), _)) =
+				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id })
+			{
+				if withdrawal.requestId.id > max_id {
+					max_id = withdrawal.requestId.id;
+				}
+			}
+		}
+		max_id
+	}
+
+	pub(crate) fn automatic_batch_size() -> u128 {
+		<T as Config>::MerkleRootAutomaticBatchSize::get()
+	}
+
+	pub(crate) fn automatic_batch_period() -> u128 {
+		<T as Config>::MerkleRootAutomaticBatchPeriod::get()
+	}
+
+	fn acquire_l2_request_id(chain: ChainIdOf<T>) -> u128 {
+		L2OriginRequestId::<T>::mutate(|val| {
+			// request ids start from id == 1
+			val.entry(chain).or_insert(1u128);
+			let id = val[&chain];
+			val.entry(chain).and_modify(|v| v.saturating_inc());
+			id
+		})
+	}
+
+	pub(crate) fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
+		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
+	}
+
+	pub fn verify_merkle_proof_for_tx(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		root_hash: H256,
+		tx_id: u128,
+		proof: Vec<H256>,
+	) -> bool {
+		let proof =
+			MerkleProof::<Keccak256Hasher>::new(proof.into_iter().map(Into::into).collect());
+
+		let inclusive_range = range.0..=range.1;
+		if !inclusive_range.contains(&tx_id) {
+			return false
+		}
+
+		let tx_hash = {
+			let request_to_proof: Withdrawal =
+				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id })
+					.unwrap()
+					.0
+					.try_into()
+					.unwrap();
+			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);
+			Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into()
+		};
+
+		if let Some(pos) = inclusive_range.clone().position(|elem| elem == tx_id) {
+			proof.verify(root_hash.into(), &[pos], &[tx_hash], inclusive_range.count())
+		} else {
+			false
+		}
+	}
+
+	fn treasury_account_id() -> T::AccountId {
+		T::TreasuryPalletId::get().into_account_truncating()
+	}
+
+	fn native_token_id() -> CurrencyIdOf<T> {
+		<T as Config>::NativeCurrencyId::get()
+	}
+
+	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
+		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
+			.map(|req| match req {
+				(L2Request::RequestResult(result), _) =>
+					Self::to_eth_request_result(result).abi_encode(),
+				(L2Request::Cancel(cancel), _) => Self::to_eth_cancel(cancel).abi_encode(),
+				(L2Request::Withdrawal(withdrawal), _) =>
+					Self::to_eth_withdrawal(withdrawal).abi_encode(),
+			})
+			.unwrap_or_default()
 	}
 }
 

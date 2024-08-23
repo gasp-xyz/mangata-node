@@ -103,7 +103,7 @@ jobs:
           - command: "yarn test-maintenance"
             fast: true
           - command: "yarn test-rollupUpdate"
-            fast: false
+            fast: true
           - command: "yarn test-bootstrap"
             fast: false
           - command: "yarn test-rewards-bootstrap"
@@ -127,6 +127,8 @@ jobs:
           - command: "yarn test-parallel-3rdPartyRewards"
             fast: true
           - command: "yarn test-sequencerStaking"
+            fast: true
+          - command: "yarn test-sequencerCancellation"
             fast: true
 
     runs-on: [e2e-gke]

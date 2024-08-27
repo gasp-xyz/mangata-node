@@ -36,8 +36,8 @@ env:
   NODE_DOCKER_IMAGE_REPOSITORY: mangatasolutions/rollup-node
 
 jobs:
-  build-node-image:
-    name: Build Docker image
+  build-node-image-amd64:
+    name: Build Docker image (AMD64)
     runs-on: [compile-gke]
     env:
       JOB_CACHE_PREFIX: docker-image-buildx-cache-${{ inputs.cache-version }}
@@ -89,8 +89,8 @@ jobs:
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=production" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }} \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }} \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64 \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-amd64 \
           --push .
 
       - name: Build and push Docker image with fast runtime
@@ -101,8 +101,8 @@ jobs:
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=fast" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64 \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64 \
           --push .
      
       - name: Export WASM artifacts from built images
@@ -197,8 +197,8 @@ jobs:
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
           --label="session_length=production" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }} \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }} \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64 \
+          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-arm64 \
           --push .
 
       - name: Upload cargo build cache
@@ -223,6 +223,21 @@ jobs:
 
             SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
             echo "Upload completed in $SECONDS seconds"
+
+  create-and-push-multiplatform-docker-image-manifest:
+    name: Generate multiplatform Docker image manifest
+    needs: [build-node-image-amd64, build-node-image-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push multiplatform Docker image manifest
+        uses: Noelware/docker-manifest-action@0.4.2
+        with:
+          inputs: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }},${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64
+          push: true
 
   rustfmt-check:
     name: Formatting check

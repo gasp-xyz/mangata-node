@@ -37,7 +37,7 @@ env:
 
 jobs:
   build-node-image:
-    name: Build Docker image for amd64 and arm64 platforms
+    name: Build Docker image
     strategy:
       matrix:
         platform:

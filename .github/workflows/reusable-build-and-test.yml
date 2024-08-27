@@ -146,6 +146,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+          tags: |
+            type=raw,value=${{ inputs.version }}-fast-amd64
+            type=raw,value=${{ inputs.branch }}-fast-amd64
+
       - uses: docker/setup-buildx-action@v3
       - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
       - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
@@ -177,13 +181,12 @@ jobs:
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
       
       - name: Build and push fast runtime image
-        id: build-fast
         uses: docker/build-push-action@v6
         with:
           build-args: "ENABLE_FAST_RUNTIME=true"
           platforms: linux/amd64
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64
+          tags: ${{ steps.meta.outputs.tags }}
   
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'

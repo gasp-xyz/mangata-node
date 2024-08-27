@@ -36,36 +36,37 @@ env:
   NODE_DOCKER_IMAGE_REPOSITORY: mangatasolutions/rollup-node
 
 jobs:
-  build-node-image-amd64:
-    name: Build Docker image (AMD64)
-    runs-on: [compile-gke]
+  build-node-image:
+    name: Build Docker image for amd64 and arm64 platforms
+    strategy:
+      matrix:
+        platform:
+          - name: amd64
+            runner: compile-gke
+          - name: arm64
+            runner: compile-gke-arm
+    runs-on: ${{ matrix.platform.runner }}
     env:
-      JOB_CACHE_PREFIX: docker-image-buildx-cache-${{ inputs.cache-version }}
+      JOB_CACHE_PREFIX: docker-buildx-cache-${{ matrix.platform.name }}-${{ inputs.cache-version }}
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
+    
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+      - uses: docker/setup-buildx-action@v3
+      - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
+      - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
       - uses: google-github-actions/auth@v2
         id: auth
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
-      
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
-      # - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      
-      - name: Instal buildkit cache extractor CLI
-        run: |
-          curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
-          tar xvf buildkit-cache-dance-3.1.2.tar.gz
-      
-      - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Download cargo build cache
         if: inputs.cache-enabled
@@ -75,35 +76,22 @@ jobs:
           CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_FOUND=false
-
+      
           if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
             echo "Injecting buildkit mount cache into Docker system"
             node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
             
             CACHE_FOUND=true
           fi
-
+      
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
-        
-      # - name: Build and push Docker image
-      #   run: |
-      #     docker buildx build \
-      #     --platform linux/amd64 \
-      #     --label="git_rev=$(git rev-parse HEAD)" \
-      #     --label="author=github" \
-      #     --label="git_ref=${{ github.ref_name }}" \
-      #     --label="session_length=production" \
-      #     --output="type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true" \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64 \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-amd64 \
-      #     --push .
       
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64
+          platforms: linux/${{ matrix.platform.name }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
       
@@ -120,18 +108,73 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+      
+      - name: Upload cargo build cache
+        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+        shell: bash
+        run: |
+          set -x
+        
+          echo "Extracting buildkit cache from Docker system"
+          node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+          
+          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_PATHS=(
+            "usr-local-cargo-registry"
+            "usr-local-cargo-git"
+            "app-target"
+          )
+      
+            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+      
+            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+            echo "Upload completed in $SECONDS seconds"
+  
+  build-node-image-with-fast-runtime:
+    name: Build Docker image with fast runtime
+    runs-on: compile-gke
+    env:
+      JOB_CACHE_PREFIX: docker-buildx-cache-fast-runtime-${{ inputs.cache-version }}
+      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
+    steps:
+      - uses: actions/checkout@v4
 
-      # - name: Build and push Docker image with fast runtime
-      #   run: |
-      #     docker buildx build \
-      #     --build-arg="ENABLE_FAST_RUNTIME=true" \
-      #     --label="git_rev=$(git rev-parse HEAD)" \
-      #     --label="author=github" \
-      #     --label="git_ref=${{ github.ref_name }}" \
-      #     --label="session_length=fast" \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64 \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64 \
-      #     --push .
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+      - uses: docker/setup-buildx-action@v3
+      - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
+      - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: google-github-actions/auth@v2
+        id: auth
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Download cargo build cache
+        if: inputs.cache-enabled
+        id: cache
+        run: |
+          set -x
+          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+          CACHE_FOUND=false
+  
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
+            echo "Injecting buildkit mount cache into Docker system"
+            node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+            
+            CACHE_FOUND=true
+          fi
+  
+          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
       
       - name: Build and push fast runtime image
         id: build-fast
@@ -141,7 +184,7 @@ jobs:
           platforms: linux/amd64
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64
-
+  
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
         shell: bash
@@ -158,123 +201,252 @@ jobs:
             "usr-local-cargo-git"
             "app-target"
           )
-
+  
             SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
             echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
-
+  
             SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
             echo "Upload completed in $SECONDS seconds"
 
-  build-node-image-arm64:
-    name: Build Docker image (ARM64)
-    runs-on: [compile-gke-arm]
-    env:
-      JOB_CACHE_PREFIX: docker-image-buildx-cache-arm64-${{ inputs.cache-version }}
-      CACHE_ARCHIVE_NAME: cache_archive.tar.zst
-    steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
-        id: auth
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      - uses: google-github-actions/setup-gcloud@v2
+  # build-node-image-amd64:
+  #   name: Build Docker image (AMD64)
+  #   runs-on: [compile-gke]
+  #   env:
+  #     JOB_CACHE_PREFIX: docker-image-buildx-cache-${{ inputs.cache-version }}
+  #     CACHE_ARCHIVE_NAME: cache_archive.tar.zst
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: google-github-actions/auth@v2
+  #       id: auth
+  #       with:
+  #         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  #     - uses: google-github-actions/setup-gcloud@v2
       
-      # - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+  #     - name: Docker metadata
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+  #     # - uses: docker/setup-qemu-action@v3
+  #     - uses: docker/setup-buildx-action@v3
       
-      - name: Instal buildkit cache extractor CLI
-        run: |
-          curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
-          tar xvf buildkit-cache-dance-3.1.2.tar.gz
+  #     - name: Instal buildkit cache extractor CLI
+  #       run: |
+  #         curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
+  #         tar xvf buildkit-cache-dance-3.1.2.tar.gz
       
-      - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Login to Docker Hub
+  #       run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Download cargo build cache
-        if: inputs.cache-enabled
-        id: cache
-        run: |
-          set -x
-          CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
-          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
-          CACHE_FOUND=false
+  #     - name: Download cargo build cache
+  #       if: inputs.cache-enabled
+  #       id: cache
+  #       run: |
+  #         set -x
+  #         CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_FOUND=false
 
-          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
-            echo "Injecting buildkit mount cache into Docker system"
-            node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+  #         if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
+  #           echo "Injecting buildkit mount cache into Docker system"
+  #           node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
             
-            CACHE_FOUND=true
-          fi
+  #           CACHE_FOUND=true
+  #         fi
 
-          echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
-          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+  #         echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+  #         echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
         
-      # - name: Build and push Docker image (ARM64)
-      #   run: |
-      #     docker buildx build \
-      #     --platform linux/arm64 \
-      #     --label="git_rev=$(git rev-parse HEAD)" \
-      #     --label="author=github" \
-      #     --label="git_ref=${{ github.ref_name }}" \
-      #     --label="session_length=production" \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64 \
-      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-arm64 \
-      #     --push .
-      - name: Build and push by digest
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/arm64
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
+  #     # - name: Build and push Docker image
+  #     #   run: |
+  #     #     docker buildx build \
+  #     #     --platform linux/amd64 \
+  #     #     --label="git_rev=$(git rev-parse HEAD)" \
+  #     #     --label="author=github" \
+  #     #     --label="git_ref=${{ github.ref_name }}" \
+  #     #     --label="session_length=production" \
+  #     #     --output="type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true" \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64 \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-amd64 \
+  #     #     --push .
       
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+  #     - name: Build and push by digest
+  #       id: build
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         platforms: linux/amd64
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
       
-      - name: Upload digest
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-linux-arm64
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
+  #     - name: Export digest
+  #       run: |
+  #         mkdir -p /tmp/digests
+  #         digest="${{ steps.build.outputs.digest }}"
+  #         touch "/tmp/digests/${digest#sha256:}"
       
-      - name: Upload cargo build cache
-        if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
-        shell: bash
-        run: |
-          set -x
+  #     - name: Upload digest
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: digests-linux-amd64
+  #         path: /tmp/digests/*
+  #         if-no-files-found: error
+  #         retention-days: 1
+
+  #     # - name: Build and push Docker image with fast runtime
+  #     #   run: |
+  #     #     docker buildx build \
+  #     #     --build-arg="ENABLE_FAST_RUNTIME=true" \
+  #     #     --label="git_rev=$(git rev-parse HEAD)" \
+  #     #     --label="author=github" \
+  #     #     --label="git_ref=${{ github.ref_name }}" \
+  #     #     --label="session_length=fast" \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64 \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64 \
+  #     #     --push .
+      
+  #     - name: Build and push fast runtime image
+  #       id: build-fast
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         build-args: "ENABLE_FAST_RUNTIME=true"
+  #         platforms: linux/amd64
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         tags: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64
+
+  #     - name: Upload cargo build cache
+  #       if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+  #       shell: bash
+  #       run: |
+  #         set -x
         
-          echo "Extracting buildkit cache from Docker system"
-          node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+  #         echo "Extracting buildkit cache from Docker system"
+  #         node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
           
-          CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
-          ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
-          CACHE_PATHS=(
-            "usr-local-cargo-registry"
-            "usr-local-cargo-git"
-            "app-target"
-          )
+  #         CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_PATHS=(
+  #           "usr-local-cargo-registry"
+  #           "usr-local-cargo-git"
+  #           "app-target"
+  #         )
 
-            SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
-            echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+  #           SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+  #           echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
 
-            SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
-            echo "Upload completed in $SECONDS seconds"
+  #           SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+  #           echo "Upload completed in $SECONDS seconds"
+
+  # build-node-image-arm64:
+  #   name: Build Docker image (ARM64)
+  #   runs-on: [compile-gke-arm]
+  #   env:
+  #     JOB_CACHE_PREFIX: docker-image-buildx-cache-arm64-${{ inputs.cache-version }}
+  #     CACHE_ARCHIVE_NAME: cache_archive.tar.zst
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: google-github-actions/auth@v2
+  #       id: auth
+  #       with:
+  #         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  #     - uses: google-github-actions/setup-gcloud@v2
+      
+  #     # - uses: docker/setup-qemu-action@v3
+  #     - uses: docker/setup-buildx-action@v3
+  #     - name: Docker metadata
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+      
+  #     - name: Instal buildkit cache extractor CLI
+  #       run: |
+  #         curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
+  #         tar xvf buildkit-cache-dance-3.1.2.tar.gz
+      
+  #     - name: Login to Docker Hub
+  #       run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Download cargo build cache
+  #       if: inputs.cache-enabled
+  #       id: cache
+  #       run: |
+  #         set -x
+  #         CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_FOUND=false
+
+  #         if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - ; then
+  #           echo "Injecting buildkit mount cache into Docker system"
+  #           node ./buildkit-cache-dance-3.1.2/dist/index.js --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+            
+  #           CACHE_FOUND=true
+  #         fi
+
+  #         echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
+  #         echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+        
+  #     # - name: Build and push Docker image (ARM64)
+  #     #   run: |
+  #     #     docker buildx build \
+  #     #     --platform linux/arm64 \
+  #     #     --label="git_rev=$(git rev-parse HEAD)" \
+  #     #     --label="author=github" \
+  #     #     --label="git_ref=${{ github.ref_name }}" \
+  #     #     --label="session_length=production" \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64 \
+  #     #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-arm64 \
+  #     #     --push .
+  #     - name: Build and push by digest
+  #       id: build
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         platforms: linux/arm64
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
+      
+  #     - name: Export digest
+  #       run: |
+  #         mkdir -p /tmp/digests
+  #         digest="${{ steps.build.outputs.digest }}"
+  #         touch "/tmp/digests/${digest#sha256:}"
+      
+  #     - name: Upload digest
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: digests-linux-arm64
+  #         path: /tmp/digests/*
+  #         if-no-files-found: error
+  #         retention-days: 1
+      
+  #     - name: Upload cargo build cache
+  #       if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
+  #       shell: bash
+  #       run: |
+  #         set -x
+        
+  #         echo "Extracting buildkit cache from Docker system"
+  #         node ./buildkit-cache-dance-3.1.2/dist/index.js --extract --cache-map '{"usr-local-cargo-registry": "/usr/local/cargo/registry", "usr-local-cargo-git": "/usr/local/cargo/git", "app-target": "/app/target"}'
+          
+  #         CACHE_KEY="${{ steps.cache.outputs.cache_key }}"
+  #         ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
+  #         CACHE_PATHS=(
+  #           "usr-local-cargo-registry"
+  #           "usr-local-cargo-git"
+  #           "app-target"
+  #         )
+
+  #           SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
+  #           echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+
+  #           SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
+  #           echo "Upload completed in $SECONDS seconds"
   
   # Reference implementation source: https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
   create-docker-image-manifest-and-export-wasms:
     name: Generate multiplatform Docker image manifest
-    needs: [build-node-image-amd64, build-node-image-arm64]
+    needs: [build-node-image]
     runs-on: ubuntu-latest
     steps:
       - name: Download digests

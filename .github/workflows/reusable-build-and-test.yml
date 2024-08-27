@@ -238,6 +238,7 @@ jobs:
           inputs: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }},${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
           images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64
           push: true
+          amend: true
 
   rustfmt-check:
     name: Formatting check

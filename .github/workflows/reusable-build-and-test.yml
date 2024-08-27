@@ -50,7 +50,12 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
-
+      
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       
@@ -81,30 +86,62 @@ jobs:
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
         
-      - name: Build and push Docker image
+      # - name: Build and push Docker image
+      #   run: |
+      #     docker buildx build \
+      #     --platform linux/amd64 \
+      #     --label="git_rev=$(git rev-parse HEAD)" \
+      #     --label="author=github" \
+      #     --label="git_ref=${{ github.ref_name }}" \
+      #     --label="session_length=production" \
+      #     --output="type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true" \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64 \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-amd64 \
+      #     --push .
+      
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
+      
+      - name: Export digest
         run: |
-          docker buildx build \
-          --platform linux/amd64 \
-          --label="git_rev=$(git rev-parse HEAD)" \
-          --label="author=github" \
-          --label="git_ref=${{ github.ref_name }}" \
-          --label="session_length=production" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64 \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-amd64 \
-          --push .
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-linux-amd64
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Build and push Docker image with fast runtime
-        run: |
-          docker buildx build \
-          --build-arg="ENABLE_FAST_RUNTIME=true" \
-          --label="git_rev=$(git rev-parse HEAD)" \
-          --label="author=github" \
-          --label="git_ref=${{ github.ref_name }}" \
-          --label="session_length=fast" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64 \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64 \
-          --push .
-     
+      # - name: Build and push Docker image with fast runtime
+      #   run: |
+      #     docker buildx build \
+      #     --build-arg="ENABLE_FAST_RUNTIME=true" \
+      #     --label="git_rev=$(git rev-parse HEAD)" \
+      #     --label="author=github" \
+      #     --label="git_ref=${{ github.ref_name }}" \
+      #     --label="session_length=fast" \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64 \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64 \
+      #     --push .
+      
+      - name: Build and push by digest fast runtime image
+        id: build-fast
+        uses: docker/build-push-action@v6
+        with:
+          build-args: "ENABLE_FAST_RUNTIME=true"
+          platforms: linux/amd64
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-fast-amd64
+         
       - name: Export WASM artifacts from built images
         run: |
           # Export WASM artifact from image with regular runtime
@@ -162,6 +199,12 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+      
       - name: Instal buildkit cache extractor CLI
         run: |
           curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz
@@ -189,18 +232,39 @@ jobs:
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
         
-      - name: Build and push Docker image (ARM64)
+      # - name: Build and push Docker image (ARM64)
+      #   run: |
+      #     docker buildx build \
+      #     --platform linux/arm64 \
+      #     --label="git_rev=$(git rev-parse HEAD)" \
+      #     --label="author=github" \
+      #     --label="git_ref=${{ github.ref_name }}" \
+      #     --label="session_length=production" \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64 \
+      #     -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-arm64 \
+      #     --push .
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm64
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
+      
+      - name: Export digest
         run: |
-          docker buildx build \
-          --platform linux/arm64 \
-          --label="git_rev=$(git rev-parse HEAD)" \
-          --label="author=github" \
-          --label="git_ref=${{ github.ref_name }}" \
-          --label="session_length=production" \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64 \
-          -t ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}-arm64 \
-          --push .
-
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-linux-arm64
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+      
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
         shell: bash
@@ -223,22 +287,48 @@ jobs:
 
             SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
             echo "Upload completed in $SECONDS seconds"
-
+  
+  # Reference implementation source: https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
   create-and-push-multiplatform-docker-image-manifest:
     name: Generate multiplatform Docker image manifest
     needs: [build-node-image-amd64, build-node-image-arm64]
     runs-on: ubuntu-latest
     steps:
+      # - name: Create and push multiplatform Docker image manifest
+      #   uses: Noelware/docker-manifest-action@0.4.2
+      #   with:
+      #     inputs: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }},${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
+      #     images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64
+      #     push: true
+      #     amend: true
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+      
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Create and push multiplatform Docker image manifest
-        uses: Noelware/docker-manifest-action@0.4.2
-        with:
-          inputs: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }},${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.branch }}
-          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64,${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-arm64
-          push: true
-          amend: true
+      
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}@sha256:%s ' *)          
+      
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ steps.meta.outputs.version }}     
 
   rustfmt-check:
     name: Formatting check

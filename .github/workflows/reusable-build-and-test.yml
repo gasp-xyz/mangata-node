@@ -108,12 +108,12 @@ jobs:
       - name: Export WASM artifacts from built images
         run: |
           # Export WASM artifact from image with regular runtime
-          container_id=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}) && \
+          container_id=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-amd64) && \
             docker cp $container_id:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm && \
             docker rm $container_id
           
           # Export WASM artifact from image with fast runtime
-          container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast) && \
+          container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64) && \
             docker cp $container_id_fast:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm && \
             docker rm $container_id_fast
 

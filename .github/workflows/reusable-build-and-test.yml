@@ -446,7 +446,7 @@ jobs:
   # Reference implementation source: https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
   create-docker-image-manifest-and-export-wasms:
     name: Generate multiplatform Docker image manifest
-    needs: [build-node-image]
+    needs: [build-node-image,build-node-image-with-fast-runtime]
     runs-on: ubuntu-latest
     steps:
       - name: Download digests

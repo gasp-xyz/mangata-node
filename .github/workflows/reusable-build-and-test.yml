@@ -134,7 +134,7 @@ jobs:
             echo "Upload completed in $SECONDS seconds"
   
   build-node-image-with-fast-runtime:
-    name: Build fast runtime Docker image
+    name: Build fast runtime Docker image (AMD64 platform only)
     runs-on: compile-gke
     env:
       JOB_CACHE_PREFIX: docker-buildx-cache-fast-runtime-${{ inputs.cache-version }}
@@ -148,8 +148,8 @@ jobs:
         with:
           images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
           tags: |
-            type=raw,value=${{ inputs.version }}-fast-amd64
-            type=raw,value=${{ inputs.branch }}-fast-amd64
+            type=raw,value=${{ inputs.version }}-fast
+            type=raw,value=${{ inputs.branch }}-fast
 
       - uses: docker/setup-buildx-action@v3
       - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
@@ -254,7 +254,7 @@ jobs:
             docker rm $container_id
           
           # Export WASM artifact from image with fast runtime
-          container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast-amd64) && \
+          container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast) && \
             docker cp $container_id_fast:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm && \
             docker rm $container_id_fast
       

@@ -187,6 +187,7 @@ jobs:
           platforms: linux/amd64
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          push: true
   
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'

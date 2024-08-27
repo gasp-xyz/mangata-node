@@ -133,7 +133,7 @@ jobs:
             echo "Upload completed in $SECONDS seconds"
   
   build-node-image-with-fast-runtime:
-    name: Build Docker image with fast runtime
+    name: Build fast runtime Docker image
     runs-on: compile-gke
     env:
       JOB_CACHE_PREFIX: docker-buildx-cache-fast-runtime-${{ inputs.cache-version }}

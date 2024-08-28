@@ -6,7 +6,7 @@ use frame_support::{
 	traits::{Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use mangata_support::traits::GetMaintenanceStatusTrait;
+use mangata_support::traits::{GetMaintenanceStatusTrait, SetMaintenanceModeOn};
 
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -67,6 +67,8 @@ pub mod pallet {
 		UpgradabilityInMaintenanceModeSwitchedOn(T::AccountId),
 		/// Upgradablilty in maintenance mode has been switched off
 		UpgradabilityInMaintenanceModeSwitchedOff(T::AccountId),
+		/// Maintenance mode has been switched on externally
+		MaintenanceModeSwitchedOnExternally,
 	}
 
 	#[pallet::error]
@@ -222,6 +224,15 @@ impl<T: Config> Pallet<T> {
 		(!current_maintenance_status.is_maintenance) ||
 			(current_maintenance_status.is_maintenance &&
 				current_maintenance_status.is_upgradable_in_maintenance)
+	}
+}
+
+impl<T: Config> SetMaintenanceModeOn for Pallet<T> {
+	fn trigger_maintanance_mode() {
+		MaintenanceStatus::<T>::mutate(|status: &mut _| {
+			status.is_maintenance = true;
+		});
+		Self::deposit_event(Event::MaintenanceModeSwitchedOnExternally);
 	}
 }
 

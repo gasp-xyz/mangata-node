@@ -109,9 +109,14 @@ mockall::mock! {
 
 mockall::mock! {
 	pub MaintenanceStatusProviderApi {}
+
 	impl GetMaintenanceStatusTrait for MaintenanceStatusProviderApi {
 		fn is_maintenance() -> bool;
 		fn is_upgradable() -> bool;
+	}
+
+	impl SetMaintenanceModeOn for MaintenanceStatusProviderApi {
+		fn trigger_maintanance_mode();
 	}
 }
 
@@ -203,7 +208,7 @@ impl ExtBuilder {
 		Self { ext }
 	}
 
-	pub fn single_sequencer(seq: AccountId) -> Self {
+	pub fn single_sequencer(_seq: AccountId) -> Self {
 		let t = frame_system::GenesisConfig::<Test>::default()
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");

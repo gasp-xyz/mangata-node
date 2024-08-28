@@ -114,6 +114,10 @@ pub mod pallet {
 			let batch_size = Self::automatic_batch_size();
 			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
 
+			if T::MaintenanceStatusProvider::is_maintenance() {
+				return T::DbWeight::get().reads_writes(10, 20)
+			}
+
 			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
 				let last_id = next_id.saturating_sub(1);
 
@@ -389,6 +393,7 @@ pub mod pallet {
 		NonExistingRequestId,
 		UnknownAliasAccount,
 		FailedDepositDoesExists,
+		EmptyBatch,
 	}
 
 	#[pallet::config]
@@ -649,11 +654,15 @@ pub mod pallet {
 		pub fn create_batch(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
-			range: (u128, u128),
 			sequencer_account: Option<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
 
 			let asignee = if let Some(sequencer) = sequencer_account {
 				ensure!(
@@ -678,34 +687,39 @@ pub mod pallet {
 				)?;
 			}
 
-			ensure!(range.0 <= range.1, Error::<T>::InvalidRange);
-			ensure!(range.0 > 0, Error::<T>::InvalidRange);
-
-			ensure!(
-				range.1 < Self::get_l2_origin_updates_counter(chain),
-				Error::<T>::NonExistingRequestId
-			);
-
 			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
 				.get(&chain)
 				.cloned()
 				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
 				.unwrap_or_default();
 
-			ensure!(range.0 <= last_request_id + 1, Error::<T>::InvalidRange);
-
 			let batch_id = last_batch_id.saturating_add(1u128);
+			let range_start = last_request_id.saturating_add(1u128);
 
-			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));
+			ensure!(
+				L2Requests::<T>::contains_key(
+					chain,
+					RequestId { origin: Origin::L2, id: range_start }
+				),
+				Error::<T>::EmptyBatch
+			);
+			let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+			ensure!(range_end >= range_start, Error::<T>::InvalidRange);
+
+			L2RequestsBatch::<T>::insert(
+				(chain, batch_id),
+				(now, (range_start, range_end), asignee.clone()),
+			);
 			L2RequestsBatchLast::<T>::mutate(|batches| {
-				batches.insert(chain.clone(), (now, batch_id, range));
+				batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
 			});
+
 			Pallet::<T>::deposit_event(Event::TxBatchCreated {
 				chain,
 				source: BatchSource::Manual,
 				assignee: asignee.clone(),
 				batch_id,
-				range,
+				range: (range_start, range_end),
 			});
 
 			Ok(().into())
@@ -1291,8 +1305,12 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
+	pub(crate) fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
+	}
+
+	fn get_latest_l2_request_id(chain: ChainIdOf<T>) -> Option<u128> {
+		L2OriginRequestId::<T>::get().get(&chain).cloned().map(|v| v.saturating_sub(1))
 	}
 
 	pub fn verify_merkle_proof_for_tx(

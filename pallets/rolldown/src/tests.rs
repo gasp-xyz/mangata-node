@@ -1925,6 +1925,52 @@ fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passe
 
 #[test]
 #[serial]
+fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_from_last_batch_is_greater_than_configurable_period() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+
+			forward_to_block::<Test>(1);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			forward_to_block::<Test>(Rolldown::automatic_batch_period() as u64);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			forward_to_block::<Test>((Rolldown::automatic_batch_period() + 1u128) as u64);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1000u128,
+			)
+			.unwrap();
+
+			forward_to_block::<Test>((Rolldown::automatic_batch_period() + 2u128) as u64);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), Some(&((Rolldown::automatic_batch_period() + 2u128) as u64, 1u128, (1u128, 1u128))));
+			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
+				source: BatchSource::PeriodReached,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
+
+		});
+}
+
+#[test]
+#[serial]
 fn test_period_based_batch_respects_sized_batches() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)

@@ -425,7 +425,7 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -503,7 +503,7 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -576,7 +576,7 @@ fn test_trigger_maintanance_mode_when_processing_cancel_resolution_triggers_an_e
 
 			forward_to_block::<Test>(10);
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
 					messages::CancelResolution {
@@ -630,7 +630,7 @@ fn test_cancel_removes_cancel_right() {
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock.expect().return_const(Ok(().into()));
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
@@ -1066,7 +1066,7 @@ fn test_withdraw() {
 					.0,
 				L2Request::Withdrawal(withdrawal_update)
 			);
-			assert_eq!(Rolldown::get_l2_origin_updates_counter(Chain::Ethereum), 2);
+			assert_eq!(Rolldown::get_next_l2_request_id(Chain::Ethereum), 2);
 		});
 }
 
@@ -1253,7 +1253,7 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 				.unwrap();
 			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
 				consts::CHAIN,
@@ -1293,7 +1293,7 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 
-			let l2_request_id = Rolldown::get_l2_origin_updates_counter(Chain::Ethereum);
+			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
 
 			let cancel_resolution = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::CancelResolution(
@@ -1981,35 +1981,6 @@ fn test_period_based_batch_respects_sized_batches() {
 		});
 }
 
-#[test]
-#[serial]
-fn test_create_manual_batch_fails_for_wrong_range() {
-	ExtBuilder::new()
-		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
-
-			assert_err!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (5, 1), None),
-				Error::<Test>::InvalidRange
-			);
-		})
-}
-
-#[test]
-#[serial]
-fn test_create_manual_batch_fails_for_range_that_does_not_exists() {
-	ExtBuilder::new()
-		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
-
-			assert_err!(
-				Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, (1, 1), None),
-				Error::<Test>::NonExistingRequestId
-			);
-		})
-}
 
 #[test]
 #[serial]
@@ -2030,7 +2001,6 @@ fn test_create_manual_batch_works() {
 			assert_ok!(Rolldown::create_batch(
 				RuntimeOrigin::signed(ALICE),
 				consts::CHAIN,
-				(1, 1),
 				None
 			));
 			assert_event_emitted!(Event::TxBatchCreated {
@@ -2053,7 +2023,6 @@ fn test_create_manual_batch_works() {
 			assert_ok!(Rolldown::create_batch(
 				RuntimeOrigin::signed(ALICE),
 				consts::CHAIN,
-				(1, 1),
 				None
 			));
 			assert_event_emitted!(Event::TxBatchCreated {
@@ -2061,22 +2030,7 @@ fn test_create_manual_batch_works() {
 				source: BatchSource::Manual,
 				assignee: ALICE,
 				batch_id: 2,
-				range: (1, 1),
-			});
-
-			assert_ok!(Rolldown::create_batch(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				(1, 2),
-				None
-			));
-
-			assert_event_emitted!(Event::TxBatchCreated {
-				chain: consts::CHAIN,
-				source: BatchSource::Manual,
-				assignee: ALICE,
-				batch_id: 3,
-				range: (1, 2),
+				range: (2, 2),
 			});
 		})
 }
@@ -2107,7 +2061,6 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 				Rolldown::create_batch(
 					RuntimeOrigin::signed(BOB),
 					consts::CHAIN,
-					(1, 1),
 					Some(ALICE)
 				),
 				Error::<Test>::UnknownAliasAccount
@@ -2137,7 +2090,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 			)
 			.unwrap();
 
-			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 1), Some(ALICE))
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, Some(ALICE))
 				.unwrap();
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
@@ -2196,7 +2149,31 @@ fn test_manual_batch_fee_update() {
 
 #[test]
 #[serial]
-fn do_not_allow_for_batches_with_gaps() {
+fn do_not_allow_for_batches_when_there_are_no_pending_requests() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_active_sequencer_alias_context();
+			selected_sequencer_mock.expect().return_const(true);
+
+			forward_to_block::<Test>(10);
+
+			assert_err!(
+				Rolldown::create_batch(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					None,
+				),
+				Error::<Test>::EmptyBatch
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
@@ -2218,16 +2195,19 @@ fn do_not_allow_for_batches_with_gaps() {
 				.unwrap();
 			}
 
-			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, (1, 5), Some(ALICE))
-				.unwrap();
+			Rolldown::create_batch(
+				RuntimeOrigin::signed(BOB),
+				consts::CHAIN,
+				None,
+			).unwrap();
+
 			assert_err!(
 				Rolldown::create_batch(
 					RuntimeOrigin::signed(BOB),
 					consts::CHAIN,
-					(7, 10),
-					Some(ALICE)
+					None,
 				),
-				Error::<Test>::InvalidRange
+				Error::<Test>::EmptyBatch
 			);
 		})
 }

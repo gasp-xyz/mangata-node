@@ -115,7 +115,7 @@ pub mod pallet {
 			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
 
 			if T::MaintenanceStatusProvider::is_maintenance() {
-				return T::DbWeight::get().reads_writes(10, 20);
+				return T::DbWeight::get().reads_writes(10, 20)
 			}
 
 			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
@@ -664,7 +664,6 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-
 			let asignee = if let Some(sequencer) = sequencer_account {
 				ensure!(
 					T::SequencerStakingProvider::is_active_sequencer_alias(
@@ -698,13 +697,19 @@ pub mod pallet {
 			let range_start = last_request_id.saturating_add(1u128);
 
 			ensure!(
-				L2Requests::<T>::contains_key(chain, RequestId{origin: Origin::L2, id: range_start} ),
+				L2Requests::<T>::contains_key(
+					chain,
+					RequestId { origin: Origin::L2, id: range_start }
+				),
 				Error::<T>::EmptyBatch
 			);
 			let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
 			ensure!(range_end >= range_start, Error::<T>::InvalidRange);
 
-			L2RequestsBatch::<T>::insert((chain, batch_id), (now, (range_start, range_end), asignee.clone()));
+			L2RequestsBatch::<T>::insert(
+				(chain, batch_id),
+				(now, (range_start, range_end), asignee.clone()),
+			);
 			L2RequestsBatchLast::<T>::mutate(|batches| {
 				batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
 			});
@@ -1305,10 +1310,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_latest_l2_request_id(chain: ChainIdOf<T>) -> Option<u128> {
-		L2OriginRequestId::<T>::get()
-			.get(&chain)
-			.cloned()
-			.map(|v| v.saturating_sub(1))
+		L2OriginRequestId::<T>::get().get(&chain).cloned().map(|v| v.saturating_sub(1))
 	}
 
 	pub fn verify_merkle_proof_for_tx(

@@ -1927,7 +1927,8 @@ fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passe
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_from_last_batch_is_greater_than_configurable_period() {
+fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_from_last_batch_is_greater_than_configurable_period(
+) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.build()
@@ -1959,7 +1960,10 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 			.unwrap();
 
 			forward_to_block::<Test>((Rolldown::automatic_batch_period() + 2u128) as u64);
-			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), Some(&((Rolldown::automatic_batch_period() + 2u128) as u64, 1u128, (1u128, 1u128))));
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
+				Some(&((Rolldown::automatic_batch_period() + 2u128) as u64, 1u128, (1u128, 1u128)))
+			);
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::PeriodReached,
@@ -1967,7 +1971,6 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 				batch_id: 1,
 				range: (1, 1),
 			});
-
 		});
 }
 
@@ -2029,7 +2032,6 @@ fn test_period_based_batch_respects_sized_batches() {
 		});
 }
 
-
 #[test]
 #[serial]
 fn test_create_manual_batch_works() {
@@ -2046,11 +2048,7 @@ fn test_create_manual_batch_works() {
 				1_000u128,
 			)
 			.unwrap();
-			assert_ok!(Rolldown::create_batch(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				None
-			));
+			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::Manual,
@@ -2068,11 +2066,7 @@ fn test_create_manual_batch_works() {
 			)
 			.unwrap();
 
-			assert_ok!(Rolldown::create_batch(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				None
-			));
+			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::Manual,
@@ -2106,11 +2100,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 			.unwrap();
 
 			assert_err!(
-				Rolldown::create_batch(
-					RuntimeOrigin::signed(BOB),
-					consts::CHAIN,
-					Some(ALICE)
-				),
+				Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, Some(ALICE)),
 				Error::<Test>::UnknownAliasAccount
 			);
 		})
@@ -2138,8 +2128,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 			)
 			.unwrap();
 
-			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, Some(ALICE))
-				.unwrap();
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, Some(ALICE)).unwrap();
 			assert_event_emitted!(Event::TxBatchCreated {
 				chain: consts::CHAIN,
 				source: BatchSource::Manual,
@@ -2209,11 +2198,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests() {
 			forward_to_block::<Test>(10);
 
 			assert_err!(
-				Rolldown::create_batch(
-					RuntimeOrigin::signed(BOB),
-					consts::CHAIN,
-					None,
-				),
+				Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, None,),
 				Error::<Test>::EmptyBatch
 			);
 		})
@@ -2243,23 +2228,14 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 				.unwrap();
 			}
 
-			Rolldown::create_batch(
-				RuntimeOrigin::signed(BOB),
-				consts::CHAIN,
-				None,
-			).unwrap();
+			Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, None).unwrap();
 
 			assert_err!(
-				Rolldown::create_batch(
-					RuntimeOrigin::signed(BOB),
-					consts::CHAIN,
-					None,
-				),
+				Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, None,),
 				Error::<Test>::EmptyBatch
 			);
 		})
 }
-
 
 #[test]
 #[serial]
@@ -2269,7 +2245,6 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.build()
 		.execute_with(|| {
-
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 
@@ -2284,7 +2259,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				)
+			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
 
@@ -2292,11 +2267,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 			is_maintenance_mock.expect().return_const(true);
 
 			assert_err!(
-				Rolldown::create_batch(
-					RuntimeOrigin::signed(BOB),
-					consts::CHAIN,
-					None,
-				),
+				Rolldown::create_batch(RuntimeOrigin::signed(BOB), consts::CHAIN, None,),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
 		})
@@ -2327,7 +2298,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				)
+			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
 
@@ -2365,7 +2336,7 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
-					)
+				)
 				.unwrap();
 			}
 			is_maintenance_mock.checkpoint();
@@ -2376,7 +2347,6 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
 		})
 }
-
 
 #[test]
 #[serial]
@@ -2396,11 +2366,9 @@ fn test_withdrawals_are_not_allowed_in_maintanance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
-					)
-				,
+				),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
-
 		})
 }
 
@@ -2437,8 +2405,6 @@ fn test_cancels_are_not_allowed_in_maintanance_mode() {
 				),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
-
-
 		})
 }
 
@@ -2467,7 +2433,5 @@ fn test_updates_are_not_allowed_in_maintanance_mode() {
 				Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
-
-
 		})
 }

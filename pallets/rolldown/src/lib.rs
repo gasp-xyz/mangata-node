@@ -114,6 +114,10 @@ pub mod pallet {
 			let batch_size = Self::automatic_batch_size();
 			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
 
+			if T::MaintenanceStatusProvider::is_maintenance() {
+				return T::DbWeight::get().reads_writes(10, 20);
+			}
+
 			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
 				let last_id = next_id.saturating_sub(1);
 
@@ -654,6 +658,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
 
 			let asignee = if let Some(sequencer) = sequencer_account {
 				ensure!(

@@ -1184,6 +1184,8 @@ fn test_new_sequencer_active() {
 #[serial]
 fn test_sequencer_unstaking() {
 	ExtBuilder::new_without_default_sequencers().build().execute_with(|| {
+		let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+		is_maintenance_mock.expect().return_const(false);
 		forward_to_block::<Test>(1);
 		let dispute_period_length = Rolldown::get_dispute_period();
 		let now = frame_system::Pallet::<Test>::block_number().saturated_into::<u128>();
@@ -2255,5 +2257,217 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 				),
 				Error::<Test>::EmptyBatch
 			);
+		})
+}
+
+
+#[test]
+#[serial]
+fn manual_batches_not_allowed_in_maintanance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+				)
+			.unwrap();
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+
+			assert_err!(
+				Rolldown::create_batch(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					None,
+				),
+				Error::<Test>::BlockedByMaintenanceMode
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+
+			forward_to_block::<Test>(10);
+
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+				)
+			.unwrap();
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+			forward_to_block::<Test>(2 * Rolldown::automatic_batch_period() as u64);
+
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+		})
+}
+
+#[test]
+#[serial]
+fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let selected_sequencer_mock =
+				MockSequencerStakingProviderApi::selected_sequencer_context();
+			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+
+			forward_to_block::<Test>(10);
+
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+
+			for _ in 0..Rolldown::automatic_batch_size() {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1_000u128,
+					)
+				.unwrap();
+			}
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+			forward_to_block::<Test>(11);
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
+		})
+}
+
+
+#[test]
+#[serial]
+fn test_withdrawals_are_not_allowed_in_maintanance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1_000u128,
+					)
+				,
+				Error::<Test>::BlockedByMaintenanceMode
+			);
+
+		})
+}
+
+#[test]
+#[serial]
+fn test_cancels_are_not_allowed_in_maintanance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let is_selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_selected_sequencer_context();
+			is_selected_sequencer_mock.expect().return_const(true);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			forward_to_block::<Test>(10);
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+			assert_err!(
+				Rolldown::cancel_requests_from_l1(
+					RuntimeOrigin::signed(BOB),
+					consts::CHAIN,
+					15u128.into(),
+				),
+				Error::<Test>::BlockedByMaintenanceMode
+			);
+
+
+		})
+}
+
+#[test]
+#[serial]
+fn test_updates_are_not_allowed_in_maintanance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.build()
+		.execute_with(|| {
+			let is_selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_selected_sequencer_context();
+			is_selected_sequencer_mock.expect().return_const(true);
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![
+					L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+			assert_err!(
+				Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+				Error::<Test>::BlockedByMaintenanceMode
+			);
+
+
 		})
 }

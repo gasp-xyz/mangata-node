@@ -112,7 +112,8 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			Self::maybe_create_batch(now);
-			Self::end_dispute_period();
+			Self::schedule_reqeust_for_execution_if_dispute_period_has_passsed(now);
+			Self::execute_requests_from_execute_queue(now);
 			T::DbWeight::get().reads_writes(20, 20)
 		}
 	}
@@ -183,8 +184,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	// queue of all updates that went through dispute period and are ready to be processed
-	pub type UpdatesExecutionQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, (T::ChainId, messages::L1Update), OptionQuery>;
+	pub type UpdatesExecutionQueue<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		u128,
+		(BlockNumberFor<T>, T::ChainId, messages::L1Update),
+		OptionQuery,
+	>;
 
 	#[pallet::storage]
 	// Id of the next update to be executed
@@ -433,8 +439,8 @@ pub mod pallet {
 			);
 
 			Self::validate_l1_update(chain, &update)?;
-			Self::schedule_requests(chain, update.into());
-			Self::process_requests();
+			let now = <frame_system::Pallet<T>>::block_number();
+			Self::schedule_requests(now, chain, update.into());
 			Ok(().into())
 		}
 
@@ -808,7 +814,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn end_dispute_period() {
+	fn schedule_reqeust_for_execution_if_dispute_period_has_passsed(now: BlockNumberFor<T>) {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
 		for (l1, (sequencer, requests, l1_read_hash)) in
@@ -823,7 +829,7 @@ impl<T: Config> Pallet<T> {
 			}
 
 			if !T::MaintenanceStatusProvider::is_maintenance() {
-				Self::schedule_requests(l1, requests.clone());
+				Self::schedule_requests(now, l1, requests.clone());
 				Self::deposit_event(Event::L1ReadScheduledForExecution {
 					chain: l1,
 					hash: l1_read_hash,
@@ -841,7 +847,6 @@ impl<T: Config> Pallet<T> {
 			u32::MAX,
 			None,
 		);
-		Self::process_requests();
 	}
 
 	fn process_single_request(l1: T::ChainId, request: messages::L1UpdateRequest) {
@@ -871,16 +876,30 @@ impl<T: Config> Pallet<T> {
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
 
-	fn process_requests() {
-		let mut limit = Self::get_max_requests_per_block();
+	fn execute_requests_from_execute_queue(now: BlockNumberFor<T>) {
+		if T::MaintenanceStatusProvider::is_maintenance() &&
+			UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get()).is_some()
+		{
+			let new_id: u128 = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|v| {
+				v.saturating_inc();
+				*v
+			});
+			UpdatesExecutionQueueNextId::<T>::put(new_id);
+			return
+		}
 
+		let mut limit = Self::get_max_requests_per_block();
 		loop {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) =
+			if let Some((scheduled_at, l1, r)) =
 				UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
+				if scheduled_at == now {
+					return
+				}
+
 				for req in r
 					.into_requests()
 					.into_iter()
@@ -910,7 +929,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn schedule_requests(chain: T::ChainId, update: messages::L1Update) {
+	fn schedule_requests(now: BlockNumberFor<T>, chain: T::ChainId, update: messages::L1Update) {
 		let max_id = [
 			update.pendingDeposits.iter().map(|r| r.requestId.id).max(),
 			update.pendingCancelResolutions.iter().map(|r| r.requestId.id).max(),
@@ -925,9 +944,11 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		let id = LastScheduledUpdateIdInExecutionQueue::<T>::get();
-		LastScheduledUpdateIdInExecutionQueue::<T>::put(id + 1);
-		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
+		let id = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|id| {
+			id.saturating_inc();
+			*id
+		});
+		UpdatesExecutionQueue::<T>::insert(id, (now, chain, update));
 	}
 
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -5,6 +5,7 @@ use super::*;
 use crate as rolldown;
 use core::convert::TryFrom;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
+use sp_runtime::traits::One;
 use std::collections::HashSet;
 
 use frame_support::traits::ConstU128;
@@ -307,6 +308,14 @@ pub enum Mocks {
 	SelectedSequencer,
 	GetL1AssetId,
 	MaintenanceMode,
+}
+
+pub fn forward_to_next_block<T>()
+where
+	T: frame_system::Config,
+	T: rolldown::Config,
+{
+	forward_to_block::<T>(frame_system::Pallet::<T>::block_number() + One::one());
 }
 
 pub fn forward_to_block<T>(n: BlockNumberFor<T>)

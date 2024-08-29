@@ -2407,3 +2407,45 @@ fn test_updates_are_not_allowed_in_maintanance_mode() {
 			);
 		})
 }
+
+#[test]
+#[serial]
+fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
+			let is_selected_sequencer_mock =
+				MockSequencerStakingProviderApi::is_selected_sequencer_context();
+			is_selected_sequencer_mock.expect().return_const(true);
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			forward_to_block::<Test>(10);
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from(MILLION),
+					timeStamp: sp_core::U256::from(1),
+				})])
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
+
+			forward_to_block::<Test>(15);
+			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
+			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenancemode {
+				chain: consts::CHAIN,
+				hash: H256::from(hex!(
+					"81edcec3dc1c825d51e584bc1026167892d961b26a60ac745a97fb197473ab6f"
+				)),
+			});
+		})
+}

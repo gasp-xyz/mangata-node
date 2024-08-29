@@ -4,8 +4,8 @@ use super::*;
 
 use crate as rolldown;
 use core::convert::TryFrom;
-use std::collections::HashSet;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
+use std::collections::HashSet;
 
 use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
@@ -237,26 +237,32 @@ impl ExtBuilder {
 		self.ext
 	}
 
-	pub fn all_mocks() -> HashSet<Mocks>{
+	pub fn all_mocks() -> HashSet<Mocks> {
 		[
 			Mocks::IsActiveSequencer,
 			Mocks::IsSelectedSequencer,
 			Mocks::SelectedSequencer,
 			Mocks::GetL1AssetId,
 			Mocks::MaintenanceMode,
-		].iter().cloned().collect()
+		]
+		.iter()
+		.cloned()
+		.collect()
 	}
 
 	pub fn execute_with_default_mocks<R>(self, f: impl FnOnce() -> R) -> R {
 		self.execute_with_mocks(Self::all_mocks(), f)
 	}
 
-	pub fn execute_without_mocks<R>(self, disabled: impl IntoIterator<Item=Mocks> + Clone, f: impl FnOnce() -> R) -> R {
-		let disabled : HashSet<Mocks> = disabled.into_iter().collect();
+	pub fn execute_without_mocks<R>(
+		self,
+		disabled: impl IntoIterator<Item = Mocks> + Clone,
+		f: impl FnOnce() -> R,
+	) -> R {
+		let disabled: HashSet<Mocks> = disabled.into_iter().collect();
 		let difference: HashSet<Mocks> = Self::all_mocks().difference(&disabled).cloned().collect();
 		self.execute_with_mocks(difference, f)
 	}
-
 
 	pub fn execute_with_mocks<R>(mut self, mocks: HashSet<Mocks>, f: impl FnOnce() -> R) -> R {
 		self.ext.execute_with(|| {
@@ -268,7 +274,6 @@ impl ExtBuilder {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			let selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
-
 
 			if mocks.contains(&Mocks::IsActiveSequencer) {
 				is_liquidity_token_mock.expect().return_const(true);
@@ -289,7 +294,6 @@ impl ExtBuilder {
 			if mocks.contains(&Mocks::MaintenanceMode) {
 				is_maintenance_mock.expect().return_const(false);
 			}
-
 
 			f()
 		})

@@ -2462,7 +2462,7 @@ fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
 
 			forward_to_block::<Test>(15);
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
-			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenancemode {
+			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
 					"81edcec3dc1c825d51e584bc1026167892d961b26a60ac745a97fb197473ab6f"
@@ -2569,7 +2569,7 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_scheduled_for_
 
 			forward_to_block::<Test>(15);
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
-			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenancemode {
+			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
 					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
@@ -2578,5 +2578,51 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_scheduled_for_
 
 			forward_to_block::<Test>(50);
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
+		})
+}
+
+#[test]
+#[serial]
+fn test_sequencer_can_submit_same_update_again_after_maintenance_mode() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+			forward_to_block::<Test>(10);
+
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
+
+			forward_to_block::<Test>(15);
+			assert_event_emitted!(Event::L1ReadScheduledForExecution {
+				chain: consts::CHAIN,
+				hash: H256::from(hex!(
+					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+				)),
+			});
+			is_maintenance_mock.checkpoint();
+
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(true);
+
+			forward_to_next_block::<Test>();
+
+			is_maintenance_mock.checkpoint();
+			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
+			is_maintenance_mock.expect().return_const(false);
+
+			forward_to_block::<Test>(20);
+			let deposit_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
+				.build();
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
+			forward_to_block::<Test>(26);
+			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 1u128.into());
 		})
 }

@@ -314,7 +314,7 @@ pub mod pallet {
 			chain: T::ChainId,
 			hash: H256,
 		},
-		L1ReadIgnoredBecauseOfMaintenancemode {
+		L1ReadIgnoredBecauseOfMaintenanceMode {
 			chain: T::ChainId,
 			hash: H256,
 		},
@@ -835,7 +835,7 @@ impl<T: Config> Pallet<T> {
 					hash: l1_read_hash,
 				});
 			} else {
-				Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenancemode {
+				Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 					chain: l1,
 					hash: l1_read_hash,
 				});

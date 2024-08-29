@@ -111,8 +111,12 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			if T::MaintenanceStatusProvider::is_maintenance() {
+				LastMaintananceMode::<T>::put(now.saturated_into::<u128>());
+			}
+
 			Self::maybe_create_batch(now);
-			Self::schedule_reqeust_for_execution_if_dispute_period_has_passsed(now);
+			Self::schedule_request_for_execution_if_dispute_period_has_passsed(now);
 			Self::execute_requests_from_execute_queue(now);
 			T::DbWeight::get().reads_writes(20, 20)
 		}
@@ -191,6 +195,9 @@ pub mod pallet {
 		(BlockNumberFor<T>, T::ChainId, messages::L1Update),
 		OptionQuery,
 	>;
+
+	#[pallet::storage]
+	pub type LastMaintananceMode<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
 	// Id of the next update to be executed
@@ -814,7 +821,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn schedule_reqeust_for_execution_if_dispute_period_has_passsed(now: BlockNumberFor<T>) {
+	fn schedule_request_for_execution_if_dispute_period_has_passsed(now: BlockNumberFor<T>) {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
 		for (l1, (sequencer, requests, l1_read_hash)) in
@@ -828,17 +835,21 @@ impl<T: Config> Pallet<T> {
 				});
 			}
 
-			if !T::MaintenanceStatusProvider::is_maintenance() {
-				Self::schedule_requests(now, l1, requests.clone());
-				Self::deposit_event(Event::L1ReadScheduledForExecution {
-					chain: l1,
-					hash: l1_read_hash,
-				});
-			} else {
-				Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
-					chain: l1,
-					hash: l1_read_hash,
-				});
+			let update_creation_block = block_number.saturating_sub(Self::get_dispute_period());
+			match LastMaintananceMode::<T>::get() {
+				Some(last_maintanance_mode) if update_creation_block < last_maintanance_mode => {
+					Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
+				_ => {
+					Self::schedule_requests(now, l1, requests.clone());
+					Self::deposit_event(Event::L1ReadScheduledForExecution {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
 			}
 		}
 

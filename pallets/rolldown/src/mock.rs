@@ -4,6 +4,7 @@ use super::*;
 
 use crate as rolldown;
 use core::convert::TryFrom;
+use std::collections::HashSet;
 use frame_support::{construct_runtime, parameter_types, traits::Everything};
 
 use frame_support::traits::ConstU128;
@@ -236,29 +237,72 @@ impl ExtBuilder {
 		self.ext
 	}
 
-	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
+	pub fn all_mocks() -> HashSet<Mocks>{
+		[
+			Mocks::IsActiveSequencer,
+			Mocks::IsSelectedSequencer,
+			Mocks::SelectedSequencer,
+			Mocks::GetL1AssetId,
+			Mocks::MaintenanceMode,
+		].iter().cloned().collect()
+	}
+
+	pub fn execute_with_default_mocks<R>(self, f: impl FnOnce() -> R) -> R {
+		self.execute_with_mocks(Self::all_mocks(), f)
+	}
+
+	pub fn execute_without_mocks<R>(self, disabled: impl IntoIterator<Item=Mocks> + Clone, f: impl FnOnce() -> R) -> R {
+		let disabled : HashSet<Mocks> = disabled.into_iter().collect();
+		let difference: HashSet<Mocks> = Self::all_mocks().difference(&disabled).cloned().collect();
+		self.execute_with_mocks(difference, f)
+	}
+
+
+	pub fn execute_with_mocks<R>(mut self, mocks: HashSet<Mocks>, f: impl FnOnce() -> R) -> R {
 		self.ext.execute_with(|| {
 			let is_liquidity_token_mock =
 				MockSequencerStakingProviderApi::is_active_sequencer_context();
-			is_liquidity_token_mock.expect().return_const(true);
-
 			let is_selected_sequencer_mock =
 				MockSequencerStakingProviderApi::is_selected_sequencer_context();
-			is_selected_sequencer_mock.expect().return_const(true);
-
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
-
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
-			is_maintenance_mock.expect().return_const(false);
-
 			let selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
-			selected_sequencer_mock.expect().return_const(None);
+
+
+			if mocks.contains(&Mocks::IsActiveSequencer) {
+				is_liquidity_token_mock.expect().return_const(true);
+			}
+
+			if mocks.contains(&Mocks::IsSelectedSequencer) {
+				is_selected_sequencer_mock.expect().return_const(true);
+			}
+
+			if mocks.contains(&Mocks::GetL1AssetId) {
+				get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
+			}
+
+			if mocks.contains(&Mocks::SelectedSequencer) {
+				selected_sequencer_mock.expect().return_const(None);
+			}
+
+			if mocks.contains(&Mocks::MaintenanceMode) {
+				is_maintenance_mock.expect().return_const(false);
+			}
+
 
 			f()
 		})
 	}
+}
+
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+pub enum Mocks {
+	IsActiveSequencer,
+	IsSelectedSequencer,
+	SelectedSequencer,
+	GetL1AssetId,
+	MaintenanceMode,
 }
 
 pub fn forward_to_block<T>(n: BlockNumberFor<T>)

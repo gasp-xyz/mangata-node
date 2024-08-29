@@ -2243,14 +2243,9 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.build()
-		.execute_with(|| {
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
-
-			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
-
 			forward_to_block::<Test>(10);
 
 			Rolldown::withdraw(
@@ -2279,18 +2274,11 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.build()
-		.execute_with(|| {
-			let selected_sequencer_mock =
-				MockSequencerStakingProviderApi::selected_sequencer_context();
-			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 
 			forward_to_block::<Test>(10);
-
-			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
 			Rolldown::withdraw(
 				RuntimeOrigin::signed(ALICE),
@@ -2316,18 +2304,11 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.build()
-		.execute_with(|| {
-			let selected_sequencer_mock =
-				MockSequencerStakingProviderApi::selected_sequencer_context();
-			selected_sequencer_mock.expect().return_const(Some(consts::ALICE));
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 
 			forward_to_block::<Test>(10);
-
-			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 
 			for _ in 0..Rolldown::automatic_batch_size() {
 				Rolldown::withdraw(
@@ -2378,11 +2359,7 @@ fn test_cancels_are_not_allowed_in_maintanance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.build()
-		.execute_with(|| {
-			let is_selected_sequencer_mock =
-				MockSequencerStakingProviderApi::is_selected_sequencer_context();
-			is_selected_sequencer_mock.expect().return_const(true);
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(false);
 			forward_to_block::<Test>(10);
@@ -2414,12 +2391,7 @@ fn test_updates_are_not_allowed_in_maintanance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.build()
-		.execute_with(|| {
-			let is_selected_sequencer_mock =
-				MockSequencerStakingProviderApi::is_selected_sequencer_context();
-			is_selected_sequencer_mock.expect().return_const(true);
-
+		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			is_maintenance_mock.expect().return_const(true);
 

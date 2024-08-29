@@ -22,15 +22,6 @@ pub trait RolldownApi<BlockHash, L1Update, Chain> {
 	/// * `account` - user account address
 	/// * `liquidity_token` - liquidity token id
 	/// * `at` - optional block hash
-	#[method(name = "rolldown_pending_l2_requests_hash")]
-	fn pending_l2_requests_hash(
-		&self,
-		chain: Chain,
-		at: Option<BlockHash>,
-	) -> RpcResult<sp_core::H256>;
-
-	#[method(name = "rolldown_pending_l2_requests")]
-	fn pending_l2_requests(&self, chain: Chain, at: Option<BlockHash>) -> RpcResult<Vec<u8>>;
 
 	#[method(name = "rolldown_get_abi_encoded_l2_request")]
 	fn get_abi_encoded_l2_request(
@@ -108,37 +99,6 @@ where
 	C: HeaderBackend<Block>,
 	C::Api: RolldownRuntimeApi<Block, L1Update, Chain>,
 {
-	fn pending_l2_requests_hash(
-		&self,
-		chain: Chain,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<sp_core::H256> {
-		let api = self.client.runtime_api();
-		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_l2_request_hash(at, chain).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
-	}
-
-	fn pending_l2_requests(
-		&self,
-		chain: Chain,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<u8>> {
-		let api = self.client.runtime_api();
-		let at = at.unwrap_or(self.client.info().best_hash);
-		api.get_l2_request(at, chain).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
-	}
 	fn get_native_sequencer_update(
 		&self,
 		hex_payload: String,

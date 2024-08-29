@@ -875,21 +875,6 @@ impl_runtime_apis! {
 	}
 
 	impl rolldown_runtime_api::RolldownRuntimeApi<Block, pallet_rolldown::messages::L1Update, pallet_rolldown::messages::Chain> for Runtime {
-		fn get_l2_request_hash(chain: pallet_rolldown::messages::Chain) -> sp_core::H256 {
-			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::pending_l2_requests_proof(chain)
-			} else {
-				Default::default()
-			}
-		}
-		fn get_l2_request(chain: pallet_rolldown::messages::Chain) -> Vec<u8> {
-			if !pallet_maintenance::Pallet::<Runtime>::is_maintenance(){
-				pallet_rolldown::Pallet::<Runtime>::l2_update_encoded(chain)
-			} else {
-				Default::default()
-			}
-		}
-
 		fn get_native_sequencer_update(hex_payload: Vec<u8>) -> Option<pallet_rolldown::messages::L1Update> {
 			pallet_rolldown::Pallet::<Runtime>::convert_eth_l1update_to_substrate_l1update(hex_payload).ok()
 		}

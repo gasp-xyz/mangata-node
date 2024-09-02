@@ -33,5 +33,5 @@ docker build \
     --build-arg BINARY_PATH=${BINARY_PATH} \
     --label "git_rev=${DOCKER_LABEL}" \
     ${DOCKER_TAGS} \
-    -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile \
+    -f ${REPO_ROOT}/Dockerfile \
     .

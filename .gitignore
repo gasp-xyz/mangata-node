@@ -33,3 +33,10 @@ gha-creds-*.json
 
 tmp
 benchmarks
+
+# buildkit-cache-dance ignores
+buildkit-cache-dance-*
+scratch
+usr-local-cargo-registry
+usr-local-cargo-git
+app-target

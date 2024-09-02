@@ -223,3 +223,20 @@ fn switch_upgradability_in_maintenance_mode_off_works() {
 		);
 	})
 }
+
+#[test]
+fn test_triggering_maintanance_mode_through_api_triggers_an_event() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(
+			MaintenanceStatus::<Test>::get(),
+			MaintenanceStatusInfo { is_maintenance: false, is_upgradable_in_maintenance: false }
+		);
+
+		<Maintenance as SetMaintenanceModeOn>::trigger_maintanance_mode();
+
+		assert_eq!(
+			MaintenanceStatus::<Test>::get(),
+			MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: false }
+		);
+	})
+}

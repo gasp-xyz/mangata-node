@@ -48,49 +48,25 @@ cargo install cargo-tarpaulin
 cargo tarpaulin --timeout 120 --workspace -e rollup-runtime-integration-test rollup-node --exclude-files **/mock.rs **/weights.rs **/weights/* --out Html
 ```
 
-### Generate docker image
-You can use `build-image.sh` script to build & generate docker image
-
-```
-./scripts/build-image.sh mangatasolutions/rollup-node:dev
-```
-
-or you can use already compiled build atributes generated in previous step
-
-```
-SKIP_BUILD=1 BUILD_DIR=./docker-cargo/release ./scripts/build-image.sh
-```
-
-This will generate new local docker image `mangatasolutions/rollup-node:dev`
-
-## Run
-
-In order to run the rollup-node locally one need to set up:
-- local rollup network
+### Building Docker image and running local network
 
 Because of number of parameters is quite troublesome thats why we came up with dedicated dockerized environment.
 
-### Set up network using docker-compose
-
-Dockerized setup requires you to build development docker image [mangatasolutions/rollup-node:dev](#generate-docker-image).
-
-Start docker environment using docker-compose, you need to
-
+Use next commands to operate local dockerized environment using Docker Compose:
 ```bash
-cd ./devops/launch
-docker compose up
-```
+# To build Docker image
+docker compose build
 
-once started, you can access nodes using port forwards
-- [127.0.0.1:9944](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) - rollup 1st node
-- [127.0.0.1:9945](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9945#/explorer) - rollup 2nd node
+# To start local 2-nodes network
+docker compose up --build -d
 
-Docker setup can be stopped using
-
-```bash
-cd ./devops/launch
+# To stop local 2-nodes network
 docker compose down
 ```
+
+Once started, you can access nodes using port forwards
+- [127.0.0.1:9944](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) - `node-alice` node
+- [127.0.0.1:9946](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - `node-bob` node
 
 ### Sudo access
 `Alice` is set as sudo account for docker setup
@@ -103,4 +79,3 @@ There is number of chain configurations available for both development and produ
 |-------------------------------|----------------|---------------------------------------------------------------|
 | `rollup-local`                |    *******     | development rollup local testnet                              |
 | `rollup-local-seq`            |     Alice      | development rollup local testnet with collators as sequencers |
-

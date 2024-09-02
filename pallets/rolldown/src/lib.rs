@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::ops::RangeInclusive;
+use messages::{EthAbi, EthAbiHash};
+pub mod messages;
 
 use frame_support::{
 	ensure,
@@ -8,10 +9,10 @@ use frame_support::{
 	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use messages::{to_eth_u256, Origin, RequestId, UpdateType};
+use messages::{Cancel, FailedDepositResolution, Origin, RequestId, Withdrawal};
 use rs_merkle::{Hasher, MerkleProof, MerkleTree};
 use scale_info::prelude::{format, string::String};
-use sp_core::hexdisplay::HexDisplay;
+
 use sp_runtime::traits::{One, SaturatedConversion, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, iter::Iterator};
 
@@ -20,16 +21,13 @@ use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
-	SequencerStakingProviderTrait,
+	SequencerStakingProviderTrait, SetMaintenanceModeOn,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
-use sp_runtime::{
-	serde::Serialize,
-	traits::{AccountIdConversion, Convert, MaybeConvert, Zero},
-};
+use sp_runtime::traits::{AccountIdConversion, Convert, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
@@ -80,8 +78,15 @@ impl Hasher for Keccak256Hasher {
 	}
 }
 
-#[derive(Debug)]
-struct Hash32([u8; 32]);
+#[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum L1RequestProcessingError {
+	Overflow,
+	AssetRegistrationProblem,
+	MintError,
+	NotEnoughtCancelRights,
+	WrongCancelRequestId,
+	SequencerNotSlashed,
+}
 
 #[cfg(test)]
 mod tests;
@@ -89,15 +94,11 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-pub mod messages;
-
 use crate::messages::L1Update;
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
-	use crate::messages::UpdateType;
 
 	use super::*;
 
@@ -110,64 +111,13 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			let batch_size = Self::automatic_batch_size();
-			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
-
-			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
-				let last_id = next_id.saturating_sub(1);
-
-				let (last_batch_block_number, last_batch_id, last_id_in_batch) =
-					L2RequestsBatchLast::<T>::get()
-						.get(&chain)
-						.cloned()
-						.map(|(block_number, batch_id, (_, last_reqeust_id))| {
-							(block_number, batch_id, last_reqeust_id)
-						})
-						.unwrap_or_default();
-
-				let trigger = if last_id >= last_id_in_batch + batch_size {
-					Some(BatchSource::AutomaticSizeReached)
-				} else if now >= last_batch_block_number + batch_period {
-					Some(BatchSource::PeriodReached)
-				} else {
-					None
-				};
-
-				if let Some(trigger) = trigger {
-					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
-						let batch_id = last_batch_id.saturating_add(1);
-						let range_start = last_id_in_batch.saturating_add(1);
-						let range_end = sp_std::cmp::min(
-							range_start.saturating_add(batch_size.saturating_sub(1)),
-							last_id,
-						);
-						if range_end >= range_start {
-							L2RequestsBatch::<T>::insert(
-								(chain, batch_id),
-								(now, (range_start, range_end), updater.clone()),
-							);
-							L2RequestsBatchLast::<T>::mutate(|batches| {
-								batches.insert(
-									chain.clone(),
-									(now, batch_id, (range_start, range_end)),
-								);
-							});
-							Pallet::<T>::deposit_event(Event::TxBatchCreated {
-								chain: *chain,
-								source: trigger,
-								assignee: updater,
-								batch_id,
-								range: (range_start, range_end),
-							});
-							break
-						}
-					} else {
-						continue
-					}
-				}
+			if T::MaintenanceStatusProvider::is_maintenance() {
+				LastMaintananceMode::<T>::put(now.saturated_into::<u128>());
 			}
 
-			Self::end_dispute_period();
+			Self::maybe_create_batch(now);
+			Self::schedule_request_for_execution_if_dispute_period_has_passsed(now);
+			Self::execute_requests_from_execute_queue(now);
 			T::DbWeight::get().reads_writes(20, 20)
 		}
 	}
@@ -180,54 +130,11 @@ pub mod pallet {
 		pub cancel_rights: u128,
 	}
 
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
-	pub struct Cancel<AccountId> {
-		pub requestId: RequestId,
-		pub updater: AccountId,
-		pub canceler: AccountId,
-		pub range: messages::Range,
-		pub hash: H256,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub struct RequestResult {
-		pub requestId: RequestId,
-		pub originRequestId: u128,
-		pub status: bool,
-		pub updateType: UpdateType,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize, Default)]
-	pub struct Withdrawal {
-		pub requestId: RequestId,
-		pub withdrawalRecipient: [u8; 20],
-		pub tokenAddress: [u8; 20],
-		pub amount: U256,
-	}
-
-	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
-	pub enum L2Request<AccountId> {
-		RequestResult(RequestResult),
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Copy, Encode, Decode, TypeInfo)]
+	pub enum L2Request<AccountId: Clone> {
+		FailedDepositResolution(FailedDepositResolution),
 		Cancel(Cancel<AccountId>),
 		Withdrawal(Withdrawal),
-	}
-
-	impl<AccountId> Into<L2Request<AccountId>> for RequestResult {
-		fn into(self) -> L2Request<AccountId> {
-			L2Request::RequestResult(self)
-		}
-	}
-
-	impl<AccountId> Into<L2Request<AccountId>> for Cancel<AccountId> {
-		fn into(self) -> L2Request<AccountId> {
-			L2Request::Cancel(self)
-		}
-	}
-
-	impl<AccountId> Into<L2Request<AccountId>> for Withdrawal {
-		fn into(self) -> L2Request<AccountId> {
-			L2Request::Withdrawal(self)
-		}
 	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo)]
@@ -237,16 +144,6 @@ pub mod pallet {
 		PeriodReached,
 	}
 
-	impl<AccountId> TryInto<Withdrawal> for L2Request<AccountId> {
-		type Error = &'static str;
-		fn try_into(self) -> Result<Withdrawal, Self::Error> {
-			match self {
-				L2Request::Withdrawal(withdrawal) => Ok(withdrawal),
-				_ => Err("not a withdrawal"),
-			}
-		}
-	}
-
 	#[derive(
 		PartialOrd, Ord, Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
 	)]
@@ -254,6 +151,11 @@ pub mod pallet {
 		Canceler,
 		Submitter,
 	}
+
+	#[pallet::storage]
+	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
+	pub type FailedL1Deposits<T: Config> =
+		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -279,15 +181,23 @@ pub mod pallet {
 		u128,
 		Blake2_128Concat,
 		T::ChainId,
-		(T::AccountId, messages::L1Update),
+		(T::AccountId, messages::L1Update, H256),
 		OptionQuery,
 	>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
 	// queue of all updates that went through dispute period and are ready to be processed
-	pub type UpdatesExecutionQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, (T::ChainId, messages::L1Update), OptionQuery>;
+	pub type UpdatesExecutionQueue<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		u128,
+		(BlockNumberFor<T>, T::ChainId, messages::L1Update),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub type LastMaintananceMode<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
 	// Id of the next update to be executed
@@ -370,10 +280,18 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// (seuquencer, end_of_dispute_period, lastAcceptedRequestOnL1, lastProccessedRequestOnL1)
-		L1ReadStored((T::ChainId, T::AccountId, u128, messages::Range, H256)),
-		// Chain, request id
-		RequestProcessedOnL2(T::ChainId, u128, bool),
+		L1ReadStored {
+			chain: T::ChainId,
+			sequencer: T::AccountId,
+			dispute_period_end: u128,
+			range: messages::Range,
+			hash: H256,
+		},
+		RequestProcessedOnL2 {
+			chain: T::ChainId,
+			request_id: u128,
+			status: Result<(), L1RequestProcessingError>,
+		},
 		L1ReadCanceled {
 			chain: T::ChainId,
 			canceled_sequencer_update: u128,
@@ -386,7 +304,7 @@ pub mod pallet {
 			batch_id: u128,
 			range: (u128, u128),
 		},
-		WithdrawlRequestCreated {
+		WithdrawalRequestCreated {
 			chain: T::ChainId,
 			request_id: RequestId,
 			recipient: [u8; 20],
@@ -395,6 +313,18 @@ pub mod pallet {
 			hash: H256,
 		},
 		ManualBatchExtraFeeSet(BalanceOf<T>),
+		DepositRefundCreated {
+			chain: ChainIdOf<T>,
+			refunded_request_id: RequestId,
+		},
+		L1ReadScheduledForExecution {
+			chain: T::ChainId,
+			hash: H256,
+		},
+		L1ReadIgnoredBecauseOfMaintenanceMode {
+			chain: T::ChainId,
+			hash: H256,
+		},
 	}
 
 	#[pallet::error]
@@ -423,6 +353,8 @@ pub mod pallet {
 		InvalidRange,
 		NonExistingRequestId,
 		UnknownAliasAccount,
+		FailedDepositDoesExists,
+		EmptyBatch,
 	}
 
 	#[pallet::config]
@@ -445,7 +377,7 @@ pub mod pallet {
 		type RightsMultiplier: Get<u128>;
 		#[pallet::constant]
 		type RequestsPerBlock: Get<u128>;
-		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait + SetMaintenanceModeOn;
 		type ChainId: From<messages::Chain>
 			+ Parameter
 			+ Member
@@ -514,8 +446,8 @@ pub mod pallet {
 			);
 
 			Self::validate_l1_update(chain, &update)?;
-			Self::schedule_requests(chain, update.into());
-			Self::process_requests();
+			let now = <frame_system::Pallet<T>>::block_number();
+			Self::schedule_requests(now, chain, update.into());
 			Ok(().into())
 		}
 
@@ -542,11 +474,11 @@ pub mod pallet {
 				Ok::<_, Error<T>>(())
 			})?;
 
-			let (submitter, request) =
+			let (submitter, request, _) =
 				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
-			let hash_of_pending_request = Self::calculate_hash_of_pending_requests(request.clone());
+			let hash_of_pending_request = Self::calculate_hash_of_sequencer_update(request.clone());
 
 			let l2_request_id = Self::acquire_l2_request_id(chain);
 
@@ -568,10 +500,7 @@ pub mod pallet {
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(
-					L2Request::Cancel(cancel_request.clone()),
-					Self::get_l2_request_hash(cancel_request.into()),
-				),
+				(L2Request::Cancel(cancel_request.clone()), cancel_request.abi_encode_hash()),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
@@ -635,18 +564,19 @@ pub mod pallet {
 				request_id.clone(),
 				(
 					L2Request::Withdrawal(withdrawal_update.clone()),
-					Self::get_l2_request_hash(withdrawal_update.clone().into()),
+					withdrawal_update.abi_encode_hash(),
 				),
 			);
 
-			Pallet::<T>::deposit_event(Event::WithdrawlRequestCreated {
+			Pallet::<T>::deposit_event(Event::WithdrawalRequestCreated {
 				chain,
 				request_id,
 				recipient,
 				token_address,
 				amount,
-				hash: Self::get_l2_request_hash(withdrawal_update.into()),
+				hash: withdrawal_update.abi_encode_hash(),
 			});
+			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 
 			Ok(().into())
 		}
@@ -665,7 +595,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let (submitter, _request) =
+			let (submitter, _request, _hash) =
 				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
@@ -685,11 +615,15 @@ pub mod pallet {
 		pub fn create_batch(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
-			range: (u128, u128),
 			sequencer_account: Option<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
 
 			let asignee = if let Some(sequencer) = sequencer_account {
 				ensure!(
@@ -714,34 +648,39 @@ pub mod pallet {
 				)?;
 			}
 
-			ensure!(range.0 <= range.1, Error::<T>::InvalidRange);
-			ensure!(range.0 > 0, Error::<T>::InvalidRange);
-
-			ensure!(
-				range.1 < Self::get_l2_origin_updates_counter(chain),
-				Error::<T>::NonExistingRequestId
-			);
-
 			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
 				.get(&chain)
 				.cloned()
 				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
 				.unwrap_or_default();
 
-			ensure!(range.0 <= last_request_id + 1, Error::<T>::InvalidRange);
-
 			let batch_id = last_batch_id.saturating_add(1u128);
+			let range_start = last_request_id.saturating_add(1u128);
 
-			L2RequestsBatch::<T>::insert((chain, batch_id), (now, range, asignee.clone()));
+			ensure!(
+				L2Requests::<T>::contains_key(
+					chain,
+					RequestId { origin: Origin::L2, id: range_start }
+				),
+				Error::<T>::EmptyBatch
+			);
+			let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+			ensure!(range_end >= range_start, Error::<T>::InvalidRange);
+
+			L2RequestsBatch::<T>::insert(
+				(chain, batch_id),
+				(now, (range_start, range_end), asignee.clone()),
+			);
 			L2RequestsBatchLast::<T>::mutate(|batches| {
-				batches.insert(chain.clone(), (now, batch_id, range));
+				batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
 			});
+
 			Pallet::<T>::deposit_event(Event::TxBatchCreated {
 				chain,
 				source: BatchSource::Manual,
 				assignee: asignee.clone(),
 				batch_id,
-				range,
+				range: (range_start, range_end),
 			});
 
 			Ok(().into())
@@ -756,6 +695,43 @@ pub mod pallet {
 			let _ = ensure_root(origin)?;
 			ManualBatchExtraFee::<T>::set(balance);
 			Pallet::<T>::deposit_event(Event::ManualBatchExtraFeeSet(balance));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn refund_failed_deposit(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: u128,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+
+			// NOTE: failed deposits are not reachable at this point
+			let _ = FailedL1Deposits::<T>::take((chain, request_id))
+				.ok_or(Error::<T>::FailedDepositDoesExists)?;
+
+			let l2_request_id = Self::acquire_l2_request_id(chain);
+
+			let failed_deposit_resolution = FailedDepositResolution {
+				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
+				originRequestId: request_id,
+			};
+
+			L2Requests::<T>::insert(
+				chain,
+				RequestId::from((Origin::L2, l2_request_id)),
+				(
+					L2Request::FailedDepositResolution(failed_deposit_resolution),
+					failed_deposit_resolution.abi_encode_hash(),
+				),
+			);
+
+			Self::deposit_event(Event::DepositRefundCreated {
+				refunded_request_id: RequestId { origin: Origin::L1, id: request_id },
+				chain,
+			});
+
 			Ok(().into())
 		}
 	}
@@ -776,35 +752,105 @@ impl<T: Config> Pallet<T> {
 		request_id: u128,
 	) -> Option<bool> {
 		let pending_requests_to_process = PendingSequencerUpdates::<T>::get(request_id, chain);
-		if let Some((_, l1_update)) = pending_requests_to_process {
-			let calculated_hash = Self::calculate_hash_of_pending_requests(l1_update);
+		if let Some((_, l1_update, _hash)) = pending_requests_to_process {
+			let calculated_hash = Self::calculate_hash_of_sequencer_update(l1_update);
 			Some(hash == calculated_hash)
 		} else {
 			None
 		}
 	}
 
-	// should run each block, check if dispute period ended, if yes, process pending requests
-	fn end_dispute_period() {
+	fn maybe_create_batch(now: BlockNumberFor<T>) {
+		let batch_size = Self::automatic_batch_size();
+		let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
+
+		if T::MaintenanceStatusProvider::is_maintenance() {
+			return
+		}
+
+		for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
+			let last_id = next_id.saturating_sub(1);
+
+			let (last_batch_block_number, last_batch_id, last_id_in_batch) =
+				L2RequestsBatchLast::<T>::get()
+					.get(&chain)
+					.cloned()
+					.map(|(block_number, batch_id, (_, last_reqeust_id))| {
+						(block_number, batch_id, last_reqeust_id)
+					})
+					.unwrap_or_default();
+
+			let trigger = if last_id >= last_id_in_batch + batch_size {
+				Some(BatchSource::AutomaticSizeReached)
+			} else if now >= last_batch_block_number + batch_period {
+				Some(BatchSource::PeriodReached)
+			} else {
+				None
+			};
+
+			if let Some(trigger) = trigger {
+				if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
+					let batch_id = last_batch_id.saturating_add(1);
+					let range_start = last_id_in_batch.saturating_add(1);
+					let range_end = sp_std::cmp::min(
+						range_start.saturating_add(batch_size.saturating_sub(1)),
+						last_id,
+					);
+					if range_end >= range_start {
+						L2RequestsBatch::<T>::insert(
+							(chain, batch_id),
+							(now, (range_start, range_end), updater.clone()),
+						);
+						L2RequestsBatchLast::<T>::mutate(|batches| {
+							batches
+								.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
+						});
+						Pallet::<T>::deposit_event(Event::TxBatchCreated {
+							chain: *chain,
+							source: trigger,
+							assignee: updater,
+							batch_id,
+							range: (range_start, range_end),
+						});
+						break
+					}
+				} else {
+					continue
+				}
+			}
+		}
+	}
+
+	fn schedule_request_for_execution_if_dispute_period_has_passsed(now: BlockNumberFor<T>) {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
-		for (l1, pending_requests_to_process) in
+		for (l1, (sequencer, requests, l1_read_hash)) in
 			PendingSequencerUpdates::<T>::iter_prefix(block_number)
 		{
-			log!(debug, "dispute end {:?}", block_number);
-
-			let sequencer = &pending_requests_to_process.0;
-			let requests = pending_requests_to_process.1.clone();
-
-			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
+			if T::SequencerStakingProvider::is_active_sequencer(l1, &sequencer) {
 				SequencersRights::<T>::mutate(l1, |sequencers| {
-					if let Some(rights) = sequencers.get_mut(sequencer) {
+					if let Some(rights) = sequencers.get_mut(&sequencer) {
 						rights.read_rights.saturating_accrue(T::RightsMultiplier::get());
 					}
 				});
 			}
 
-			Self::schedule_requests(l1, requests.clone());
+			let update_creation_block = block_number.saturating_sub(Self::get_dispute_period());
+			match LastMaintananceMode::<T>::get() {
+				Some(last_maintanance_mode) if update_creation_block < last_maintanance_mode => {
+					Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
+				_ => {
+					Self::schedule_requests(now, l1, requests.clone());
+					Self::deposit_event(Event::L1ReadScheduledForExecution {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
+			}
 		}
 
 		let _ = PendingSequencerUpdates::<T>::clear_prefix(
@@ -812,7 +858,6 @@ impl<T: Config> Pallet<T> {
 			u32::MAX,
 			None,
 		);
-		Self::process_requests();
 	}
 
 	fn process_single_request(l1: T::ChainId, request: messages::L1UpdateRequest) {
@@ -820,36 +865,52 @@ impl<T: Config> Pallet<T> {
 			return
 		}
 
-		let (status, request_type) = match request.clone() {
-			messages::L1UpdateRequest::Deposit(deposit) =>
-				(Self::process_deposit(l1, &deposit).is_ok(), UpdateType::DEPOSIT),
-			messages::L1UpdateRequest::CancelResolution(cancel) => (
-				Self::process_cancel_resolution(l1, &cancel).is_ok(),
-				UpdateType::CANCEL_RESOLUTION,
-			),
-			messages::L1UpdateRequest::WithdrawalResolution(withdrawal) => (
-				Self::process_withdrawal_resolution(l1, &withdrawal).is_ok(),
-				UpdateType::WITHDRAWAL_RESOLUTION,
-			),
-			messages::L1UpdateRequest::Remove(remove) =>
-				(Self::process_l2_updates_to_remove(l1, &remove).is_ok(), UpdateType::INDEX_UPDATE),
+		let status = match request.clone() {
+			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
+				.or_else(|err| {
+					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
+					Err(err)
+				}),
+			messages::L1UpdateRequest::CancelResolution(cancel) =>
+				Self::process_cancel_resolution(l1, &cancel).or_else(|err| {
+					T::MaintenanceStatusProvider::trigger_maintanance_mode();
+					Err(err)
+				}),
 		};
 
-		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2(l1, request.id(), status));
+		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2 {
+			chain: l1,
+			request_id: request.id(),
+			status,
+		});
 
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
 
-	fn process_requests() {
-		let mut limit = Self::get_max_requests_per_block();
+	fn execute_requests_from_execute_queue(now: BlockNumberFor<T>) {
+		if T::MaintenanceStatusProvider::is_maintenance() &&
+			UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get()).is_some()
+		{
+			let new_id: u128 = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|v| {
+				v.saturating_inc();
+				*v
+			});
+			UpdatesExecutionQueueNextId::<T>::put(new_id);
+			return
+		}
 
+		let mut limit = Self::get_max_requests_per_block();
 		loop {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) =
+			if let Some((scheduled_at, l1, r)) =
 				UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
+				if scheduled_at == now {
+					return
+				}
+
 				for req in r
 					.into_requests()
 					.into_iter()
@@ -879,12 +940,10 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn schedule_requests(chain: T::ChainId, update: messages::L1Update) {
+	fn schedule_requests(now: BlockNumberFor<T>, chain: T::ChainId, update: messages::L1Update) {
 		let max_id = [
 			update.pendingDeposits.iter().map(|r| r.requestId.id).max(),
-			update.pendingWithdrawalResolutions.iter().map(|r| r.requestId.id).max(),
 			update.pendingCancelResolutions.iter().map(|r| r.requestId.id).max(),
-			update.pendingL2UpdatesToRemove.iter().map(|r| r.requestId.id).max(),
 		]
 		.iter()
 		.filter_map(|elem| elem.clone())
@@ -896,22 +955,28 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		let id = LastScheduledUpdateIdInExecutionQueue::<T>::get();
-		LastScheduledUpdateIdInExecutionQueue::<T>::put(id + 1);
-		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
+		let id = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|id| {
+			id.saturating_inc();
+			*id
+		});
+		UpdatesExecutionQueue::<T>::insert(id, (now, chain, update));
 	}
 
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	/// NOTE: This function is not transactional, so even if it fails at some point that DOES NOT
+	/// REVERT PREVIOUS CHANGES TO STORAGE, whoever is modifying it should take that into account!
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_deposit(
 		l1: T::ChainId,
 		deposit_request_details: &messages::Deposit,
-	) -> Result<(), &'static str> {
+	) -> Result<(), L1RequestProcessingError> {
 		let account: T::AccountId =
 			T::AddressConverter::convert(deposit_request_details.depositRecipient);
 
-		let amount: u128 =
-			deposit_request_details.amount.try_into().or(Err(Error::<T>::BalanceOverflow))?;
-
-		// check ferried
+		let amount = TryInto::<u128>::try_into(deposit_request_details.amount)
+			.map_err(|_| L1RequestProcessingError::Overflow)?
+			.try_into()
+			.map_err(|_| L1RequestProcessingError::Overflow)?;
 
 		let eth_asset =
 			T::AssetAddressConverter::convert((l1, deposit_request_details.tokenAddress));
@@ -919,15 +984,11 @@ impl<T: Config> Pallet<T> {
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.or(Err(Error::<T>::L1AssetCreationFailed))?,
+				.map_err(|_| L1RequestProcessingError::AssetRegistrationProblem)?,
 		};
 
-		// ADD tokens: mint tokens for user
-		T::Tokens::mint(
-			asset_id,
-			&account,
-			amount.try_into().or(Err(Error::<T>::BalanceOverflow))?,
-		)?;
+		T::Tokens::mint(asset_id, &account, amount)
+			.map_err(|_| L1RequestProcessingError::MintError)?;
 
 		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
@@ -935,24 +996,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn process_withdrawal_resolution(
-		l1: T::ChainId,
-		withdrawal_resolution: &messages::WithdrawalResolution,
-	) -> Result<(), &'static str> {
-		L2Requests::<T>::remove(
-			l1,
-			RequestId::from((Origin::L2, withdrawal_resolution.l2RequestId)),
-		);
-		TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
-		//TODO: handle sending tokens back
-		log!(debug, "Withdrawal resolution processed successfully: {:?}", withdrawal_resolution);
-		Ok(())
-	}
-
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	/// NOTE: This function is not transactional, so even if it fails at some point that DOES NOT
+	/// REVERT PREVIOUS CHANGES TO STORAGE, whoever is modifying it should take that into account!
+	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_cancel_resolution(
 		l1: T::ChainId,
 		cancel_resolution: &messages::CancelResolution,
-	) -> Result<(), &'static str> {
+	) -> Result<(), L1RequestProcessingError> {
 		let cancel_request_id = cancel_resolution.l2RequestId;
 		let cancel_justified = cancel_resolution.cancelJustified;
 
@@ -961,7 +1012,7 @@ impl<T: Config> Pallet<T> {
 				Some((L2Request::Cancel(cancel), _)) => Some(cancel),
 				_ => None,
 			}
-			.ok_or("NoCancelRequest")?;
+			.ok_or(L1RequestProcessingError::WrongCancelRequestId)?;
 
 		let updater = cancel_update.updater;
 		let canceler = cancel_update.canceler;
@@ -986,8 +1037,6 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		L2Requests::<T>::remove(l1, RequestId::from((Origin::L2, cancel_request_id)));
-
 		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
 			v.remove(&(cancel_request_id, DisputeRole::Submitter))
 		});
@@ -996,111 +1045,16 @@ impl<T: Config> Pallet<T> {
 		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
-		T::SequencerStakingProvider::slash_sequencer(l1, &to_be_slashed, to_reward.as_ref())?;
-
-		log!(debug, "SLASH for: {:?}, rewarded: {:?}", to_be_slashed, to_reward);
-
-		log!(debug, "Cancel resolutiuon processed successfully: {:?}", cancel_resolution);
-		// additional checks
-		Ok(())
-	}
-
-	fn process_l2_updates_to_remove(
-		l1: T::ChainId,
-		updates_to_remove_request_details: &messages::L2UpdatesToRemove,
-	) -> Result<(), &'static str> {
-		for requestId in updates_to_remove_request_details.l2UpdatesToRemove.iter() {
-			L2Requests::<T>::remove(l1, RequestId { origin: Origin::L1, id: *requestId });
-		}
-
-		log!(
-			debug,
-			"Update removal processed successfully, removed: {:?}",
-			updates_to_remove_request_details
-		);
-		//additional checks
+		T::SequencerStakingProvider::slash_sequencer(l1, &to_be_slashed, to_reward.as_ref())
+			.map_err(|_| L1RequestProcessingError::SequencerNotSlashed)?;
 
 		Ok(())
 	}
 
-	fn to_eth_cancel(cancel: Cancel<T::AccountId>) -> messages::eth_abi::Cancel {
-		messages::eth_abi::Cancel {
-			requestId: cancel.requestId.into(),
-			range: cancel.range.into(),
-			hash: alloy_primitives::FixedBytes::<32>::from_slice(&cancel.hash[..]),
-		}
-	}
-
-	fn to_eth_request_result(request: RequestResult) -> messages::eth_abi::RequestResult {
-		messages::eth_abi::RequestResult {
-			requestId: request.requestId.into(),
-			originRequestId: messages::to_eth_u256(request.originRequestId.into()),
-			updateType: request.updateType.into(),
-			status: request.status.into(),
-		}
-	}
-
-	fn to_eth_withdrawal(withdrawal: Withdrawal) -> messages::eth_abi::Withdrawal {
-		messages::eth_abi::Withdrawal {
-			requestId: withdrawal.requestId.into(),
-			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
-			tokenAddress: withdrawal.tokenAddress.into(),
-			amount: to_eth_u256(withdrawal.amount),
-		}
-	}
-
-	fn calculate_hash_of_pending_requests(update: messages::L1Update) -> H256 {
+	fn calculate_hash_of_sequencer_update(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
 		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
 		H256::from(hash)
-	}
-
-	fn get_l2_request_hash(req: L2Request<T::AccountId>) -> H256 {
-		match req {
-			L2Request::RequestResult(rr) => {
-				let eth_req_result = Self::to_eth_request_result(rr);
-				let hash: [u8; 32] = Keccak256::digest(&eth_req_result.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-			L2Request::Cancel(c) => {
-				let eth_cancel = Self::to_eth_cancel(c);
-				let hash: [u8; 32] = Keccak256::digest(&eth_cancel.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-			L2Request::Withdrawal(w) => {
-				let eth_withdrawal = Self::to_eth_withdrawal(w);
-				let hash: [u8; 32] = Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into();
-				H256::from(hash)
-			},
-		}
-	}
-
-	fn get_l2_update(l1: T::ChainId) -> messages::eth_abi::L2Update {
-		let mut update = messages::eth_abi::L2Update {
-			results: Vec::new(),
-			cancels: Vec::new(),
-			withdrawals: Vec::new(),
-		};
-
-		for (request_id, req) in L2Requests::<T>::iter_prefix(l1) {
-			match req {
-				(L2Request::RequestResult(result), _) =>
-					update.results.push(Self::to_eth_request_result(result)),
-				(L2Request::Cancel(cancel), _) => {
-					update.cancels.push(Self::to_eth_cancel(cancel));
-				},
-				(L2Request::Withdrawal(withdrawal), _) => {
-					update.withdrawals.push(Self::to_eth_withdrawal(withdrawal));
-				},
-			};
-		}
-
-		update.results.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
-		update.cancels.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
-
-		update.withdrawals.sort_by(|a, b| a.requestId.id.cmp(&b.requestId.id));
-
-		update
 	}
 
 	fn handle_sequencer_deactivation(
@@ -1123,16 +1077,6 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub fn pending_l2_requests_proof(chain: T::ChainId) -> sp_core::H256 {
-		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
-		hash.into()
-	}
-
-	pub fn l2_update_encoded(chain: T::ChainId) -> Vec<u8> {
-		let update = Pallet::<T>::get_l2_update(chain);
-		update.abi_encode()
-	}
-
 	pub fn convert_eth_l1update_to_substrate_l1update(
 		payload: Vec<u8>,
 	) -> Result<L1Update, String> {
@@ -1145,10 +1089,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn validate_l1_update(l1: T::ChainId, update: &messages::L1Update) -> DispatchResult {
 		ensure!(
-			!update.pendingDeposits.is_empty() ||
-				!update.pendingCancelResolutions.is_empty() ||
-				!update.pendingWithdrawalResolutions.is_empty() ||
-				!update.pendingL2UpdatesToRemove.is_empty(),
+			!update.pendingDeposits.is_empty() || !update.pendingCancelResolutions.is_empty(),
 			Error::<T>::EmptyUpdate
 		);
 
@@ -1163,14 +1104,6 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			update
 				.pendingCancelResolutions
-				.iter()
-				.map(|v| v.requestId.origin)
-				.all(|v| v == Origin::L1),
-			Error::<T>::InvalidUpdate
-		);
-		ensure!(
-			update
-				.pendingL2UpdatesToRemove
 				.iter()
 				.map(|v| v.requestId.origin)
 				.all(|v| v == Origin::L1),
@@ -1200,33 +1133,9 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::InvalidUpdate
 		);
 
-		ensure!(
-			update
-				.pendingL2UpdatesToRemove
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
-
-		ensure!(
-			update
-				.pendingWithdrawalResolutions
-				.iter()
-				.map(|v| v.requestId.id)
-				.into_iter()
-				.tuple_windows()
-				.all(|(a, b)| a < b),
-			Error::<T>::InvalidUpdate
-		);
-
 		let lowest_id = [
 			update.pendingDeposits.first().map(|v| v.requestId.id),
 			update.pendingCancelResolutions.first().map(|v| v.requestId.id),
-			update.pendingWithdrawalResolutions.first().map(|v| v.requestId.id),
-			update.pendingL2UpdatesToRemove.first().map(|v| v.requestId.id),
 		]
 		.iter()
 		.filter_map(|v| v.clone())
@@ -1243,35 +1152,23 @@ impl<T: Config> Pallet<T> {
 
 		let last_id = lowest_id +
 			(update.pendingDeposits.len() as u128) +
-			(update.pendingWithdrawalResolutions.len() as u128) +
-			(update.pendingCancelResolutions.len() as u128) +
-			(update.pendingL2UpdatesToRemove.len() as u128);
+			(update.pendingCancelResolutions.len() as u128);
 
 		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
-		let mut withdrawal_it = update.pendingWithdrawalResolutions.iter();
 		let mut cancel_it = update.pendingCancelResolutions.iter();
-		let mut updates_it = update.pendingL2UpdatesToRemove.iter();
-		let mut withdrawal = withdrawal_it.next();
 
 		let mut deposit = deposit_it.next();
 		let mut cancel = cancel_it.next();
-		let mut update = updates_it.next();
 
 		for id in (lowest_id..last_id).into_iter() {
-			match (deposit, cancel, update, withdrawal) {
-				(Some(d), _, _, _) if d.requestId.id == id => {
+			match (deposit, cancel) {
+				(Some(d), _) if d.requestId.id == id => {
 					deposit = deposit_it.next();
 				},
-				(_, Some(c), _, _) if c.requestId.id == id => {
+				(_, Some(c)) if c.requestId.id == id => {
 					cancel = cancel_it.next();
-				},
-				(_, _, Some(u), _) if u.requestId.id == id => {
-					update = updates_it.next();
-				},
-				(_, _, _, Some(w)) if w.requestId.id == id => {
-					withdrawal = withdrawal_it.next();
 				},
 				_ => return Err(Error::<T>::InvalidUpdate.into()),
 			}
@@ -1323,27 +1220,27 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::MultipleUpdatesInSingleBlock
 		);
 
-		// insert pending_requests
+		let update: messages::eth_abi::L1Update = read.clone().into();
+		let request_hash = Keccak256::digest(&update.abi_encode());
+		let l1_read_hash = H256::from_slice(request_hash.as_slice());
+
 		PendingSequencerUpdates::<T>::insert(
 			dispute_period_end,
 			l1,
-			(sequencer.clone(), read.clone()),
+			(sequencer.clone(), read.clone(), l1_read_hash),
 		);
-
-		let update: messages::eth_abi::L1Update = read.clone().into();
-		let request_hash = Keccak256::digest(&update.abi_encode());
 
 		LastUpdateBySequencer::<T>::insert((l1, &sequencer), current_block_number);
 
 		let requests_range = read.range().ok_or(Error::<T>::InvalidUpdate)?;
 
-		Pallet::<T>::deposit_event(Event::L1ReadStored((
-			l1,
+		Pallet::<T>::deposit_event(Event::L1ReadStored {
+			chain: l1,
 			sequencer,
 			dispute_period_end,
-			requests_range,
-			H256::from_slice(request_hash.as_slice()),
-		)));
+			range: requests_range,
+			hash: l1_read_hash,
+		});
 
 		Ok(().into())
 	}
@@ -1379,11 +1276,6 @@ impl<T: Config> Pallet<T> {
 			.count()
 	}
 
-	fn get_l2_requests_proof(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
-		let hash: [u8; 32] = Keccak256::digest(Self::l2_update_encoded(chain).as_slice()).into();
-		hash.into()
-	}
-
 	pub fn create_merkle_tree(
 		chain: ChainIdOf<T>,
 		range: (u128, u128),
@@ -1399,7 +1291,6 @@ impl<T: Config> Pallet<T> {
 		l2_requests.map(|txs| MerkleTree::<Keccak256Hasher>::from_leaves(txs.as_ref()))
 	}
 
-	//TODO: error handling
 	pub fn get_merkle_root(chain: ChainIdOf<T>, range: (u128, u128)) -> H256 {
 		if let Some(tree) = Self::create_merkle_tree(chain, range) {
 			H256::from(tree.root().unwrap_or_default())
@@ -1460,8 +1351,12 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn get_l2_origin_updates_counter(chain: ChainIdOf<T>) -> u128 {
+	pub(crate) fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
+	}
+
+	fn get_latest_l2_request_id(chain: ChainIdOf<T>) -> Option<u128> {
+		L2OriginRequestId::<T>::get().get(&chain).cloned().map(|v| v.saturating_sub(1))
 	}
 
 	pub fn verify_merkle_proof_for_tx(
@@ -1479,19 +1374,15 @@ impl<T: Config> Pallet<T> {
 			return false
 		}
 
-		let tx_hash = {
-			let request_to_proof: Withdrawal =
-				L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id })
-					.unwrap()
-					.0
-					.try_into()
-					.unwrap();
-			let eth_withdrawal = Pallet::<T>::to_eth_withdrawal(request_to_proof);
-			Keccak256::digest(&eth_withdrawal.abi_encode()[..]).into()
-		};
-
-		if let Some(pos) = inclusive_range.clone().position(|elem| elem == tx_id) {
-			proof.verify(root_hash.into(), &[pos], &[tx_hash], inclusive_range.count())
+		let pos = inclusive_range.clone().position(|elem| elem == tx_id);
+		let request = L2Requests::<T>::get(chain, RequestId { origin: Origin::L2, id: tx_id });
+		if let (Some((req, _)), Some(pos)) = (request, pos) {
+			proof.verify(
+				root_hash.into(),
+				&[pos],
+				&[req.abi_encode_hash().into()],
+				inclusive_range.count(),
+			)
 		} else {
 			false
 		}
@@ -1507,13 +1398,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|req| match req {
-				(L2Request::RequestResult(result), _) =>
-					Self::to_eth_request_result(result).abi_encode(),
-				(L2Request::Cancel(cancel), _) => Self::to_eth_cancel(cancel).abi_encode(),
-				(L2Request::Withdrawal(withdrawal), _) =>
-					Self::to_eth_withdrawal(withdrawal).abi_encode(),
-			})
+			.map(|(req, _hash)| req.abi_encode())
 			.unwrap_or_default()
 	}
 }

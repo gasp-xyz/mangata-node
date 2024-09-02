@@ -111,68 +111,13 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			let batch_size = Self::automatic_batch_size();
-			let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
-
 			if T::MaintenanceStatusProvider::is_maintenance() {
-				return T::DbWeight::get().reads_writes(10, 20)
+				LastMaintananceMode::<T>::put(now.saturated_into::<u128>());
 			}
 
-			for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
-				let last_id = next_id.saturating_sub(1);
-
-				let (last_batch_block_number, last_batch_id, last_id_in_batch) =
-					L2RequestsBatchLast::<T>::get()
-						.get(&chain)
-						.cloned()
-						.map(|(block_number, batch_id, (_, last_reqeust_id))| {
-							(block_number, batch_id, last_reqeust_id)
-						})
-						.unwrap_or_default();
-
-				let trigger = if last_id >= last_id_in_batch + batch_size {
-					Some(BatchSource::AutomaticSizeReached)
-				} else if now >= last_batch_block_number + batch_period {
-					Some(BatchSource::PeriodReached)
-				} else {
-					None
-				};
-
-				if let Some(trigger) = trigger {
-					if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
-						let batch_id = last_batch_id.saturating_add(1);
-						let range_start = last_id_in_batch.saturating_add(1);
-						let range_end = sp_std::cmp::min(
-							range_start.saturating_add(batch_size.saturating_sub(1)),
-							last_id,
-						);
-						if range_end >= range_start {
-							L2RequestsBatch::<T>::insert(
-								(chain, batch_id),
-								(now, (range_start, range_end), updater.clone()),
-							);
-							L2RequestsBatchLast::<T>::mutate(|batches| {
-								batches.insert(
-									chain.clone(),
-									(now, batch_id, (range_start, range_end)),
-								);
-							});
-							Pallet::<T>::deposit_event(Event::TxBatchCreated {
-								chain: *chain,
-								source: trigger,
-								assignee: updater,
-								batch_id,
-								range: (range_start, range_end),
-							});
-							break
-						}
-					} else {
-						continue
-					}
-				}
-			}
-
-			Self::end_dispute_period();
+			Self::maybe_create_batch(now);
+			Self::schedule_request_for_execution_if_dispute_period_has_passsed(now);
+			Self::execute_requests_from_execute_queue(now);
 			T::DbWeight::get().reads_writes(20, 20)
 		}
 	}
@@ -236,15 +181,23 @@ pub mod pallet {
 		u128,
 		Blake2_128Concat,
 		T::ChainId,
-		(T::AccountId, messages::L1Update),
+		(T::AccountId, messages::L1Update, H256),
 		OptionQuery,
 	>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
 	// queue of all updates that went through dispute period and are ready to be processed
-	pub type UpdatesExecutionQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, u128, (T::ChainId, messages::L1Update), OptionQuery>;
+	pub type UpdatesExecutionQueue<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		u128,
+		(BlockNumberFor<T>, T::ChainId, messages::L1Update),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub type LastMaintananceMode<T: Config> = StorageValue<_, u128, OptionQuery>;
 
 	#[pallet::storage]
 	// Id of the next update to be executed
@@ -363,6 +316,14 @@ pub mod pallet {
 		DepositRefundCreated {
 			chain: ChainIdOf<T>,
 			refunded_request_id: RequestId,
+		},
+		L1ReadScheduledForExecution {
+			chain: T::ChainId,
+			hash: H256,
+		},
+		L1ReadIgnoredBecauseOfMaintenanceMode {
+			chain: T::ChainId,
+			hash: H256,
 		},
 	}
 
@@ -485,8 +446,8 @@ pub mod pallet {
 			);
 
 			Self::validate_l1_update(chain, &update)?;
-			Self::schedule_requests(chain, update.into());
-			Self::process_requests();
+			let now = <frame_system::Pallet<T>>::block_number();
+			Self::schedule_requests(now, chain, update.into());
 			Ok(().into())
 		}
 
@@ -513,7 +474,7 @@ pub mod pallet {
 				Ok::<_, Error<T>>(())
 			})?;
 
-			let (submitter, request) =
+			let (submitter, request, _) =
 				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
@@ -634,7 +595,7 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let (submitter, _request) =
+			let (submitter, _request, _hash) =
 				PendingSequencerUpdates::<T>::take(requests_to_cancel, chain)
 					.ok_or(Error::<T>::RequestDoesNotExist)?;
 
@@ -791,7 +752,7 @@ impl<T: Config> Pallet<T> {
 		request_id: u128,
 	) -> Option<bool> {
 		let pending_requests_to_process = PendingSequencerUpdates::<T>::get(request_id, chain);
-		if let Some((_, l1_update)) = pending_requests_to_process {
+		if let Some((_, l1_update, _hash)) = pending_requests_to_process {
 			let calculated_hash = Self::calculate_hash_of_sequencer_update(l1_update);
 			Some(hash == calculated_hash)
 		} else {
@@ -799,27 +760,97 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	// should run each block, check if dispute period ended, if yes, process pending requests
-	fn end_dispute_period() {
+	fn maybe_create_batch(now: BlockNumberFor<T>) {
+		let batch_size = Self::automatic_batch_size();
+		let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
+
+		if T::MaintenanceStatusProvider::is_maintenance() {
+			return
+		}
+
+		for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
+			let last_id = next_id.saturating_sub(1);
+
+			let (last_batch_block_number, last_batch_id, last_id_in_batch) =
+				L2RequestsBatchLast::<T>::get()
+					.get(&chain)
+					.cloned()
+					.map(|(block_number, batch_id, (_, last_reqeust_id))| {
+						(block_number, batch_id, last_reqeust_id)
+					})
+					.unwrap_or_default();
+
+			let trigger = if last_id >= last_id_in_batch + batch_size {
+				Some(BatchSource::AutomaticSizeReached)
+			} else if now >= last_batch_block_number + batch_period {
+				Some(BatchSource::PeriodReached)
+			} else {
+				None
+			};
+
+			if let Some(trigger) = trigger {
+				if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
+					let batch_id = last_batch_id.saturating_add(1);
+					let range_start = last_id_in_batch.saturating_add(1);
+					let range_end = sp_std::cmp::min(
+						range_start.saturating_add(batch_size.saturating_sub(1)),
+						last_id,
+					);
+					if range_end >= range_start {
+						L2RequestsBatch::<T>::insert(
+							(chain, batch_id),
+							(now, (range_start, range_end), updater.clone()),
+						);
+						L2RequestsBatchLast::<T>::mutate(|batches| {
+							batches
+								.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
+						});
+						Pallet::<T>::deposit_event(Event::TxBatchCreated {
+							chain: *chain,
+							source: trigger,
+							assignee: updater,
+							batch_id,
+							range: (range_start, range_end),
+						});
+						break
+					}
+				} else {
+					continue
+				}
+			}
+		}
+	}
+
+	fn schedule_request_for_execution_if_dispute_period_has_passsed(now: BlockNumberFor<T>) {
 		let block_number = <frame_system::Pallet<T>>::block_number().saturated_into::<u128>();
 
-		for (l1, pending_requests_to_process) in
+		for (l1, (sequencer, requests, l1_read_hash)) in
 			PendingSequencerUpdates::<T>::iter_prefix(block_number)
 		{
-			log!(debug, "dispute end {:?}", block_number);
-
-			let sequencer = &pending_requests_to_process.0;
-			let requests = pending_requests_to_process.1.clone();
-
-			if T::SequencerStakingProvider::is_active_sequencer(l1, sequencer) {
+			if T::SequencerStakingProvider::is_active_sequencer(l1, &sequencer) {
 				SequencersRights::<T>::mutate(l1, |sequencers| {
-					if let Some(rights) = sequencers.get_mut(sequencer) {
+					if let Some(rights) = sequencers.get_mut(&sequencer) {
 						rights.read_rights.saturating_accrue(T::RightsMultiplier::get());
 					}
 				});
 			}
 
-			Self::schedule_requests(l1, requests.clone());
+			let update_creation_block = block_number.saturating_sub(Self::get_dispute_period());
+			match LastMaintananceMode::<T>::get() {
+				Some(last_maintanance_mode) if update_creation_block < last_maintanance_mode => {
+					Self::deposit_event(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
+				_ => {
+					Self::schedule_requests(now, l1, requests.clone());
+					Self::deposit_event(Event::L1ReadScheduledForExecution {
+						chain: l1,
+						hash: l1_read_hash,
+					});
+				},
+			}
 		}
 
 		let _ = PendingSequencerUpdates::<T>::clear_prefix(
@@ -827,7 +858,6 @@ impl<T: Config> Pallet<T> {
 			u32::MAX,
 			None,
 		);
-		Self::process_requests();
 	}
 
 	fn process_single_request(l1: T::ChainId, request: messages::L1UpdateRequest) {
@@ -857,16 +887,30 @@ impl<T: Config> Pallet<T> {
 		LastProcessedRequestOnL2::<T>::insert(l1, request.id());
 	}
 
-	fn process_requests() {
-		let mut limit = Self::get_max_requests_per_block();
+	fn execute_requests_from_execute_queue(now: BlockNumberFor<T>) {
+		if T::MaintenanceStatusProvider::is_maintenance() &&
+			UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get()).is_some()
+		{
+			let new_id: u128 = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|v| {
+				v.saturating_inc();
+				*v
+			});
+			UpdatesExecutionQueueNextId::<T>::put(new_id);
+			return
+		}
 
+		let mut limit = Self::get_max_requests_per_block();
 		loop {
 			if limit == 0 {
 				return
 			}
-			if let Some((l1, r)) =
+			if let Some((scheduled_at, l1, r)) =
 				UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
+				if scheduled_at == now {
+					return
+				}
+
 				for req in r
 					.into_requests()
 					.into_iter()
@@ -896,7 +940,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn schedule_requests(chain: T::ChainId, update: messages::L1Update) {
+	fn schedule_requests(now: BlockNumberFor<T>, chain: T::ChainId, update: messages::L1Update) {
 		let max_id = [
 			update.pendingDeposits.iter().map(|r| r.requestId.id).max(),
 			update.pendingCancelResolutions.iter().map(|r| r.requestId.id).max(),
@@ -911,9 +955,11 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		let id = LastScheduledUpdateIdInExecutionQueue::<T>::get();
-		LastScheduledUpdateIdInExecutionQueue::<T>::put(id + 1);
-		UpdatesExecutionQueue::<T>::insert(id + 1, (chain, update));
+		let id = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|id| {
+			id.saturating_inc();
+			*id
+		});
+		UpdatesExecutionQueue::<T>::insert(id, (now, chain, update));
 	}
 
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1174,15 +1220,15 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::MultipleUpdatesInSingleBlock
 		);
 
-		// insert pending_requests
+		let update: messages::eth_abi::L1Update = read.clone().into();
+		let request_hash = Keccak256::digest(&update.abi_encode());
+		let l1_read_hash = H256::from_slice(request_hash.as_slice());
+
 		PendingSequencerUpdates::<T>::insert(
 			dispute_period_end,
 			l1,
-			(sequencer.clone(), read.clone()),
+			(sequencer.clone(), read.clone(), l1_read_hash),
 		);
-
-		let update: messages::eth_abi::L1Update = read.clone().into();
-		let request_hash = Keccak256::digest(&update.abi_encode());
 
 		LastUpdateBySequencer::<T>::insert((l1, &sequencer), current_block_number);
 
@@ -1193,7 +1239,7 @@ impl<T: Config> Pallet<T> {
 			sequencer,
 			dispute_period_end,
 			range: requests_range,
-			hash: H256::from_slice(request_hash.as_slice()),
+			hash: l1_read_hash,
 		});
 
 		Ok(().into())

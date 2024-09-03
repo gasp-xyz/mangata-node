@@ -355,6 +355,7 @@ pub mod pallet {
 		UnknownAliasAccount,
 		FailedDepositDoesExists,
 		EmptyBatch,
+		TokenDoestNotExist,
 	}
 
 	#[pallet::config]
@@ -530,7 +531,7 @@ pub mod pallet {
 
 			let eth_asset = T::AssetAddressConverter::convert((chain, token_address));
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset)
-				.ok_or(Error::<T>::MathOverflow)?;
+				.ok_or(Error::<T>::TokenDoestNotExist)?;
 
 			// fail will occur if user has not enough balance
 			<T as Config>::Tokens::ensure_can_withdraw(
@@ -1351,7 +1352,8 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
+	#[cfg(test)]
+	fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
 	}
 

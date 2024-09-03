@@ -1087,6 +1087,28 @@ fn test_withdraw() {
 
 #[test]
 #[serial]
+fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_without_mocks([Mocks::GetL1AssetId], || {
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(None);
+
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					hex!("0123456789012345678901234567890123456789"),
+					1_000_000u128,
+				),
+				Error::<Test>::TokenDoestNotExist
+			);
+		});
+}
+
+#[test]
+#[serial]
 fn error_on_withdraw_too_much() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
@@ -1608,7 +1630,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 
 #[test]
 #[serial]
-fn consider_awaiting_l1_READ_update_in_dispute_period_when_assigning_initial_read_rights_to_sequencer(
+fn consider_awaiting_l1_sequencer_update_in_dispute_period_when_assigning_initial_read_rights_to_sequencer(
 ) {
 	ExtBuilder::new()
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
@@ -1797,8 +1819,8 @@ fn test_merkle_proof_works() {
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootAutomaticBatchSize()
-{
+fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root_automatic_batch_size(
+) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.build()
@@ -1885,7 +1907,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootA
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passes() {
+fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_passes() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.build()

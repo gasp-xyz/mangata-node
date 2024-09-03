@@ -24,7 +24,6 @@ pub mod consts {
 	pub const ALICE: u64 = 2;
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
-	pub const EVE: u64 = 5;
 	pub const CHAIN: crate::messages::Chain = crate::messages::Chain::Ethereum;
 }
 

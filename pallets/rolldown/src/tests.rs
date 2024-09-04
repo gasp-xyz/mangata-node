@@ -4,7 +4,7 @@ use crate::{
 	*,
 };
 
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok, error::BadOrigin};
 use hex_literal::hex;
 use messages::L1UpdateRequest;
 
@@ -2725,5 +2725,88 @@ fn test_sequencer_rights_are_returned_when_maintanance_mode_is_turned_off_before
 
 			forward_to_block::<Test>(20);
 			assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 0_u128.into());
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_can_only_be_called_as_sudo() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			assert_noop!(
+				Rolldown::force_create_batch(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					(10, 20),
+					ALICE
+				),
+				BadOrigin
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_fails_for_invalid_range() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (10, 20), ALICE),
+				Error::<Test>::InvalidRange
+			);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 10), ALICE),
+				Error::<Test>::InvalidRange
+			);
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (0, 1), ALICE),
+				Error::<Test>::InvalidRange
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_succeeds_for_valid_range() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 1), ALICE)
+				.unwrap();
+
+			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
 		})
 }

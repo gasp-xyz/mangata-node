@@ -690,6 +690,37 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// Froce create batch and assigns it to provided sequencer
+		/// provided requests range must exists - otherwise `[Error::InvalidRange]` error will be returned
+		pub fn force_create_batch(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			range: (u128, u128),
+			sequencer_account: AccountIdOf<T>,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
+			ensure!(
+				L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range.0 }),
+				Error::<T>::InvalidRange
+			);
+
+			ensure!(
+				L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range.1 }),
+				Error::<T>::InvalidRange
+			);
+
+			Self::persist_batch_and_deposit_event(chain, range, sequencer_account);
+			Ok(().into())
+		}
 	}
 }
 

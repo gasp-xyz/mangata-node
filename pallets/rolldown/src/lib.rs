@@ -619,25 +619,13 @@ pub mod pallet {
 			sequencer_account: Option<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
 
 			ensure!(
 				!T::MaintenanceStatusProvider::is_maintenance(),
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let asignee = if let Some(sequencer) = sequencer_account {
-				ensure!(
-					T::SequencerStakingProvider::is_active_sequencer_alias(
-						chain, &sequencer, &sender
-					),
-					Error::<T>::UnknownAliasAccount
-				);
-				sequencer
-			} else {
-				sender.clone()
-			};
-
+			let asignee = Self::get_batch_asignee(chain, &sender, sequencer_account)?;
 			let extra_fee = ManualBatchExtraFee::<T>::get();
 			if !extra_fee.is_zero() {
 				<T as Config>::Tokens::transfer(
@@ -649,41 +637,8 @@ pub mod pallet {
 				)?;
 			}
 
-			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
-				.get(&chain)
-				.cloned()
-				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
-				.unwrap_or_default();
-
-			let batch_id = last_batch_id.saturating_add(1u128);
-			let range_start = last_request_id.saturating_add(1u128);
-
-			ensure!(
-				L2Requests::<T>::contains_key(
-					chain,
-					RequestId { origin: Origin::L2, id: range_start }
-				),
-				Error::<T>::EmptyBatch
-			);
-			let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
-			ensure!(range_end >= range_start, Error::<T>::InvalidRange);
-
-			L2RequestsBatch::<T>::insert(
-				(chain, batch_id),
-				(now, (range_start, range_end), asignee.clone()),
-			);
-			L2RequestsBatchLast::<T>::mutate(|batches| {
-				batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
-			});
-
-			Pallet::<T>::deposit_event(Event::TxBatchCreated {
-				chain,
-				source: BatchSource::Manual,
-				assignee: asignee.clone(),
-				batch_id,
-				range: (range_start, range_end),
-			});
-
+			let range = Self::get_batch_range_from_available_requests(chain)?;
+			Self::persist_batch_and_deposit_event(chain, range, asignee);
 			Ok(().into())
 		}
 
@@ -1402,6 +1357,73 @@ impl<T: Config> Pallet<T> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
 			.map(|(req, _hash)| req.abi_encode())
 			.unwrap_or_default()
+	}
+
+	fn get_batch_range_from_available_requests(
+		chain: ChainIdOf<T>,
+	) -> Result<(u128, u128), Error<T>> {
+		let last_request_id = L2RequestsBatchLast::<T>::get()
+			.get(&chain)
+			.cloned()
+			.map(|(_block_number, _batch_id, range)| range.1)
+			.unwrap_or_default();
+		let range_start = last_request_id.saturating_add(1u128);
+		let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+
+		if L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range_start }) {
+			Ok((range_start, range_end))
+		} else {
+			Err(Error::<T>::EmptyBatch)
+		}
+	}
+
+	fn get_next_batch_id(chain: ChainIdOf<T>) -> u128 {
+		let last_batch_id = L2RequestsBatchLast::<T>::get()
+			.get(&chain)
+			.cloned()
+			.map(|(_block_number, batch_id, _range)| batch_id)
+			.unwrap_or_default();
+		last_batch_id.saturating_add(1u128)
+	}
+
+	fn persist_batch_and_deposit_event(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		asignee: T::AccountId,
+	) {
+		let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+		let batch_id = Self::get_next_batch_id(chain);
+
+		L2RequestsBatch::<T>::insert((chain, batch_id), (now, (range.0, range.1), asignee.clone()));
+
+		L2RequestsBatchLast::<T>::mutate(|batches| {
+			batches.insert(chain.clone(), (now, batch_id, (range.0, range.1)));
+		});
+
+		Pallet::<T>::deposit_event(Event::TxBatchCreated {
+			chain,
+			source: BatchSource::Manual,
+			assignee: asignee.clone(),
+			batch_id,
+			range: (range.0, range.1),
+		});
+	}
+
+	/// Deduces account that batch should be assigened to
+	fn get_batch_asignee(
+		chain: ChainIdOf<T>,
+		sender: &T::AccountId,
+		sequencer_account: Option<T::AccountId>,
+	) -> Result<T::AccountId, Error<T>> {
+		if let Some(sequencer) = sequencer_account {
+			if T::SequencerStakingProvider::is_active_sequencer_alias(chain, &sequencer, sender) {
+				Ok(sequencer)
+			} else {
+				Err(Error::<T>::UnknownAliasAccount)
+			}
+		} else {
+			Ok(sender.clone())
+		}
 	}
 }
 

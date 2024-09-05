@@ -196,7 +196,7 @@ fn deposit_fail_creates_update_with_status_false() {
 			));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
-			assert!(!FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
+			assert!(!FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
 
 			forward_to_block::<Test>(20);
 
@@ -206,7 +206,7 @@ fn deposit_fail_creates_update_with_status_false() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			assert!(FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
+			assert!(FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
 }
@@ -236,7 +236,8 @@ fn test_refund_of_failed_withdrawal() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128).unwrap();
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 
 			assert_event_emitted!(Event::DepositRefundCreated {
 				refunded_request_id: RequestId::new(Origin::L1, 1u128),
@@ -264,11 +265,46 @@ fn test_withdrawal_can_be_refunded_only_once() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(20);
-			Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128).unwrap();
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 			assert_err!(
-				Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128),
+				Rolldown::refund_failed_deposit(
+					RuntimeOrigin::signed(CHARLIE),
+					consts::CHAIN,
+					1u128
+				),
 				Error::<Test>::FailedDepositDoesExists
 			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_withdrawal_can_be_refunded_only_by_account_deposit_recipient() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
+					timeStamp: sp_core::U256::from(1),
+				})])
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			forward_to_block::<Test>(20);
+
+			assert_err!(
+				Rolldown::refund_failed_deposit(RuntimeOrigin::signed(ALICE), consts::CHAIN, 1u128),
+				Error::<Test>::FailedDepositDoesExists
+			);
+
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 		});
 }
 

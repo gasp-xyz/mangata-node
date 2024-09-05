@@ -155,7 +155,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
 	pub type FailedL1Deposits<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), OptionQuery>;
+		StorageMap<_, Blake2_128Concat, (T::AccountId, T::ChainId, u128), (), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -356,6 +356,7 @@ pub mod pallet {
 		FailedDepositDoesExists,
 		EmptyBatch,
 		TokenDoestNotExist,
+		NotDepositRecipient,
 	}
 
 	#[pallet::config]
@@ -656,15 +657,16 @@ pub mod pallet {
 
 		#[pallet::call_index(8)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// only deposit recipient can initiate refund failed deposit
 		pub fn refund_failed_deposit(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			request_id: u128,
 		) -> DispatchResult {
-			let _ = ensure_root(origin)?;
+			let sender = ensure_signed(origin)?;
 
 			// NOTE: failed deposits are not reachable at this point
-			let _ = FailedL1Deposits::<T>::take((chain, request_id))
+			let _ = FailedL1Deposits::<T>::take((sender, chain, request_id))
 				.ok_or(Error::<T>::FailedDepositDoesExists)?;
 
 			let l2_request_id = Self::acquire_l2_request_id(chain);
@@ -855,7 +857,8 @@ impl<T: Config> Pallet<T> {
 		let status = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
 				.or_else(|err| {
-					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
+					let who: T::AccountId = T::AddressConverter::convert(deposit.depositRecipient);
+					FailedL1Deposits::<T>::insert((who, l1, deposit.requestId.id), ());
 					Err(err)
 				}),
 			messages::L1UpdateRequest::CancelResolution(cancel) =>

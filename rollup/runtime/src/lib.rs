@@ -171,10 +171,18 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+pub struct ExcludeRegisterNonL1Asset;
+
+impl Contains<RuntimeCall> for ExcludeRegisterNonL1Asset {
+	fn contains(call: &RuntimeCall) -> bool {
+		matches!(call, RuntimeCall::AssetRegistry(orml_asset_registry::Call::register_asset { .. }))
+	}
+}
+
 // Configure FRAME pallets to include in runtime.
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = frame_support::traits::EverythingBut<(ExcludeRegisterNonL1Asset)>;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = cfg::frame_system::RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).

@@ -254,11 +254,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_deposits)]
-	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_withdrawals)]
-	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	pub type L2RequestsBatch<T: Config> = StorageMap<

@@ -76,6 +76,6 @@ sp_api::decl_runtime_apis! {
 			input_amount: Balance,
 		) -> Option<bool>;
 		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>>;
-		fn get_total_number_of_swaps() -> u32;
+		fn get_total_number_of_swaps() -> u128;
 	}
 }

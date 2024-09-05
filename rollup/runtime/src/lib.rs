@@ -891,11 +891,11 @@ impl_runtime_apis! {
 			Some(Rolldown::get_max_accepted_request_id_on_l2(chain).saturating_sub(Rolldown::get_last_processed_request_on_l2(chain)))
 		}
 
-		fn get_total_number_of_deposits() -> u32 {
+		fn get_total_number_of_deposits() -> u128 {
 			Rolldown::get_total_number_of_deposits()
 		}
 
-		fn get_total_number_of_withdrawals() -> u32 {
+		fn get_total_number_of_withdrawals() -> u128 {
 			Rolldown::get_total_number_of_withdrawals()
 		}
 
@@ -1249,7 +1249,7 @@ impl_runtime_apis! {
 			.collect::<Vec<_>>()
 		}
 
-		fn get_total_number_of_swaps() -> u32 {
+		fn get_total_number_of_swaps() -> u128 {
 			Xyk::get_total_number_of_swaps()
 		}
 	}

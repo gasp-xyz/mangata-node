@@ -13,8 +13,8 @@ sp_api::decl_runtime_apis! {
 		fn verify_sequencer_update(chain: Chain, hash: H256, request_id: u128) -> Option<bool>;
 		fn get_last_processed_request_on_l2(chain: Chain) -> Option<u128>;
 		fn get_number_of_pending_requests(chain: Chain) -> Option<u128>;
-		fn get_total_number_of_deposits() -> u32;
-		fn get_total_number_of_withdrawals() -> u32;
+		fn get_total_number_of_deposits() -> u128;
+		fn get_total_number_of_withdrawals() -> u128;
 		fn get_merkle_root(chain: Chain, range : (u128, u128)) -> H256;
 		fn get_merkle_proof_for_tx(chain: Chain, range : (u128, u128), tx_id: u128) -> Vec<H256>;
 		fn verify_merkle_proof_for_tx(chain: Chain, range: (u128, u128), tx_id: u128, root: H256, proof: Vec<H256>) -> bool;

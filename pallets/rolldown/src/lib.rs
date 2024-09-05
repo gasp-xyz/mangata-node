@@ -355,7 +355,7 @@ pub mod pallet {
 		UnknownAliasAccount,
 		FailedDepositDoesExists,
 		EmptyBatch,
-		TokenDoestNotExist,
+		TokenDoesNotExist,
 		NotDepositRecipient,
 	}
 
@@ -532,7 +532,7 @@ pub mod pallet {
 
 			let eth_asset = T::AssetAddressConverter::convert((chain, token_address));
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset)
-				.ok_or(Error::<T>::TokenDoestNotExist)?;
+				.ok_or(Error::<T>::TokenDoesNotExist)?;
 
 			// fail will occur if user has not enough balance
 			<T as Config>::Tokens::ensure_can_withdraw(

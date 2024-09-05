@@ -1138,7 +1138,7 @@ fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
 					hex!("0123456789012345678901234567890123456789"),
 					1_000_000u128,
 				),
-				Error::<Test>::TokenDoestNotExist
+				Error::<Test>::TokenDoesNotExist
 			);
 		});
 }

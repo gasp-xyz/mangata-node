@@ -380,7 +380,8 @@ pub mod pallet {
 				Error::<T>::SequencerAlreadyInActiveSet
 			);
 			ensure!(
-				ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize,
+				ActiveSequencers::<T>::get().get(&chain).unwrap_or(&Default::default()).len() <
+					T::MaxSequencers::get() as usize,
 				Error::<T>::MaxSequencersLimitReached
 			);
 			ensure!(

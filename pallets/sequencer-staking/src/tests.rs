@@ -2,7 +2,7 @@ use crate::{
 	mock::{consts::*, *},
 	*,
 };
-use core::{convert::TryFrom, future::pending};
+use core::{convert::TryFrom, future::pending, str::CharIndices};
 use frame_support::{assert_err, assert_ok};
 use hex_literal::hex;
 use mockall::predicate::eq;
@@ -944,5 +944,68 @@ fn test_sequencer_cannot_join_if_its_account_is_used_as_sequencer_alias() {
 			),
 			Error::<Test>::SequencerAccountIsActiveSequencerAlias
 		);
+	});
+}
+
+#[test]
+#[serial]
+fn pallet_max_sequencers_limit_is_considered_separately_for_each_set() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+		ActiveSequencers::<Test>::kill();
+
+		let seq_limit = <<Test as Config>::MaxSequencers as Get<u32>>::get() as AccountId;
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock
+			.expect()
+			.times(2 * seq_limit as usize)
+			.return_const(());
+		const FIRST_CHAIN_ID: u32 = 1;
+		const SECOND_CHAIN_ID: u32 = 3;
+
+		{
+			for seq in 0u64..seq_limit {
+				Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
+				assert_ok!(SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq),
+					FIRST_CHAIN_ID,
+					MINIMUM_STAKE,
+					None
+				));
+				assert!(SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &seq));
+			}
+
+			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
+			assert_ok!(SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(seq_limit),
+				FIRST_CHAIN_ID,
+				MINIMUM_STAKE,
+				None
+			));
+			assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &seq_limit));
+		}
+
+		{
+			for seq in 0u64..seq_limit {
+				Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
+				assert_ok!(SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq),
+					SECOND_CHAIN_ID,
+					MINIMUM_STAKE,
+					None
+				));
+				assert!(SequencerStaking::is_active_sequencer(SECOND_CHAIN_ID, &seq));
+			}
+
+			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
+			assert_ok!(SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(seq_limit),
+				SECOND_CHAIN_ID,
+				MINIMUM_STAKE,
+				None
+			));
+			assert!(!SequencerStaking::is_active_sequencer(SECOND_CHAIN_ID, &seq_limit));
+		}
 	});
 }

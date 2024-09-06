@@ -1091,6 +1091,7 @@ fn test_conversion_address() {
 fn test_withdraw() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), MILLION);
 			Rolldown::withdraw(
@@ -1118,6 +1119,17 @@ fn test_withdraw() {
 				L2Request::Withdrawal(withdrawal_update)
 			);
 			assert_eq!(Rolldown::get_next_l2_request_id(Chain::Ethereum), 2);
+
+			// check withdraw fee
+			let fee = <<Test as Config>::WithdrawFee as sp_core::TypedGet>::get();
+			assert_eq!(
+				TokensOf::<Test>::free_balance(NativeCurrencyId::get(), &ALICE),
+				MILLION - fee
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(NativeCurrencyId::get(), &Rolldown::treasury_account_id()),
+				fee
+			);
 		});
 }
 
@@ -1167,6 +1179,7 @@ fn error_on_withdraw_too_much() {
 fn test_reproduce_bug_with_incremental_updates() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
+		.issue(ALICE, NativeCurrencyId::get(), 10_000u128)
 		.execute_with_default_mocks(|| {
 			let first_update = L1UpdateBuilder::new()
 				.with_requests(vec![
@@ -1828,6 +1841,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 fn test_merkle_proof_works() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			for i in 0..500 {
 				Rolldown::withdraw(
@@ -1859,6 +1873,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 ) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let selected_sequencer_mock =
@@ -1946,6 +1961,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_passes() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
@@ -2010,6 +2026,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 ) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
@@ -2058,6 +2075,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 fn test_period_based_batch_respects_sized_batches() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let selected_sequencer_mock =
@@ -2116,6 +2134,7 @@ fn test_period_based_batch_respects_sized_batches() {
 fn test_create_manual_batch_works() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
@@ -2161,6 +2180,7 @@ fn test_create_manual_batch_works() {
 fn test_create_manual_batch_fails_for_invalid_alias_account() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2190,6 +2210,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 fn test_create_manual_batch_work_for_alias_account() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2227,6 +2248,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 fn test_merkle_proof_for_single_element_tree_is_empty() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			Rolldown::withdraw(
 				RuntimeOrigin::signed(ALICE),
@@ -2288,6 +2310,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests() {
 fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2321,6 +2344,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 fn manual_batches_not_allowed_in_maintanance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2352,6 +2376,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2382,6 +2407,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();

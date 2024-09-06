@@ -36,8 +36,10 @@ pub struct IssuanceInfo<Balance> {
 	pub linear_issuance_blocks: u32,
 	// The split of issuance assgined to liquidity_mining
 	pub liquidity_mining_split: Perbill,
-	// The split of issuance assgined to staking
+	// The split of issuance assgined to staking/collators
 	pub staking_split: Perbill,
+	// The split of issuance assgined to sequencers
+	pub sequencers_split: Perbill,
 	// The total mga allocated to crowdloan rewards
 	pub total_crowdloan_allocation: Balance,
 }
@@ -122,6 +124,9 @@ pub mod pallet {
 		/// The account id that holds the staking issuance
 		type StakingIssuanceVault: Get<Self::AccountId>;
 		#[pallet::constant]
+		/// The account id that holds the sequencers issuance
+		type SequencersIssuanceVault: Get<Self::AccountId>;
+		#[pallet::constant]
 		/// The total mga allocated for crowdloans
 		type TotalCrowdloanAllocation: Get<BalanceOf<Self>>;
 		#[pallet::constant]
@@ -139,6 +144,9 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The split of issuance for staking rewards
 		type StakingSplit: Get<Perbill>;
+		#[pallet::constant]
+		/// The split of issuance for sequencers rewards
+		type SequencersSplit: Get<Perbill>;
 		#[pallet::constant]
 		/// The number of blocks the tge tokens vest for
 		type TGEReleasePeriod: Get<u32>;
@@ -171,7 +179,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_session_issuance)]
 	pub type SessionIssuance<T: Config> =
-		StorageMap<_, Twox64Concat, u32, Option<(BalanceOf<T>, BalanceOf<T>)>, ValueQuery>;
+		StorageMap<_, Twox64Concat, u32, Option<(BalanceOf<T>, BalanceOf<T>, BalanceOf<T>)>, ValueQuery>;
 
 	#[pallet::error]
 	/// Errors
@@ -278,9 +286,9 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Issuance for upcoming session issued
-		SessionIssuanceIssued(u32, BalanceOf<T>, BalanceOf<T>),
+		SessionIssuanceIssued(u32, BalanceOf<T>, BalanceOf<T>, BalanceOf<T>),
 		/// Issuance for upcoming session calculated and recorded
-		SessionIssuanceRecorded(u32, BalanceOf<T>, BalanceOf<T>),
+		SessionIssuanceRecorded(u32, BalanceOf<T>, BalanceOf<T>, BalanceOf<T>),
 		/// Issuance configuration has been finalized
 		IssuanceConfigInitialized(IssuanceInfo<BalanceOf<T>>),
 		/// TGE has been finalized
@@ -316,14 +324,17 @@ impl<T: Config> ProvideTotalCrowdloanRewardAllocation<T> for Pallet<T> {
 }
 
 impl<T: Config> GetIssuance<BalanceOf<T>> for Pallet<T> {
-	fn get_all_issuance(n: u32) -> Option<(BalanceOf<T>, BalanceOf<T>)> {
+	fn get_all_issuance(n: u32) -> Option<(BalanceOf<T>, BalanceOf<T>, BalanceOf<T>)> {
 		SessionIssuance::<T>::get(n)
 	}
 	fn get_liquidity_mining_issuance(n: u32) -> Option<BalanceOf<T>> {
-		SessionIssuance::<T>::get(n).map(|(x, _)| x)
+		SessionIssuance::<T>::get(n).map(|(x, _, _)| x)
 	}
 	fn get_staking_issuance(n: u32) -> Option<BalanceOf<T>> {
-		SessionIssuance::<T>::get(n).map(|(_, x)| x)
+		SessionIssuance::<T>::get(n).map(|(_, x, _)| x)
+	}
+	fn get_sequencer_issuance(n: u32) -> Option<BalanceOf<T>> {
+		SessionIssuance::<T>::get(n).map(|(_, _, x)| x)
 	}
 }
 
@@ -341,6 +352,7 @@ impl<T: Config> Pallet<T> {
 			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 			liquidity_mining_split: T::LiquidityMiningSplit::get(),
 			staking_split: T::StakingSplit::get(),
+			sequencers_split: T::SequencersSplit::get(),
 			total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
 		};
 
@@ -356,6 +368,8 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
+				.ok_or(Error::<T>::IssuanceConfigInvalid)?
+				.checked_add(&issuance_config.sequencers_split)
 				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
 				Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
@@ -428,6 +442,7 @@ impl<T: Config> Pallet<T> {
 			issuance_config.liquidity_mining_split * current_round_issuance;
 
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
+		let sequencers_issuance = issuance_config.sequencers_split * current_round_issuance;
 
 		T::LiquidityMiningApi::distribute_rewards(liquidity_mining_issuance);
 
@@ -442,22 +457,29 @@ impl<T: Config> Pallet<T> {
 				&T::StakingIssuanceVault::get(),
 				staking_issuance,
 			);
+			let sequencers_issuance_issued = T::Tokens::deposit_creating(
+				T::NativeCurrencyId::get().into(),
+				&T::SequencersIssuanceVault::get(),
+				sequencers_issuance,
+			);
 			Self::deposit_event(Event::SessionIssuanceIssued(
 				current_round,
 				liquidity_mining_issuance_issued.peek(),
 				staking_issuance_issued.peek(),
+				sequencers_issuance_issued.peek(),
 			));
 		}
 
 		SessionIssuance::<T>::insert(
 			current_round,
-			Some((liquidity_mining_issuance, staking_issuance)),
+			Some((liquidity_mining_issuance, staking_issuance, sequencers_issuance)),
 		);
 
 		Pallet::<T>::deposit_event(Event::SessionIssuanceRecorded(
 			current_round,
 			liquidity_mining_issuance,
 			staking_issuance,
+			sequencers_issuance
 		));
 
 		Ok(())

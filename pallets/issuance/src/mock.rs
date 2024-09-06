@@ -111,14 +111,17 @@ parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub const SequencersIssuanceVaultId: PalletId = PalletId(*b"py/seqiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+	pub SequencersIssuanceVault: AccountId = SequencersIssuanceVaultId::get().into_account_truncating();
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
 	pub const IssuanceCap: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
-	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const StakingSplit: Perbill = Perbill::from_parts(222222222);
+	pub const SequencersSplit: Perbill = Perbill::from_parts(222222222);
 	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
 	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
 	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
@@ -146,11 +149,13 @@ impl pallet_issuance::Config for Test {
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
+	type SequencersIssuanceVault = SequencersIssuanceVault;
 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
 	type IssuanceCap = IssuanceCap;
 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
 	type LiquidityMiningSplit = LiquidityMiningSplit;
 	type StakingSplit = StakingSplit;
+	type SequencersSplit = SequencersSplit;
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
@@ -253,7 +258,7 @@ pub type StakeCurrency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
 	let mut session_number: u32;
-	let mut session_issuance: (Balance, Balance);
+	let mut session_issuance: (Balance, Balance, Balance);
 	let mut block_issuance: Balance;
 	while System::block_number() < n {
 		System::on_finalize(System::block_number());
@@ -262,7 +267,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		session_issuance = <Issuance as GetIssuance<_>>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1) /
+		block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2) /
 			(BlocksPerRound::get().saturated_into::<u128>());
 
 		if let Some(x) = expected_amount_minted {

@@ -1191,12 +1191,15 @@ pub mod config {
 			pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 			pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 			pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+			pub const SequencerIssuanceVaultId: PalletId = PalletId(*b"py/seqiv");
+			pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
 
 			pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
 			pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
 			pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
 			pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
-			pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+			pub const StakingSplit: Perbill = Perbill::from_parts(344444444);
+			pub const SequencerSplit: Perbill = Perbill::from_parts(100000000);
 			pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
 			pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
 			pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
@@ -1429,6 +1432,7 @@ pub mod config {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 			pub const RequestsPerBlock: u128 = 50;
 			pub const RightsMultiplier: u128 = 1;
+			pub const WithdrawFee: Balance = 50 * currency::DOLLARS;
 		}
 
 		#[cfg(feature = "fast-runtime")]

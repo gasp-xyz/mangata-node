@@ -178,8 +178,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_session_issuance)]
-	pub type SessionIssuance<T: Config> =
-		StorageMap<_, Twox64Concat, u32, Option<(BalanceOf<T>, BalanceOf<T>, BalanceOf<T>)>, ValueQuery>;
+	pub type SessionIssuance<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		u32,
+		Option<(BalanceOf<T>, BalanceOf<T>, BalanceOf<T>)>,
+		ValueQuery,
+	>;
 
 	#[pallet::error]
 	/// Errors
@@ -479,7 +484,7 @@ impl<T: Config> Pallet<T> {
 			current_round,
 			liquidity_mining_issuance,
 			staking_issuance,
-			sequencers_issuance
+			sequencers_issuance,
 		));
 
 		Ok(())

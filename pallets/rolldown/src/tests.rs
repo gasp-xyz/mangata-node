@@ -1127,7 +1127,10 @@ fn test_withdraw() {
 				MILLION - fee
 			);
 			assert_eq!(
-				TokensOf::<Test>::free_balance(NativeCurrencyId::get(), &Rolldown::treasury_account_id()),
+				TokensOf::<Test>::free_balance(
+					NativeCurrencyId::get(),
+					&Rolldown::treasury_account_id()
+				),
 				fee
 			);
 		});

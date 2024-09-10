@@ -276,7 +276,11 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
 		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
-		StakeProvided { chain: T::ChainId, added_stake: BalanceOf<T>, total_stake: BalanceOf<T> },
+		StakeProvided {
+			chain: T::ChainId,
+			added_stake: BalanceOf<T>,
+			total_stake: BalanceOf<T>,
+		},
 		/// Notify about reward periods that has been paid (sequencer, payout rounds, any rewards left)
 		SequencerRewardsDistributed(T::AccountId, PayoutRounds),
 		/// Paid the account the balance as liquid rewards

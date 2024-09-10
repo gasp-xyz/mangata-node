@@ -247,6 +247,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
 		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
+		StakeProvided { chain: T::ChainId, added_stake: BalanceOf<T>, total_stake: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -372,6 +373,12 @@ pub mod pallet {
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
 			T::Currency::reserve(&sender, stake_amount)?;
+
+			Self::deposit_event(Event::StakeProvided {
+				chain,
+				added_stake: stake_amount,
+				total_stake: sequencer_stake,
+			});
 
 			Ok(().into())
 		}

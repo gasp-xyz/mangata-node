@@ -241,6 +241,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
 		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
+		StakeProvided { chain: T::ChainId, added_stake: BalanceOf<T>, total_stake: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -317,19 +318,22 @@ pub mod pallet {
 				Error::<T>::SequencerAccountIsActiveSequencerAlias
 			);
 
-			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
-				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-				if *stake >= MinimalStakeAmount::<T>::get() &&
-					!Self::is_active_sequencer(chain, &sender)
-				{
-					if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
-						active_sequencers.entry(chain).or_default().try_push(sender.clone())
-					}) {
-						Self::announce_sequencer_joined_active_set(chain, sender.clone());
+			let total_stake = <SequencerStake<T>>::try_mutate(
+				(&sender, &chain),
+				|stake| -> Result<BalanceOf<T>, Error<T>> {
+					*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
+					if *stake >= MinimalStakeAmount::<T>::get() &&
+						!Self::is_active_sequencer(chain, &sender)
+					{
+						if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+							active_sequencers.entry(chain).or_default().try_push(sender.clone())
+						}) {
+							Self::announce_sequencer_joined_active_set(chain, sender.clone());
+						}
 					}
-				}
-				Ok(())
-			})?;
+					Ok(*stake)
+				},
+			)?;
 
 			if let Some(alias_account) = alias_account {
 				ensure!(
@@ -347,6 +351,12 @@ pub mod pallet {
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
 			T::Currency::reserve(&sender, stake_amount)?;
+
+			Self::deposit_event(Event::StakeProvided {
+				chain,
+				added_stake: stake_amount,
+				total_stake,
+			});
 
 			Ok(().into())
 		}

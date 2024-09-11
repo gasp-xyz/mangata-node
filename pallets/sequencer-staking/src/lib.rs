@@ -248,6 +248,7 @@ pub mod pallet {
 		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
 		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
 		StakeProvided { chain: T::ChainId, added_stake: BalanceOf<T>, total_stake: BalanceOf<T> },
+		StakeRemoved { chain: T::ChainId, removed_stake: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -451,6 +452,8 @@ pub mod pallet {
 			}
 
 			SequencerStake::<T>::remove((&sender, &chain));
+
+			Self::deposit_event(Event::StakeRemoved { chain, removed_stake: sequencer_stake });
 			Ok(().into())
 		}
 

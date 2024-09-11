@@ -55,6 +55,12 @@ mod mock;
 
 pub use pallet::*;
 
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum StakeAction {
+	StakeOnly,
+	StakeAndJoinActiveSet,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -297,19 +303,25 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		/// provides stake for the purpose of becoming sequencers
-		/// if stake amount is greater than `MinimalStakeAmount` and limit of active sequencres is not
-		/// reached, sequencer automatically joins active set, otherwise sequencer can call `rejoin_active_sequencers` when there are free seats
+		///
 		/// - `chain` - chain for which to assign stake_amount
 		/// - `stake_amont` - amount of stake
 		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
 		///                     of updates in pallet-rolldown. Alias account can not be set to another
 		///                     active sequencer or to some account that is already used as
 		///                     alias_account for another sequencer
+		/// - `stake_action` - determines what are candidate expectations regarding joining active set,
+		/// 	* 'StakeOnly' - sequencer only provides stake, but does not join active set.
+		/// 	* 'StakeAndJoinActiveSet' - sequencer provides stake and joins active set. Fails if
+		/// 								candidate didnt join active set or if candidate is already in active set.
+		///		Candiate can also choose to call `rejoin_active_sequencers` later when there are free seats to
+		///		join active set
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
 			alias_account: Option<T::AccountId>,
+			stake_action: StakeAction,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -318,22 +330,32 @@ pub mod pallet {
 				Error::<T>::SequencerAccountIsActiveSequencerAlias
 			);
 
-			let total_stake = <SequencerStake<T>>::try_mutate(
+			let sequencer_stake = <SequencerStake<T>>::try_mutate(
 				(&sender, &chain),
 				|stake| -> Result<BalanceOf<T>, Error<T>> {
 					*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-					if *stake >= MinimalStakeAmount::<T>::get() &&
-						!Self::is_active_sequencer(chain, &sender)
-					{
-						if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
-							active_sequencers.entry(chain).or_default().try_push(sender.clone())
-						}) {
-							Self::announce_sequencer_joined_active_set(chain, sender.clone());
-						}
-					}
 					Ok(*stake)
 				},
 			)?;
+
+			if let StakeAction::StakeAndJoinActiveSet = stake_action {
+				ensure!(
+					!Self::is_active_sequencer(chain, &sender),
+					Error::<T>::SequencerAlreadyInActiveSet
+				);
+				ensure!(
+					sequencer_stake >= MinimalStakeAmount::<T>::get(),
+					Error::<T>::NotEnoughSequencerStake
+				);
+				ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+					active_sequencers
+						.entry(chain)
+						.or_default()
+						.try_push(sender.clone())
+						.or(Err(Error::<T>::MaxSequencersLimitReached))
+				})?;
+				Self::announce_sequencer_joined_active_set(chain, sender.clone());
+			};
 
 			if let Some(alias_account) = alias_account {
 				ensure!(
@@ -355,7 +377,7 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeProvided {
 				chain,
 				added_stake: stake_amount,
-				total_stake,
+				total_stake: sequencer_stake,
 			});
 
 			Ok(().into())
@@ -390,7 +412,8 @@ pub mod pallet {
 				Error::<T>::SequencerAlreadyInActiveSet
 			);
 			ensure!(
-				ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize,
+				ActiveSequencers::<T>::get().get(&chain).unwrap_or(&Default::default()).len() <
+					T::MaxSequencers::get() as usize,
 				Error::<T>::MaxSequencersLimitReached
 			);
 			ensure!(
@@ -572,7 +595,8 @@ impl<T: Config> Pallet<T> {
 		);
 	}
 
-	pub(crate) fn set_active_sequencers(
+	#[cfg(test)]
+	fn set_active_sequencers(
 		iter: impl IntoIterator<Item = (T::ChainId, T::AccountId)>,
 	) -> Result<(), Error<T>> {
 		ActiveSequencers::<T>::kill();

@@ -104,7 +104,7 @@ fn process_single_deposit() {
 			sequencer: ALICE,
 			dispute_period_end: current_block_number + dispute_period,
 			range: (1u128, 1u128).into(),
-			hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19").into()
+			hash: hex!("75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398").into()
 		});
 	});
 }
@@ -154,6 +154,7 @@ fn deposit_executed_after_dispute_period() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -185,6 +186,7 @@ fn deposit_fail_creates_update_with_status_false() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -225,6 +227,7 @@ fn test_refund_of_failed_withdrawal() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -260,6 +263,7 @@ fn test_withdrawal_can_be_refunded_only_once() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -292,6 +296,7 @@ fn test_withdrawal_can_be_refunded_only_by_account_deposit_recipient() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -322,6 +327,7 @@ fn l1_upate_executed_immaidately_if_force_submitted() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -354,6 +360,7 @@ fn each_request_executed_only_once() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
@@ -444,7 +451,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 					updater: ALICE,
 					canceler: BOB,
 					range: (1u128, 1u128).into(),
-					hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19")
+					hash: hex!("75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398")
 						.into()
 				}
 				.into()
@@ -761,6 +768,7 @@ fn test_l1_update_hash_compare_with_solidty() {
 					tokenAddress: hex!("0000000000000000000000000000000000000003"),
 					amount: 4u128.into(),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				}),
 				L1UpdateRequest::CancelResolution(messages::CancelResolution {
 					requestId: RequestId::new(Origin::L1, 6u128),
@@ -773,7 +781,7 @@ fn test_l1_update_hash_compare_with_solidty() {
 		let hash = Rolldown::calculate_hash_of_sequencer_update(update);
 		assert_eq!(
 			hash,
-			hex!("af1c7908d0762a131c827a13d9a6afde3e6f1a4a842d96708935d57fc2a0af7a").into()
+			hex!("68e72614919768cae8e3cdcc417cd406d59b61ff3b0efaad1bd5b3982a128f36").into()
 		);
 	});
 }
@@ -1041,6 +1049,7 @@ fn execute_two_consecutive_incremental_reqeusts() {
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
 				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
 			});
 
 			let first_update = L1UpdateBuilder::default()
@@ -1099,6 +1108,7 @@ fn test_withdraw() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000_000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -1107,6 +1117,7 @@ fn test_withdraw() {
 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: U256::from(1_000_000u128),
+				ferryTip: U256::from(0),
 			};
 			// check iftokens were burned
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
@@ -1137,6 +1148,7 @@ fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
 					ETH_RECIPIENT_ACCOUNT,
 					hex!("0123456789012345678901234567890123456789"),
 					1_000_000u128,
+					0u128,
 				),
 				Error::<Test>::TokenDoesNotExist
 			);
@@ -1155,7 +1167,8 @@ fn error_on_withdraw_too_much() {
 					consts::CHAIN,
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
-					10_000_000u128
+					10_000_000u128,
+					0u128,
 				),
 				Error::<Test>::NotEnoughAssets
 			);
@@ -1176,6 +1189,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
+						ferryTip: sp_core::U256::from(0),
 					}),
 					L1UpdateRequest::Deposit(messages::Deposit {
 						requestId: RequestId::new(Origin::L1, 2u128),
@@ -1183,6 +1197,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
+						ferryTip: sp_core::U256::from(0),
 					}),
 				])
 				.with_offset(1u128)
@@ -1195,6 +1210,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -1212,6 +1228,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				10u128,
+				0u128,
 			)
 			.unwrap();
 			assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 2_u128.into());
@@ -1484,7 +1501,8 @@ fn test_maintenance_mode_blocks_extrinsics() {
 				consts::CHAIN,
 				Default::default(),
 				Default::default(),
-				Default::default()
+				Default::default(),
+				Default::default(),
 			),
 			Error::<Test>::BlockedByMaintenanceMode
 		);
@@ -1836,6 +1854,7 @@ fn test_merkle_proof_works() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					i as u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -1881,6 +1900,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -1893,6 +1913,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
@@ -1910,6 +1931,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -1926,6 +1948,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -1965,6 +1988,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -1982,6 +2006,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2035,6 +2060,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2080,6 +2106,7 @@ fn test_period_based_batch_respects_sized_batches() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -2094,6 +2121,7 @@ fn test_period_based_batch_respects_sized_batches() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2125,6 +2153,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
@@ -2142,6 +2171,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2175,6 +2205,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2204,6 +2235,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2234,6 +2266,7 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1,
+				0u128,
 			)
 			.unwrap();
 
@@ -2303,6 +2336,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -2333,6 +2367,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2365,6 +2400,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2396,6 +2432,7 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128,
 				)
 				.unwrap();
 			}
@@ -2426,6 +2463,7 @@ fn test_withdrawals_are_not_allowed_in_maintanance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128,
 				),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
@@ -2508,6 +2546,7 @@ fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -2523,7 +2562,7 @@ fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
 			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"81edcec3dc1c825d51e584bc1026167892d961b26a60ac745a97fb197473ab6f"
+					"6b5cabff8b0f12e9fac3708cad00edba4cdb2b3b8a3ab935073a303c53333c2b"
 				)),
 			});
 		})
@@ -2549,7 +2588,7 @@ fn test_reqeust_scheduled_for_execution_are_not_execute_in_the_same_block() {
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 
@@ -2585,7 +2624,7 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_executed_in_ma
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 			is_maintenance_mock.checkpoint();
@@ -2630,7 +2669,7 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_scheduled_for_
 			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 
@@ -2660,7 +2699,7 @@ fn test_sequencer_can_submit_same_update_again_after_maintenance_mode() {
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 			is_maintenance_mock.checkpoint();
@@ -2802,6 +2841,7 @@ fn test_force_create_batch_fails_for_invalid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 
@@ -2831,6 +2871,7 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128,
 			)
 			.unwrap();
 

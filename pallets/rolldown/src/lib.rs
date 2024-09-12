@@ -522,6 +522,7 @@ pub mod pallet {
 			recipient: [u8; 20],
 			token_address: [u8; 20],
 			amount: u128,
+			ferry_tip: u128,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
 
@@ -559,6 +560,7 @@ pub mod pallet {
 				withdrawalRecipient: recipient.clone(),
 				tokenAddress: token_address.clone(),
 				amount: U256::from(amount),
+				ferryTip: U256::from(ferry_tip),
 			};
 			// add cancel request to pending updates
 			L2Requests::<T>::insert(

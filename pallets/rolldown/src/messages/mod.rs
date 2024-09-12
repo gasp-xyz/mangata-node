@@ -146,6 +146,7 @@ pub struct Withdrawal {
 	pub withdrawalRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
 	pub amount: U256,
+	pub ferryTip: U256,
 }
 
 impl NativeToEthMapping for Withdrawal {
@@ -187,8 +188,9 @@ pub struct Deposit {
 	pub requestId: RequestId,
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
-	pub amount: sp_core::U256,
-	pub timeStamp: sp_core::U256,
+	pub amount: U256,
+	pub timeStamp: U256,
+	pub ferryTip: U256,
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
@@ -322,6 +324,7 @@ impl TryFrom<eth_abi::Deposit> for Deposit {
 			tokenAddress,
 			amount: from_eth_u256(deposit.amount),
 			timeStamp: from_eth_u256(deposit.timeStamp),
+			ferryTip: from_eth_u256(deposit.ferryTip),
 		})
 	}
 }

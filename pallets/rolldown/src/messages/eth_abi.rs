@@ -45,6 +45,7 @@ impl From<crate::Withdrawal> for Withdrawal {
 			withdrawalRecipient: withdrawal.withdrawalRecipient.into(),
 			tokenAddress: withdrawal.tokenAddress.into(),
 			amount: crate::messages::to_eth_u256(withdrawal.amount.into()),
+			ferryTip: crate::messages::to_eth_u256(withdrawal.ferryTip.into()),
 		}
 	}
 }
@@ -112,6 +113,7 @@ impl From<crate::messages::Deposit> for Deposit {
 			tokenAddress: deposit.tokenAddress.into(),
 			amount: to_eth_u256(deposit.amount),
 			timeStamp: to_eth_u256(deposit.timeStamp),
+			ferryTip: to_eth_u256(deposit.ferryTip),
 		}
 	}
 }
@@ -125,6 +127,7 @@ sol! {
 		address tokenAddress;
 		uint256 amount;
 		uint256 timeStamp;
+		uint256 ferryTip;
 	}
 
 
@@ -167,6 +170,7 @@ sol! {
 		address withdrawalRecipient;
 		address tokenAddress;
 		uint256 amount;
+		uint256 ferryTip;
 	}
 
 	#[derive(Debug, PartialEq)]

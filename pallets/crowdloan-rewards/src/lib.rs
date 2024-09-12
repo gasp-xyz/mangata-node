@@ -621,7 +621,7 @@ pub mod pallet {
 					// signature
 					ensure!(
 						signature.verify(
-							Keccak256::digest(payload.clone()).as_slice(),
+							payload.as_slice(),
 							&relay_account.clone().into()
 						),
 						Error::<T>::InvalidClaimSignature

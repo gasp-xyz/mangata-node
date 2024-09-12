@@ -50,10 +50,10 @@ fn process_all_schedules_in_current_session() {
 			panic!("couldnt process all schedules within the session");
 		}
 
-		if !ProofOfStake::is_new_session()
-			&& ProofOfStake::list_metadata().pos == ProofOfStake::list_metadata().tail
+		if !ProofOfStake::is_new_session() &&
+			ProofOfStake::list_metadata().pos == ProofOfStake::list_metadata().tail
 		{
-			break;
+			break
 		}
 		roll_to_next_block::<Test>();
 	}

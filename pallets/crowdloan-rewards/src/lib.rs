@@ -472,8 +472,8 @@ pub mod pallet {
 			}
 
 			ensure!(
-				crowdloan_allocation_amount
-					>= InitializedRewardAmount::<T>::get(CrowdloanId::<T>::get()),
+				crowdloan_allocation_amount >=
+					InitializedRewardAmount::<T>::get(CrowdloanId::<T>::get()),
 				Error::<T>::AllocationDoesNotMatch
 			);
 
@@ -514,14 +514,14 @@ pub mod pallet {
 
 			// Ensure we dont go over funds
 			ensure!(
-				total_initialized_rewards + incoming_rewards
-					<= Pallet::<T>::get_crowdloan_allocation(CrowdloanId::<T>::get()),
+				total_initialized_rewards + incoming_rewards <=
+					Pallet::<T>::get_crowdloan_allocation(CrowdloanId::<T>::get()),
 				Error::<T>::BatchBeyondFundPot
 			);
 
 			for (relay_account, native_account, reward) in &rewards {
-				if ClaimedRelayChainIds::<T>::get(CrowdloanId::<T>::get(), relay_account).is_some()
-					|| UnassociatedContributions::<T>::get(CrowdloanId::<T>::get(), relay_account)
+				if ClaimedRelayChainIds::<T>::get(CrowdloanId::<T>::get(), relay_account).is_some() ||
+					UnassociatedContributions::<T>::get(CrowdloanId::<T>::get(), relay_account)
 						.is_some()
 				{
 					// Dont fail as this is supposed to be called with batch calls and we
@@ -531,7 +531,7 @@ pub mod pallet {
 						native_account.clone(),
 						*reward,
 					));
-					continue;
+					continue
 				}
 
 				total_initialized_rewards += *reward;
@@ -545,7 +545,7 @@ pub mod pallet {
 						native_account.clone(),
 						*reward,
 					));
-					continue;
+					continue
 				}
 
 				if let Some(native_account) = native_account {

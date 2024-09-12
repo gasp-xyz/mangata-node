@@ -201,7 +201,7 @@ pub mod pallet {
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
 			let phase = Phase::<T>::get(); // R:1
 			if phase == BootstrapPhase::Finished {
-				return T::DbWeight::get().reads(1);
+				return T::DbWeight::get().reads(1)
 			}
 
 			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get()
@@ -717,7 +717,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(());
+					return Ok(())
 				},
 			}
 
@@ -725,7 +725,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(());
+					return Ok(())
 				},
 			}
 
@@ -733,7 +733,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(());
+					return Ok(())
 				},
 			}
 
@@ -741,7 +741,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(());
+					return Ok(())
 				},
 			}
 
@@ -940,7 +940,7 @@ impl<T: Config> Pallet<T> {
 		let (liq_token_id, _) = Self::minted_liquidity();
 		let total_rewards = rewards.checked_add(&rewards_vested).ok_or(Error::<T>::MathOverflow)?;
 		if total_rewards == BalanceOf::<T>::zero() {
-			return Ok(());
+			return Ok(())
 		}
 
 		T::Currency::transfer(
@@ -1062,8 +1062,8 @@ impl<T: Config> Pallet<T> {
 		*/
 		let (pre_second_token_valuation, _) = Valuations::<T>::get();
 		ensure!(
-			token_id != Self::first_token_id()
-				|| pre_second_token_valuation != BalanceOf::<T>::zero(),
+			token_id != Self::first_token_id() ||
+				pre_second_token_valuation != BalanceOf::<T>::zero(),
 			Error::<T>::FirstProvisionInSecondTokenId
 		);
 
@@ -1245,8 +1245,8 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> Contains<(CurrencyIdOf<T>, CurrencyIdOf<T>)> for Pallet<T> {
 	fn contains(pair: &(CurrencyIdOf<T>, CurrencyIdOf<T>)) -> bool {
 		if BootstrapSchedule::<T>::get().is_some() {
-			pair == &(Self::first_token_id(), Self::second_token_id())
-				|| pair == &(Self::second_token_id(), Self::first_token_id())
+			pair == &(Self::first_token_id(), Self::second_token_id()) ||
+				pair == &(Self::second_token_id(), Self::first_token_id())
 		} else {
 			false
 		}

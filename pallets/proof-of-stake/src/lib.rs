@@ -267,7 +267,7 @@ pub mod pallet {
 			// NOTE: 1R
 			if Self::is_new_session() {
 				SchedulesListMetadata::<T>::mutate(|s| s.pos = None);
-				return Default::default();
+				return Default::default()
 			}
 
 			for _ in 0..T::SchedulesPerBlock::get() {
@@ -372,15 +372,15 @@ pub mod pallet {
 						}
 					}
 				} else {
-					break;
+					break
 				}
 			}
 
 			// always use same amount of block space even if no schedules were processed
-			T::DbWeight::get().reads(1)
-				+ T::DbWeight::get().writes(1)
-				+ T::DbWeight::get().reads(T::SchedulesPerBlock::get().into())
-				+ T::DbWeight::get().writes(T::SchedulesPerBlock::get().into())
+			T::DbWeight::get().reads(1) +
+				T::DbWeight::get().writes(1) +
+				T::DbWeight::get().reads(T::SchedulesPerBlock::get().into()) +
+				T::DbWeight::get().writes(T::SchedulesPerBlock::get().into())
 		}
 	}
 
@@ -1321,8 +1321,8 @@ impl<T: Config> Pallet<T> {
 			rewards_info
 				.activated_amount
 				.checked_sub(&ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id))
-				.ok_or(Error::<T>::MathOverflow)?
-				>= liquidity_assets_burned,
+				.ok_or(Error::<T>::MathOverflow)? >=
+				liquidity_assets_burned,
 			Error::<T>::LiquidityLockedIn3rdpartyRewards
 		);
 
@@ -1574,43 +1574,43 @@ impl<T: Config> Pallet<T> {
 		token_id: CurrencyIdOf<T>,
 		amount_per_session: BalanceOf<T>,
 	) -> bool {
-		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session).into()
-			>= T::Min3rdPartyRewardValutationPerSession::get()
+		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session).into() >=
+			T::Min3rdPartyRewardValutationPerSession::get()
 		{
-			return true;
+			return true
 		}
 
-		if token_id == Self::native_token_id()
-			&& amount_per_session.into() >= T::Min3rdPartyRewardValutationPerSession::get()
+		if token_id == Self::native_token_id() &&
+			amount_per_session.into() >= T::Min3rdPartyRewardValutationPerSession::get()
 		{
-			return true;
+			return true
 		}
 
 		if <T as Config>::ValuationApi::valuate_non_liquidity_token(token_id, amount_per_session)
 			.into() >= T::Min3rdPartyRewardValutationPerSession::get()
 		{
-			return true;
+			return true
 		}
 
-		return false;
+		return false
 	}
 
 	fn verify_rewards_min_volume(token_id: CurrencyIdOf<T>) -> bool {
 		if token_id == Self::native_token_id() {
-			return true;
+			return true
 		}
 
 		if let Some((mga_reserves, _)) = <T as Config>::ValuationApi::get_pool_state(token_id) {
-			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get();
+			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get()
 		}
 
 		if let Ok((mga_reserves, _)) =
 			<T as Config>::ValuationApi::get_reserves(Self::native_token_id(), token_id)
 		{
-			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get();
+			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get()
 		}
 
-		return false;
+		return false
 	}
 }
 
@@ -1761,10 +1761,9 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
-					Some(total_weight) if !total_weight.is_zero() => {
+					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
-							.mul_floor(liquidity_mining_rewards)
-					},
+							.mul_floor(liquidity_mining_rewards),
 					_ => BalanceOf::<T>::zero(),
 				};
 

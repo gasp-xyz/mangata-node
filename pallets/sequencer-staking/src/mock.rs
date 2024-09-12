@@ -234,7 +234,7 @@ impl ExtBuilder {
 		self.create_if_does_not_exists(token_id);
 		self.ext
 			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
-		return self;
+		return self
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {

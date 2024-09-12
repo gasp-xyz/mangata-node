@@ -1311,8 +1311,8 @@ fn reproduce_mgx654_bug_report() {
 			orml_tokens::AccountData {
 				free: SINGLE_USER_REWARDS,
 				reserved: 0u128,
-				frozen: SINGLE_USER_REWARDS
-					- (<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)
+				frozen: SINGLE_USER_REWARDS -
+					(<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)
 			}
 		);
 
@@ -1323,9 +1323,9 @@ fn reproduce_mgx654_bug_report() {
 			orml_tokens::AccountData {
 				free: SINGLE_USER_REWARDS,
 				reserved: 0u128,
-				frozen: (SINGLE_USER_REWARDS
-					- (<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS))
-					* 10 / 50
+				frozen: (SINGLE_USER_REWARDS -
+					(<Test as Config>::InitializationPayment::get() * SINGLE_USER_REWARDS)) *
+					10 / 50
 			}
 		);
 

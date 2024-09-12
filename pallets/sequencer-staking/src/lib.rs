@@ -151,7 +151,7 @@ pub mod pallet {
 			let active_sequencers = ActiveSequencers::<T>::get();
 			// let active_chains = active_sequencers.keys().collect()::<BTreeSet<_>>();
 			if !(n % T::BlocksForSequencerUpdate::get().into()).is_zero() {
-				return
+				return;
 			}
 
 			NextSequencerIndex::<T>::mutate(|idxs| {
@@ -466,8 +466,8 @@ pub mod pallet {
 				Error::<T>::SequencerAlreadyInActiveSet
 			);
 			ensure!(
-				ActiveSequencers::<T>::get().get(&chain).unwrap_or(&Default::default()).len() <
-					T::MaxSequencers::get() as usize,
+				ActiveSequencers::<T>::get().get(&chain).unwrap_or(&Default::default()).len()
+					< T::MaxSequencers::get() as usize,
 				Error::<T>::MaxSequencersLimitReached
 			);
 			ensure!(
@@ -611,8 +611,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn maybe_remove_sequencer_from_active_set(chain: T::ChainId, sequencer: T::AccountId) {
-		if <SequencerStake<T>>::get((sequencer.clone(), chain)) < MinimalStakeAmount::<T>::get() &&
-			Self::is_active_sequencer(chain, &sequencer)
+		if <SequencerStake<T>>::get((sequencer.clone(), chain)) < MinimalStakeAmount::<T>::get()
+			&& Self::is_active_sequencer(chain, &sequencer)
 		{
 			Self::remove_sequencers_from_active_set(chain, [sequencer].iter().cloned().collect());
 		}
@@ -624,7 +624,7 @@ impl<T: Config> Pallet<T> {
 		deactivating_sequencers: BTreeSet<T::AccountId>,
 	) {
 		if deactivating_sequencers.is_empty() {
-			return
+			return;
 		}
 
 		let active_seqs = ActiveSequencers::<T>::get();
@@ -695,7 +695,7 @@ impl<T: Config> Pallet<T> {
 			RoundSequencerRewardInfo::<T>::iter_prefix(sequencer.clone()).enumerate()
 		{
 			if (id as u32) >= limit {
-				break
+				break;
 			}
 
 			Self::payout_reward(round, sequencer.clone(), reward)?;
@@ -809,12 +809,12 @@ impl<T: Config> SequencerStakingRewardsTrait<AccountIdOf<T>, RoundIndex> for Pal
 		// payout is now - duration rounds ago => now - duration > 0 else return early
 		let duration = T::RewardPaymentDelay::get();
 		if round < duration {
-			return
+			return;
 		}
 		let round_to_payout = round.saturating_sub(duration);
 		let total = <Points<T>>::take(round_to_payout);
 		if total.is_zero() {
-			return
+			return;
 		}
 		let total_issuance =
 			T::Issuance::get_sequencer_issuance(round_to_payout).unwrap_or(Zero::zero());
@@ -842,7 +842,9 @@ impl<T: Config> EnsureOrigin<<T as frame_system::Config>::RuntimeOrigin>
 					BalanceOf<T>,
 					ChainIdOf<T>,
 				>>::is_active_sequencer(todo!(), &who) =>
-				Ok(who.clone()),
+			{
+				Ok(who.clone())
+			},
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}

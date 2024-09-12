@@ -677,7 +677,7 @@ pub mod pallet {
 				}
 				self.total_backing =
 					self.total_backing.checked_sub(&amount).ok_or(Error::<T>::MathError)?;
-				return Ok((true, amount))
+				return Ok((true, amount));
 			}
 			// else (no item removed from the top)
 			self.bottom_delegations = self
@@ -715,13 +715,13 @@ pub mod pallet {
 					self.total_backing =
 						self.total_backing.checked_add(&more).ok_or(Error::<T>::MathError)?;
 					in_top = true;
-					break
+					break;
 				}
 			}
 			// if delegator was increased in top delegations
 			if in_top {
 				self.sort_top_delegations();
-				return Ok(true)
+				return Ok(true);
 			}
 			// else delegator to increase must exist in bottom
 			// >pop requires push later on to reset in case it isn't used
@@ -736,7 +736,7 @@ pub mod pallet {
 					self.total_backing =
 						self.total_backing.checked_add(&more).ok_or(Error::<T>::MathError)?;
 					move_2_top = x.amount > lowest_top.amount;
-					break
+					break;
 				}
 			}
 			if move_2_top {
@@ -784,7 +784,7 @@ pub mod pallet {
 						}
 					}
 					in_top = true;
-					break
+					break;
 				}
 			}
 			if in_top {
@@ -809,14 +809,14 @@ pub mod pallet {
 						self.total_backing.checked_sub(&less).ok_or(Error::<T>::MathError)?;
 					self.add_top_delegation(highest_bottom);
 					self.add_bottom_delegation(lowest_top);
-					return Ok(false)
+					return Ok(false);
 				} else {
 					// no existing bottom delegators so update both counters the same magnitude
 					self.total_counted =
 						self.total_counted.checked_sub(&less).ok_or(Error::<T>::MathError)?;
 					self.total_backing =
 						self.total_backing.checked_sub(&less).ok_or(Error::<T>::MathError)?;
-					return Ok(true)
+					return Ok(true);
 				}
 			}
 			for x in &mut self.bottom_delegations {
@@ -824,7 +824,7 @@ pub mod pallet {
 					x.amount = x.amount.checked_sub(&less).ok_or(Error::<T>::MathError)?;
 					self.total_backing =
 						self.total_backing.checked_sub(&less).ok_or(Error::<T>::MathError)?;
-					break
+					break;
 				}
 			}
 			self.sort_bottom_delegations();
@@ -1166,7 +1166,7 @@ pub mod pallet {
 								balance_amt.into(),
 								in_top,
 							));
-							return Ok(())
+							return Ok(());
 						}
 					}
 					Err(Error::<T>::DelegationDNE.into())
@@ -1219,10 +1219,10 @@ pub mod pallet {
 									balance_amt.into(),
 									in_top,
 								));
-								return Ok(())
+								return Ok(());
 							} else {
 								// must rm entire delegation if x.amount <= less or cancel request
-								return Err(Error::<T>::DelegationBelowMin.into())
+								return Err(Error::<T>::DelegationBelowMin.into());
 							}
 						}
 					}
@@ -1993,8 +1993,8 @@ pub mod pallet {
 				Error::<T>::TooLowCurrentStakingLiquidityTokensCount
 			);
 			ensure!(
-				staking_liquidity_tokens.contains_key(&liquidity_token) ||
-					liquidity_token == T::NativeTokenId::get(),
+				staking_liquidity_tokens.contains_key(&liquidity_token)
+					|| liquidity_token == T::NativeTokenId::get(),
 				Error::<T>::StakingLiquidityTokenNotListed
 			);
 
@@ -2305,8 +2305,8 @@ pub mod pallet {
 				ensure!(state.is_active(), Error::<T>::CannotDelegateIfLeaving);
 				// delegation after first
 				ensure!(
-					Self::valuate_bond(collator_state.liquidity_token, amount) >=
-						T::MinDelegation::get(),
+					Self::valuate_bond(collator_state.liquidity_token, amount)
+						>= T::MinDelegation::get(),
 					Error::<T>::DelegationBelowMin
 				);
 				ensure!(
@@ -2339,8 +2339,8 @@ pub mod pallet {
 			// This check is hard
 			// There is no other way to add to a collators delegation count
 			ensure!(
-				collator_state.delegators.0.len() <
-					T::MaxTotalDelegatorsPerCandidate::get() as usize,
+				collator_state.delegators.0.len()
+					< T::MaxTotalDelegatorsPerCandidate::get() as usize,
 				Error::<T>::ExceedMaxTotalDelegatorsPerCandidate
 			);
 			ensure!(
@@ -2533,11 +2533,12 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			let added_liquidity_token: CurrencyIdOf<T> = match paired_or_liquidity_token {
-				PairedOrLiquidityToken::Paired(x) =>
+				PairedOrLiquidityToken::Paired(x) => {
 					T::StakingLiquidityTokenValuator::get_liquidity_asset(
 						x.into(),
 						T::NativeTokenId::get().into(),
-					)?,
+					)?
+				},
 				PairedOrLiquidityToken::Liquidity(x) => {
 					T::StakingLiquidityTokenValuator::get_liquidity_token_mga_pool(x.into())?;
 					x
@@ -2572,11 +2573,12 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			let removed_liquidity_token: CurrencyIdOf<T> = match paired_or_liquidity_token {
-				PairedOrLiquidityToken::Paired(x) =>
+				PairedOrLiquidityToken::Paired(x) => {
 					T::StakingLiquidityTokenValuator::get_liquidity_asset(
 						x.into(),
 						T::NativeTokenId::get().into(),
-					)?,
+					)?
+				},
 				PairedOrLiquidityToken::Liquidity(x) => x,
 			};
 
@@ -2758,8 +2760,8 @@ pub mod pallet {
 					let collator_candidate_state = <CandidateState<T>>::get(&collator_candidate)
 						.ok_or(Error::<T>::CandidateDNE)?;
 					ensure!(
-						Some(aggregator.clone()) ==
-							candidate_aggregator_map.remove(collator_candidate),
+						Some(aggregator.clone())
+							== candidate_aggregator_map.remove(collator_candidate),
 						Error::<T>::CandidateNotAggregatingUnderAggregator
 					);
 
@@ -2802,8 +2804,9 @@ pub mod pallet {
 				ExistenceRequirement::AllowDeath,
 			)?;
 			match kind {
-				RewardKind::Collator =>
-					Self::deposit_event(Event::Rewarded(round, to.clone(), amt)),
+				RewardKind::Collator => {
+					Self::deposit_event(Event::Rewarded(round, to.clone(), amt))
+				},
 				RewardKind::Delegator(collator) => Self::deposit_event(Event::DelegatorDueReward(
 					round,
 					collator.clone(),
@@ -3130,12 +3133,12 @@ pub mod pallet {
 			// payout is now - duration rounds ago => now - duration > 0 else return early
 			let duration = T::RewardPaymentDelay::get();
 			if now < duration {
-				return
+				return;
 			}
 			let round_to_payout = now.saturating_sub(duration);
 			let total = <Points<T>>::take(round_to_payout);
 			if total.is_zero() {
-				return
+				return;
 			}
 			let total_issuance =
 				T::Issuance::get_staking_issuance(round_to_payout).unwrap_or(Zero::zero());
@@ -3150,15 +3153,17 @@ pub mod pallet {
 				let author_rewards = author_issuance_perbill.mul_floor(total_issuance);
 
 				match round_aggregator_info.get(&author) {
-					Some(aggregator_distribution) =>
+					Some(aggregator_distribution) => {
 						Self::process_aggregator_with_rewards_and_dist(
 							round_to_payout,
 							author,
 							author_rewards,
 							aggregator_distribution,
-						),
-					None =>
-						Self::process_collator_with_rewards(round_to_payout, author, author_rewards),
+						)
+					},
+					None => {
+						Self::process_collator_with_rewards(round_to_payout, author, author_rewards)
+					},
 				}
 			}
 		}
@@ -3240,7 +3245,7 @@ pub mod pallet {
 					Some((bond, bond.amount.checked_div(&2_u32.into()).unwrap_or_default()))
 				} else {
 					match liq_token_to_pool.get(&bond.liquidity_token) {
-						Some(Some((reserve1, reserve2))) if !reserve1.is_zero() =>
+						Some(Some((reserve1, reserve2))) if !reserve1.is_zero() => {
 							multiply_by_rational_with_rounding(
 								bond.amount.into(),
 								(*reserve1).into(),
@@ -3249,7 +3254,8 @@ pub mod pallet {
 							)
 							.map(SaturatedConversion::saturated_into)
 							.map(|val| (bond, val))
-							.or(Some((bond, BalanceOf::<T>::max_value()))),
+							.or(Some((bond, BalanceOf::<T>::max_value())))
+						},
 						_ => None,
 					}
 				}
@@ -3396,7 +3402,7 @@ pub mod pallet {
 				RoundCollatorRewardInfo::<T>::iter_prefix(collator.clone()).enumerate()
 			{
 				if payouts_left < (info.delegator_rewards.len() as u32 + 1u32) {
-					break
+					break;
 				}
 
 				Self::payout_reward(

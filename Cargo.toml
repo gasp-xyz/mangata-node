@@ -163,5 +163,3 @@ sp-arithmetic = { git = "https://www.github.com/mangata-finance//polkadot-sdk", 
 sp-storage = { git = "https://www.github.com/mangata-finance//polkadot-sdk", branch = "eth-rollup-develop" }
 sp-inherents = { git = "https://www.github.com/mangata-finance//polkadot-sdk", branch = "eth-rollup-develop" }
 sp-statement-store = { git = "https://www.github.com/mangata-finance//polkadot-sdk", branch = "eth-rollup-develop" }
-
-

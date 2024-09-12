@@ -193,9 +193,9 @@ where
 
 			let q_pow = calculate_q_pow(Q, time_passed.checked_add(1)?);
 
-			let cummulative_missing_new = base -
-				base * U256::from(REWARDS_PRECISION) / q_pow -
-				user_info.missing_at_last_checkpoint;
+			let cummulative_missing_new = base
+				- base * U256::from(REWARDS_PRECISION) / q_pow
+				- user_info.missing_at_last_checkpoint;
 
 			cummulative_work =
 				cummulative_work_max_possible_for_ratio.checked_sub(cummulative_missing_new)?

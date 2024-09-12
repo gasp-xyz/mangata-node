@@ -688,8 +688,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				!T::DisabledTokens::contains(&first_asset_id) &&
-					!T::DisabledTokens::contains(&second_asset_id),
+				!T::DisabledTokens::contains(&first_asset_id)
+					&& !T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
@@ -1045,8 +1045,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				!T::DisabledTokens::contains(&first_asset_id) &&
-					!T::DisabledTokens::contains(&second_asset_id),
+				!T::DisabledTokens::contains(&first_asset_id)
+					&& !T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
@@ -1096,8 +1096,8 @@ pub mod pallet {
 				.ok_or(Error::<T>::NoSuchLiquidityAsset)?;
 
 			ensure!(
-				!T::DisabledTokens::contains(&first_asset_id) &&
-					!T::DisabledTokens::contains(&second_asset_id),
+				!T::DisabledTokens::contains(&first_asset_id)
+					&& !T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
@@ -1137,9 +1137,9 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	fn total_fee() -> u128 {
-		T::PoolFeePercentage::get() +
-			T::TreasuryFeePercentage::get() +
-			T::BuyAndBurnFeePercentage::get()
+		T::PoolFeePercentage::get()
+			+ T::TreasuryFeePercentage::get()
+			+ T::BuyAndBurnFeePercentage::get()
 	}
 
 	pub fn get_max_instant_burn_amount(
@@ -1492,7 +1492,7 @@ impl<T: Config> Pallet<T> {
 				(second_asset_amount, first_asset_amount),
 			);
 		} else {
-			return Err(DispatchError::from(Error::<T>::NoSuchPool))
+			return Err(DispatchError::from(Error::<T>::NoSuchPool));
 		}
 
 		Ok(())
@@ -1587,8 +1587,8 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 		//If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-		else if Pools::<T>::contains_key((sold_asset_id, mangata_id)) ||
-			Pools::<T>::contains_key((mangata_id, sold_asset_id))
+		else if Pools::<T>::contains_key((sold_asset_id, mangata_id))
+			|| Pools::<T>::contains_key((mangata_id, sold_asset_id))
 		{
 			// MAX: 2R (from if cond)
 
@@ -1709,7 +1709,7 @@ impl<T: Config> Pallet<T> {
 			BalanceOf::<T>::one()
 		} else {
 			initial_liquidity
-		})
+		});
 	}
 
 	fn is_pool_empty(
@@ -1720,7 +1720,7 @@ impl<T: Config> Pallet<T> {
 		let total_liquidity_assets: BalanceOf<T> =
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into());
 
-		return Ok(total_liquidity_assets.is_zero())
+		return Ok(total_liquidity_assets.is_zero());
 	}
 }
 
@@ -1744,8 +1744,8 @@ impl<T: Config> PreValidateSwaps<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> fo
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
 		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id)
+				&& !T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -1864,13 +1864,13 @@ impl<T: Config> PreValidateSwaps<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> fo
 			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
 
 			if x == y {
-				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
+				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into());
 			}
 		}
 
 		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id)
+				&& !T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -1961,8 +1961,8 @@ impl<T: Config> PreValidateSwaps<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> fo
 		);
 
 		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id)
+				&& !T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -2083,8 +2083,8 @@ impl<T: Config> PreValidateSwaps<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> fo
 			*swap_token_list.get(1).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 
 		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id)
+				&& !T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -2101,16 +2101,16 @@ impl<T: Config> PreValidateSwaps<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> fo
 			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
 
 			if x == y {
-				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
+				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into());
 			} else if x > y {
 				if !atomic_pairs_hashset.insert((x, y)) {
-					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into())
+					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into());
 				};
 			} else
 			// x < y
 			{
 				if !atomic_pairs_hashset.insert((y, x)) {
-					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into())
+					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into());
 				};
 			}
 		}
@@ -2459,7 +2459,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 
 		if bought_asset_amount < min_amount_out {
 			if err_upon_bad_slippage {
-				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
+				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount));
 			} else {
 				Pallet::<T>::deposit_event(Event::SellAssetFailedDueToSlippage(
 					sender,
@@ -2469,7 +2469,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 					bought_asset_amount,
 					min_amount_out,
 				));
-				return Ok(Default::default())
+				return Ok(Default::default());
 			}
 		}
 
@@ -2526,9 +2526,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 
 			// fail/error and revert if bad final slippage
 			if atomic_bought_asset_amount < min_amount_out {
-				return Err(Error::<T>::InsufficientOutputAmount.into())
+				return Err(Error::<T>::InsufficientOutputAmount.into());
 			} else {
-				return Ok(atomic_bought_asset_amount)
+				return Ok(atomic_bought_asset_amount);
 			}
 		})
 	}
@@ -2781,7 +2781,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 
 		if sold_asset_amount > max_amount_in {
 			if err_upon_bad_slippage {
-				return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
+				return Err(DispatchError::from(Error::<T>::InsufficientInputAmount));
 			} else {
 				Pallet::<T>::deposit_event(Event::BuyAssetFailedDueToSlippage(
 					sender,
@@ -2859,7 +2859,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 				)?;
 			}
 
-			return Ok(atomic_sold_asset_amount)
+			return Ok(atomic_sold_asset_amount);
 		})
 	}
 
@@ -2978,8 +2978,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 
 		// Ensure pool exists
 		ensure!(
-			(LiquidityAssets::<T>::contains_key((first_asset_id, second_asset_id)) ||
-				LiquidityAssets::<T>::contains_key((second_asset_id, first_asset_id))),
+			(LiquidityAssets::<T>::contains_key((first_asset_id, second_asset_id))
+				|| LiquidityAssets::<T>::contains_key((second_asset_id, first_asset_id))),
 			Error::<T>::NoSuchPool,
 		);
 
@@ -2993,9 +2993,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into());
 
 		// The pool is empty and we are basically creating a new pool and reusing the existing one
-		let second_asset_amount = if !(first_asset_reserve.is_zero() &&
-			second_asset_reserve.is_zero()) &&
-			!total_liquidity_assets.is_zero()
+		let second_asset_amount = if !(first_asset_reserve.is_zero()
+			&& second_asset_reserve.is_zero())
+			&& !total_liquidity_assets.is_zero()
 		{
 			// Calculation of required second asset amount and received liquidity token amount
 			ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
@@ -3086,8 +3086,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			T::AccountId,
 			BalanceOf<T>,
 			CurrencyIdOf<T>,
-		>>::is_enabled(liquidity_asset_id) &&
-			activate_minted_liquidity
+		>>::is_enabled(liquidity_asset_id)
+			&& activate_minted_liquidity
 		{
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<
@@ -3158,8 +3158,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			LiquidityPools::<T>::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
 
 		ensure!(
-			!T::DisabledTokens::contains(&first_asset_id) &&
-				!T::DisabledTokens::contains(&second_asset_id),
+			!T::DisabledTokens::contains(&first_asset_id)
+				&& !T::DisabledTokens::contains(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -3216,7 +3216,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		} else if provided_asset_id == second_asset_id {
 			(second_reserve, first_reserve, first_asset_id)
 		} else {
-			return Err(DispatchError::from(Error::<T>::FunctionNotAvailableForThisToken))
+			return Err(DispatchError::from(Error::<T>::FunctionNotAvailableForThisToken));
 		};
 
 		// Ensure user has enough tokens to sell
@@ -3284,8 +3284,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		let vault = Pallet::<T>::account_id();
 
 		ensure!(
-			!T::DisabledTokens::contains(&first_asset_id) &&
-				!T::DisabledTokens::contains(&second_asset_id),
+			!T::DisabledTokens::contains(&first_asset_id)
+				&& !T::DisabledTokens::contains(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -3309,8 +3309,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		ensure!(
 			liquidity_token_available_balance
 				.checked_add(&max_instant_unreserve_amount)
-				.ok_or(Error::<T>::MathOverflow)? >=
-				liquidity_asset_amount,
+				.ok_or(Error::<T>::MathOverflow)?
+				>= liquidity_asset_amount,
 			Error::<T>::NotEnoughAssets,
 		);
 
@@ -3345,14 +3345,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		// All storage values related to this pool must be destroyed
 		if liquidity_asset_amount == total_liquidity_assets {
 			ensure!(
-				(first_asset_reserve == first_asset_amount) &&
-					(second_asset_reserve == second_asset_amount),
+				(first_asset_reserve == first_asset_amount)
+					&& (second_asset_reserve == second_asset_amount),
 				Error::<T>::UnexpectedFailure
 			);
 		} else {
 			ensure!(
-				(first_asset_reserve >= first_asset_amount) &&
-					(second_asset_reserve >= second_asset_amount),
+				(first_asset_reserve >= first_asset_amount)
+					&& (second_asset_reserve >= second_asset_amount),
 				Error::<T>::UnexpectedFailure
 			);
 		}
@@ -3561,7 +3561,7 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_token_id.into());
 
 		if liquidity_token_reserve.is_zero() {
-			return Default::default()
+			return Default::default();
 		}
 
 		multiply_by_rational_with_rounding(
@@ -3595,7 +3595,7 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 		mga_token_amount: BalanceOf<T>,
 	) -> BalanceOf<T> {
 		if mga_valuation.is_zero() {
-			return Default::default()
+			return Default::default();
 		}
 
 		multiply_by_rational_with_rounding(
@@ -3624,7 +3624,7 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_token_id.into());
 
 		if liquidity_token_reserve.is_zero() {
-			return None
+			return None;
 		}
 
 		Some((mga_token_reserve, liquidity_token_reserve))

@@ -781,7 +781,7 @@ impl<T: Config> Pallet<T> {
 		let batch_period: BlockNumberFor<T> = Self::automatic_batch_period().saturated_into();
 
 		if T::MaintenanceStatusProvider::is_maintenance() {
-			return
+			return;
 		}
 
 		for (chain, next_id) in L2OriginRequestId::<T>::get().iter() {
@@ -828,10 +828,10 @@ impl<T: Config> Pallet<T> {
 							batch_id,
 							range: (range_start, range_end),
 						});
-						break
+						break;
 					}
 				} else {
-					continue
+					continue;
 				}
 			}
 		}
@@ -878,7 +878,7 @@ impl<T: Config> Pallet<T> {
 
 	fn process_single_request(l1: T::ChainId, request: messages::L1UpdateRequest) {
 		if request.id() <= LastProcessedRequestOnL2::<T>::get(l1) {
-			return
+			return;
 		}
 
 		let status = match request.clone() {
@@ -888,11 +888,12 @@ impl<T: Config> Pallet<T> {
 					FailedL1Deposits::<T>::insert((who, l1, deposit.requestId.id), ());
 					Err(err)
 				}),
-			messages::L1UpdateRequest::CancelResolution(cancel) =>
+			messages::L1UpdateRequest::CancelResolution(cancel) => {
 				Self::process_cancel_resolution(l1, &cancel).or_else(|err| {
 					T::MaintenanceStatusProvider::trigger_maintanance_mode();
 					Err(err)
-				}),
+				})
+			},
 		};
 
 		Pallet::<T>::deposit_event(Event::RequestProcessedOnL2 {
@@ -905,27 +906,27 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn execute_requests_from_execute_queue(now: BlockNumberFor<T>) {
-		if T::MaintenanceStatusProvider::is_maintenance() &&
-			UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get()).is_some()
+		if T::MaintenanceStatusProvider::is_maintenance()
+			&& UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get()).is_some()
 		{
 			let new_id: u128 = LastScheduledUpdateIdInExecutionQueue::<T>::mutate(|v| {
 				v.saturating_inc();
 				*v
 			});
 			UpdatesExecutionQueueNextId::<T>::put(new_id);
-			return
+			return;
 		}
 
 		let mut limit = Self::get_max_requests_per_block();
 		loop {
 			if limit == 0 {
-				return
+				return;
 			}
 			if let Some((scheduled_at, l1, r)) =
 				UpdatesExecutionQueue::<T>::get(UpdatesExecutionQueueNextId::<T>::get())
 			{
 				if scheduled_at == now {
-					return
+					return;
 				}
 
 				for req in r
@@ -942,7 +943,7 @@ impl<T: Config> Pallet<T> {
 					} else {
 						UpdatesExecutionQueue::<T>::remove(UpdatesExecutionQueueNextId::<T>::get());
 						UpdatesExecutionQueueNextId::<T>::mutate(|v| *v += 1);
-						break
+						break;
 					}
 				}
 			} else {
@@ -951,7 +952,7 @@ impl<T: Config> Pallet<T> {
 				) {
 					UpdatesExecutionQueueNextId::<T>::mutate(|v| *v += 1);
 				} else {
-					break
+					break;
 				}
 			}
 		}
@@ -1167,9 +1168,9 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::WrongRequestId
 		);
 
-		let last_id = lowest_id +
-			(update.pendingDeposits.len() as u128) +
-			(update.pendingCancelResolutions.len() as u128);
+		let last_id = lowest_id
+			+ (update.pendingDeposits.len() as u128)
+			+ (update.pendingCancelResolutions.len() as u128);
 
 		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
@@ -1218,11 +1219,11 @@ impl<T: Config> Pallet<T> {
 		if let Some(rights) = SequencersRights::<T>::get(&l1).get(&sequencer) {
 			if rights.read_rights == 0u128 {
 				log!(debug, "{:?} does not have sufficient read_rights", sequencer);
-				return Err(Error::<T>::OperationFailed.into())
+				return Err(Error::<T>::OperationFailed.into());
 			}
 		} else {
 			log!(debug, "{:?} not a sequencer, CHEEKY BASTARD!", sequencer);
-			return Err(Error::<T>::OperationFailed.into())
+			return Err(Error::<T>::OperationFailed.into());
 		}
 
 		// // Decrease read_rights by 1
@@ -1269,9 +1270,9 @@ impl<T: Config> Pallet<T> {
 		let mut read_rights = 0u128;
 		let last_update = LastUpdateBySequencer::<T>::get((chain, sequencer));
 
-		if last_update != 0 &&
-			last_update.saturating_add(T::DisputePeriodLength::get()) >=
-				<frame_system::Pallet<T>>::block_number().saturated_into::<u128>()
+		if last_update != 0
+			&& last_update.saturating_add(T::DisputePeriodLength::get())
+				>= <frame_system::Pallet<T>>::block_number().saturated_into::<u128>()
 		{
 			read_rights += 1;
 		}
@@ -1325,7 +1326,7 @@ impl<T: Config> Pallet<T> {
 		tx_id: u128,
 	) -> Vec<H256> {
 		if tx_id < range.0 || tx_id > range.1 {
-			return Default::default()
+			return Default::default();
 		}
 
 		let tree = Self::create_merkle_tree(chain, range);
@@ -1392,7 +1393,7 @@ impl<T: Config> Pallet<T> {
 
 		let inclusive_range = range.0..=range.1;
 		if !inclusive_range.contains(&tx_id) {
-			return false
+			return false;
 		}
 
 		let pos = inclusive_range.clone().position(|elem| elem == tx_id);

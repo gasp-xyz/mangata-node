@@ -769,9 +769,9 @@ const ACCOUNT_WITH_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
 };
 
 fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) -> Weight {
-	<Test as frame_system::Config>::DbWeight::get().reads(reads) +
-		<Test as frame_system::Config>::DbWeight::get().writes(writes) +
-		(<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
+	<Test as frame_system::Config>::DbWeight::get().reads(reads)
+		+ <Test as frame_system::Config>::DbWeight::get().writes(writes)
+		+ (<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
 }
 
 #[test_case(

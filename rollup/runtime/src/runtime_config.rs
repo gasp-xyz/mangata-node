@@ -232,7 +232,7 @@ pub mod config {
 		{
 			fn set_code(code: Vec<u8>) -> DispatchResult {
 				if !::pallet_maintenance::Pallet::<T>::is_upgradable() {
-					return Err(::pallet_maintenance::Error::<T>::UpgradeBlockedByMaintenance.into())
+					return Err(::pallet_maintenance::Error::<T>::UpgradeBlockedByMaintenance.into());
 				}
 				E::set_code(code)
 			}
@@ -318,9 +318,9 @@ pub mod config {
 			fn contains(t: &TokenId) -> bool {
 				let meta: Option<_> = ::orml_asset_registry::Metadata::<T>::get(*t);
 				if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-					return xyk.operations_disabled
+					return xyk.operations_disabled;
 				}
-				return false
+				return false;
 			}
 		}
 
@@ -394,7 +394,7 @@ pub mod config {
 								Ok(_) => {},
 								Err(e) => {
 									log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-									return false
+									return false;
 								},
 							}
 						}
@@ -510,8 +510,8 @@ pub mod config {
 				bought_asset_id: TokenId,
 				min_amount_out: Balance,
 			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-				if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
-					fee_lock_metadata.is_whitelisted(bought_asset_id)
+				if fee_lock_metadata.is_whitelisted(sold_asset_id)
+					|| fee_lock_metadata.is_whitelisted(bought_asset_id)
 				{
 					let (_, _, _, _, _, bought_asset_amount) =
 						<pallet_xyk::Pallet<T> as PreValidateSwaps<
@@ -578,8 +578,8 @@ pub mod config {
 				bought_asset_id: TokenId,
 				max_amount_in: Balance,
 			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-				if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
-					fee_lock_metadata.is_whitelisted(bought_asset_id)
+				if fee_lock_metadata.is_whitelisted(sold_asset_id)
+					|| fee_lock_metadata.is_whitelisted(bought_asset_id)
 				{
 					let (_, _, _, _, _, sold_asset_amount) =
 						<pallet_xyk::Pallet<T> as PreValidateSwaps<
@@ -746,10 +746,10 @@ pub mod config {
 				let call_type: crate::CallType = (*call).clone().into();
 
 				match call_type {
-					crate::CallType::MultiSell { .. } |
-					crate::CallType::MultiBuy { .. } |
-					crate::CallType::AtomicBuy { .. } |
-					crate::CallType::AtomicSell { .. } => {
+					crate::CallType::MultiSell { .. }
+					| crate::CallType::MultiBuy { .. }
+					| crate::CallType::AtomicBuy { .. }
+					| crate::CallType::AtomicSell { .. } => {
 						ensure!(
 							tip.is_zero(),
 							TransactionValidityError::Invalid(
@@ -1234,15 +1234,17 @@ pub mod config {
 					config::TreasuryPalletIdOf::<T>::get().into_account_truncating();
 
 				match asset_id.cmp(&next_id.into()) {
-					Ordering::Equal =>
+					Ordering::Equal => {
 						CurrencyAdapter::<T>::create(&treasury_account, Default::default())
 							.and_then(|created_asset_id| {
 								match created_asset_id.cmp(&asset_id.into()) {
 									Ordering::Equal => Ok((asset_id, asset_metadata)),
-									_ =>
-										Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+									_ => {
+										Err(orml_asset_registry::Error::<T>::InvalidAssetId.into())
+									},
 								}
-							}),
+							})
+					},
 					Ordering::Less => Ok((asset_id, asset_metadata)),
 					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
 				}
@@ -1337,12 +1339,12 @@ pub mod config {
 				let call: crate::CallType = (c.clone()).into();
 
 				match call {
-					CallType::MultiSell { .. } |
-					CallType::MultiBuy { .. } |
-					CallType::AtomicBuy { .. } |
-					CallType::AtomicSell { .. } |
-					CallType::CompoundRewards |
-					CallType::ProvideLiquidityWithConversion => true,
+					CallType::MultiSell { .. }
+					| CallType::MultiBuy { .. }
+					| CallType::AtomicBuy { .. }
+					| CallType::AtomicSell { .. }
+					| CallType::CompoundRewards
+					| CallType::ProvideLiquidityWithConversion => true,
 					_ => false,
 				}
 			}

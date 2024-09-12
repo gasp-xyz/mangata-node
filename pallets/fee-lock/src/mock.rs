@@ -200,13 +200,13 @@ impl ExtBuilder {
 				Tokens::create(RuntimeOrigin::root(), 0, 0).unwrap();
 			}
 		});
-		return self
+		return self;
 	}
 
 	pub fn mint(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self {
 		self.ext
 			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
-		return self
+		return self;
 	}
 
 	pub fn initialize_fee_locks(mut self, period: u64, lock_amount: u128, threshold: u128) -> Self {
@@ -220,7 +220,7 @@ impl ExtBuilder {
 			)
 			.unwrap()
 		});
-		return self
+		return self;
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {

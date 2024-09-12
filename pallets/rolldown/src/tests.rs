@@ -2817,6 +2817,7 @@ fn test_force_create_batch_can_only_be_called_as_sudo() {
 fn test_force_create_batch_fails_for_invalid_range() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
@@ -2851,6 +2852,7 @@ fn test_force_create_batch_fails_for_invalid_range() {
 fn test_force_create_batch_succeeds_for_valid_range() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 

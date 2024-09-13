@@ -32,8 +32,7 @@ serial_test = { version = "0.6.0", default-features = false }
 mockall = "0.11.0"
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-
-
+pallet-issuance = { path = "../issuance", default-features = false }
 
 [features]
 default = ["std"]

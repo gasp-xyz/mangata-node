@@ -168,6 +168,8 @@ impl rolldown::Config for Test {
 	type MerkleRootAutomaticBatchPeriod = ConstU128<25>;
 	type TreasuryPalletId = TreasuryPalletId;
 	type NativeCurrencyId = NativeCurrencyId;
+	type SequencerStakingRewards = ();
+	type WithdrawFee = ConstU128<500>;
 }
 
 pub struct ExtBuilder {

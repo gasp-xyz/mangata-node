@@ -12,7 +12,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 hex = { package = "rustc-hex", version = "2.1.0", default-features = false }
 hex-literal = { version = "0.3.3", default-features = false }
 log = { version = "0.4.14", default-features = false }
-serde = { version = "1.0.126", optional = true }
+serde = { version = "1.0.188", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
 	"derive",
 ] }

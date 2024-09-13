@@ -1293,10 +1293,10 @@ pub mod config {
 	pub mod pallet_identity {
 		use crate::*;
 		parameter_types! {
-			// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
-			pub const BasicDeposit: Balance = deposit(1, 270);
-			// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
-			pub const FieldDeposit: Balance = deposit(0, 66);
+			// difference of 26 bytes on-chain for the registration and 9 bytes on-chain for the identity
+			// information, already accounted for by the byte deposit
+			pub const BasicDeposit: Balance = deposit(1, 17);
+			pub const ByteDeposit: Balance = deposit(0, 1);
 			// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
 			pub const SubAccountDeposit: Balance = deposit(1, 97);
 			pub const MaxSubAccounts: u32 = 100;

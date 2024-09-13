@@ -83,7 +83,7 @@ pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
-use pallet_identity::simple::IdentityInfo;
+use pallet_identity::legacy::IdentityInfo;
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
@@ -732,10 +732,9 @@ impl pallet_identity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type BasicDeposit = cfg::pallet_identity::BasicDeposit;
-	type FieldDeposit = cfg::pallet_identity::FieldDeposit;
+	type ByteDeposit = cfg::pallet_identity::ByteDeposit;
 	type SubAccountDeposit = cfg::pallet_identity::SubAccountDeposit;
 	type MaxSubAccounts = cfg::pallet_identity::MaxSubAccounts;
-	type MaxAdditionalFields = cfg::pallet_identity::MaxAdditionalFields;
 	type IdentityInformation = IdentityInfo<cfg::pallet_identity::MaxAdditionalFields>;
 	type MaxRegistrars = cfg::pallet_identity::MaxRegistrars;
 	type ForceOrigin = cfg::pallet_identity::IdentityForceOrigin;

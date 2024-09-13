@@ -156,3 +156,9 @@ sc-offchain = { path = "../polkadot-sdk/substrate/client/offchain" }
 sc-service = { path = "../polkadot-sdk/substrate/client/service" }
 sc-rpc = { path = "../polkadot-sdk/substrate/client/rpc" }
 sc-rpc-api = { path = "../polkadot-sdk/substrate/client/rpc-api" }
+
+[patch."https://github.com/paritytech/polkadot-sdk"]
+sp-storage = { path = "../polkadot-sdk/substrate/primitives/storage" }
+sp-externalities = { path = "../polkadot-sdk/substrate/primitives/externalities" }
+sp-runtime-interface = { path = "../polkadot-sdk/substrate/primitives/runtime-interface" }
+sp-crypto-ec-utils = { path = "../polkadot-sdk/substrate/primitives/crypto/ec-utils" }

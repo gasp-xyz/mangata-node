@@ -9,7 +9,7 @@ license = "GPL-3.0-or-later"
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
-serde = { version = "1.0.126", features = ["derive"], optional = true }
+serde = { version = "1.0.188", features = ["derive"], optional = true }
 
 # Substrate packages
 

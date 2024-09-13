@@ -12,7 +12,7 @@ codec = { package = "parity-scale-codec", version = "3.6.1", default-features = 
 	"derive",
 ] }
 log = { version = "0.4.14", default-features = false }
-serde = { version = "1.0.126", optional = true, features = ["derive"] }
+serde = { version = "1.0.188", optional = true, features = ["derive"] }
 serde_json = { version = "1.0.108", default-features = false }
 scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }

@@ -110,6 +110,7 @@ pub fn rollup_local_config(
 	let decode_url = decode_url.unwrap_or(String::from(
 		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",
 	));
+	// todo builder
 	ChainSpec::from_genesis(
 		// Name
 		"Rollup Local",
@@ -227,6 +228,8 @@ pub fn rollup_local_config(
 		Some(properties),
 		// Extensions
 		None,
+		// code
+		rollup_runtime::WASM_BINARY.expect("WASM binary was not build, please build it!")
 	)
 }
 
@@ -249,9 +252,6 @@ fn rollup_genesis(
 
 	rollup_runtime::RuntimeGenesisConfig {
 		system: rollup_runtime::SystemConfig {
-			code: rollup_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
 			..Default::default()
 		},
 		tokens: rollup_runtime::TokensConfig {

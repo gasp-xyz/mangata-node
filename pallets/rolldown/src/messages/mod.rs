@@ -193,6 +193,10 @@ pub struct Deposit {
 	pub ferryTip: U256,
 }
 
+impl NativeToEthMapping for Deposit {
+	type EthType = eth_abi::Deposit;
+}
+
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub struct CancelResolution {
 	pub requestId: RequestId,

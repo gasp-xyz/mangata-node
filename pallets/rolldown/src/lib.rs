@@ -79,6 +79,23 @@ impl Hasher for Keccak256Hasher {
 }
 
 #[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum L1DepositProcessingError {
+	Overflow,
+	AssetRegistrationProblem,
+	MintError,
+}
+
+impl<T> From<L1DepositProcessingError> for Error<T> {
+	fn from(e: L1DepositProcessingError) -> Self {
+		match e {
+			L1DepositProcessingError::Overflow => Error::<T>::BalanceOverflow,
+			L1DepositProcessingError::AssetRegistrationProblem => Error::<T>::L1AssetCreationFailed,
+			L1DepositProcessingError::MintError => Error::<T>::MintError,
+		}
+	}
+}
+
+#[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum L1RequestProcessingError {
 	Overflow,
 	AssetRegistrationProblem,
@@ -86,6 +103,16 @@ pub enum L1RequestProcessingError {
 	NotEnoughtCancelRights,
 	WrongCancelRequestId,
 	SequencerNotSlashed,
+}
+
+impl From<L1DepositProcessingError>  for L1RequestProcessingError {
+	fn from(err: L1DepositProcessingError) -> Self {
+		match err {
+			L1DepositProcessingError::Overflow => Self::Overflow,
+			L1DepositProcessingError::AssetRegistrationProblem => Self::AssetRegistrationProblem,
+			L1DepositProcessingError::MintError => Self::MintError,
+		}
+	}
 }
 
 #[cfg(test)]
@@ -151,6 +178,10 @@ pub mod pallet {
 		Canceler,
 		Submitter,
 	}
+
+	#[pallet::storage]
+	pub type FerriedDeposits<T: Config> =
+		StorageMap<_, Blake2_128Concat, (T::ChainId, H256), T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
@@ -311,6 +342,7 @@ pub mod pallet {
 			token_address: [u8; 20],
 			amount: u128,
 			hash: H256,
+			ferry_tip: u128,
 		},
 		ManualBatchExtraFeeSet(BalanceOf<T>),
 		DepositRefundCreated {
@@ -325,6 +357,11 @@ pub mod pallet {
 			chain: T::ChainId,
 			hash: H256,
 		},
+		DepositFerried{
+			chain: T::ChainId,
+			deposit: messages::Deposit,
+			deposit_hash: H256,
+		}
 	}
 
 	#[pallet::error]
@@ -357,6 +394,9 @@ pub mod pallet {
 		EmptyBatch,
 		TokenDoesNotExist,
 		NotDepositRecipient,
+		FerryHashMismatch,
+		MintError,
+		AssetRegistrationProblem,
 	}
 
 	#[pallet::config]
@@ -522,7 +562,7 @@ pub mod pallet {
 			recipient: [u8; 20],
 			token_address: [u8; 20],
 			amount: u128,
-			ferry_tip: u128,
+			ferry_tip: Option<u128>,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
 
@@ -560,7 +600,7 @@ pub mod pallet {
 				withdrawalRecipient: recipient.clone(),
 				tokenAddress: token_address.clone(),
 				amount: U256::from(amount),
-				ferryTip: U256::from(ferry_tip),
+				ferryTip: U256::from(ferry_tip.unwrap_or_default()),
 			};
 			// add cancel request to pending updates
 			L2Requests::<T>::insert(
@@ -579,6 +619,7 @@ pub mod pallet {
 				token_address,
 				amount,
 				hash: withdrawal_update.abi_encode_hash(),
+				ferry_tip: ferry_tip.unwrap_or_default(),
 			});
 			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 
@@ -725,6 +766,63 @@ pub mod pallet {
 			Self::persist_batch_and_deposit_event(chain, range, sequencer_account);
 			Ok(().into())
 		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn ferry_deposit(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: RequestId,
+			deposit_recipient: [u8; 20],
+			token_address: [u8; 20],
+			amount: u128,
+			timestamp: u128,
+			ferry_tip: u128,
+			deposit_hash: H256,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let deposit = messages::Deposit{
+				requestId: request_id,
+				depositRecipient: deposit_recipient,
+				tokenAddress: token_address,
+				amount: amount.into(),
+				timeStamp: timestamp.into(),
+				ferryTip: ferry_tip.into(),
+			};
+
+			ensure!(
+				deposit.abi_encode_hash() == deposit_hash,
+				Error::<T>::FerryHashMismatch
+			);
+
+			let amount = amount
+				.checked_sub(ferry_tip)
+				.and_then(|v| TryInto::<u128>::try_into(v).ok())
+				.and_then(|v| TryInto::<BalanceOf::<T>>::try_into(v).ok())
+			 	.ok_or(Error::<T>::MathOverflow)?;
+
+			let eth_asset = T::AssetAddressConverter::convert((chain, deposit.tokenAddress));
+			let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
+				Some(id) => id,
+				None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
+					.map_err(|_| Error::<T>::AssetRegistrationProblem)?,
+			};
+
+			let account = T::AddressConverter::convert(deposit.depositRecipient);
+
+			T::Tokens::transfer(asset_id, &sender, &account, amount, ExistenceRequirement::KeepAlive)
+				.map_err(|_| Error::<T>::NotEnoughAssets)?;
+			FerriedDeposits::<T>::insert((chain, deposit_hash),  sender);
+
+			Self::deposit_event(Event::DepositFerried {
+				chain,
+				deposit,
+				deposit_hash,
+			});
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -857,12 +955,15 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let status = match request.clone() {
-			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
-				.or_else(|err| {
+			messages::L1UpdateRequest::Deposit(deposit) => {
+				let deposit_status = Self::process_deposit(l1, &deposit);
+				TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
+				deposit_status.or_else(|err| {
 					let who: T::AccountId = T::AddressConverter::convert(deposit.depositRecipient);
 					FailedL1Deposits::<T>::insert((who, l1, deposit.requestId.id), ());
-					Err(err)
-				}),
+					Err(err.into())
+				})
+			},
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
 				Self::process_cancel_resolution(l1, &cancel).or_else(|err| {
 					T::MaintenanceStatusProvider::trigger_maintanance_mode();
@@ -960,30 +1061,29 @@ impl<T: Config> Pallet<T> {
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_deposit(
 		l1: T::ChainId,
-		deposit_request_details: &messages::Deposit,
-	) -> Result<(), L1RequestProcessingError> {
-		let account: T::AccountId =
-			T::AddressConverter::convert(deposit_request_details.depositRecipient);
+		deposit: &messages::Deposit,
+	) -> Result<(), L1DepositProcessingError> {
 
-		let amount = TryInto::<u128>::try_into(deposit_request_details.amount)
-			.map_err(|_| L1RequestProcessingError::Overflow)?
+		let amount = TryInto::<u128>::try_into(deposit.amount)
+			.map_err(|_| L1DepositProcessingError::Overflow)?
 			.try_into()
-			.map_err(|_| L1RequestProcessingError::Overflow)?;
+			.map_err(|_| L1DepositProcessingError::Overflow)?;
 
 		let eth_asset =
-			T::AssetAddressConverter::convert((l1, deposit_request_details.tokenAddress));
+			T::AssetAddressConverter::convert((l1, deposit.tokenAddress));
 
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.map_err(|_| L1RequestProcessingError::AssetRegistrationProblem)?,
+				.map_err(|_| L1DepositProcessingError::AssetRegistrationProblem)?,
 		};
 
-		T::Tokens::mint(asset_id, &account, amount)
-			.map_err(|_| L1RequestProcessingError::MintError)?;
+		let account = FerriedDeposits::<T>::get((l1, deposit.abi_encode_hash()))
+			.unwrap_or(T::AddressConverter::convert(deposit.depositRecipient));
 
-		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
-		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
+
+		 T::Tokens::mint(asset_id, &account, amount)
+		 	.map_err(|_| L1DepositProcessingError::MintError)?;
 
 		Ok(())
 	}

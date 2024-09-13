@@ -1108,7 +1108,7 @@ fn test_withdraw() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -1148,7 +1148,7 @@ fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
 					ETH_RECIPIENT_ACCOUNT,
 					hex!("0123456789012345678901234567890123456789"),
 					1_000_000u128,
-					0u128,
+					0u128.into(),
 				),
 				Error::<Test>::TokenDoesNotExist
 			);
@@ -1168,7 +1168,7 @@ fn error_on_withdraw_too_much() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					10_000_000u128,
-					0u128,
+					0u128.into(),
 				),
 				Error::<Test>::NotEnoughAssets
 			);
@@ -1228,7 +1228,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				10u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 2_u128.into());
@@ -1854,7 +1854,7 @@ fn test_merkle_proof_works() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					i as u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1900,7 +1900,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1913,7 +1913,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
@@ -1931,7 +1931,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1948,7 +1948,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -1988,7 +1988,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2006,7 +2006,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2060,7 +2060,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2106,7 +2106,7 @@ fn test_period_based_batch_respects_sized_batches() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2121,7 +2121,7 @@ fn test_period_based_batch_respects_sized_batches() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2153,7 +2153,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
@@ -2171,7 +2171,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2205,7 +2205,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2235,7 +2235,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2266,7 +2266,7 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2336,7 +2336,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2367,7 +2367,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2400,7 +2400,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2432,7 +2432,7 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
-					0u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2463,7 +2463,7 @@ fn test_withdrawals_are_not_allowed_in_maintanance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
-					0u128,
+					0u128.into(),
 				),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
@@ -2841,7 +2841,7 @@ fn test_force_create_batch_fails_for_invalid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2871,7 +2871,38 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
-				0u128,
+				0u128.into(),
+			)
+			.unwrap();
+
+			Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 1), ALICE)
+				.unwrap();
+
+			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 

@@ -262,6 +262,7 @@ pub mod config {
 			pub const SpendPeriod: BlockNumber = 1 * consts::DAYS;
 			pub const Burn: Permill = Permill::from_percent(0);
 			pub const MaxApprovals: u32 = 100;
+			pub const SpendPayoutPeriod: BlockNumber = 30 * consts::DAYS;
 		}
 	}
 
@@ -347,7 +348,6 @@ pub mod config {
 					decimals,
 					existential_deposit: Default::default(),
 					additional: Default::default(),
-					location: None,
 				};
 				::orml_asset_registry::Pallet::<T>::do_register_asset_without_asset_processor(
 					metadata, asset,
@@ -384,7 +384,6 @@ pub mod config {
 							additional.xyk = Some(XykMetadata { operations_disabled: false });
 							match ::orml_asset_registry::Pallet::<T>::do_update_asset(
 								asset,
-								None,
 								None,
 								None,
 								None,
@@ -1283,7 +1282,6 @@ pub mod config {
 					name: b"L1Asset".to_vec().try_into().unwrap(),
 					symbol: b"L1Asset".to_vec().try_into().unwrap(),
 					existential_deposit: Zero::zero(),
-					location: None,
 					additional: CustomMetadata { xcm: None, xyk: None },
 				};
 

@@ -234,7 +234,6 @@ impl AssetMetadataMutationTrait<TokenId> for MockAssetRegister {
 			name: BoundedVec::truncate_from(name),
 			symbol: BoundedVec::truncate_from(symbol),
 			decimals,
-			location: None,
 			additional: Default::default(),
 			existential_deposit: 0,
 		};

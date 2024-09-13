@@ -49,7 +49,11 @@ pub use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
-		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		tokens::{
+			currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+			pay::PayFromAccount,
+			UnityAssetBalanceConversion,
+		},
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, EnsureOrigin,
 		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
 		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
@@ -79,6 +83,7 @@ pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
+use pallet_identity::simple::IdentityInfo;
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
@@ -251,6 +256,14 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = cfg::pallet_treasury::MaxApprovals;
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
+	type BeneficiaryLookup = IdentityLookup<Self::AccountId>;
+	type Beneficiary = AccountId;
+	type AssetKind = ();
+	type PayoutPeriod = cfg::pallet_treasury::SpendPayoutPeriod;
+	type Paymaster = PayFromAccount<Self::Currency, TreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 parameter_types! {
@@ -723,6 +736,7 @@ impl pallet_identity::Config for Runtime {
 	type SubAccountDeposit = cfg::pallet_identity::SubAccountDeposit;
 	type MaxSubAccounts = cfg::pallet_identity::MaxSubAccounts;
 	type MaxAdditionalFields = cfg::pallet_identity::MaxAdditionalFields;
+	type IdentityInformation = IdentityInfo<cfg::pallet_identity::MaxAdditionalFields>;
 	type MaxRegistrars = cfg::pallet_identity::MaxRegistrars;
 	type ForceOrigin = cfg::pallet_identity::IdentityForceOrigin;
 	type RegistrarOrigin = cfg::pallet_identity::IdentityRegistrarOrigin;

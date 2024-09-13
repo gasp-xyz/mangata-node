@@ -56,12 +56,16 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_treasury.
 pub trait WeightInfo {
-	fn spend() -> Weight;
+	fn spend_local() -> Weight;
 	fn propose_spend() -> Weight;
 	fn reject_proposal() -> Weight;
 	fn approve_proposal(p: u32, ) -> Weight;
 	fn remove_approval() -> Weight;
 	fn on_initialize_proposals(p: u32, ) -> Weight;
+	fn spend() -> Weight;
+	fn payout() -> Weight;
+	fn check_status() -> Weight;
+	fn void_spend() -> Weight;
 }
 
 /// Weights for pallet_treasury using the Mangata node and recommended hardware.
@@ -128,6 +132,11 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+
+	fn spend_local() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn payout() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn check_status() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn void_spend() -> sp_weights::Weight { Weight::from_parts(0, 0) }
 }
 
 // For backwards compatibility and tests
@@ -193,4 +202,9 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
+
+	fn spend_local() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn payout() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn check_status() -> sp_weights::Weight { Weight::from_parts(0, 0) }
+	fn void_spend() -> sp_weights::Weight { Weight::from_parts(0, 0) }
 }

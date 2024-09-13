@@ -191,7 +191,6 @@ pub fn rollup_local_config(
 							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
-							location: None,
 						},
 						Some(L1Asset::Ethereum(gasp_token_address)),
 					),
@@ -203,7 +202,6 @@ pub fn rollup_local_config(
 							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
-							location: None,
 						},
 						Some(L1Asset::Ethereum(
 							array_bytes::hex2array("0x0000000000000000000000000000000000000001")

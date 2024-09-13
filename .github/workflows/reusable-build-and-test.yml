@@ -312,7 +312,7 @@ jobs:
             $(printf '${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}@sha256:%s ' *)
   
       - name: Inspect image
-        run: docker buildx imagetools inspect ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ steps.meta.outputs.version }}-fast
+        run: docker buildx imagetools inspect ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ steps.meta.outputs.version }}
   
       - name: Export WASM artifacts from built images
         run: |

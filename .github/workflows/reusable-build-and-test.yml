@@ -91,7 +91,7 @@ jobs:
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
 
-      - name: Build and push by digest
+      - name: Build and export image by digest
         id: build
         uses: docker/build-push-action@v6
         with:
@@ -190,7 +190,7 @@ jobs:
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
 
-      - name: Build and push fast runtime image
+      - name: Build and export fast runtime image by digest
         id: build
         uses: docker/build-push-action@v6
         with:

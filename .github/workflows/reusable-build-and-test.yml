@@ -58,6 +58,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+          labels: |
+            runtime-type=regular
+
       - uses: docker/setup-buildx-action@v3
       - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
       - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
@@ -134,10 +137,17 @@ jobs:
             echo "Upload completed in $SECONDS seconds"
 
   build-node-image-with-fast-runtime:
-    name: Build fast runtime Docker image (AMD64 platform only)
-    runs-on: compile-gke
+    name: Build fast runtime Docker image
+    strategy:
+      matrix:
+        platform:
+          - name: amd64
+            runner: compile-gke
+          - name: arm64
+            runner: compile-gke-arm
+    runs-on: ${{ matrix.platform.runner }}
     env:
-      JOB_CACHE_PREFIX: docker-buildx-cache-fast-runtime-${{ inputs.cache-version }}
+      JOB_CACHE_PREFIX: docker-buildx-cache-${{ matrix.platform.name }}-${{ inputs.cache-version }}
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
@@ -147,9 +157,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
-          tags: |
-            type=raw,value=${{ inputs.version }}-fast
-            type=raw,value=${{ inputs.branch }}-fast
+          labels: |
+            runtime-type=fast
 
       - uses: docker/setup-buildx-action@v3
       - run: curl -LJO https://github.com/reproducible-containers/buildkit-cache-dance/archive/refs/tags/v3.1.2.tar.gz && tar xvf buildkit-cache-dance-3.1.2.tar.gz
@@ -182,14 +191,28 @@ jobs:
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
 
       - name: Build and push fast runtime image
+        id: build
         uses: docker/build-push-action@v6
         with:
           build-args: "ENABLE_FAST_RUNTIME=true"
-          platforms: linux/amd64
+          platforms: linux/${{ matrix.platform.name }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ steps.meta.outputs.tags }}
-          push: true
-
+          outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
+      
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-digests-linux-${{ matrix.platform.name }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+      
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
         shell: bash
@@ -215,7 +238,7 @@ jobs:
 
   create-docker-image-manifest-and-export-wasms:
     name: Generate multiplatform Docker image manifest
-    needs: [build-node-image,build-node-image-with-fast-runtime]
+    needs: [build-node-image]
     runs-on: ubuntu-latest
     steps:
       - name: Download digests
@@ -253,18 +276,56 @@ jobs:
             docker cp $container_id:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm && \
             docker rm $container_id
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wasm-${{ inputs.version }}
+          path: ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
+  
+  create-fast-docker-image-manifest-and-export-wasms:
+    name: Generate multiplatform Docker image manifest for fast runtime image
+    needs: [build-node-image-with-fast-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: fast-digests-*
+          merge-multiple: true
+  
+      - uses: docker/setup-buildx-action@v3
+      - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+  
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}
+          tags: |
+            type=raw,value=${{ inputs.version }}-fast
+            type=raw,value=${{ inputs.branch }}-fast
+  
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}@sha256:%s ' *)
+  
+      - name: Inspect image
+        run: docker buildx imagetools inspect ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ steps.meta.outputs.version }}-fast
+  
+      - name: Export WASM artifacts from built images
+        run: |
           # Export WASM artifact from image with fast runtime
           container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast) && \
             docker cp $container_id_fast:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm && \
             docker rm $container_id_fast
-
+  
       - uses: actions/upload-artifact@v3
         with:
-          name: wasms-${{ inputs.version }}
-          path: |
-            ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
-            ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-
+          name: wasm-fast-${{ inputs.version }}
+          path: ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+  
   rustfmt-check:
     name: Formatting check
     runs-on: ubuntu-latest

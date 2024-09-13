@@ -147,7 +147,7 @@ jobs:
             runner: compile-gke-arm
     runs-on: ${{ matrix.platform.runner }}
     env:
-      JOB_CACHE_PREFIX: docker-buildx-cache-${{ matrix.platform.name }}-${{ inputs.cache-version }}
+      JOB_CACHE_PREFIX: docker-buildx-fast-cache-${{ matrix.platform.name }}-${{ inputs.cache-version }}
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4

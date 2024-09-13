@@ -130,7 +130,7 @@ jobs:
             fast: true
           - command: "yarn test-sequencerCancellation"
             fast: true
-          - command: "yarn test-l1RolldownUpdates"
+          - command: "yarn test-rolldown"
             fast: true
 
 

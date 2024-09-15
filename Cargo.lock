@@ -6218,6 +6218,7 @@ dependencies = [
 name = "pallet-sudo-mangata"
 version = "4.0.0-dev"
 dependencies = [
+ "docify",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

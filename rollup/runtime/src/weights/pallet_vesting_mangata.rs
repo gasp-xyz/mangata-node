@@ -63,6 +63,7 @@ pub trait WeightInfo {
 	fn force_vested_transfer(l: u32, s: u32, ) -> Weight;
 	fn not_unlocking_merge_schedules(l: u32, s: u32, ) -> Weight;
 	fn unlocking_merge_schedules(l: u32, s: u32, ) -> Weight;
+	fn force_remove_vesting_schedule(l: u32, s: u32, ) -> Weight;
 }
 
 /// Weights for pallet_vesting_mangata using the Mangata node and recommended hardware.
@@ -163,6 +164,10 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
+
+	fn force_remove_vesting_schedule(l: u32, s: u32, ) -> Weight {
+		Weight::from_parts(0, 0)
+	}
 }
 
 // For backwards compatibility and tests
@@ -261,5 +266,9 @@ impl WeightInfo for () {
 			.saturating_add((Weight::from_parts(262_141, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+	}
+
+	fn force_remove_vesting_schedule(l: u32, s: u32, ) -> Weight {
+		Weight::from_parts(0, 0)
 	}
 }

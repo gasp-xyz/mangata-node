@@ -36,7 +36,7 @@ pub use mangata_support::traits::{
 	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
-use sp_api::HeaderT;
+use sp_runtime::traits::{Header as HeaderT};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::account::EthereumSignature;
 use sp_runtime::SaturatedConversion;
@@ -87,7 +87,7 @@ use pallet_identity::legacy::IdentityInfo;
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
-pub use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+pub use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 pub use pallet_xyk::{self, AssetMetadataMutationTrait};
 pub use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
@@ -362,7 +362,7 @@ impl pallet_utility_mangata::Config for Runtime {
 	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
-use cfg::pallet_transaction_payment_mangata::{
+use cfg::pallet_transaction_payment::{
 	FeeHelpers, OnChargeHandler, ToAuthor, TriggerEvent, TwoCurrencyOnChargeAdapter,
 };
 
@@ -374,7 +374,7 @@ where
 {
 	fn trigger(who: T::AccountId, token_id: TokenId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
-			pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
+			pallet_transaction_payment::Event::<Runtime>::TransactionFeePaid {
 				who,
 				token_id,
 				actual_fee: fee,
@@ -461,7 +461,7 @@ pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	Foo<T>,
 >;
 
-impl pallet_transaction_payment_mangata::Config for Runtime {
+impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
@@ -469,11 +469,10 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		OnChargeTransactionHandler<Runtime>,
 		FeeLock,
 	>;
-	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
+	type LengthToFee = cfg::pallet_transaction_payment::LengthToFee;
 	type WeightToFee = constants::fee::WeightToFee;
-	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
-	type OperationalFeeMultiplier =
-		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
+	type FeeMultiplierUpdate = cfg::pallet_transaction_payment::FeeMultiplierUpdate;
+	type OperationalFeeMultiplier = cfg::pallet_transaction_payment::OperationalFeeMultiplier;
 }
 
 parameter_types! {
@@ -806,7 +805,7 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,
-		TransactionPayment: pallet_transaction_payment_mangata = 11,
+		TransactionPayment: pallet_transaction_payment = 11,
 
 		// Xyk stuff
 		Xyk: pallet_xyk = 13,
@@ -1412,17 +1411,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_mangata_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 		fn query_weight_to_fee(weight: Weight) -> Balance {
@@ -1433,19 +1432,19 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
 		for Runtime
 	{
 		fn query_call_info(
 			call: RuntimeCall,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_call_info(call, len)
 		}
 		fn query_call_fee_details(
 			call: RuntimeCall,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_call_fee_details(call, len)
 		}
 		fn query_weight_to_fee(weight: Weight) -> Balance {

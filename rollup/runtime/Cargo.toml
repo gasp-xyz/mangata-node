@@ -85,8 +85,8 @@ pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch
 pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-sudo-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-timestamp = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-treasury = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 
@@ -129,8 +129,8 @@ std = [
 	"pallet-sudo-mangata/std",
 	"pallet-sudo-origin/std",
 	"pallet-timestamp/std",
-	"pallet-transaction-payment-mangata-rpc-runtime-api/std",
-	"pallet-transaction-payment-mangata/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
 	"pallet-utility-mangata/std",
 	"pallet-vesting-mangata/std",
@@ -187,7 +187,7 @@ try-runtime = [
 	"pallet-sudo-mangata/try-runtime",
 	"pallet-sudo-origin/try-runtime",
 	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment-mangata/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-utility-mangata/try-runtime",
 	"pallet-vesting-mangata/try-runtime",

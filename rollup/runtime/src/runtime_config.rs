@@ -86,7 +86,7 @@ pub mod runtime_types {
 		frame_system::CheckEra<Runtime>,
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
-		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
+		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		frame_system::CheckNonZeroSender<Runtime>,
 	);
 
@@ -404,7 +404,7 @@ pub mod config {
 		}
 	}
 
-	pub mod pallet_transaction_payment_mangata {
+	pub mod pallet_transaction_payment {
 		use crate::*;
 
 		parameter_types! {
@@ -470,7 +470,7 @@ pub mod config {
 		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
 		impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
 		where
-			T: pallet_transaction_payment_mangata::Config
+			T: pallet_transaction_payment::Config
 				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
 			T::LengthToFee: frame_support::weights::WeightToFee<
@@ -696,7 +696,7 @@ pub mod config {
 		/// then tip.
 		impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 		where
-			T: pallet_transaction_payment_mangata::Config
+			T: pallet_transaction_payment::Config
 				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
 			<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
@@ -942,7 +942,7 @@ pub mod config {
 		/// then tip.
 		impl<T, C, OU, T1, T2, SF, TE> OnChargeTransaction<T> for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>
 		where
-			T: pallet_transaction_payment_mangata::Config,
+			T: pallet_transaction_payment::Config,
 			TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance: From<u128>,
 			C::CurrencyId: Into<u32>,

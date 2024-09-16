@@ -40,9 +40,9 @@ pallet-sudo-mangata = { path = "../polkadot-sdk/substrate/frame/sudo-mangata" }
 mangata-support = { path = "../polkadot-sdk/substrate/frame/mangata-support" }
 pallet-utility-mangata = { path = "../polkadot-sdk/substrate/frame/utility-mangata" }
 pallet-authorship = { path = "../polkadot-sdk/substrate/frame/authorship" }
-pallet-transaction-payment-mangata = { path = "../polkadot-sdk/substrate/frame/transaction-payment-mangata" }
-pallet-transaction-payment-mangata-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment-mangata/rpc" }
-pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+pallet-transaction-payment = { path = "../polkadot-sdk/substrate/frame/transaction-payment" }
+pallet-transaction-payment-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api" }
 pallet-grandpa = { path = "../polkadot-sdk/substrate/frame/grandpa" }
 pallet-vesting-mangata = { path = "../polkadot-sdk/substrate/frame/vesting-mangata" }
 frame-system = { path = "../polkadot-sdk/substrate/frame/system" }

@@ -43,8 +43,8 @@ pallet-rolldown = { path = "../../pallets/rolldown"}
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-transaction-payment = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-chain-spec = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
@@ -118,7 +118,7 @@ runtime-benchmarks = [
 try-runtime = [
 	"frame-system/try-runtime",
 	"rollup-runtime/try-runtime",
-	"pallet-transaction-payment-mangata/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
 	"try-runtime-cli/try-runtime",
 ]

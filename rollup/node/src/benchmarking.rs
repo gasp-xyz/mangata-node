@@ -73,7 +73,7 @@ pub fn create_benchmark_extrinsic(
 		)),
 		frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<runtime::Runtime>::new(),
-		pallet_transaction_payment_mangata::ChargeTransactionPayment::<runtime::Runtime>::from(0),
+		pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
 		frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
 	);
 

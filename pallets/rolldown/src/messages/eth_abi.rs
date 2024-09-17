@@ -34,6 +34,7 @@ impl From<crate::FailedDepositResolution> for FailedDepositResolution {
 			originRequestId: crate::messages::to_eth_u256(
 				failed_deposit_resolution.originRequestId.into(),
 			),
+			ferry: failed_deposit_resolution.ferry.into(),
 		}
 	}
 }
@@ -162,6 +163,7 @@ sol! {
 	struct FailedDepositResolution {
 		RequestId requestId;
 		uint256 originRequestId;
+		address ferry;
 	}
 
 	#[derive(Debug, PartialEq)]

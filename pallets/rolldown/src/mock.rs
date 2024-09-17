@@ -21,6 +21,7 @@ pub(crate) type TokenId = u32;
 
 pub mod consts {
 	pub const MILLION: u128 = 1_000_000;
+	pub const THOUSAND: u128 = 1_000;
 	pub const ALICE: u64 = 2;
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;

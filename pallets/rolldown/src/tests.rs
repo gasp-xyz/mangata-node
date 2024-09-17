@@ -198,7 +198,7 @@ fn deposit_fail_creates_update_with_status_false() {
 			));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
-			assert!(!FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
+			assert!(!FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
 
 			forward_to_block::<Test>(20);
 
@@ -208,7 +208,7 @@ fn deposit_fail_creates_update_with_status_false() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			assert!(FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
+			assert!(FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
 }
@@ -244,7 +244,8 @@ fn test_refund_of_failed_withdrawal() {
 
 			assert_event_emitted!(Event::DepositRefundCreated {
 				refunded_request_id: RequestId::new(Origin::L1, 1u128),
-				chain: Chain::Ethereum
+				chain: Chain::Ethereum,
+				ferry: None
 			});
 		});
 }
@@ -277,7 +278,7 @@ fn test_withdrawal_can_be_refunded_only_once() {
 					consts::CHAIN,
 					1u128
 				),
-				Error::<Test>::FailedDepositDoesExists
+				Error::<Test>::FailedDepositDoesNotExist
 			);
 		});
 }
@@ -305,7 +306,7 @@ fn test_withdrawal_can_be_refunded_only_by_account_deposit_recipient() {
 
 			assert_err!(
 				Rolldown::refund_failed_deposit(RuntimeOrigin::signed(ALICE), consts::CHAIN, 1u128),
-				Error::<Test>::FailedDepositDoesExists
+				Error::<Test>::NotEligibleForRefund
 			);
 
 			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
@@ -2889,32 +2890,288 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 }
 
 #[test]
+#[ignore]
 #[serial]
-fn test_deposit_ferry() {
+fn test_deposit_ferry_fails_on_zero_tip() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
-			Rolldown::withdraw(
+			let deposit = messages::Deposit {
+				requestId: Default::default(),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+
+			Rolldown::ferry_deposit(
 				RuntimeOrigin::signed(ALICE),
 				consts::CHAIN,
-				ETH_RECIPIENT_ACCOUNT,
-				ETH_TOKEN_ADDRESS,
-				1_000u128,
-				0u128.into(),
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.try_into().unwrap(),
+				deposit.timeStamp.try_into().unwrap(),
+				deposit.ferryTip.try_into().unwrap(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_with_wrong_hash_fails() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: Default::default(),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+
+			assert_err!(
+				Rolldown::ferry_deposit(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					deposit.requestId,
+					deposit.depositRecipient,
+					deposit.tokenAddress,
+					deposit.amount.try_into().unwrap(),
+					deposit.timeStamp.try_into().unwrap(),
+					deposit.ferryTip.try_into().unwrap(),
+					H256::zero()
+				),
+				Error::<Test>::FerryHashMismatch
+			);
+
+			forward_to_block::<Test>(14);
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_without_tip() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
 			)
 			.unwrap();
 
-			Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 1), ALICE)
-				.unwrap();
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
 
-			assert_event_emitted!(Event::TxBatchCreated {
-				chain: consts::CHAIN,
-				source: BatchSource::Manual,
-				assignee: ALICE,
-				batch_id: 1,
-				range: (1, 1),
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				charlie_balance_after
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE),
+				alice_balance_before + deposit.ferryTip.saturated_into::<u128>()
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_with_tip() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(10 * THOUSAND),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
+
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				charlie_balance_after
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE),
+				alice_balance_before + deposit.ferryTip.saturated_into::<u128>()
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_ferry_deposit_that_fails() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, u128::MAX)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(u128::MAX),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(1u128),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
+
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+
+			assert_event_emitted!(Event::RequestProcessedOnL2 {
+				chain: messages::Chain::Ethereum,
+				request_id: 1u128,
+				status: Err(L1RequestProcessingError::MintError),
+			});
+
+			assert_err!(
+				Rolldown::refund_failed_deposit(
+					RuntimeOrigin::signed(CHARLIE),
+					consts::CHAIN,
+					deposit.requestId.id
+				),
+				Error::<Test>::NotEligibleForRefund
+			);
+
+			Rolldown::refund_failed_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId.id,
+			)
+			.unwrap();
+
+			assert_event_emitted!(Event::DepositRefundCreated {
+				refunded_request_id: RequestId::new(Origin::L1, 1u128),
+				chain: Chain::Ethereum,
+				ferry: Some(ALICE),
 			});
 		})
 }

@@ -136,6 +136,7 @@ impl From<(Origin, u128)> for RequestId {
 pub struct FailedDepositResolution {
 	pub requestId: RequestId,
 	pub originRequestId: u128,
+	pub ferry: [u8; 20],
 }
 
 #[derive(
@@ -242,6 +243,18 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
 		}
+	}
+}
+
+impl From<Deposit> for L1UpdateRequest {
+	fn from(deposit: Deposit) -> L1UpdateRequest {
+		L1UpdateRequest::Deposit(deposit)
+	}
+}
+
+impl From<CancelResolution> for L1UpdateRequest {
+	fn from(cancel: CancelResolution) -> L1UpdateRequest {
+		L1UpdateRequest::CancelResolution(cancel)
 	}
 }
 

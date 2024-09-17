@@ -217,6 +217,8 @@ parameter_types! {
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+	pub const SequencerIssuanceVaultId: PalletId = PalletId(*b"py/seqiv");
+	pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
 	pub const MgaTokenId: TokenId = 0u32;
 
 
@@ -224,7 +226,8 @@ parameter_types! {
 	pub const IssuanceCap: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
-	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const StakingSplit: Perbill = Perbill::from_parts(344444444);
+	pub const SequencerSplit: Perbill = Perbill::from_parts(100000000);
 	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
 	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
 	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
@@ -251,6 +254,8 @@ impl pallet_issuance::Config for Test {
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
 	type LiquidityMiningApi = ProofOfStake;
+	type SequencersIssuanceVault = SequencerIssuanceVault;
+	type SequencersSplit = SequencerSplit;
 }
 
 mockall::mock! {

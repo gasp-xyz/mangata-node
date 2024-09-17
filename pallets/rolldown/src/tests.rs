@@ -4,7 +4,7 @@ use crate::{
 	*,
 };
 
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok, error::BadOrigin};
 use hex_literal::hex;
 use messages::L1UpdateRequest;
 
@@ -196,7 +196,7 @@ fn deposit_fail_creates_update_with_status_false() {
 			));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
-			assert!(!FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
+			assert!(!FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
 
 			forward_to_block::<Test>(20);
 
@@ -206,7 +206,7 @@ fn deposit_fail_creates_update_with_status_false() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			assert!(FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
+			assert!(FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
 }
@@ -236,7 +236,8 @@ fn test_refund_of_failed_withdrawal() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128).unwrap();
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 
 			assert_event_emitted!(Event::DepositRefundCreated {
 				refunded_request_id: RequestId::new(Origin::L1, 1u128),
@@ -264,11 +265,46 @@ fn test_withdrawal_can_be_refunded_only_once() {
 
 			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(20);
-			Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128).unwrap();
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 			assert_err!(
-				Rolldown::refund_failed_deposit(RuntimeOrigin::root(), consts::CHAIN, 1u128),
+				Rolldown::refund_failed_deposit(
+					RuntimeOrigin::signed(CHARLIE),
+					consts::CHAIN,
+					1u128
+				),
 				Error::<Test>::FailedDepositDoesExists
 			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_withdrawal_can_be_refunded_only_by_account_deposit_recipient() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 0u128)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit {
+					requestId: Default::default(),
+					depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+					tokenAddress: ETH_TOKEN_ADDRESS,
+					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
+					timeStamp: sp_core::U256::from(1),
+				})])
+				.build();
+
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			forward_to_block::<Test>(20);
+
+			assert_err!(
+				Rolldown::refund_failed_deposit(RuntimeOrigin::signed(ALICE), consts::CHAIN, 1u128),
+				Error::<Test>::FailedDepositDoesExists
+			);
+
+			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
+				.unwrap();
 		});
 }
 
@@ -1055,6 +1091,7 @@ fn test_conversion_address() {
 fn test_withdraw() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			assert_eq!(TokensOf::<Test>::total_issuance(ETH_TOKEN_ADDRESS_MGX), MILLION);
 			Rolldown::withdraw(
@@ -1082,6 +1119,42 @@ fn test_withdraw() {
 				L2Request::Withdrawal(withdrawal_update)
 			);
 			assert_eq!(Rolldown::get_next_l2_request_id(Chain::Ethereum), 2);
+
+			// check withdraw fee
+			let fee = <<Test as Config>::WithdrawFee as sp_core::TypedGet>::get();
+			assert_eq!(
+				TokensOf::<Test>::free_balance(NativeCurrencyId::get(), &ALICE),
+				MILLION - fee
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(
+					NativeCurrencyId::get(),
+					&Rolldown::treasury_account_id()
+				),
+				fee
+			);
+		});
+}
+
+#[test]
+#[serial]
+fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_without_mocks([Mocks::GetL1AssetId], || {
+			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
+			get_l1_asset_id_mock.expect().return_const(None);
+
+			assert_err!(
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					hex!("0123456789012345678901234567890123456789"),
+					1_000_000u128,
+				),
+				Error::<Test>::TokenDoesNotExist
+			);
 		});
 }
 
@@ -1109,6 +1182,7 @@ fn error_on_withdraw_too_much() {
 fn test_reproduce_bug_with_incremental_updates() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, 10_000u128)
+		.issue(ALICE, NativeCurrencyId::get(), 10_000u128)
 		.execute_with_default_mocks(|| {
 			let first_update = L1UpdateBuilder::new()
 				.with_requests(vec![
@@ -1608,7 +1682,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 
 #[test]
 #[serial]
-fn consider_awaiting_l1_READ_update_in_dispute_period_when_assigning_initial_read_rights_to_sequencer(
+fn consider_awaiting_l1_sequencer_update_in_dispute_period_when_assigning_initial_read_rights_to_sequencer(
 ) {
 	ExtBuilder::new()
 		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
@@ -1770,6 +1844,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 fn test_merkle_proof_works() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			for i in 0..500 {
 				Rolldown::withdraw(
@@ -1797,10 +1872,11 @@ fn test_merkle_proof_works() {
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootAutomaticBatchSize()
-{
+fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root_automatic_batch_size(
+) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let selected_sequencer_mock =
@@ -1885,9 +1961,10 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_MerkleRootA
 
 #[test]
 #[serial]
-fn test_batch_is_created_automatically_when_MerkleRootAutomaticBatchPeriod_passes() {
+fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_passes() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
@@ -1952,6 +2029,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 ) {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
@@ -2000,6 +2078,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 fn test_period_based_batch_respects_sized_batches() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.build()
 		.execute_with(|| {
 			let selected_sequencer_mock =
@@ -2058,6 +2137,7 @@ fn test_period_based_batch_respects_sized_batches() {
 fn test_create_manual_batch_works() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			forward_to_block::<Test>(10);
 
@@ -2103,6 +2183,7 @@ fn test_create_manual_batch_works() {
 fn test_create_manual_batch_fails_for_invalid_alias_account() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2132,6 +2213,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 fn test_create_manual_batch_work_for_alias_account() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2169,6 +2251,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 fn test_merkle_proof_for_single_element_tree_is_empty() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.execute_with_default_mocks(|| {
 			Rolldown::withdraw(
 				RuntimeOrigin::signed(ALICE),
@@ -2230,6 +2313,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests() {
 fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_with_default_mocks(|| {
 			let selected_sequencer_mock =
@@ -2263,6 +2347,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 fn manual_batches_not_allowed_in_maintanance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2294,6 +2379,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2324,6 +2410,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 	ExtBuilder::new()
 		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
 		.issue(BOB, ETH_TOKEN_ADDRESS_MGX, MILLION)
 		.execute_without_mocks([Mocks::MaintenanceMode], || {
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2703,5 +2790,90 @@ fn test_sequencer_rights_are_returned_when_maintanance_mode_is_turned_off_before
 
 			forward_to_block::<Test>(20);
 			assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 0_u128.into());
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_can_only_be_called_as_sudo() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			assert_noop!(
+				Rolldown::force_create_batch(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					(10, 20),
+					ALICE
+				),
+				BadOrigin
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_fails_for_invalid_range() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (10, 20), ALICE),
+				Error::<Test>::InvalidRange
+			);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 10), ALICE),
+				Error::<Test>::InvalidRange
+			);
+
+			assert_err!(
+				Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (0, 1), ALICE),
+				Error::<Test>::InvalidRange
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_force_create_batch_succeeds_for_valid_range() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			Rolldown::withdraw(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				ETH_RECIPIENT_ACCOUNT,
+				ETH_TOKEN_ADDRESS,
+				1_000u128,
+			)
+			.unwrap();
+
+			Rolldown::force_create_batch(RuntimeOrigin::root(), consts::CHAIN, (1, 1), ALICE)
+				.unwrap();
+
+			assert_event_emitted!(Event::TxBatchCreated {
+				chain: consts::CHAIN,
+				source: BatchSource::Manual,
+				assignee: ALICE,
+				batch_id: 1,
+				range: (1, 1),
+			});
 		})
 }

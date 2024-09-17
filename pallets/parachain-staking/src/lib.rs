@@ -152,7 +152,7 @@ use frame_support::{
 use frame_system::{pallet_prelude::*, RawOrigin};
 pub use mangata_support::traits::{
 	ComputeIssuance, GetIssuance, PoolCreateApi, ProofOfStakeRewardsApi,
-	SequencerStakingProviderTrait, StakingReservesProviderTrait, Valuate, XykFunctionsTrait,
+	SequencerStakingRewardsTrait, StakingReservesProviderTrait, Valuate, XykFunctionsTrait,
 };
 pub use mangata_types::multipurpose_liquidity::BondKind;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -1509,6 +1509,8 @@ pub mod pallet {
 		type FallbackProvider: GetMembers<Self::AccountId>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+		/// Sequencer rewarding hooks
+		type SequencerStakingRewards: SequencerStakingRewardsTrait<Self::AccountId, RoundIndex>;
 	}
 
 	#[pallet::error]
@@ -3493,6 +3495,7 @@ pub mod pallet {
 				round.update(n);
 				// pay all stakers for T::RewardPaymentDelay rounds ago
 				Self::pay_stakers(round.current);
+				T::SequencerStakingRewards::pay_sequencers(round.current);
 				// select top collator candidates for next round
 				let (collator_count, _delegation_count, total_relevant_exposure) =
 					Self::select_top_candidates(round.current.saturating_add(One::one()));

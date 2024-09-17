@@ -21,7 +21,7 @@ use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
-	SequencerStakingProviderTrait, SetMaintenanceModeOn,
+	SequencerStakingProviderTrait, SequencerStakingRewardsTrait, SetMaintenanceModeOn,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -39,6 +39,8 @@ pub type BalanceOf<T> =
 pub type ChainIdOf<T> = <T as pallet::Config>::ChainId;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+type RoundIndex = u32;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
 
@@ -155,7 +157,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
 	pub type FailedL1Deposits<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (), OptionQuery>;
+		StorageMap<_, Blake2_128Concat, (T::AccountId, T::ChainId, u128), (), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -254,11 +256,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_deposits)]
-	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfDeposits<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_withdrawals)]
-	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfWithdrawals<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	pub type L2RequestsBatch<T: Config> = StorageMap<
@@ -337,6 +339,7 @@ pub mod pallet {
 		AddressDeserializationFailure,
 		RequestDoesNotExist,
 		NotEnoughAssets,
+		NotEnoughAssetsForFee,
 		BalanceOverflow,
 		L1AssetCreationFailed,
 		MathOverflow,
@@ -355,6 +358,8 @@ pub mod pallet {
 		UnknownAliasAccount,
 		FailedDepositDoesExists,
 		EmptyBatch,
+		TokenDoesNotExist,
+		NotDepositRecipient,
 	}
 
 	#[pallet::config]
@@ -365,6 +370,7 @@ pub mod pallet {
 			BalanceOf<Self>,
 			ChainIdOf<Self>,
 		>;
+		type SequencerStakingRewards: SequencerStakingRewardsTrait<Self::AccountId, RoundIndex>;
 		type AddressConverter: Convert<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
@@ -401,6 +407,9 @@ pub mod pallet {
 		type MerkleRootAutomaticBatchPeriod: Get<u128>;
 		type TreasuryPalletId: Get<PalletId>;
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
+		/// Withdrawals flat fee
+		#[pallet::constant]
+		type WithdrawFee: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -422,7 +431,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
 			requests: messages::L1Update,
@@ -530,7 +539,7 @@ pub mod pallet {
 
 			let eth_asset = T::AssetAddressConverter::convert((chain, token_address));
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset)
-				.ok_or(Error::<T>::MathOverflow)?;
+				.ok_or(Error::<T>::TokenDoesNotExist)?;
 
 			// fail will occur if user has not enough balance
 			<T as Config>::Tokens::ensure_can_withdraw(
@@ -541,6 +550,26 @@ pub mod pallet {
 				Default::default(),
 			)
 			.or(Err(Error::<T>::NotEnoughAssets))?;
+
+			let extra_fee = <<T as Config>::WithdrawFee>::get();
+			if !extra_fee.is_zero() {
+				<T as Config>::Tokens::ensure_can_withdraw(
+					Self::native_token_id(),
+					&account,
+					extra_fee,
+					WithdrawReasons::all(),
+					Default::default(),
+				)
+				.or(Err(Error::<T>::NotEnoughAssetsForFee))?;
+
+				<T as Config>::Tokens::transfer(
+					Self::native_token_id(),
+					&account,
+					&Self::treasury_account_id(),
+					extra_fee,
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
 
 			// burn tokes for user
 			T::Tokens::burn_and_settle(
@@ -618,25 +647,13 @@ pub mod pallet {
 			sequencer_account: Option<T::AccountId>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
 
 			ensure!(
 				!T::MaintenanceStatusProvider::is_maintenance(),
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
-			let asignee = if let Some(sequencer) = sequencer_account {
-				ensure!(
-					T::SequencerStakingProvider::is_active_sequencer_alias(
-						chain, &sequencer, &sender
-					),
-					Error::<T>::UnknownAliasAccount
-				);
-				sequencer
-			} else {
-				sender.clone()
-			};
-
+			let asignee = Self::get_batch_asignee(chain, &sender, sequencer_account)?;
 			let extra_fee = ManualBatchExtraFee::<T>::get();
 			if !extra_fee.is_zero() {
 				<T as Config>::Tokens::transfer(
@@ -648,41 +665,8 @@ pub mod pallet {
 				)?;
 			}
 
-			let (last_batch_id, last_request_id) = L2RequestsBatchLast::<T>::get()
-				.get(&chain)
-				.cloned()
-				.map(|(_block_number, batch_id, range)| (batch_id, range.1))
-				.unwrap_or_default();
-
-			let batch_id = last_batch_id.saturating_add(1u128);
-			let range_start = last_request_id.saturating_add(1u128);
-
-			ensure!(
-				L2Requests::<T>::contains_key(
-					chain,
-					RequestId { origin: Origin::L2, id: range_start }
-				),
-				Error::<T>::EmptyBatch
-			);
-			let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
-			ensure!(range_end >= range_start, Error::<T>::InvalidRange);
-
-			L2RequestsBatch::<T>::insert(
-				(chain, batch_id),
-				(now, (range_start, range_end), asignee.clone()),
-			);
-			L2RequestsBatchLast::<T>::mutate(|batches| {
-				batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
-			});
-
-			Pallet::<T>::deposit_event(Event::TxBatchCreated {
-				chain,
-				source: BatchSource::Manual,
-				assignee: asignee.clone(),
-				batch_id,
-				range: (range_start, range_end),
-			});
-
+			let range = Self::get_batch_range_from_available_requests(chain)?;
+			Self::persist_batch_and_deposit_event(chain, range, asignee);
 			Ok(().into())
 		}
 
@@ -700,15 +684,16 @@ pub mod pallet {
 
 		#[pallet::call_index(8)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// only deposit recipient can initiate refund failed deposit
 		pub fn refund_failed_deposit(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			request_id: u128,
 		) -> DispatchResult {
-			let _ = ensure_root(origin)?;
+			let sender = ensure_signed(origin)?;
 
 			// NOTE: failed deposits are not reachable at this point
-			let _ = FailedL1Deposits::<T>::take((chain, request_id))
+			let _ = FailedL1Deposits::<T>::take((sender, chain, request_id))
 				.ok_or(Error::<T>::FailedDepositDoesExists)?;
 
 			let l2_request_id = Self::acquire_l2_request_id(chain);
@@ -732,6 +717,37 @@ pub mod pallet {
 				chain,
 			});
 
+			Ok(().into())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		/// Froce create batch and assigns it to provided sequencer
+		/// provided requests range must exists - otherwise `[Error::InvalidRange]` error will be returned
+		pub fn force_create_batch(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			range: (u128, u128),
+			sequencer_account: AccountIdOf<T>,
+		) -> DispatchResult {
+			let _ = ensure_root(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::BlockedByMaintenanceMode
+			);
+
+			ensure!(
+				L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range.0 }),
+				Error::<T>::InvalidRange
+			);
+
+			ensure!(
+				L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range.1 }),
+				Error::<T>::InvalidRange
+			);
+
+			Self::persist_batch_and_deposit_event(chain, range, sequencer_account);
 			Ok(().into())
 		}
 	}
@@ -868,7 +884,8 @@ impl<T: Config> Pallet<T> {
 		let status = match request.clone() {
 			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
 				.or_else(|err| {
-					FailedL1Deposits::<T>::insert((l1, deposit.requestId.id), ());
+					let who: T::AccountId = T::AddressConverter::convert(deposit.depositRecipient);
+					FailedL1Deposits::<T>::insert((who, l1, deposit.requestId.id), ());
 					Err(err)
 				}),
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
@@ -1236,11 +1253,14 @@ impl<T: Config> Pallet<T> {
 
 		Pallet::<T>::deposit_event(Event::L1ReadStored {
 			chain: l1,
-			sequencer,
+			sequencer: sequencer.clone(),
 			dispute_period_end,
 			range: requests_range,
 			hash: l1_read_hash,
 		});
+
+		// 2 storage reads & writes in seqs pallet
+		T::SequencerStakingRewards::note_update_author(&sequencer);
 
 		Ok(().into())
 	}
@@ -1351,7 +1371,8 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
+	#[cfg(test)]
+	fn get_next_l2_request_id(chain: ChainIdOf<T>) -> u128 {
 		L2OriginRequestId::<T>::get().get(&chain).cloned().unwrap_or(1u128)
 	}
 
@@ -1388,7 +1409,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn treasury_account_id() -> T::AccountId {
+	pub(crate) fn treasury_account_id() -> T::AccountId {
 		T::TreasuryPalletId::get().into_account_truncating()
 	}
 
@@ -1400,6 +1421,73 @@ impl<T: Config> Pallet<T> {
 		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
 			.map(|(req, _hash)| req.abi_encode())
 			.unwrap_or_default()
+	}
+
+	fn get_batch_range_from_available_requests(
+		chain: ChainIdOf<T>,
+	) -> Result<(u128, u128), Error<T>> {
+		let last_request_id = L2RequestsBatchLast::<T>::get()
+			.get(&chain)
+			.cloned()
+			.map(|(_block_number, _batch_id, range)| range.1)
+			.unwrap_or_default();
+		let range_start = last_request_id.saturating_add(1u128);
+		let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+
+		if L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range_start }) {
+			Ok((range_start, range_end))
+		} else {
+			Err(Error::<T>::EmptyBatch)
+		}
+	}
+
+	fn get_next_batch_id(chain: ChainIdOf<T>) -> u128 {
+		let last_batch_id = L2RequestsBatchLast::<T>::get()
+			.get(&chain)
+			.cloned()
+			.map(|(_block_number, batch_id, _range)| batch_id)
+			.unwrap_or_default();
+		last_batch_id.saturating_add(1u128)
+	}
+
+	fn persist_batch_and_deposit_event(
+		chain: ChainIdOf<T>,
+		range: (u128, u128),
+		asignee: T::AccountId,
+	) {
+		let now: BlockNumberFor<T> = <frame_system::Pallet<T>>::block_number();
+		let batch_id = Self::get_next_batch_id(chain);
+
+		L2RequestsBatch::<T>::insert((chain, batch_id), (now, (range.0, range.1), asignee.clone()));
+
+		L2RequestsBatchLast::<T>::mutate(|batches| {
+			batches.insert(chain.clone(), (now, batch_id, (range.0, range.1)));
+		});
+
+		Pallet::<T>::deposit_event(Event::TxBatchCreated {
+			chain,
+			source: BatchSource::Manual,
+			assignee: asignee.clone(),
+			batch_id,
+			range: (range.0, range.1),
+		});
+	}
+
+	/// Deduces account that batch should be assigened to
+	fn get_batch_asignee(
+		chain: ChainIdOf<T>,
+		sender: &T::AccountId,
+		sequencer_account: Option<T::AccountId>,
+	) -> Result<T::AccountId, Error<T>> {
+		if let Some(sequencer) = sequencer_account {
+			if T::SequencerStakingProvider::is_active_sequencer_alias(chain, &sequencer, sender) {
+				Ok(sequencer)
+			} else {
+				Err(Error::<T>::UnknownAliasAccount)
+			}
+		} else {
+			Ok(sender.clone())
+		}
 	}
 }
 

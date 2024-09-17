@@ -2,16 +2,10 @@ use crate::{
 	mock::{consts::*, *},
 	*,
 };
-use core::{convert::TryFrom, future::pending};
+use core::{convert::TryFrom, future::pending, str::CharIndices};
 use frame_support::{assert_err, assert_ok};
-use hex_literal::hex;
 use mockall::predicate::eq;
-use orml_traits::MultiReservableCurrency;
 use serial_test::serial;
-use sp_io::storage::rollback_transaction;
-use sp_runtime::BoundedBTreeSet;
-
-pub type TokensOf<Test> = <Test as crate::Config>::Currency;
 
 #[test]
 #[serial]
@@ -29,6 +23,8 @@ fn test_genesis_build() {
 		assert_eq!(TokensOf::<Test>::reserved_balance(&ALICE), MINIMUM_STAKE);
 		assert_eq!(TokensOf::<Test>::total_balance(&BOB), TOKENS_ENDOWED);
 		assert_eq!(TokensOf::<Test>::reserved_balance(&BOB), MINIMUM_STAKE);
+
+		assert_eq!(CurrentRound::<Test>::get(), 0);
 	});
 }
 
@@ -50,7 +46,8 @@ fn test_provide_sequencer_stake_works_and_activates() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			None
+			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 		assert_eq!(
 			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
@@ -76,19 +73,17 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_insufficient_
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
 		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), 0);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_ok!(SequencerStaking::provide_sequencer_stake(
-			RuntimeOrigin::signed(CHARLIE),
-			consts::DEFAULT_CHAIN_ID,
-			MINIMUM_STAKE - 1,
-			None
-		));
-		assert_eq!(
-			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
-			MINIMUM_STAKE - 1
+
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				MINIMUM_STAKE - 1,
+				None,
+				StakeAction::StakeAndJoinActiveSet
+			),
+			Error::<Test>::NotEnoughSequencerStake
 		);
-		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
-		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE - 1);
 	});
 }
 
@@ -111,19 +106,16 @@ fn test_provide_sequencer_stake_works_and_does_not_activate_due_to_max_seq_bound
 		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), 0);
 		assert_eq!(SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)), 0);
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_ok!(SequencerStaking::provide_sequencer_stake(
-			RuntimeOrigin::signed(CHARLIE),
-			consts::DEFAULT_CHAIN_ID,
-			MINIMUM_STAKE,
-			None
-		));
-		assert_eq!(
-			SequencerStake::<Test>::get(&(CHARLIE, consts::DEFAULT_CHAIN_ID)),
-			MINIMUM_STAKE
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				MINIMUM_STAKE,
+				None,
+				StakeAction::StakeAndJoinActiveSet
+			),
+			Error::<Test>::MaxSequencersLimitReached
 		);
-		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &CHARLIE));
-		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
-		assert_eq!(TokensOf::<Test>::reserved_balance(&CHARLIE), MINIMUM_STAKE);
 	});
 }
 
@@ -174,7 +166,8 @@ fn test_rejoin_active_sequencer_works() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE - 1,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 		assert_err!(
 			SequencerStaking::rejoin_active_sequencers(
@@ -193,7 +186,8 @@ fn test_rejoin_active_sequencer_works() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			1,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		SequencerStaking::set_active_sequencers(
@@ -229,7 +223,8 @@ fn test_can_not_join_set_if_full() {
 				RuntimeOrigin::signed(seq),
 				consts::DEFAULT_CHAIN_ID,
 				MINIMUM_STAKE,
-				None
+				None,
+				StakeAction::StakeAndJoinActiveSet
 			));
 			assert!(SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &seq));
 		}
@@ -239,7 +234,8 @@ fn test_can_not_join_set_if_full() {
 			RuntimeOrigin::signed(seq_limit),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 		assert!(!SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &seq_limit));
 		assert_err!(
@@ -272,7 +268,8 @@ fn test_provide_stake_fails_on_sequencers_limit_reached() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE - 1,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 		assert_err!(
 			SequencerStaking::rejoin_active_sequencers(
@@ -287,11 +284,23 @@ fn test_provide_stake_fails_on_sequencers_limit_reached() {
 		)
 		.unwrap();
 
+		assert_err!(
+			SequencerStaking::provide_sequencer_stake(
+				RuntimeOrigin::signed(CHARLIE),
+				consts::DEFAULT_CHAIN_ID,
+				1,
+				None,
+				StakeAction::StakeAndJoinActiveSet
+			),
+			Error::<Test>::MaxSequencersLimitReached
+		);
+
 		assert_ok!(SequencerStaking::provide_sequencer_stake(
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			1,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		SequencerStaking::set_active_sequencers(
@@ -359,7 +368,8 @@ fn test_set_sequencer_configuration() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE + 1,
-			None
+			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		let handle_sequencer_deactivations_mock =
@@ -451,7 +461,8 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			amount,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
@@ -482,7 +493,8 @@ fn test_slash_sequencer_when_stake_less_than_repatriated_amount() {
 			RuntimeOrigin::signed(DAVE),
 			consts::DEFAULT_CHAIN_ID,
 			amount,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		let total_issuance_0 = TokensOf::<Test>::total_issuance();
@@ -511,7 +523,8 @@ fn test_slash_sequencer_when_stake_less_than_stake_but_greater_than_repatriated_
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			amount,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		assert_eq!(TokensOf::<Test>::total_balance(&CHARLIE), TOKENS_ENDOWED);
@@ -542,7 +555,8 @@ fn test_slash_sequencer_when_stake_less_than_stake_but_greater_than_repatriated_
 			RuntimeOrigin::signed(DAVE),
 			consts::DEFAULT_CHAIN_ID,
 			amount,
-			None
+			None,
+			StakeAction::StakeOnly
 		));
 
 		let total_issuance_0 = TokensOf::<Test>::total_issuance();
@@ -750,7 +764,8 @@ fn test_provide_sequencer_stake_sets_updater_account_to_same_address_as_sequence
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			None
+			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		forward_to_block::<Test>(100);
@@ -785,7 +800,8 @@ fn test_sequencer_can_set_alias_address() {
 			RuntimeOrigin::signed(CHARLIE),
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
-			Some(EVE)
+			Some(EVE),
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert!(
@@ -813,6 +829,7 @@ fn test_sequencer_can_update_alias_address() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		SequencerStaking::set_updater_account_for_sequencer(
@@ -840,6 +857,7 @@ fn test_sequencer_can_not_set_another_sequencer_address_as_alias() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert_err!(
@@ -848,6 +866,7 @@ fn test_sequencer_can_not_set_another_sequencer_address_as_alias() {
 				consts::DEFAULT_CHAIN_ID,
 				MINIMUM_STAKE,
 				Some(ALICE),
+				StakeAction::StakeAndJoinActiveSet
 			),
 			Error::<Test>::AliasAccountIsActiveSequencer
 		);
@@ -857,6 +876,7 @@ fn test_sequencer_can_not_set_another_sequencer_address_as_alias() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert_err!(
@@ -886,6 +906,7 @@ fn test_sequencer_can_not_set_use_already_used_alias() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			Some(EVE),
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert_err!(
@@ -894,6 +915,7 @@ fn test_sequencer_can_not_set_use_already_used_alias() {
 				consts::DEFAULT_CHAIN_ID,
 				MINIMUM_STAKE,
 				Some(EVE),
+				StakeAction::StakeAndJoinActiveSet
 			),
 			Error::<Test>::AddressInUse
 		);
@@ -903,6 +925,7 @@ fn test_sequencer_can_not_set_use_already_used_alias() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			None,
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert_err!(
@@ -933,6 +956,7 @@ fn test_sequencer_cannot_join_if_its_account_is_used_as_sequencer_alias() {
 			consts::DEFAULT_CHAIN_ID,
 			MINIMUM_STAKE,
 			Some(consts::ALICE),
+			StakeAction::StakeAndJoinActiveSet
 		));
 
 		assert_err!(
@@ -941,8 +965,129 @@ fn test_sequencer_cannot_join_if_its_account_is_used_as_sequencer_alias() {
 				consts::DEFAULT_CHAIN_ID,
 				MINIMUM_STAKE,
 				None,
+				StakeAction::StakeAndJoinActiveSet
 			),
 			Error::<Test>::SequencerAccountIsActiveSequencerAlias
 		);
+	});
+}
+
+#[test]
+#[serial]
+fn payout_distribution_to_sequencers() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+		<<Test as Config>::Issuance>::compute_issuance(0);
+		let total = <<Test as Config>::Issuance>::get_sequencer_issuance(0).unwrap();
+
+		assert_eq!(10_0000, total);
+		assert_eq!(10_0000, TokensOf::<Test>::total_balance(&SequencerIssuanceVault::get()));
+
+		// these are called from rolldown pallet to notify update was created by sequencer
+		// alice should have 4x more rewards than bob in first round
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::note_update_author(&ALICE);
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::note_update_author(&ALICE);
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::note_update_author(&ALICE);
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::note_update_author(&ALICE);
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::note_update_author(&BOB);
+
+		// simulate new session hook in staking pallet
+		// we have a delay of 2 rounds
+		// previous round is 0, current is 1, nothing should be rewarded
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::pay_sequencers(1);
+		// previous round is 1, current is 2, rewards for first round should be paid out
+		<SequencerStaking as SequencerStakingRewardsTrait<_, _>>::pay_sequencers(2);
+
+		assert_eq!(80_000_u128, RoundSequencerRewardInfo::<Test>::get(ALICE, 0).unwrap());
+		assert_eq!(20_000_u128, RoundSequencerRewardInfo::<Test>::get(BOB, 0).unwrap());
+
+		let mut sum = 0;
+		for id in [ALICE, BOB] {
+			let balance = TokensOf::<Test>::total_balance(&id);
+			let reward = RoundSequencerRewardInfo::<Test>::get(id, 0).unwrap();
+			assert_ok!(SequencerStaking::payout_sequencer_rewards(
+				RuntimeOrigin::signed(id),
+				id,
+				None
+			));
+			assert_eq!(balance + reward, TokensOf::<Test>::total_balance(&id));
+			sum += reward;
+		}
+
+		assert_eq!(sum, total);
+		assert_eq!(2, CurrentRound::<Test>::get());
+		assert_eq!(0, TokensOf::<Test>::total_balance(&SequencerIssuanceVault::get()));
+	});
+}
+
+#[test]
+#[serial]
+fn pallet_max_sequencers_limit_is_considered_separately_for_each_set() {
+	set_default_mocks!();
+	ExtBuilder::new().build().execute_with(|| {
+		forward_to_block::<Test>(10);
+		ActiveSequencers::<Test>::kill();
+
+		let seq_limit = <<Test as Config>::MaxSequencers as Get<u32>>::get() as AccountId;
+		let new_sequencer_active_mock = MockRolldownProviderApi::new_sequencer_active_context();
+		new_sequencer_active_mock
+			.expect()
+			.times(2 * seq_limit as usize)
+			.return_const(());
+		const FIRST_CHAIN_ID: u32 = 1;
+		const SECOND_CHAIN_ID: u32 = 3;
+
+		{
+			for seq in 0u64..seq_limit {
+				Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
+				assert_ok!(SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq),
+					FIRST_CHAIN_ID,
+					MINIMUM_STAKE,
+					None,
+					StakeAction::StakeAndJoinActiveSet
+				));
+				assert!(SequencerStaking::is_active_sequencer(consts::DEFAULT_CHAIN_ID, &seq));
+			}
+
+			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
+			assert_err!(
+				SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq_limit),
+					FIRST_CHAIN_ID,
+					MINIMUM_STAKE,
+					None,
+					StakeAction::StakeAndJoinActiveSet
+				),
+				Error::<Test>::MaxSequencersLimitReached
+			);
+		}
+
+		{
+			for seq in 0u64..seq_limit {
+				Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq, MINIMUM_STAKE).unwrap();
+				assert_ok!(SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq),
+					SECOND_CHAIN_ID,
+					MINIMUM_STAKE,
+					None,
+					StakeAction::StakeAndJoinActiveSet
+				));
+				assert!(SequencerStaking::is_active_sequencer(SECOND_CHAIN_ID, &seq));
+			}
+
+			Tokens::mint(RuntimeOrigin::root(), NATIVE_TOKEN_ID, seq_limit, MINIMUM_STAKE).unwrap();
+			assert_err!(
+				SequencerStaking::provide_sequencer_stake(
+					RuntimeOrigin::signed(seq_limit),
+					SECOND_CHAIN_ID,
+					MINIMUM_STAKE,
+					None,
+					StakeAction::StakeAndJoinActiveSet
+				),
+				Error::<Test>::MaxSequencersLimitReached
+			);
+		}
 	});
 }

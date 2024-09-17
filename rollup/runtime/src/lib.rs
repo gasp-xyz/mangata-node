@@ -572,6 +572,7 @@ impl parachain_staking::Config for Runtime {
 	// type SequencerStakingProvider = SequencerStaking;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
+	type SequencerStakingRewards = SequencerStaking;
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
@@ -601,11 +602,13 @@ impl pallet_issuance::Config for Runtime {
 	type HistoryLimit = cfg::pallet_issuance::HistoryLimit;
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = cfg::pallet_issuance::StakingIssuanceVault;
+	type SequencersIssuanceVault = cfg::pallet_issuance::SequencerIssuanceVault;
 	type TotalCrowdloanAllocation = cfg::pallet_issuance::TotalCrowdloanAllocation;
 	type IssuanceCap = cfg::pallet_issuance::IssuanceCap;
 	type LinearIssuanceBlocks = cfg::pallet_issuance::LinearIssuanceBlocks;
 	type LiquidityMiningSplit = cfg::pallet_issuance::LiquidityMiningSplit;
 	type StakingSplit = cfg::pallet_issuance::StakingSplit;
+	type SequencersSplit = cfg::pallet_issuance::SequencerSplit;
 	type ImmediateTGEReleasePercent = cfg::pallet_issuance::ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = cfg::pallet_issuance::TGEReleasePeriod;
 	type TGEReleaseBegin = cfg::pallet_issuance::TGEReleaseBegin;
@@ -750,6 +753,8 @@ impl pallet_rolldown::Config for Runtime {
 	type MerkleRootAutomaticBatchSize = cfg::pallet_rolldown::MerkleRootAutomaticBatchSize;
 	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type NativeCurrencyId = tokens::RxTokenId;
+	type SequencerStakingRewards = SequencerStaking;
+	type WithdrawFee = cfg::pallet_rolldown::WithdrawFee;
 }
 
 impl pallet_sequencer_staking::Config for Runtime {
@@ -762,6 +767,10 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
 	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
 	type ChainId = pallet_rolldown::messages::Chain;
+	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
+	type SequencerIssuanceVault = cfg::pallet_issuance::SequencerIssuanceVault;
+	type RewardPaymentDelay = cfg::parachain_staking::RewardPaymentDelay;
+	type Issuance = Issuance;
 }
 
 impl pallet_metamask_signature::Config for Runtime {
@@ -891,11 +900,11 @@ impl_runtime_apis! {
 			Some(Rolldown::get_max_accepted_request_id_on_l2(chain).saturating_sub(Rolldown::get_last_processed_request_on_l2(chain)))
 		}
 
-		fn get_total_number_of_deposits() -> u32 {
+		fn get_total_number_of_deposits() -> u128 {
 			Rolldown::get_total_number_of_deposits()
 		}
 
-		fn get_total_number_of_withdrawals() -> u32 {
+		fn get_total_number_of_withdrawals() -> u128 {
 			Rolldown::get_total_number_of_withdrawals()
 		}
 
@@ -1249,7 +1258,7 @@ impl_runtime_apis! {
 			.collect::<Vec<_>>()
 		}
 
-		fn get_total_number_of_swaps() -> u32 {
+		fn get_total_number_of_swaps() -> u128 {
 			Xyk::get_total_number_of_swaps()
 		}
 	}

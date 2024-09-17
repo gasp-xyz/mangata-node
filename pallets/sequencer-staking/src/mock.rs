@@ -1,18 +1,19 @@
 // Copyright (C) 2020 Mangata team
-
-use self::consts::DEFAULT_CHAIN_ID;
-
 use super::*;
 
 use crate as sequencer_staking;
 use core::convert::TryFrom;
-use frame_support::{construct_runtime, parameter_types, traits::Everything};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{tokens::fungible::Mutate, Everything},
+	PalletId,
+};
+use mangata_support::traits::{ComputeIssuance, GetIssuance};
 
-use frame_support::traits::ConstU128;
-pub use mangata_support::traits::ProofOfStakeRewardsApi;
-use mockall::automock;
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::ConvertBack, BuildStorage, Permill, Saturating};
+use sp_runtime::{
+	traits::AccountIdConversion, BuildStorage, Perbill, Percent, Permill, Saturating,
+};
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -21,7 +22,6 @@ pub(crate) type TokenId = u32;
 pub(crate) type ChainId = u32;
 
 pub mod consts {
-	pub const MILLION: u128 = 1_000_000;
 	pub const ALICE: u64 = 2;
 	pub const BOB: u64 = 3;
 	pub const CHARLIE: u64 = 4;
@@ -75,6 +75,60 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub const HistoryLimit: u32 = 10u32;
+
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+	pub const SequencerIssuanceVaultId: PalletId = PalletId(*b"py/seqiv");
+	pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
+
+	pub const TotalCrowdloanAllocation: Balance = 0;
+	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const LinearIssuanceBlocks: u32 = 10_000u32;
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(344444444);
+	pub const SequencerSplit: Perbill = Perbill::from_parts(100000000);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
+	pub const BlocksPerRound: u32 = 5;
+	pub const TargetTge:u128 = 2_000_000_000u128;
+
+}
+
+pub struct MockIssuance;
+impl ComputeIssuance for MockIssuance {
+	fn initialize() {}
+	fn compute_issuance(_n: u32) {
+		let issuance = Self::get_sequencer_issuance(_n).unwrap();
+
+		let _ = TokensOf::<Test>::mint_into(&SequencerIssuanceVault::get(), issuance.into());
+	}
+}
+
+impl GetIssuance<Balance> for MockIssuance {
+	fn get_all_issuance(_n: u32) -> Option<(Balance, Balance, Balance)> {
+		unimplemented!()
+	}
+	fn get_liquidity_mining_issuance(_n: u32) -> Option<Balance> {
+		unimplemented!()
+	}
+	fn get_staking_issuance(_n: u32) -> Option<Balance> {
+		unimplemented!()
+	}
+	fn get_sequencer_issuance(_n: u32) -> Option<Balance> {
+		let to_be_issued: Balance =
+			IssuanceCap::get() - TargetTge::get() - TotalCrowdloanAllocation::get();
+		let linear_issuance_sessions: u32 = LinearIssuanceBlocks::get() / BlocksPerRound::get();
+		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
+		let issuance = SequencerSplit::get() * linear_issuance_per_session;
+		Some(issuance)
+	}
+}
+
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
 		match currency_id {
@@ -100,6 +154,8 @@ impl orml_tokens::Config for Test {
 parameter_types! {
 	pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 	pub const NativeTokenId: TokenId = 0;
+	pub const DefaultPayoutLimit: u32 = 15;
+	pub const RewardPaymentDelay: u32 = 2;
 }
 
 impl sequencer_staking::Config for Test {
@@ -112,6 +168,10 @@ impl sequencer_staking::Config for Test {
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<2>;
 	type CancellerRewardPercentage = CancellerRewardPercentage;
 	type ChainId = ChainId;
+	type DefaultPayoutLimit = DefaultPayoutLimit;
+	type SequencerIssuanceVault = SequencerIssuanceVault;
+	type RewardPaymentDelay = RewardPaymentDelay;
+	type Issuance = MockIssuance;
 }
 
 mockall::mock! {
@@ -242,3 +302,5 @@ macro_rules! assert_event_emitted {
 		}
 	};
 }
+
+pub type TokensOf<Test> = <Test as crate::Config>::Currency;

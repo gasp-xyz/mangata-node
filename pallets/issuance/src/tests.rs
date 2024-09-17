@@ -24,7 +24,8 @@ fn init_issuance_config_works() {
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
 				liquidity_mining_split: Perbill::from_parts(555555556),
-				staking_split: Perbill::from_parts(444444444),
+				staking_split: Perbill::from_parts(222222222),
+				sequencers_split: Perbill::from_parts(222222222),
 				total_crowdloan_allocation: 200_000_000u128,
 			})
 		);
@@ -74,7 +75,8 @@ fn cannot_init_issuance_config_when_already_init() {
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
 				liquidity_mining_split: Perbill::from_parts(555555556),
-				staking_split: Perbill::from_parts(444444444),
+				staking_split: Perbill::from_parts(222222222),
+				sequencers_split: Perbill::from_parts(222222222),
 				total_crowdloan_allocation: 200_000_000u128,
 			})
 		);
@@ -146,12 +148,12 @@ fn linear_issuance_works() {
 		let session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		let session_issuance = <Issuance as GetIssuance<_>>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		let block_issuance = (session_issuance.0 + session_issuance.1) /
+		let block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2) /
 			(BlocksPerRound::get().saturated_into::<u128>());
 
 		// Mint in block 1
 		// We are not minting in block 0, but that's okay
-		assert_eq!(405040, (session_issuance.0 + session_issuance.1));
+		assert_eq!(405040, (session_issuance.0 + session_issuance.1 + session_issuance.2));
 		assert_eq!(81008, block_issuance);
 
 		roll_to_while_minting(10000, Some(81008));

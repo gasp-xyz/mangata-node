@@ -4,30 +4,28 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{
-		Currency, DefensiveSaturating, Get, OneSessionHandler, ReservableCurrency, StorageVersion,
-	},
+	traits::{Currency, ExistenceRequirement, Get, ReservableCurrency, StorageVersion},
+	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*};
 
-use codec::alloc::string::{String, ToString};
-pub use mangata_support::traits::{RolldownProviderTrait, SequencerStakingProviderTrait};
-use scale_info::prelude::format;
-use sp_core::U256;
-use sp_runtime::{
-	serde::{Deserialize, Serialize},
-	traits::{CheckedAdd, One, Zero},
-	RuntimeAppPublic, Saturating,
+pub use mangata_support::traits::{
+	ComputeIssuance, GetIssuance, RolldownProviderTrait, SequencerStakingProviderTrait,
+	SequencerStakingRewardsTrait,
 };
-pub use sp_runtime::{BoundedBTreeMap, BoundedVec};
-use sp_std::collections::btree_map::Entry::{Occupied, Vacant};
+use sp_runtime::{
+	traits::{CheckedAdd, One, Zero},
+	Saturating,
+};
+pub use sp_runtime::{BoundedBTreeMap, BoundedVec, Perbill};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SequencerIndex = u32;
 type RoundIndex = u32;
+type RewardPoint = u32;
 type RoundRefCount = RoundIndex;
 
 pub type BalanceOf<T> =
@@ -55,10 +53,20 @@ mod mock;
 
 pub use pallet::*;
 
+#[derive(Eq, PartialEq, Encode, Decode, TypeInfo, Debug, Clone)]
+pub enum PayoutRounds {
+	All,
+	Partial(Vec<RoundIndex>),
+}
+
+#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum StakeAction {
+	StakeOnly,
+	StakeAndJoinActiveSet,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
-
-	use frame_support::BoundedBTreeSet;
 
 	use super::*;
 
@@ -125,6 +133,8 @@ pub mod pallet {
 					SelectedSequencer::<T>::mutate(|selected| selected.insert(*chain, seq.clone()));
 				}
 			}
+
+			<CurrentRound<T>>::put(0);
 		}
 	}
 
@@ -210,9 +220,9 @@ pub mod pallet {
 	pub type SelectedSequencer<T: Config> =
 		StorageValue<_, BTreeMap<T::ChainId, T::AccountId>, ValueQuery>;
 
-	// #[pallet::storage]
-	// #[pallet::getter(fn get_current_round)]
-	// pub type CurrentRound<T: Config> = StorageValue<_, RoundIndex, ValueQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn get_current_round)]
+	pub type CurrentRound<T: Config> = StorageValue<_, RoundIndex, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::unbounded]
@@ -236,11 +246,55 @@ pub mod pallet {
 	#[pallet::getter(fn get_minimal_stake_amount)]
 	pub type MinimalStakeAmount<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_round_collator_reward_info)]
+	/// Stores information about rewards per each session
+	pub type RoundSequencerRewardInfo<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Twox64Concat,
+		RoundIndex,
+		BalanceOf<T>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn points)]
+	/// Total points awarded to collators for block production in the round
+	pub type Points<T: Config> = StorageMap<_, Twox64Concat, RoundIndex, RewardPoint, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn awarded_pts)]
+	/// Points for each collator per round
+	pub type AwardedPts<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		RoundIndex,
+		Twox64Concat,
+		T::AccountId,
+		RewardPoint,
+		ValueQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		SequencersRemovedFromActiveSet(T::ChainId, Vec<T::AccountId>),
 		SequencerJoinedActiveSet(T::ChainId, T::AccountId),
+		StakeProvided {
+			chain: T::ChainId,
+			added_stake: BalanceOf<T>,
+			total_stake: BalanceOf<T>,
+		},
+		StakeRemoved {
+			chain: T::ChainId,
+			removed_stake: BalanceOf<T>,
+		},
+		/// Notify about reward periods that has been paid (sequencer, payout rounds, any rewards left)
+		SequencerRewardsDistributed(T::AccountId, PayoutRounds),
+		/// Paid the account the balance as liquid rewards
+		Rewarded(RoundIndex, T::AccountId, BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -260,11 +314,13 @@ pub mod pallet {
 		AddressInUse,
 		AliasAccountIsActiveSequencer,
 		SequencerAccountIsActiveSequencerAlias,
+		SequencerRoundRewardsDNE,
 	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		/// The currency type
 		type Currency: ReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
 		type MinimumSequencers: Get<u32>;
@@ -289,6 +345,15 @@ pub mod pallet {
 		type BlocksForSequencerUpdate: Get<u32>;
 		#[pallet::constant]
 		type CancellerRewardPercentage: Get<sp_runtime::Permill>;
+		#[pallet::constant]
+		type DefaultPayoutLimit: Get<u32>;
+		/// The account id that holds the sequencer issuance
+		type SequencerIssuanceVault: Get<Self::AccountId>;
+		/// Number of rounds after which block authors are rewarded
+		#[pallet::constant]
+		type RewardPaymentDelay: Get<RoundIndex>;
+		/// The module used for computing and getting issuance
+		type Issuance: ComputeIssuance + GetIssuance<BalanceOf<Self>>;
 	}
 
 	#[pallet::call]
@@ -296,19 +361,25 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5.saturating_add(T::MaxSequencers::get().into())).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		/// provides stake for the purpose of becoming sequencers
-		/// if stake amount is greater than `MinimalStakeAmount` and limit of active sequencres is not
-		/// reached, sequencer automatically joins active set, otherwise sequencer can call `rejoin_active_sequencers` when there are free seats
+		///
 		/// - `chain` - chain for which to assign stake_amount
 		/// - `stake_amont` - amount of stake
 		/// - `alias_account` - optional parameter, alias account is eligible to create manual bataches
 		///                     of updates in pallet-rolldown. Alias account can not be set to another
 		///                     active sequencer or to some account that is already used as
 		///                     alias_account for another sequencer
+		/// - `stake_action` - determines what are candidate expectations regarding joining active set,
+		/// 	* 'StakeOnly' - sequencer only provides stake, but does not join active set.
+		/// 	* 'StakeAndJoinActiveSet' - sequencer provides stake and joins active set. Fails if
+		/// 								candidate didnt join active set or if candidate is already in active set.
+		///		Candiate can also choose to call `rejoin_active_sequencers` later when there are free seats to
+		///		join active set
 		pub fn provide_sequencer_stake(
 			origin: OriginFor<T>,
 			chain: T::ChainId,
 			stake_amount: BalanceOf<T>,
 			alias_account: Option<T::AccountId>,
+			stake_action: StakeAction,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -317,19 +388,32 @@ pub mod pallet {
 				Error::<T>::SequencerAccountIsActiveSequencerAlias
 			);
 
-			<SequencerStake<T>>::try_mutate((&sender, &chain), |stake| -> DispatchResult {
-				*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
-				if *stake >= MinimalStakeAmount::<T>::get() &&
-					!Self::is_active_sequencer(chain, &sender)
-				{
-					if let Ok(_) = ActiveSequencers::<T>::try_mutate(|active_sequencers| {
-						active_sequencers.entry(chain).or_default().try_push(sender.clone())
-					}) {
-						Self::announce_sequencer_joined_active_set(chain, sender.clone());
-					}
-				}
-				Ok(())
-			})?;
+			let sequencer_stake = <SequencerStake<T>>::try_mutate(
+				(&sender, &chain),
+				|stake| -> Result<BalanceOf<T>, Error<T>> {
+					*stake = stake.checked_add(&stake_amount).ok_or(Error::<T>::MathOverflow)?;
+					Ok(*stake)
+				},
+			)?;
+
+			if let StakeAction::StakeAndJoinActiveSet = stake_action {
+				ensure!(
+					!Self::is_active_sequencer(chain, &sender),
+					Error::<T>::SequencerAlreadyInActiveSet
+				);
+				ensure!(
+					sequencer_stake >= MinimalStakeAmount::<T>::get(),
+					Error::<T>::NotEnoughSequencerStake
+				);
+				ActiveSequencers::<T>::try_mutate(|active_sequencers| {
+					active_sequencers
+						.entry(chain)
+						.or_default()
+						.try_push(sender.clone())
+						.or(Err(Error::<T>::MaxSequencersLimitReached))
+				})?;
+				Self::announce_sequencer_joined_active_set(chain, sender.clone());
+			};
 
 			if let Some(alias_account) = alias_account {
 				ensure!(
@@ -347,6 +431,12 @@ pub mod pallet {
 			// add full rights to sequencer (create whole entry in SequencersRights @ rolldown)
 			// add +1 cancel right to all other sequencers (non active are deleted from SequencersRights @ rolldown)
 			T::Currency::reserve(&sender, stake_amount)?;
+
+			Self::deposit_event(Event::StakeProvided {
+				chain,
+				added_stake: stake_amount,
+				total_stake: sequencer_stake,
+			});
 
 			Ok(().into())
 		}
@@ -380,7 +470,8 @@ pub mod pallet {
 				Error::<T>::SequencerAlreadyInActiveSet
 			);
 			ensure!(
-				ActiveSequencers::<T>::get().len() < T::MaxSequencers::get() as usize,
+				ActiveSequencers::<T>::get().get(&chain).unwrap_or(&Default::default()).len() <
+					T::MaxSequencers::get() as usize,
 				Error::<T>::MaxSequencersLimitReached
 			);
 			ensure!(
@@ -418,6 +509,8 @@ pub mod pallet {
 			}
 
 			SequencerStake::<T>::remove((&sender, &chain));
+
+			Self::deposit_event(Event::StakeRemoved { chain, removed_stake: sequencer_stake });
 			Ok(().into())
 		}
 
@@ -488,6 +581,23 @@ pub mod pallet {
 			}
 
 			Ok(().into())
+		}
+
+		/// This extrinsic should be used to distribute rewards for sequencer.
+		///
+		/// params:
+		/// - sequencer - account id
+		/// - number_of_sessions - number of rewards periods that should be processed within extrinsic.
+		#[pallet::call_index(6)]
+		#[pallet::weight(number_of_sessions.unwrap_or(T::DefaultPayoutLimit::get()) * (T::DbWeight::get().reads_writes(3, 3).saturating_add(Weight::from_parts(40_000_000, 0))))]
+		#[transactional]
+		pub fn payout_sequencer_rewards(
+			origin: OriginFor<T>,
+			sequencer: T::AccountId,
+			number_of_sessions: Option<u32>,
+		) -> DispatchResultWithPostInfo {
+			let _caller = ensure_signed(origin)?;
+			Self::do_payout_sequencer_rewards(sequencer, number_of_sessions)
 		}
 	}
 }
@@ -562,7 +672,8 @@ impl<T: Config> Pallet<T> {
 		);
 	}
 
-	pub(crate) fn set_active_sequencers(
+	#[cfg(test)]
+	fn set_active_sequencers(
 		iter: impl IntoIterator<Item = (T::ChainId, T::AccountId)>,
 	) -> Result<(), Error<T>> {
 		ActiveSequencers::<T>::kill();
@@ -576,6 +687,51 @@ impl<T: Config> Pallet<T> {
 			}
 			Ok::<_, Error<T>>(())
 		})?;
+		Ok(())
+	}
+
+	fn do_payout_sequencer_rewards(
+		sequencer: T::AccountId,
+		number_of_sessions: Option<u32>,
+	) -> DispatchResultWithPostInfo {
+		let mut rounds = Vec::<RoundIndex>::new();
+
+		let limit = number_of_sessions.unwrap_or(T::DefaultPayoutLimit::get());
+		for (id, (round, reward)) in
+			RoundSequencerRewardInfo::<T>::iter_prefix(sequencer.clone()).enumerate()
+		{
+			if (id as u32) >= limit {
+				break
+			}
+
+			Self::payout_reward(round, sequencer.clone(), reward)?;
+
+			RoundSequencerRewardInfo::<T>::remove(sequencer.clone(), round);
+			rounds.push(round);
+		}
+
+		ensure!(!rounds.is_empty(), Error::<T>::SequencerRoundRewardsDNE);
+
+		if let Some(_) = RoundSequencerRewardInfo::<T>::iter_prefix(sequencer.clone()).next() {
+			Self::deposit_event(Event::SequencerRewardsDistributed(
+				sequencer,
+				PayoutRounds::Partial(rounds),
+			));
+		} else {
+			Self::deposit_event(Event::SequencerRewardsDistributed(sequencer, PayoutRounds::All));
+		}
+
+		Ok(().into())
+	}
+
+	pub fn payout_reward(round: RoundIndex, to: T::AccountId, amt: BalanceOf<T>) -> DispatchResult {
+		let _ = <T as pallet::Config>::Currency::transfer(
+			&<T as pallet::Config>::SequencerIssuanceVault::get(),
+			&to,
+			amt,
+			ExistenceRequirement::AllowDeath,
+		)?;
+		Self::deposit_event(Event::Rewarded(round, to.clone(), amt));
 		Ok(())
 	}
 }
@@ -644,6 +800,37 @@ impl<T: Config> SequencerStakingProviderTrait<AccountIdOf<T>, BalanceOf<T>, Chai
 
 	fn selected_sequencer(chain: ChainIdOf<T>) -> Option<AccountIdOf<T>> {
 		SelectedSequencer::<T>::get().get(&chain).cloned()
+	}
+}
+
+impl<T: Config> SequencerStakingRewardsTrait<AccountIdOf<T>, RoundIndex> for Pallet<T> {
+	fn note_update_author(author: &AccountIdOf<T>) {
+		let now = <CurrentRound<T>>::get();
+		let score_plus_20 = <AwardedPts<T>>::get(now, &author).saturating_add(20);
+		<AwardedPts<T>>::insert(now, author, score_plus_20);
+		<Points<T>>::mutate(now, |x| *x = x.saturating_add(20));
+	}
+	fn pay_sequencers(round: RoundIndex) {
+		<CurrentRound<T>>::put(round);
+		// payout is now - duration rounds ago => now - duration > 0 else return early
+		let duration = T::RewardPaymentDelay::get();
+		if round < duration {
+			return
+		}
+		let round_to_payout = round.saturating_sub(duration);
+		let total = <Points<T>>::take(round_to_payout);
+		if total.is_zero() {
+			return
+		}
+		let total_issuance =
+			T::Issuance::get_sequencer_issuance(round_to_payout).unwrap_or(Zero::zero());
+
+		for (author, pts) in <AwardedPts<T>>::drain_prefix(round_to_payout) {
+			let author_issuance_perbill = Perbill::from_rational(pts, total);
+			let author_rewards = author_issuance_perbill.mul_floor(total_issuance);
+
+			RoundSequencerRewardInfo::<T>::insert(author, round_to_payout, author_rewards);
+		}
 	}
 }
 

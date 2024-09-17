@@ -600,7 +600,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_total_number_of_swaps)]
-	pub type TotalNumberOfSwaps<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type TotalNumberOfSwaps<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {

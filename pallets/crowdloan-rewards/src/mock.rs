@@ -17,7 +17,7 @@
 //! Test utilities
 use crate::{self as pallet_crowdloan_rewards, Config};
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, derive_impl, parameter_types,
 	traits::{Contains, Nothing, OnFinalize, OnInitialize, WithdrawReasons},
 	PalletId,
 };
@@ -47,41 +47,16 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 construct_runtime!(
 	pub enum Test {
-		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>},
-		Utility: pallet_utility::{Pallet, Call, Storage, Event},
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Tokens: orml_tokens,
+		Crowdloan: pallet_crowdloan_rewards,
+		Utility: pallet_utility,
+		Vesting: pallet_vesting_mangata,
 	}
 );
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
-
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = Nothing;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = BlockHashCount;
-	type DbWeight = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = ();
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type OnSetCode = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type MaxConsumers = sp_core::ConstU32<16>;
-	type Nonce = u64;
 	type Block = Block;
 }
 
@@ -132,6 +107,7 @@ impl pallet_vesting_mangata::Config for Test {
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	type BlockNumberProvider = System;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;

@@ -2,10 +2,11 @@ use crate::command::{EvmChain, InitialSequencersSet};
 use rand::{thread_rng, Rng};
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
-	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
+	CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
 	SystemConfig, XcmMetadata, WASM_BINARY,
 };
 use sc_service::ChainType;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{ecdsa, ByteArray, Encode, Pair, Public, H256};
 use sp_keyring::EthereumKeyring;
@@ -229,7 +230,7 @@ pub fn rollup_local_config(
 		// Extensions
 		None,
 		// code
-		rollup_runtime::WASM_BINARY.expect("WASM binary was not build, please build it!")
+		rollup_runtime::WASM_BINARY.expect("WASM binary was not build, please build it!"),
 	)
 }
 
@@ -251,9 +252,7 @@ fn rollup_genesis(
 	let initial_sequencers_stake = 10_000_000_u128;
 
 	rollup_runtime::RuntimeGenesisConfig {
-		system: rollup_runtime::SystemConfig {
-			..Default::default()
-		},
+		system: rollup_runtime::SystemConfig { ..Default::default() },
 		tokens: rollup_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
 				.iter()

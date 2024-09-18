@@ -20,7 +20,7 @@
 use super::*;
 use crate as sudo_origin;
 use frame_support::{
-	parameter_types,
+	derive_impl, parameter_types,
 	traits::{Contains, Everything},
 	weights::Weight,
 };
@@ -41,8 +41,6 @@ pub mod logger {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::call]
@@ -85,10 +83,12 @@ pub mod logger {
 	}
 
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn account_log)]
 	pub(super) type AccountLog<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::unbounded]
 	#[pallet::getter(fn i32_log)]
 	pub(super) type I32Log<T> = StorageValue<_, Vec<i32>, ValueQuery>;
 }
@@ -103,11 +103,6 @@ frame_support::construct_runtime!(
 	}
 );
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
-}
-
 pub struct BlockEverything;
 impl Contains<RuntimeCall> for BlockEverything {
 	fn contains(_: &RuntimeCall) -> bool {
@@ -115,30 +110,9 @@ impl Contains<RuntimeCall> for BlockEverything {
 	}
 }
 
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type RuntimeOrigin = RuntimeOrigin;
-	type Nonce = u64;
-	type RuntimeCall = RuntimeCall;
-	type Hash = sp_runtime::testing::H256;
-	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = u64;
-	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
-	type RuntimeEvent = RuntimeEvent;
 	type Block = Block;
-	type BlockHashCount = BlockHashCount;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = ();
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 // Implement the logger module's `Config` on the Test runtime.

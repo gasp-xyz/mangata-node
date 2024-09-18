@@ -1302,6 +1302,9 @@ pub mod config {
 			pub const MaxSubAccounts: u32 = 100;
 			pub const MaxAdditionalFields: u32 = 100;
 			pub const MaxRegistrars: u32 = 20;
+			pub const PendingUsernameExpiration: u32 = 7 * consts::DAYS;
+			pub const MaxSuffixLength: u32 = 7;
+			pub const MaxUsernameLength: u32 = 32;
 		}
 
 		pub type IdentityForceOrigin = EnsureRoot<AccountId>;

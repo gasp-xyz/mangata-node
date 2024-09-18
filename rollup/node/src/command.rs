@@ -13,7 +13,7 @@ use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::{Deref, PartialComponents};
 use sp_core::Pair;
 use sp_keyring::Sr25519Keyring;
-use sp_runtime::traits::IdentifyAccount;
+use sp_runtime::traits::{HashingFor, IdentifyAccount};
 use std::{
 	convert::TryInto,
 	sync::{Arc, Mutex},
@@ -177,7 +177,7 @@ pub fn run() -> sc_cli::Result<()> {
 							)
 						}
 
-						cmd.run::<Block, ()>(config)
+						cmd.run::<HashingFor<Block>, sp_statement_store::runtime_api::HostFunctions>(config)
 					},
 					BenchmarkCmd::Block(cmd) => {
 						let PartialComponents { client, .. } = service::new_partial(&config)?;

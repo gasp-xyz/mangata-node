@@ -4,7 +4,7 @@ CODE_ROOT=${CODE_ROOT:-${REPO_ROOT}}
 OUTPUT_DIR=docker-cargo/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
-DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:multi-nightly-2023-05-22}
+DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:multi-1.77-nightly-2024-01-20}
 DOCKER_USER="$(id -u):$(id -g)"
 DOCKER_JOB_NAME=cargo-wrapper
 if [ -n "${DISABLE_TTY}" ]; then

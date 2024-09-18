@@ -7,19 +7,23 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{alloc::string::String, Decode, Encode, MaxEncodedLen};
-use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_application_crypto::ByteArray;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
+	account::EthereumSignature,
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
-		IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor, PostDispatchInfoOf,
-		Saturating, SignedExtension, StaticLookup, Verify, Zero,
+		Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor,
+		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
-	Percent, Permill, RuntimeDebug,
+	ApplyExtrinsicResult, BoundedVec, DispatchError, ExtrinsicInclusionMode, FixedPointNumber,
+	OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -36,10 +40,6 @@ pub use mangata_support::traits::{
 	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
-use sp_runtime::traits::{Header as HeaderT};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-pub use sp_runtime::account::EthereumSignature;
-use sp_runtime::SaturatedConversion;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "runtime-benchmarks")]
@@ -74,7 +74,6 @@ pub use frame_system::{
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use runtime_config::*;
-use sp_application_crypto::ByteArray;
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
 
@@ -83,6 +82,7 @@ pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
+use pallet_grandpa::AuthorityId as GrandpaId;
 use pallet_identity::legacy::IdentityInfo;
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
@@ -90,8 +90,6 @@ pub use pallet_sudo_origin;
 pub use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 pub use pallet_xyk::{self, AssetMetadataMutationTrait};
 pub use scale_info::TypeInfo;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
 
 pub mod runtime_config;
 pub mod weights;
@@ -224,6 +222,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cfg::frame_system::MaintenanceGatedSetCode<Runtime, ()>;
 	/// The maximum number of consumers allowed on a single account.
 	type MaxConsumers = cfg::frame_system::MaxConsumers;
+	type RuntimeTask = RuntimeTask;
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -634,6 +638,7 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = cfg::pallet_vesting_mangata::MinVestedTransfer;
+	type BlockNumberProvider = System;
 	type WeightInfo = weights::pallet_vesting_mangata_weights::ModuleWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
@@ -740,6 +745,12 @@ impl pallet_identity::Config for Runtime {
 	type RegistrarOrigin = cfg::pallet_identity::IdentityRegistrarOrigin;
 	type Slashed = Treasury;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+	type OffchainSignature = Signature;
+	type SigningPublicKey = <Signature as Verify>::Signer;
+	type UsernameAuthorityOrigin = EnsureRoot<Self::AccountId>;
+	type PendingUsernameExpiration = cfg::pallet_identity::PendingUsernameExpiration;
+	type MaxSuffixLength = cfg::pallet_identity::MaxSuffixLength;
+	type MaxUsernameLength = cfg::pallet_identity::MaxUsernameLength;
 }
 
 impl pallet_maintenance::Config for Runtime {
@@ -992,7 +1003,7 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			Executive::runtime_upgraded_peek()
+			Executive::runtime_upgraded()
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1297,7 +1308,7 @@ impl_runtime_apis! {
 			Executive::execute_block_ver_impl(block, author);
 		}
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
+		fn initialize_block(header: &<Block as BlockT>::Header) -> ExtrinsicInclusionMode {
 			Executive::initialize_block(header)
 		}
 	}

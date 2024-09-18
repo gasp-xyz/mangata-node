@@ -4,7 +4,7 @@ use super::*;
 
 use crate as pallet_fee_lock;
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, derive_impl, parameter_types,
 	traits::{Contains, Everything},
 	weights::constants::RocksDbWeight,
 	PalletId,
@@ -15,7 +15,7 @@ use sp_runtime::{traits::AccountIdConversion, BuildStorage};
 use sp_std::convert::TryFrom;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
-pub(crate) type AccountId = u128;
+pub(crate) type AccountId = u64;
 pub(crate) type Balance = u128;
 pub(crate) type TokenId = u32;
 pub(crate) type Amount = i128;
@@ -30,34 +30,10 @@ construct_runtime!(
 	}
 );
 
-parameter_types!(
-	pub const BlockHashCount: u32 = 250;
-);
-
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type RuntimeOrigin = RuntimeOrigin;
-	type Nonce = u64;
-	type RuntimeCall = RuntimeCall;
-	type Hash = sp_runtime::testing::H256;
-	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
-	type RuntimeEvent = RuntimeEvent;
 	type Block = Block;
-	type BlockHashCount = BlockHashCount;
-	type BlockWeights = ();
-	type BlockLength = ();
 	type DbWeight = RocksDbWeight;
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = ();
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_type_with_key! {

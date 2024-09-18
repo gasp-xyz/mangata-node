@@ -27,7 +27,7 @@ fn identity_permissions_correct() {
 		// origin passes, but fails on no identity set
 		assert_noop!(
 			Identity::kill_identity(RuntimeOrigin::root(), AccountId::from(BOB).into()),
-			pallet_identity::Error::<Runtime>::NotNamed
+			pallet_identity::Error::<Runtime>::NoIdentity
 		);
 	});
 }

@@ -19,9 +19,9 @@
 use crate::*;
 use frame_support::traits::tokens::currency::MultiTokenCurrency;
 
+use codec::Encode;
 use frame_support::{assert_err, assert_noop, assert_ok, traits::MultiTokenVestingSchedule};
 use mock::*;
-use codec::Encode;
 use sp_application_crypto::RuntimePublic;
 use sp_core::Pair;
 use sp_runtime::{account::EthereumSignature, traits::Dispatchable, DispatchError, ModuleError};

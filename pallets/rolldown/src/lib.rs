@@ -26,9 +26,9 @@ use mangata_support::traits::{
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_core::{H256, U256};
+use sp_crypto_hashing::keccak_256;
 use sp_runtime::traits::{AccountIdConversion, Convert, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
-use sp_crypto_hashing::keccak_256;
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,

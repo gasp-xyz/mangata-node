@@ -22,7 +22,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use frame_support::{
-	derive_impl, assert_ok, construct_runtime, parameter_types,
+	assert_ok, construct_runtime, derive_impl, parameter_types,
 	traits::{
 		Contains, Everything, MultiTokenCurrency, MultiTokenVestingSchedule, OnFinalize,
 		OnInitialize,

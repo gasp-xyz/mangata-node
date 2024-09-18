@@ -108,19 +108,11 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		let payload = hex2bytes(hex_payload).map_err(|e| {
-			ErrorObject::owned(
-				0,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(0, "Unable to serve the request", Some(format!("{:?}", e)))
 		})?;
 
 		api.get_native_sequencer_update(at, payload).map_err(|e| {
-			ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 		})
 	}
 
@@ -135,11 +127,7 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 		api.verify_sequencer_update(at, chain, hash, request_id)
 			.map_err(|e| {
-				ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 			.and_then(|e| match e {
 				Some(result) => Ok(result),
@@ -161,11 +149,7 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.get_merkle_root(at, chain, range).map_err(|e| {
-			ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 		})
 	}
 
@@ -180,11 +164,7 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.get_merkle_proof_for_tx(at, chain, range, tx_id).map_err(|e| {
-			ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 		})
 	}
 
@@ -202,11 +182,7 @@ where
 
 		api.verify_merkle_proof_for_tx(at, chain, range, tx_id, root, proof)
 			.map_err(|e| {
-				ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 	}
 
@@ -220,11 +196,7 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.get_abi_encoded_l2_request(at, chain, request_id).map_err(|e| {
-			ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 		})
 	}
 }

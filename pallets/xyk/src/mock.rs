@@ -4,7 +4,7 @@ use super::*;
 
 use crate as xyk;
 use frame_support::{
-	derive_impl, construct_runtime, parameter_types,
+	construct_runtime, derive_impl, parameter_types,
 	traits::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
 	},

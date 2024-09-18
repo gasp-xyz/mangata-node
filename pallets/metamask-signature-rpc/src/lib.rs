@@ -55,20 +55,12 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		let call = hex2bytes(call).map_err(|e| {
-			ErrorObject::owned(
-				0,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)
+			ErrorObject::owned(0, "Unable to serve the request", Some(format!("{:?}", e)))
 		})?;
 
 		api.get_eip712_sign_data(at, call)
 			.map_err(|e| {
-				ErrorObject::owned(
-					0,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)
+				ErrorObject::owned(0, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 			.and_then(|v| {
 				if v.is_empty() {

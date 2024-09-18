@@ -13,11 +13,11 @@ use scale_info::{
 };
 use serde::{Deserialize, Serialize};
 use sp_core::{RuntimeDebug, H256, U256};
+use sp_crypto_hashing::keccak_256;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	vec::Vec,
 };
-use sp_crypto_hashing::keccak_256;
 
 pub trait NativeToEthMapping {
 	type EthType: SolValue;

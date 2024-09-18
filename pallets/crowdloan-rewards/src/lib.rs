@@ -619,10 +619,7 @@ pub mod pallet {
 					// I am erroring here as I think it is good to know the reason in the single-case
 					// signature
 					ensure!(
-						signature.verify(
-							payload.as_slice(),
-							&relay_account.clone().into()
-						),
+						signature.verify(payload.as_slice(), &relay_account.clone().into()),
 						Error::<T>::InvalidClaimSignature
 					);
 					voted.insert(relay_account, ());

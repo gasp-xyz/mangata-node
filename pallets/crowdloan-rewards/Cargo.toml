@@ -6,62 +6,60 @@ version = '0.6.0'
 description = "Reward citizens who participated in a crowdloan to acquire a parachain slot o nthe backing relay chain."
 
 [dependencies]
-parity-scale-codec = { version = "3.0.0", default-features = false }
-serde = { version = "1.0.101", optional = true, features = ["derive"], default-features = false }
-log = { version = "0.4", default-features = false }
-scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
-sha3 = { version = "0.10", default-features = false }
+codec = { workspace = true, default-features = false }
+serde = { workspace = true, optional = true, features = ["derive"], default-features = false }
+log = { workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false, features = ["derive"] }
 
-frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, optional = true }
-frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-utility = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-trie = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, optional = true }
-sp-application-crypto = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+mangata-types = { workspace = true, default-features = false }
+pallet-utility = { workspace = true, default-features = false }
+pallet-vesting-mangata = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-trie = { workspace = true, default-features = false, optional = true }
+sp-application-crypto = { workspace = true, default-features = false }
 
-orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
+orml-tokens = { workspace = true, default-features = false }
 
 [dev-dependencies]
-orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-sp-keystore = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+orml-traits = { workspace = true, default-features = false }
+sp-keystore = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
 std = [
-    "frame-benchmarking?/std",
-    "frame-support/std",
-    "frame-system/std",
-    "log/std",
-    "mangata-types/std",
-    "orml-tokens/std",
-    "orml-traits/std",
-    "pallet-utility/std",
-    "pallet-vesting-mangata/std",
-    "parity-scale-codec/std",
-    "scale-info/std",
-    "serde",
-    "sp-core/std",
-    "sp-io/std",
-    "sp-runtime/std",
-    "sp-std/std",
-    "sp-application-crypto/std",
-    "sha3/std"
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"mangata-types/std",
+	"orml-tokens/std",
+	"orml-traits/std",
+	"pallet-utility/std",
+	"pallet-vesting-mangata/std",
+	"codec/std",
+	"scale-info/std",
+	"serde",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-application-crypto/std",
 ]
 runtime-benchmarks = [
-    "frame-benchmarking/runtime-benchmarks",
-    "sp-runtime/runtime-benchmarks",
-    "sp-trie",
+	"frame-benchmarking/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-trie",
 ]
 
 try-runtime = [
-    "frame-system/try-runtime",
-    "frame-support/try-runtime",
-    "pallet-vesting-mangata/try-runtime",
-    "sp-runtime/try-runtime",
+	"frame-system/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-vesting-mangata/try-runtime",
+	"sp-runtime/try-runtime",
 ]

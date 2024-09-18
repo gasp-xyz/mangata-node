@@ -25,10 +25,10 @@ use mangata_support::traits::{
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
 use sp_runtime::traits::{AccountIdConversion, Convert, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
+use sp_crypto_hashing::keccak_256;
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
 	<T as frame_system::Config>::AccountId,
@@ -74,7 +74,7 @@ impl Hasher for Keccak256Hasher {
 
 	fn hash(data: &[u8]) -> [u8; 32] {
 		let mut output = [0u8; 32];
-		let hash = Keccak256::digest(&data[..]);
+		let hash = keccak_256(&data[..]);
 		output.copy_from_slice(&hash[..]);
 		output
 	}
@@ -1070,7 +1070,7 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_hash_of_sequencer_update(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
-		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
+		let hash: [u8; 32] = keccak_256(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
 
@@ -1238,7 +1238,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let update: messages::eth_abi::L1Update = read.clone().into();
-		let request_hash = Keccak256::digest(&update.abi_encode());
+		let request_hash = keccak_256(&update.abi_encode());
 		let l1_read_hash = H256::from_slice(request_hash.as_slice());
 
 		PendingSequencerUpdates::<T>::insert(

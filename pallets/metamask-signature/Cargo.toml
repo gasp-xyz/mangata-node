@@ -8,20 +8,18 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
-	"derive",
-] }
-log = { version = "0.4.14", default-features = false }
-serde = { version = "1.0.188", optional = true, features = ["derive"] }
-serde_json = { version = "1.0.108", default-features = false }
-scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-alloy-sol-types = { version = "0.5.0", default-features = false }
+codec = { workspace = true, default-features = false, features = ["derive"] }
+log = { workspace = true, default-features = false }
+serde = { workspace = true, optional = true, features = ["derive"] }
+serde_json = { workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false, features = ["derive"] }
+sp-std = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+frame-benchmarking = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+frame-support = { workspace = true, default-features = false }
+alloy-sol-types = { workspace = true, default-features = false }
 
 [dev-dependencies]
 

@@ -67,7 +67,6 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use orml_tokens::MultiTokenCurrencyExtended;
-use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	account::EthereumSignature,
 	traits::{AtLeast32BitUnsigned, BlockNumberProvider, CheckedSub, Saturating, Verify},

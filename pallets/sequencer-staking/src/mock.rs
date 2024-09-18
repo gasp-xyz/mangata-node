@@ -72,7 +72,6 @@ parameter_types! {
 	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 	pub const BlocksPerRound: u32 = 5;
 	pub const TargetTge:u128 = 2_000_000_000u128;
-
 }
 
 pub struct MockIssuance;

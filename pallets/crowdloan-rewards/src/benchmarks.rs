@@ -9,7 +9,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use parity_scale_codec::{alloc::string::String, Encode};
+use codec::{alloc::string::String, Encode};
 use sp_application_crypto::{ecdsa::Public, RuntimePublic};
 use sp_runtime::{
 	account::EthereumSignature,

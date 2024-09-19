@@ -17,7 +17,7 @@ use sp_runtime::{
 	account::EthereumSignature,
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
+		AccountIdConversion, BlakeTwo256, Block as BlockT, Convert, ConvertInto, DispatchInfoOf,
 		Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor,
 		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
@@ -69,7 +69,7 @@ pub use frame_support::{
 };
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	Call as SystemCall, ConsumedWeight, EnsureRoot, SetCode,
+	Call as SystemCall, ConsumedWeight, EnsureRoot, EnsureRootWithSuccess, SetCode,
 };
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -259,15 +259,18 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = cfg::pallet_treasury::MaxApprovals;
-	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 	type BeneficiaryLookup = IdentityLookup<Self::AccountId>;
 	type Beneficiary = AccountId;
 	type AssetKind = ();
 	type PayoutPeriod = cfg::pallet_treasury::SpendPayoutPeriod;
 	type Paymaster = PayFromAccount<Self::Currency, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type SpendOrigin = EnsureRootWithSuccess<AccountId, ConstU128<{ 1000 * consts::UNIT }>>;
 }
 
 parameter_types! {

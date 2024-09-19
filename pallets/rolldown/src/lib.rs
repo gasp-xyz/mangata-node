@@ -825,8 +825,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let deposit = messages::Deposit {
-				requestId: request_id,
 				depositRecipient: deposit_recipient,
+				requestId: request_id,
 				tokenAddress: token_address,
 				amount: amount.into(),
 				timeStamp: timestamp.into(),
@@ -834,33 +834,36 @@ pub mod pallet {
 			};
 
 			ensure!(deposit.abi_encode_hash() == deposit_hash, Error::<T>::FerryHashMismatch);
+			Self::ferry_desposit_impl(sender, chain, deposit)?;
 
-			let amount = amount
-				.checked_sub(ferry_tip)
-				.and_then(|v| TryInto::<u128>::try_into(v).ok())
-				.and_then(|v| TryInto::<BalanceOf<T>>::try_into(v).ok())
-				.ok_or(Error::<T>::MathOverflow)?;
+			Ok(().into())
+		}
 
-			let eth_asset = T::AssetAddressConverter::convert((chain, deposit.tokenAddress));
-			let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
-				Some(id) => id,
-				None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-					.map_err(|_| Error::<T>::AssetRegistrationProblem)?,
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn ferry_deposit_unsafe(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: RequestId,
+			deposit_recipient: [u8; 20],
+			token_address: [u8; 20],
+			amount: u128,
+			timestamp: u128,
+			ferry_tip: u128,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let deposit = messages::Deposit {
+				depositRecipient: deposit_recipient,
+				requestId: request_id,
+				tokenAddress: token_address,
+				amount: amount.into(),
+				timeStamp: timestamp.into(),
+				ferryTip: ferry_tip.into(),
 			};
 
-			let account = T::AddressConverter::convert(deposit.depositRecipient);
-
-			T::Tokens::transfer(
-				asset_id,
-				&sender,
-				&account,
-				amount,
-				ExistenceRequirement::KeepAlive,
-			)
-			.map_err(|_| Error::<T>::NotEnoughAssets)?;
-			FerriedDeposits::<T>::insert((chain, deposit_hash), sender);
-
-			Self::deposit_event(Event::DepositFerried { chain, deposit, deposit_hash });
+			Self::ferry_desposit_impl(sender, chain, deposit)?;
 
 			Ok(().into())
 		}
@@ -1604,6 +1607,39 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Ok(sender.clone())
 		}
+	}
+
+	fn ferry_desposit_impl(sender: T::AccountId, chain: T::ChainId, deposit: messages::Deposit) -> Result<(), Error::<T>> {
+		let deposit_hash = deposit.abi_encode_hash();
+
+		let amount = deposit.amount
+			.checked_sub(deposit.ferryTip)
+			.and_then(|v| TryInto::<u128>::try_into(v).ok())
+			.and_then(|v| TryInto::<BalanceOf<T>>::try_into(v).ok())
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		let eth_asset = T::AssetAddressConverter::convert((chain, deposit.tokenAddress));
+		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
+			Some(id) => id,
+			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
+				.map_err(|_| Error::<T>::AssetRegistrationProblem)?,
+		};
+
+		let account = T::AddressConverter::convert(deposit.depositRecipient);
+
+		T::Tokens::transfer(
+			asset_id,
+			&sender,
+			&account,
+			amount,
+			ExistenceRequirement::KeepAlive,
+		)
+			.map_err(|_| Error::<T>::NotEnoughAssets)?;
+		FerriedDeposits::<T>::insert((chain, deposit_hash), sender);
+
+		Self::deposit_event(Event::DepositFerried { chain, deposit, deposit_hash });
+
+		Ok(().into())
 	}
 }
 

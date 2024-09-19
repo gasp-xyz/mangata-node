@@ -217,6 +217,13 @@ pub struct L1Update {
 	pub pendingCancelResolutions: Vec<CancelResolution>,
 }
 
+impl NativeToEthMapping for L1Update
+where
+	Self: Clone,
+{
+	type EthType = eth_abi::L1Update;
+}
+
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
 pub enum L1UpdateRequest {
 	Deposit(Deposit),

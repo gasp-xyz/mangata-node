@@ -484,8 +484,12 @@ pub mod pallet {
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
 			requests: messages::L1Update,
+			update_hash: H256,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
+
+			let update_hash = requests.abi_encode_hash();
+
 			Self::update_impl(sequencer, requests)
 		}
 
@@ -839,7 +843,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-
 		#[pallet::call_index(11)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn ferry_deposit_unsafe(
@@ -866,6 +869,16 @@ pub mod pallet {
 			Self::ferry_desposit_impl(sender, chain, deposit)?;
 
 			Ok(().into())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn update_l2_from_l1_unsafe(
+			origin: OriginFor<T>,
+			requests: messages::L1Update,
+		) -> DispatchResult {
+			let sequencer = ensure_signed(origin)?;
+			Self::update_impl(sequencer, requests)
 		}
 	}
 }
@@ -1609,10 +1622,15 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn ferry_desposit_impl(sender: T::AccountId, chain: T::ChainId, deposit: messages::Deposit) -> Result<(), Error::<T>> {
+	fn ferry_desposit_impl(
+		sender: T::AccountId,
+		chain: T::ChainId,
+		deposit: messages::Deposit,
+	) -> Result<(), Error<T>> {
 		let deposit_hash = deposit.abi_encode_hash();
 
-		let amount = deposit.amount
+		let amount = deposit
+			.amount
 			.checked_sub(deposit.ferryTip)
 			.and_then(|v| TryInto::<u128>::try_into(v).ok())
 			.and_then(|v| TryInto::<BalanceOf<T>>::try_into(v).ok())
@@ -1627,13 +1645,7 @@ impl<T: Config> Pallet<T> {
 
 		let account = T::AddressConverter::convert(deposit.depositRecipient);
 
-		T::Tokens::transfer(
-			asset_id,
-			&sender,
-			&account,
-			amount,
-			ExistenceRequirement::KeepAlive,
-		)
+		T::Tokens::transfer(asset_id, &sender, &account, amount, ExistenceRequirement::KeepAlive)
 			.map_err(|_| Error::<T>::NotEnoughAssets)?;
 		FerriedDeposits::<T>::insert((chain, deposit_hash), sender);
 

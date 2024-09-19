@@ -66,6 +66,14 @@ impl Convert<[u8; 20], sp_runtime::AccountId20>
 	}
 }
 
+impl ConvertBack<[u8; 20], sp_runtime::AccountId20>
+	for EthereumAddressConverter<sp_runtime::AccountId20>
+{
+	fn convert_back(eth_addr: sp_runtime::AccountId20) -> [u8; 20] {
+		eth_addr.into()
+	}
+}
+
 #[derive(Clone)]
 pub struct Keccak256Hasher {}
 
@@ -993,7 +1001,6 @@ impl<T: Config> Pallet<T> {
 				TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 				deposit_status.or_else(|err| {
 					let who: T::AccountId = T::AddressConverter::convert(deposit.depositRecipient);
-					println!("INSERT who: {:?}, l1: {:?}, id: {:?}", who, l1, deposit.requestId.id);
 					FailedL1Deposits::<T>::insert(
 						(l1, deposit.requestId.id),
 						(who, deposit.abi_encode_hash()),

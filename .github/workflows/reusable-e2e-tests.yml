@@ -317,3 +317,4 @@ jobs:
           SLACK_COLOR: "#ff0011"
           SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.NODE_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
           GITHUB_REF: 'https://mangata-finance.github.io/mangata-node/${{ github.run_number }}'
+

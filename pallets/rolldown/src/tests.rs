@@ -10,7 +10,7 @@ use messages::L1UpdateRequest;
 
 use serial_test::serial;
 
-use sp_runtime::traits::ConvertBack;
+use sp_runtime::traits::{ConvertBack, ConvertToValue};
 use sp_std::iter::FromIterator;
 
 pub const ETH_TOKEN_ADDRESS: [u8; 20] = hex!("2CD2188119797153892438E57364D95B32975560");
@@ -1131,7 +1131,7 @@ fn test_withdraw() {
 			assert_eq!(Rolldown::get_next_l2_request_id(Chain::Ethereum), 2);
 
 			// check withdraw fee
-			let fee = <<Test as Config>::WithdrawFee as sp_core::TypedGet>::get();
+			let fee = <<Test as Config>::WithdrawFee as Convert<_, _>>::convert(Chain::Ethereum);
 			assert_eq!(
 				TokensOf::<Test>::free_balance(NativeCurrencyId::get(), &ALICE),
 				MILLION - fee

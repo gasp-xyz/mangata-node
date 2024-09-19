@@ -20,23 +20,24 @@ pub const ETH_RECIPIENT_ACCOUNT_MGX: AccountId = CHARLIE;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Tokens;
 
-struct L1UpdateBuilder(Option<u128>, Vec<L1UpdateRequest>);
+pub(crate) struct L1UpdateBuilder(Option<u128>, Vec<L1UpdateRequest>);
+
 impl L1UpdateBuilder {
-	fn new() -> Self {
+	pub fn new() -> Self {
 		Self(None, Default::default())
 	}
 
-	fn with_offset(mut self, offset: u128) -> Self {
+	pub fn with_offset(mut self, offset: u128) -> Self {
 		self.0 = Some(offset);
 		self
 	}
 
-	fn with_requests(mut self, requests: Vec<L1UpdateRequest>) -> Self {
+	pub fn with_requests(mut self, requests: Vec<L1UpdateRequest>) -> Self {
 		self.1 = requests;
 		self
 	}
 
-	fn build(self) -> messages::L1Update {
+	pub fn build(self) -> messages::L1Update {
 		let mut update = messages::L1Update::default();
 
 		for (id, r) in self.1.into_iter().enumerate() {
@@ -754,37 +755,6 @@ fn test_cancel_removes_cancel_right() {
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 		});
-}
-
-#[test]
-#[serial]
-// this test ensures that the hash calculated on rust side matches hash calculated in contract
-fn test_l1_update_hash_compare_with_solidty() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		let update = L1UpdateBuilder::new()
-			.with_requests(vec![
-				L1UpdateRequest::Deposit(messages::Deposit {
-					requestId: RequestId::new(Origin::L1, 1u128),
-					depositRecipient: hex!("0000000000000000000000000000000000000002"),
-					tokenAddress: hex!("0000000000000000000000000000000000000003"),
-					amount: 4u128.into(),
-					timeStamp: sp_core::U256::from(1),
-					ferryTip: sp_core::U256::from(0),
-				}),
-				L1UpdateRequest::CancelResolution(messages::CancelResolution {
-					requestId: RequestId::new(Origin::L1, 6u128),
-					l2RequestId: 7u128,
-					cancelJustified: true,
-					timeStamp: sp_core::U256::from(2),
-				}),
-			])
-			.build();
-		let hash = Rolldown::calculate_hash_of_sequencer_update(update);
-		assert_eq!(
-			hash,
-			hex!("68e72614919768cae8e3cdcc417cd406d59b61ff3b0efaad1bd5b3982a128f36").into()
-		);
-	});
 }
 
 #[test]
@@ -2917,39 +2887,6 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 				batch_id: 1,
 				range: (1, 1),
 			});
-		})
-}
-
-#[test]
-#[ignore]
-#[serial]
-fn test_deposit_ferry_fails_on_zero_tip() {
-	ExtBuilder::new()
-		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
-		.execute_with_default_mocks(|| {
-			forward_to_block::<Test>(10);
-
-			let deposit = messages::Deposit {
-				requestId: Default::default(),
-				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
-				tokenAddress: ETH_TOKEN_ADDRESS,
-				amount: sp_core::U256::from(MILLION),
-				timeStamp: sp_core::U256::from(1),
-				ferryTip: sp_core::U256::from(0),
-			};
-
-			Rolldown::ferry_deposit(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				deposit.requestId,
-				deposit.depositRecipient,
-				deposit.tokenAddress,
-				deposit.amount.try_into().unwrap(),
-				deposit.timeStamp.try_into().unwrap(),
-				deposit.ferryTip.try_into().unwrap(),
-				deposit.abi_encode_hash(),
-			)
-			.unwrap();
 		})
 }
 

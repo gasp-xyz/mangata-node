@@ -129,7 +129,7 @@ impl ComputeIssuance for MockIssuance {
 }
 
 impl GetIssuance<Balance> for MockIssuance {
-	fn get_all_issuance(_n: u32) -> Option<(Balance, Balance)> {
+	fn get_all_issuance(_n: u32) -> Option<(Balance, Balance, Balance)> {
 		unimplemented!()
 	}
 	fn get_liquidity_mining_issuance(_n: u32) -> Option<Balance> {
@@ -142,6 +142,9 @@ impl GetIssuance<Balance> for MockIssuance {
 		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
 		let staking_issuance = StakingSplit::get() * linear_issuance_per_session;
 		Some(staking_issuance)
+	}
+	fn get_sequencer_issuance(_n: u32) -> Option<Balance> {
+		unimplemented!()
 	}
 }
 
@@ -309,6 +312,7 @@ impl Config for Test {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = ();
 	type WeightInfo = ();
+	type SequencerStakingRewards = ();
 }
 
 #[derive(Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]

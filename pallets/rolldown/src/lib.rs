@@ -21,7 +21,7 @@ use frame_support::{traits::WithdrawReasons, PalletId};
 use itertools::Itertools;
 use mangata_support::traits::{
 	AssetRegistryProviderTrait, GetMaintenanceStatusTrait, RolldownProviderTrait,
-	SequencerStakingProviderTrait, SetMaintenanceModeOn,
+	SequencerStakingProviderTrait, SequencerStakingRewardsTrait, SetMaintenanceModeOn,
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -39,6 +39,8 @@ pub type BalanceOf<T> =
 pub type ChainIdOf<T> = <T as pallet::Config>::ChainId;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+type RoundIndex = u32;
 
 pub(crate) const LOG_TARGET: &'static str = "rolldown";
 
@@ -375,6 +377,7 @@ pub mod pallet {
 		AddressDeserializationFailure,
 		RequestDoesNotExist,
 		NotEnoughAssets,
+		NotEnoughAssetsForFee,
 		BalanceOverflow,
 		L1AssetCreationFailed,
 		MathOverflow,
@@ -408,6 +411,7 @@ pub mod pallet {
 			BalanceOf<Self>,
 			ChainIdOf<Self>,
 		>;
+		type SequencerStakingRewards: SequencerStakingRewardsTrait<Self::AccountId, RoundIndex>;
 		type AddressConverter: ConvertBack<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
@@ -444,6 +448,9 @@ pub mod pallet {
 		type MerkleRootAutomaticBatchPeriod: Get<u128>;
 		type TreasuryPalletId: Get<PalletId>;
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
+		/// Withdrawals flat fee
+		#[pallet::constant]
+		type WithdrawFee: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -465,7 +472,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
 			requests: messages::L1Update,
@@ -585,6 +592,26 @@ pub mod pallet {
 				Default::default(),
 			)
 			.or(Err(Error::<T>::NotEnoughAssets))?;
+
+			let extra_fee = <<T as Config>::WithdrawFee>::get();
+			if !extra_fee.is_zero() {
+				<T as Config>::Tokens::ensure_can_withdraw(
+					Self::native_token_id(),
+					&account,
+					extra_fee,
+					WithdrawReasons::all(),
+					Default::default(),
+				)
+				.or(Err(Error::<T>::NotEnoughAssetsForFee))?;
+
+				<T as Config>::Tokens::transfer(
+					Self::native_token_id(),
+					&account,
+					&Self::treasury_account_id(),
+					extra_fee,
+					ExistenceRequirement::KeepAlive,
+				)?;
+			}
 
 			// burn tokes for user
 			T::Tokens::burn_and_settle(
@@ -1335,11 +1362,14 @@ impl<T: Config> Pallet<T> {
 
 		Pallet::<T>::deposit_event(Event::L1ReadStored {
 			chain: l1,
-			sequencer,
+			sequencer: sequencer.clone(),
 			dispute_period_end,
 			range: requests_range,
 			hash: l1_read_hash,
 		});
+
+		// 2 storage reads & writes in seqs pallet
+		T::SequencerStakingRewards::note_update_author(&sequencer);
 
 		Ok(().into())
 	}
@@ -1488,7 +1518,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn treasury_account_id() -> T::AccountId {
+	pub(crate) fn treasury_account_id() -> T::AccountId {
 		T::TreasuryPalletId::get().into_account_truncating()
 	}
 

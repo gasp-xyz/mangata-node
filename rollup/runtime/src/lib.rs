@@ -56,7 +56,8 @@ pub use frame_support::{
 		},
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, EnsureOrigin,
 		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
-		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
+		InstanceFilter, KeyOwnerProofSystem, NeverEnsureOrigin, Randomness, StorageInfo,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -266,7 +267,7 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Self::Currency, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
+	type SpendOrigin = NeverEnsureOrigin<u128>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 	#[cfg(feature = "runtime-benchmarks")]
@@ -551,7 +552,7 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type ProposalCloseDelay = cfg::pallet_collective_mangata::CouncilProposalCloseDelay;
 	type MaxProposals = cfg::pallet_collective_mangata::CouncilMaxProposals;
 	type MaxMembers = cfg::pallet_collective_mangata::CouncilMaxMembers;
-	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
+	type FoundationAccountsProvider = cfg::pallet_membership::FoundationAccountsProvider;
 	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 	type SetMembersOrigin = cfg::pallet_collective_mangata::SetMembersOrigin<Self::AccountId>;
@@ -756,9 +757,24 @@ impl pallet_identity::Config for Runtime {
 	type MaxUsernameLength = cfg::pallet_identity::MaxUsernameLength;
 }
 
+/// membership pallets is used to maintain Foundation accounts
+/// only a `change_key` of existing -> new member account id is allowed
+impl pallet_membership::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = NeverEnsureOrigin<()>;
+	type RemoveOrigin = NeverEnsureOrigin<()>;
+	type SwapOrigin = NeverEnsureOrigin<()>;
+	type ResetOrigin = NeverEnsureOrigin<()>;
+	type PrimeOrigin = NeverEnsureOrigin<()>;
+	type MembershipInitialized = ();
+	type MembershipChanged = ();
+	type MaxMembers = cfg::pallet_membership::MaxMembers;
+	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
+}
+
 impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
+	type FoundationAccountsProvider = cfg::pallet_membership::FoundationAccountsProvider;
 }
 
 impl pallet_rolldown::Config for Runtime {
@@ -859,6 +875,7 @@ construct_runtime!(
 		SudoOrigin: pallet_sudo_origin = 62,
 		Council: pallet_collective_mangata::<Instance1> = 63,
 		Identity: pallet_identity = 64,
+		FoundationMembers: pallet_membership = 65,
 	}
 );
 

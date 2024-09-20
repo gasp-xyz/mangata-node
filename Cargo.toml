@@ -78,6 +78,7 @@ pallet-balances = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "
 pallet-collective-mangata = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
 pallet-grandpa = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
 pallet-identity = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
+pallet-membership = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
 pallet-proxy = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
 pallet-session = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }
 pallet-sudo-mangata = { git = "https://github.com/gasp-xyz/polkadot-sdk", branch = "eth-rollup-develop", default-features = false }

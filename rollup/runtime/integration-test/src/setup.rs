@@ -15,12 +15,12 @@ mod rollup_imports {
 	pub use rollup_runtime::{
 		consts::UNIT,
 		runtime_config::config::{
-			orml_asset_registry::AssetMetadataOf, pallet_maintenance::FoundationAccountsProvider,
-			pallet_proxy::ProxyType,
+			orml_asset_registry::AssetMetadataOf, pallet_membership::FoundationAccountsProvider,
+			pallet_proxy::ProxyType, pallet_membership::MaxMembers,
 		},
 		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity, Maintenance,
 		ProofOfStake, Proxy, Rolldown, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId,
-		Tokens, UncheckedExtrinsic, Xyk, XykMetadata,
+		Tokens, UncheckedExtrinsic, Xyk, XykMetadata, FoundationMembers
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;
@@ -104,6 +104,13 @@ impl ExtBuilder {
 		orml_asset_registry::GenesisConfig::<Runtime> { assets: encoded }
 			.assimilate_storage(&mut t)
 			.unwrap();
+
+		pallet_membership::GenesisConfig::<Runtime> {
+			members: BoundedVec::truncate_from([AccountId::from(ALICE)].to_vec()),
+			 ..Default::default()
+			 }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

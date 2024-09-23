@@ -136,6 +136,7 @@ impl From<(Origin, u128)> for RequestId {
 pub struct FailedDepositResolution {
 	pub requestId: RequestId,
 	pub originRequestId: u128,
+	pub ferry: [u8; 20],
 }
 
 #[derive(
@@ -146,6 +147,7 @@ pub struct Withdrawal {
 	pub withdrawalRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
 	pub amount: U256,
+	pub ferryTip: U256,
 }
 
 impl NativeToEthMapping for Withdrawal {
@@ -187,8 +189,13 @@ pub struct Deposit {
 	pub requestId: RequestId,
 	pub depositRecipient: [u8; 20],
 	pub tokenAddress: [u8; 20],
-	pub amount: sp_core::U256,
-	pub timeStamp: sp_core::U256,
+	pub amount: U256,
+	pub timeStamp: U256,
+	pub ferryTip: U256,
+}
+
+impl NativeToEthMapping for Deposit {
+	type EthType = eth_abi::Deposit;
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
@@ -208,6 +215,13 @@ pub struct L1Update {
 	pub chain: Chain,
 	pub pendingDeposits: Vec<Deposit>,
 	pub pendingCancelResolutions: Vec<CancelResolution>,
+}
+
+impl NativeToEthMapping for L1Update
+where
+	Self: Clone,
+{
+	type EthType = eth_abi::L1Update;
 }
 
 #[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, TypeInfo, Serialize)]
@@ -236,6 +250,18 @@ impl L1UpdateRequest {
 			L1UpdateRequest::Deposit(deposit) => deposit.requestId.origin.clone(),
 			L1UpdateRequest::CancelResolution(cancel) => cancel.requestId.origin.clone(),
 		}
+	}
+}
+
+impl From<Deposit> for L1UpdateRequest {
+	fn from(deposit: Deposit) -> L1UpdateRequest {
+		L1UpdateRequest::Deposit(deposit)
+	}
+}
+
+impl From<CancelResolution> for L1UpdateRequest {
+	fn from(cancel: CancelResolution) -> L1UpdateRequest {
+		L1UpdateRequest::CancelResolution(cancel)
 	}
 }
 
@@ -322,6 +348,7 @@ impl TryFrom<eth_abi::Deposit> for Deposit {
 			tokenAddress,
 			amount: from_eth_u256(deposit.amount),
 			timeStamp: from_eth_u256(deposit.timeStamp),
+			ferryTip: from_eth_u256(deposit.ferryTip),
 		})
 	}
 }

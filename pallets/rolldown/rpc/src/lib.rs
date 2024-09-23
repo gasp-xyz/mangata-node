@@ -1,5 +1,4 @@
 // Copyright (C) 2021 Mangata team
-
 use jsonrpsee::{
 	core::{async_trait, Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,

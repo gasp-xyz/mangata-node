@@ -112,6 +112,22 @@ fn process_single_deposit() {
 
 #[test]
 #[serial]
+fn test_reject_update_with_wrong_hash() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(36);
+		let update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update, H256::zero()),
+			Error::<Test>::UpdateHashMishmatch
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn l2_counter_updates_when_requests_are_processed() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let update1 = L1UpdateBuilder::default()

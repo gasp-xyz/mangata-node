@@ -409,6 +409,7 @@ pub mod pallet {
 		FerryHashMismatch,
 		MintError,
 		AssetRegistrationProblem,
+		UpdateHashMishmatch,
 	}
 
 	#[pallet::config]
@@ -488,7 +489,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
 
-			let update_hash = requests.abi_encode_hash();
+			let hash = requests.abi_encode_hash();
+			ensure!(update_hash == hash, Error::<T>::UpdateHashMishmatch);
 
 			Self::update_impl(sequencer, requests)
 		}

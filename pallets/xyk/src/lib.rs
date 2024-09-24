@@ -483,7 +483,7 @@ pub mod pallet {
 		/// Unexpected failure
 		UnexpectedFailure,
 		/// Unexpected failure
-		NotMangataLiquidityAsset,
+		NotPairedWithNativeAsset,
 		/// Second asset amount exceeded expectations
 		SecondAssetAmountExceededExpectations,
 		/// Math overflow
@@ -1570,12 +1570,12 @@ impl<T: Config> Pallet<T> {
 		treasury_amount: BalanceOf<T>,
 	) -> DispatchResult {
 		let vault = Self::account_id();
-		let mangata_id: CurrencyIdOf<T> = Self::native_token_id();
+		let native_token_id: CurrencyIdOf<T> = Self::native_token_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();
 		let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
 
 		// If settling token is mangata, treasury amount is added to treasury and burn amount is burned from corresponding pool
-		if sold_asset_id == mangata_id {
+		if sold_asset_id == native_token_id {
 			// treasury_amount of MGA is already in treasury at this point
 
 			// MGA burned from bnb_treasury_account
@@ -1587,14 +1587,14 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 		//If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-		else if Pools::<T>::contains_key((sold_asset_id, mangata_id)) ||
-			Pools::<T>::contains_key((mangata_id, sold_asset_id))
+		else if Pools::<T>::contains_key((sold_asset_id, native_token_id)) ||
+			Pools::<T>::contains_key((native_token_id, sold_asset_id))
 		{
 			// MAX: 2R (from if cond)
 
 			// Getting token reserves
 			let (input_reserve, output_reserve) =
-				Pallet::<T>::get_reserves(sold_asset_id, mangata_id)?;
+				Pallet::<T>::get_reserves(sold_asset_id, native_token_id)?;
 
 			// Calculating swapped mangata amount
 			let settle_amount_in_mangata = Self::calculate_sell_price_no_fee(
@@ -1631,7 +1631,7 @@ impl<T: Config> Pallet<T> {
 			Pallet::<T>::set_reserves(
 				sold_asset_id,
 				input_reserve.saturating_add(treasury_amount).saturating_add(burn_amount),
-				mangata_id,
+				native_token_id,
 				output_reserve
 					.saturating_sub(treasury_amount_in_mangata)
 					.saturating_sub(burn_amount_in_mangata),
@@ -1646,7 +1646,7 @@ impl<T: Config> Pallet<T> {
 			)?;
 
 			<T as Config>::Currency::transfer(
-				mangata_id.into(),
+				native_token_id.into(),
 				&vault,
 				&treasury_account,
 				treasury_amount_in_mangata,
@@ -1663,7 +1663,7 @@ impl<T: Config> Pallet<T> {
 
 			// Mangata burned from pool
 			<T as Config>::Currency::burn_and_settle(
-				mangata_id.into(),
+				native_token_id.into(),
 				&vault,
 				burn_amount_in_mangata,
 			)?;
@@ -3538,7 +3538,7 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 		match native_currency_id {
 			_ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
 			_ if native_currency_id == second_token_id => Ok((second_token_id, first_token_id)),
-			_ => Err(Error::<T>::NotMangataLiquidityAsset.into()),
+			_ => Err(Error::<T>::NotPairedWithNativeAsset.into()),
 		}
 	}
 

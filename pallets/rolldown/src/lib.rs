@@ -278,8 +278,8 @@ pub mod pallet {
 	pub type AwaitingCancelResolution<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(T::ChainId, T::AccountId),
-		BTreeSet<(u128, DisputeRole)>,
+		T::ChainId,
+		BTreeSet<(T::AccountId, u128, DisputeRole)>,
 		ValueQuery,
 	>;
 
@@ -554,11 +554,11 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| {
-				v.insert((l2_request_id, DisputeRole::Submitter))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((submitter.clone(), l2_request_id, DisputeRole::Submitter))
 			});
-			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| {
-				v.insert((l2_request_id, DisputeRole::Canceler))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((canceler, l2_request_id, DisputeRole::Canceler))
 			});
 
 			L2Requests::<T>::insert(
@@ -1188,11 +1188,11 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Submitter))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(updater, cancel_request_id, DisputeRole::Submitter))
 		});
-		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Canceler))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(canceler, cancel_request_id, DisputeRole::Canceler))
 		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
@@ -1411,9 +1411,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		read_rights.saturating_accrue(
-			AwaitingCancelResolution::<T>::get((chain, sequencer))
+			AwaitingCancelResolution::<T>::get(chain)
 				.iter()
-				.filter(|(_, role)| *role == DisputeRole::Submitter)
+				.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Submitter)
 				.count() as u128,
 		);
 
@@ -1424,9 +1424,9 @@ impl<T: Config> Pallet<T> {
 		chain: ChainIdOf<T>,
 		sequencer: &AccountIdOf<T>,
 	) -> usize {
-		AwaitingCancelResolution::<T>::get((chain, sequencer))
+		AwaitingCancelResolution::<T>::get(chain)
 			.iter()
-			.filter(|(_, role)| *role == DisputeRole::Canceler)
+			.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Canceler)
 			.count()
 	}
 
@@ -1674,8 +1674,13 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 				},
 			);
 
-			for (_, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
-				rights.cancel_rights.saturating_accrue(T::RightsMultiplier::get())
+			let sequencer_count = (sequencer_set.len() as u128).saturating_sub(1u128);
+
+			for (s, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
+				rights.cancel_rights =
+					T::RightsMultiplier::get().saturating_mul(sequencer_count).saturating_sub(
+						Pallet::<T>::count_of_cancel_rights_under_dispute(chain, s) as u128,
+					)
 			}
 		});
 	}

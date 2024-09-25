@@ -2,9 +2,9 @@
 
 use codec::Codec;
 use jsonrpsee::{
-	core::{async_trait, Error as JsonRpseeError, RpcResult},
+	core::{async_trait, RpcResult},
 	proc_macros::rpc,
-	types::error::{CallError, ErrorObject},
+	types::error::ErrorObject,
 };
 pub use metamask_signature_runtime_api::MetamaskSignatureRuntimeApi;
 use sp_api::ProvideRuntimeApi;
@@ -55,28 +55,20 @@ where
 		let at = at.unwrap_or(self.client.info().best_hash);
 
 		let call = hex2bytes(call).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				0,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
+			ErrorObject::owned(0, "Unable to serve the request", Some(format!("{:?}", e)))
 		})?;
 
 		api.get_eip712_sign_data(at, call)
 			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					0,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
+				ErrorObject::owned(0, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 			.and_then(|v| {
 				if v.is_empty() {
-					Err(JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					Err(ErrorObject::owned(
 						0,
 						"Unable to serve the request",
 						Some(format!("Empty response")),
-					))))
+					))
 				} else {
 					Ok(v)
 				}

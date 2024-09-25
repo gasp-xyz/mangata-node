@@ -7,19 +7,23 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{alloc::string::String, Decode, Encode, MaxEncodedLen};
-use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_application_crypto::ByteArray;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
+	account::EthereumSignature,
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, BlakeTwo256, Block as BlockT, ConvertInto, DispatchInfoOf,
-		IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor, PostDispatchInfoOf,
-		Saturating, SignedExtension, StaticLookup, Verify, Zero,
+		AccountIdConversion, BlakeTwo256, Block as BlockT, Convert, ConvertInto, DispatchInfoOf,
+		Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor,
+		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, BoundedVec, DispatchError, FixedPointNumber, OpaqueExtrinsic, Perbill,
-	Percent, Permill, RuntimeDebug,
+	ApplyExtrinsicResult, BoundedVec, DispatchError, ExtrinsicInclusionMode, FixedPointNumber,
+	OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -36,10 +40,6 @@ pub use mangata_support::traits::{
 	PreValidateSwaps, ProofOfStakeRewardsApi,
 };
 pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadata};
-use sp_api::HeaderT;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-pub use sp_runtime::account::EthereumSignature;
-use sp_runtime::SaturatedConversion;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "runtime-benchmarks")]
@@ -49,7 +49,11 @@ pub use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
-		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		tokens::{
+			currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+			pay::PayFromAccount,
+			UnityAssetBalanceConversion,
+		},
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, EnsureOrigin,
 		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
 		InstanceFilter, KeyOwnerProofSystem, Randomness, StorageInfo, WithdrawReasons,
@@ -65,12 +69,11 @@ pub use frame_support::{
 };
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	Call as SystemCall, ConsumedWeight, EnsureRoot, SetCode,
+	Call as SystemCall, ConsumedWeight, EnsureRoot, EnsureRootWithSuccess, SetCode,
 };
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use runtime_config::*;
-use sp_application_crypto::ByteArray;
 use static_assertions::const_assert;
 use xyk_runtime_api::RpcAssetMetadata;
 
@@ -79,14 +82,14 @@ pub use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
+use pallet_grandpa::AuthorityId as GrandpaId;
+use pallet_identity::legacy::IdentityInfo;
 pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
-pub use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+pub use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 pub use pallet_xyk::{self, AssetMetadataMutationTrait};
 pub use scale_info::TypeInfo;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
 
 pub mod runtime_config;
 pub mod weights;
@@ -219,6 +222,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cfg::frame_system::MaintenanceGatedSetCode<Runtime, ()>;
 	/// The maximum number of consumers allowed on a single account.
 	type MaxConsumers = cfg::frame_system::MaxConsumers;
+	type RuntimeTask = RuntimeTask;
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -250,7 +259,18 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = cfg::pallet_treasury::MaxApprovals;
+	type BeneficiaryLookup = IdentityLookup<Self::AccountId>;
+	type Beneficiary = AccountId;
+	type AssetKind = ();
+	type PayoutPeriod = cfg::pallet_treasury::SpendPayoutPeriod;
+	type Paymaster = PayFromAccount<Self::Currency, TreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type SpendOrigin = EnsureRootWithSuccess<AccountId, ConstU128<{ 1000 * consts::UNIT }>>;
 }
 
 parameter_types! {
@@ -349,7 +369,7 @@ impl pallet_utility_mangata::Config for Runtime {
 	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
-use cfg::pallet_transaction_payment_mangata::{
+use cfg::pallet_transaction_payment::{
 	FeeHelpers, OnChargeHandler, ToAuthor, TriggerEvent, TwoCurrencyOnChargeAdapter,
 };
 
@@ -361,7 +381,7 @@ where
 {
 	fn trigger(who: T::AccountId, token_id: TokenId, fee: u128, tip: u128) {
 		TransactionPayment::deposit_event(
-			pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
+			pallet_transaction_payment::Event::<Runtime>::TransactionFeePaid {
 				who,
 				token_id,
 				actual_fee: fee,
@@ -448,7 +468,7 @@ pub type OnChargeTransactionHandler<T> = TwoCurrencyOnChargeAdapter<
 	Foo<T>,
 >;
 
-impl pallet_transaction_payment_mangata::Config for Runtime {
+impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
@@ -456,11 +476,10 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		OnChargeTransactionHandler<Runtime>,
 		FeeLock,
 	>;
-	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
+	type LengthToFee = cfg::pallet_transaction_payment::LengthToFee;
 	type WeightToFee = constants::fee::WeightToFee;
-	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
-	type OperationalFeeMultiplier =
-		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
+	type FeeMultiplierUpdate = cfg::pallet_transaction_payment::FeeMultiplierUpdate;
+	type OperationalFeeMultiplier = cfg::pallet_transaction_payment::OperationalFeeMultiplier;
 }
 
 parameter_types! {
@@ -622,6 +641,7 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = cfg::pallet_vesting_mangata::MinVestedTransfer;
+	type BlockNumberProvider = System;
 	type WeightInfo = weights::pallet_vesting_mangata_weights::ModuleWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
@@ -719,15 +739,21 @@ impl pallet_identity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::RxTokenId>;
 	type BasicDeposit = cfg::pallet_identity::BasicDeposit;
-	type FieldDeposit = cfg::pallet_identity::FieldDeposit;
+	type ByteDeposit = cfg::pallet_identity::ByteDeposit;
 	type SubAccountDeposit = cfg::pallet_identity::SubAccountDeposit;
 	type MaxSubAccounts = cfg::pallet_identity::MaxSubAccounts;
-	type MaxAdditionalFields = cfg::pallet_identity::MaxAdditionalFields;
+	type IdentityInformation = IdentityInfo<cfg::pallet_identity::MaxAdditionalFields>;
 	type MaxRegistrars = cfg::pallet_identity::MaxRegistrars;
 	type ForceOrigin = cfg::pallet_identity::IdentityForceOrigin;
 	type RegistrarOrigin = cfg::pallet_identity::IdentityRegistrarOrigin;
 	type Slashed = Treasury;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+	type OffchainSignature = Signature;
+	type SigningPublicKey = <Signature as Verify>::Signer;
+	type UsernameAuthorityOrigin = EnsureRoot<Self::AccountId>;
+	type PendingUsernameExpiration = cfg::pallet_identity::PendingUsernameExpiration;
+	type MaxSuffixLength = cfg::pallet_identity::MaxSuffixLength;
+	type MaxUsernameLength = cfg::pallet_identity::MaxUsernameLength;
 }
 
 impl pallet_maintenance::Config for Runtime {
@@ -793,7 +819,7 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,
-		TransactionPayment: pallet_transaction_payment_mangata = 11,
+		TransactionPayment: pallet_transaction_payment = 11,
 
 		// Xyk stuff
 		Xyk: pallet_xyk = 13,
@@ -980,7 +1006,7 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			Executive::runtime_upgraded_peek()
+			Executive::runtime_upgraded()
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1285,7 +1311,7 @@ impl_runtime_apis! {
 			Executive::execute_block_ver_impl(block, author);
 		}
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
+		fn initialize_block(header: &<Block as BlockT>::Header) -> ExtrinsicInclusionMode {
 			Executive::initialize_block(header)
 		}
 	}
@@ -1399,17 +1425,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_mangata_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 		fn query_weight_to_fee(weight: Weight) -> Balance {
@@ -1420,19 +1446,19 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
 		for Runtime
 	{
 		fn query_call_info(
 			call: RuntimeCall,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_call_info(call, len)
 		}
 		fn query_call_fee_details(
 			call: RuntimeCall,
 			len: u32,
-		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_call_fee_details(call, len)
 		}
 		fn query_weight_to_fee(weight: Weight) -> Balance {

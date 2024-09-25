@@ -4,7 +4,7 @@ use super::*;
 use crate as sequencer_staking;
 use core::convert::TryFrom;
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, derive_impl, parameter_types,
 	traits::{tokens::fungible::Mutate, Everything},
 	PalletId,
 };
@@ -46,33 +46,9 @@ construct_runtime!(
 	}
 );
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type RuntimeOrigin = RuntimeOrigin;
-	type Nonce = u64;
-	type RuntimeCall = RuntimeCall;
-	type Hash = sp_runtime::testing::H256;
-	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
-	type RuntimeEvent = RuntimeEvent;
 	type Block = Block;
-	type BlockHashCount = BlockHashCount;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = ();
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -96,7 +72,6 @@ parameter_types! {
 	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 	pub const BlocksPerRound: u32 = 5;
 	pub const TargetTge:u128 = 2_000_000_000u128;
-
 }
 
 pub struct MockIssuance;

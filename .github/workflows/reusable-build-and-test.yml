@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       builder_image:
-        default: mangatasolutions/node-builder:multi-nightly-2023-05-22
+        default: mangatasolutions/node-builder:multi-1.77-nightly-2024-01-20
         description: Docker image used for Rust builds
         required: false
         type: string
@@ -198,13 +198,13 @@ jobs:
           platforms: linux/${{ matrix.platform.name }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.NODE_DOCKER_IMAGE_REPOSITORY }},push-by-digest=true,name-canonical=true,push=true
-      
+
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
-      
+
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
@@ -212,7 +212,7 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
-      
+
       - name: Upload cargo build cache
         if: inputs.cache-enabled && steps.cache.outputs.cache_found == 'false'
         shell: bash
@@ -280,7 +280,7 @@ jobs:
         with:
           name: wasm-${{ inputs.version }}
           path: ./rollup_runtime-${{ inputs.version }}.compact.compressed.wasm
-  
+
   create-fast-docker-image-manifest-and-export-wasms:
     name: Generate multiplatform Docker image manifest for fast runtime image
     needs: [build-node-image-with-fast-runtime]
@@ -292,10 +292,10 @@ jobs:
           path: /tmp/digests
           pattern: fast-digests-*
           merge-multiple: true
-  
+
       - uses: docker/setup-buildx-action@v3
       - run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-  
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -304,28 +304,27 @@ jobs:
           tags: |
             type=raw,value=${{ inputs.version }}-fast
             type=raw,value=${{ inputs.branch }}-fast
-  
+
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}@sha256:%s ' *)
-  
+
       - name: Inspect image
         run: docker buildx imagetools inspect ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ steps.meta.outputs.version }}
-  
+
       - name: Export WASM artifacts from built images
         run: |
           # Export WASM artifact from image with fast runtime
           container_id_fast=$(docker create ${{ env.NODE_DOCKER_IMAGE_REPOSITORY }}:${{ inputs.version }}-fast) && \
             docker cp $container_id_fast:/app/rollup_runtime.compact.compressed.wasm ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm && \
             docker rm $container_id_fast
-  
       - uses: actions/upload-artifact@v3
         with:
           name: wasm-fast-${{ inputs.version }}
           path: ./rollup_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
-  
+
   rustfmt-check:
     name: Formatting check
     runs-on: ubuntu-latest

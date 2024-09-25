@@ -63,6 +63,8 @@ pub trait WeightInfo {
 	fn set_storage(i: u32, ) -> Weight;
 	fn kill_storage(i: u32, ) -> Weight;
 	fn kill_prefix(p: u32, ) -> Weight;
+	fn authorize_upgrade() -> Weight;
+	fn apply_authorized_upgrade() -> Weight;
 }
 
 /// Weights for frame_system using the Mangata node and recommended hardware.
@@ -131,6 +133,14 @@ impl<T: frame_system::Config> frame_system::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
+	
+	fn authorize_upgrade() -> Weight {
+			Weight::from_parts(0, 0)
+		}
+	
+	fn apply_authorized_upgrade() -> Weight {
+			Weight::from_parts(0, 0)
+		}
 }
 
 // For backwards compatibility and tests
@@ -198,4 +208,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
 			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
+	
+	fn authorize_upgrade() -> Weight {
+			Weight::from_parts(0, 0)
+		}
+	
+	fn apply_authorized_upgrade() -> Weight {
+			Weight::from_parts(0, 0)
+		}
 }

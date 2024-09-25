@@ -11,13 +11,13 @@ jobs:
       id-token: write
     runs-on: [compile-gke]
     container:
-      image: mangatasolutions/node-builder:multi-nightly-2023-05-22
+      image: mangatasolutions/node-builder:multi-1.77-nightly-2024-01-20
     env:
       JOB_CACHE_PREFIX: node-docs-cache-1
       CACHE_ARCHIVE_NAME: cache_archive.tar.zst
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: google-github-actions/auth@v2
         id: auth
         with:
@@ -32,14 +32,14 @@ jobs:
           CACHE_KEY="${{ env.JOB_CACHE_PREFIX }}-${{ hashFiles('**/Cargo.lock') }}"
           ARCHIVE_NAME="${{ env.CACHE_ARCHIVE_NAME }}"
           CACHE_FOUND=false
-      
-          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then 
+
+          if gcloud storage cp "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME" - | zstd -d | tar -xf - -C / ; then
             CACHE_FOUND=true
           fi
-      
+
           echo "cache_found=$CACHE_FOUND" >> $GITHUB_OUTPUT
           echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
-      
+
       - uses: mozilla-actions/sccache-action@v0.0.5
       - run: |
           echo "SCCACHE_GCS_BUCKET=mangata-node-ci-cache" >> $GITHUB_ENV
@@ -47,10 +47,10 @@ jobs:
           echo "SCCACHE_GCS_KEY_PREFIX=${{ env.JOB_CACHE_PREFIX }}" >> $GITHUB_ENV
           echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
           echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
-      
+
       - name: Build docs
         run: cargo doc
-      
+
       - name: Deploy to GCP
         uses: google-github-actions/upload-cloud-storage@v2.1.0
         with:
@@ -59,7 +59,7 @@ jobs:
           parent: false
           concurrency: 50
           process_gcloudignore: false
-          
+
       - name: Upload cargo build cache
         shell: bash
         run: |
@@ -73,9 +73,9 @@ jobs:
             "/usr/local/cargo/registry/cache/"
             "/usr/local/cargo/git/db/"
           )
-      
+
             SECONDS=0; tar -cf - "${CACHE_PATHS[@]}" | zstd -T0 -5 > "$ARCHIVE_NAME"
             echo "Compression completed in $SECONDS seconds" && echo "Archive size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
-      
+
             SECONDS=0; gcloud storage cp "$ARCHIVE_NAME" "gs://mangata-node-ci-cache/$CACHE_KEY/$ARCHIVE_NAME"
             echo "Upload completed in $SECONDS seconds"

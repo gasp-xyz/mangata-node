@@ -12,8 +12,8 @@ use scale_info::{
 	TypeInfo,
 };
 use serde::{Deserialize, Serialize};
-use sha3::{Digest, Keccak256};
 use sp_core::{RuntimeDebug, H256, U256};
+use sp_crypto_hashing::keccak_256;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	vec::Vec,
@@ -37,7 +37,7 @@ where
 {
 	fn abi_encode_hash(&self) -> H256 {
 		let encoded = self.abi_encode();
-		let hash: [u8; 32] = Keccak256::digest(&encoded[..]).into();
+		let hash: [u8; 32] = keccak_256(&encoded[..]).into();
 		H256::from(hash)
 	}
 }

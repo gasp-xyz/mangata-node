@@ -7,11 +7,11 @@ use serial_test::serial;
 use sp_runtime::traits::BadOrigin;
 use test_case::test_case;
 
-const USER_ID: u128 = 0;
-const PROVISION_USER1_ID: u128 = 200;
-const PROVISION_USER2_ID: u128 = 201;
-const ANOTHER_USER_ID: u128 = 100;
-const YET_ANOTHER_USER_ID: u128 = 900;
+const USER_ID: u64 = 0;
+const PROVISION_USER1_ID: u64 = 200;
+const PROVISION_USER2_ID: u64 = 201;
+const ANOTHER_USER_ID: u64 = 100;
+const YET_ANOTHER_USER_ID: u64 = 900;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 const LIQ_TOKEN_ID: TokenId = 10_u32;

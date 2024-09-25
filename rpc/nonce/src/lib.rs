@@ -23,11 +23,10 @@ use codec::{Codec, Decode, Encode};
 use jsonrpsee::{
 	core::{async_trait, RpcResult},
 	proc_macros::rpc,
-	types::error::{CallError, ErrorObject},
+	types::error::ErrorObject,
 };
 use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
-
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::HeaderBackend;
 use sp_core::{hexdisplay::HexDisplay, Bytes};
@@ -106,21 +105,21 @@ where
 {
 	async fn nonce(&self, account: AccountId) -> RpcResult<Index> {
 		let api = self.client.runtime_api();
-		let at = self.client.info().best_hash;
+		let best = self.client.info().best_hash;
 
-		let mut nonce = api.account_nonce(at, account.clone()).map_err(|e| {
-			CallError::Custom(ErrorObject::owned(
+		let mut nonce = api.account_nonce(best, account.clone()).map_err(|e| {
+			ErrorObject::owned(
 				Error::RuntimeError.into(),
 				"Unable to query nonce.",
 				Some(e.to_string()),
-			))
+			)
 		})?;
 
-		let txs_in_queue = api.enqueued_txs_count(at, account.clone()).unwrap();
+		let txs_in_queue = api.enqueued_txs_count(best, account.clone()).unwrap();
 		for _ in 0..txs_in_queue {
 			nonce += traits::One::one();
 		}
-		log::debug!(target: "rpc::nonce", "nonce for {} at block {} => {} ({} in queue)", account, at, nonce, txs_in_queue);
+		log::debug!(target: "rpc::nonce", "nonce for {} at block {} => {} ({} in queue)", account, best, nonce, txs_in_queue);
 
 		Ok(adjust_nonce(&*self.pool, account, nonce))
 	}
@@ -136,19 +135,19 @@ where
 
 		let uxt: <Block as traits::Block>::Extrinsic =
 			Decode::decode(&mut &*extrinsic).map_err(|e| {
-				CallError::Custom(ErrorObject::owned(
+				ErrorObject::owned(
 					Error::DecodeError.into(),
 					"Unable to dry run extrinsic",
 					Some(e.to_string()),
-				))
+				)
 			})?;
 
 		let result = api.apply_extrinsic(at, uxt).map_err(|e| {
-			CallError::Custom(ErrorObject::owned(
+			ErrorObject::owned(
 				Error::RuntimeError.into(),
 				"Unable to dry run extrinsic.",
 				Some(e.to_string()),
-			))
+			)
 		})?;
 
 		Ok(Encode::encode(&result).into())
@@ -189,4 +188,129 @@ where
 	}
 
 	current_nonce
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	use assert_matches::assert_matches;
+	use futures::executor::block_on;
+	use sc_transaction_pool::BasicPool;
+	use sp_runtime::{
+		transaction_validity::{InvalidTransaction, TransactionValidityError},
+		ApplyExtrinsicResult,
+	};
+	use substrate_test_runtime_client::{runtime::Transfer, AccountKeyring};
+
+	#[tokio::test]
+	async fn should_return_next_nonce_for_some_account() {
+		sp_tracing::try_init_simple();
+
+		// given
+		let client = Arc::new(substrate_test_runtime_client::new());
+		let spawner = sp_core::testing::TaskExecutor::new();
+		let pool =
+			BasicPool::new_full(Default::default(), true.into(), None, spawner, client.clone());
+
+		let source = sp_runtime::transaction_validity::TransactionSource::External;
+		let new_transaction = |nonce: u64| {
+			let t = Transfer {
+				from: AccountKeyring::Alice.into(),
+				to: AccountKeyring::Bob.into(),
+				amount: 5,
+				nonce,
+			};
+			t.into_unchecked_extrinsic()
+		};
+		let hash_of_block0 = client.info().genesis_hash;
+		// Populate the pool
+		let ext0 = new_transaction(0);
+		block_on(pool.submit_one(hash_of_block0, source, ext0)).unwrap();
+		let ext1 = new_transaction(1);
+		block_on(pool.submit_one(hash_of_block0, source, ext1)).unwrap();
+
+		let accounts = System::new(client, pool, DenyUnsafe::Yes);
+
+		// when
+		let nonce = accounts.nonce(AccountKeyring::Alice.into()).await;
+
+		// then
+		assert_eq!(nonce.unwrap(), 2);
+	}
+
+	#[tokio::test]
+	async fn dry_run_should_deny_unsafe() {
+		sp_tracing::try_init_simple();
+
+		// given
+		let client = Arc::new(substrate_test_runtime_client::new());
+		let spawner = sp_core::testing::TaskExecutor::new();
+		let pool =
+			BasicPool::new_full(Default::default(), true.into(), None, spawner, client.clone());
+
+		let accounts = System::new(client, pool, DenyUnsafe::Yes);
+
+		// when
+		let res = accounts.dry_run(vec![].into(), None).await;
+		assert_matches!(res, Err(e) => {
+			assert!(e.message().contains("RPC call is unsafe to be called externally"));
+		});
+	}
+
+	#[tokio::test]
+	async fn dry_run_should_work() {
+		sp_tracing::try_init_simple();
+
+		// given
+		let client = Arc::new(substrate_test_runtime_client::new());
+		let spawner = sp_core::testing::TaskExecutor::new();
+		let pool =
+			BasicPool::new_full(Default::default(), true.into(), None, spawner, client.clone());
+
+		let accounts = System::new(client, pool, DenyUnsafe::No);
+
+		let tx = Transfer {
+			from: AccountKeyring::Alice.into(),
+			to: AccountKeyring::Bob.into(),
+			amount: 5,
+			nonce: 0,
+		}
+		.into_unchecked_extrinsic();
+
+		// when
+		let bytes = accounts.dry_run(tx.encode().into(), None).await.expect("Call is successful");
+
+		// then
+		let apply_res: ApplyExtrinsicResult = Decode::decode(&mut bytes.as_ref()).unwrap();
+		assert_eq!(apply_res, Ok(Ok(())));
+	}
+
+	#[tokio::test]
+	async fn dry_run_should_indicate_error() {
+		sp_tracing::try_init_simple();
+
+		// given
+		let client = Arc::new(substrate_test_runtime_client::new());
+		let spawner = sp_core::testing::TaskExecutor::new();
+		let pool =
+			BasicPool::new_full(Default::default(), true.into(), None, spawner, client.clone());
+
+		let accounts = System::new(client, pool, DenyUnsafe::No);
+
+		let tx = Transfer {
+			from: AccountKeyring::Alice.into(),
+			to: AccountKeyring::Bob.into(),
+			amount: 5,
+			nonce: 100,
+		}
+		.into_unchecked_extrinsic();
+
+		// when
+		let bytes = accounts.dry_run(tx.encode().into(), None).await.expect("Call is successful");
+
+		// then
+		let apply_res: ApplyExtrinsicResult = Decode::decode(&mut bytes.as_ref()).unwrap();
+		assert_eq!(apply_res, Err(TransactionValidityError::Invalid(InvalidTransaction::Future)));
+	}
 }

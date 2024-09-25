@@ -12,16 +12,16 @@ repository.workspace = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop"}
+substrate-wasm-builder = { workspace = true }
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
-scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
-hex-literal = { version = "0.3.1" }
-log = { version = "0.4.17", default-features = false }
+codec = { workspace = true, default-features = false, features = ["derive"] }
+scale-info = { workspace = true, default-features = false, features = ["derive"] }
+hex-literal = { workspace = true }
+log = { workspace = true, default-features = false }
+array-bytes = { workspace = true }
 smallvec = "1.6.1"
 static_assertions = "1.1.0"
-array-bytes = { version = "6.2.0" }
 
 # Local Dependencies
 pallet-bootstrap = { path = "../../pallets/bootstrap", default-features = false, version = "0.1.0" }
@@ -44,56 +44,56 @@ pallet-crowdloan-rewards = { path = '../../pallets/crowdloan-rewards', default-f
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
-mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-utility-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-block-builder = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-inherents = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-storage = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-version = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-weights = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-application-crypto = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+mangata-support = { workspace = true, default-features = false }
+mangata-types = { workspace = true, default-features = false }
+pallet-utility-mangata = { workspace = true, default-features = false }
+sp-api = { workspace = true, default-features = false }
+sp-block-builder = { workspace = true, default-features = false }
+sp-consensus-aura = { workspace = true, default-features = false }
+sp-consensus-grandpa = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-inherents = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-offchain = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-session = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-storage = { workspace = true, default-features = false }
+sp-transaction-pool = { workspace = true, default-features = false }
+sp-ver = { workspace = true, default-features = false }
+sp-version = { workspace = true, default-features = false }
+sp-weights = { workspace = true, default-features = false }
+sp-application-crypto = { workspace = true, default-features = false }
 
 ## Substrate FRAME Dependencies
-frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, optional = true }
-frame-executive = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-system-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, optional = true }
-frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-try-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false, optional = true }
-ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-executive = { workspace = true, default-features = false }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-system-rpc-runtime-api = { workspace = true, default-features = false }
+frame-try-runtime = { workspace = true, default-features = false, optional = true }
+ver-api = { workspace = true, default-features = false }
 
 ## Substrate Pallet Dependencies
-pallet-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-authorship = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-collective-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-identity = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-sudo-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-timestamp = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-treasury = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+pallet-aura = { workspace = true, default-features = false }
+pallet-grandpa = { workspace = true, default-features = false }
+pallet-authorship = { workspace = true, default-features = false }
+pallet-collective-mangata = { workspace = true, default-features = false }
+pallet-identity = { workspace = true, default-features = false }
+pallet-proxy = { workspace = true, default-features = false }
+pallet-session = { workspace = true, default-features = false }
+pallet-sudo-mangata = { workspace = true, default-features = false }
+pallet-timestamp = { workspace = true, default-features = false }
+pallet-transaction-payment = { workspace = true, default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
+pallet-treasury = { workspace = true, default-features = false }
+pallet-vesting-mangata = { workspace = true, default-features = false }
 
 # Open-Runtime-Module-Library Dependencies
-orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
-orml-traits = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
+orml-asset-registry = { workspace = true, default-features = false }
+orml-tokens = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -129,8 +129,8 @@ std = [
 	"pallet-sudo-mangata/std",
 	"pallet-sudo-origin/std",
 	"pallet-timestamp/std",
-	"pallet-transaction-payment-mangata-rpc-runtime-api/std",
-	"pallet-transaction-payment-mangata/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
 	"pallet-utility-mangata/std",
 	"pallet-vesting-mangata/std",
@@ -187,7 +187,7 @@ try-runtime = [
 	"pallet-sudo-mangata/try-runtime",
 	"pallet-sudo-origin/try-runtime",
 	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment-mangata/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-utility-mangata/try-runtime",
 	"pallet-vesting-mangata/try-runtime",
@@ -231,5 +231,5 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-rolldown/runtime-benchmarks",
 	"pallet-sequencer-staking/runtime-benchmarks",
-	"pallet-session/runtime-benchmarks"
+	"pallet-session/runtime-benchmarks",
 ]

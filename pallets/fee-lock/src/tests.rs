@@ -139,7 +139,7 @@ fn process_fee_lock_trigger_works() {
 		let fee_lock_amount = 1000;
 		let swap_value_threshold = 1000;
 
-		let caller: u128 = 0u128;
+		let caller = 0u64;
 		let initial_amount: Balance = 2_000_000__u128;
 		let token_id: TokenId =
 			<Test as Config>::Tokens::create(&caller, initial_amount.into()).unwrap().into();
@@ -171,7 +171,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData { free: 2_000_000__u128, reserved: 0__u128, frozen: 0__u128 }
 		);
 
@@ -180,10 +180,10 @@ fn process_fee_lock_trigger_works() {
 		assert_eq!(now, 0);
 
 		// First timeout on empty user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - fee_lock_amount,
 				reserved: fee_lock_amount,
@@ -192,7 +192,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: fee_lock_amount,
 				last_fee_lock_block: now,
@@ -200,10 +200,10 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Second timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 2 * fee_lock_amount,
 				reserved: 2 * fee_lock_amount,
@@ -212,7 +212,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 2 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -220,10 +220,10 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Third timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 3 * fee_lock_amount,
 				reserved: 3 * fee_lock_amount,
@@ -232,7 +232,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 3 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -245,10 +245,10 @@ fn process_fee_lock_trigger_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Thrice timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 1 * fee_lock_amount,
 				reserved: 1 * fee_lock_amount,
@@ -257,7 +257,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 1 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -270,10 +270,10 @@ fn process_fee_lock_trigger_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Once timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 1 * fee_lock_amount,
 				reserved: 1 * fee_lock_amount,
@@ -282,7 +282,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 1 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -290,10 +290,10 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Second timeout
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 2 * fee_lock_amount,
 				reserved: 2 * fee_lock_amount,
@@ -302,7 +302,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 2 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -314,10 +314,10 @@ fn process_fee_lock_trigger_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 1 * fee_lock_amount,
 				reserved: 1 * fee_lock_amount,
@@ -326,7 +326,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 1 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -342,7 +342,7 @@ fn unlock_fee_works() {
 		let fee_lock_amount = 1000;
 		let swap_value_threshold = 1000;
 
-		let caller: u128 = 0u128;
+		let caller = 0u64;
 		let initial_amount: Balance = 2_000_000__u128;
 		let token_id: TokenId =
 			<Test as Config>::Tokens::create(&caller, initial_amount.into()).unwrap().into();
@@ -374,7 +374,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData { free: 2_000_000__u128, reserved: 0__u128, frozen: 0__u128 }
 		);
 
@@ -383,19 +383,19 @@ fn unlock_fee_works() {
 		assert_eq!(now, 0);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::NotFeeLocked
 		);
 
 		// First timeout on empty user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - fee_lock_amount,
 				reserved: fee_lock_amount,
@@ -404,7 +404,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: fee_lock_amount,
 				last_fee_lock_block: now,
@@ -412,10 +412,10 @@ fn unlock_fee_works() {
 		);
 
 		// Second timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 2 * fee_lock_amount,
 				reserved: 2 * fee_lock_amount,
@@ -424,7 +424,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 2 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -432,10 +432,10 @@ fn unlock_fee_works() {
 		);
 
 		// Third timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 3 * fee_lock_amount,
 				reserved: 3 * fee_lock_amount,
@@ -444,7 +444,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 3 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -452,11 +452,11 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::CantUnlockFeeYet
 		);
 
@@ -465,11 +465,11 @@ fn unlock_fee_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128));
-		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64));
+		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 0 * fee_lock_amount,
 				reserved: 0 * fee_lock_amount,
@@ -478,7 +478,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 0 * fee_lock_amount,
 				last_fee_lock_block: 0 * now,
@@ -486,19 +486,19 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::NotFeeLocked
 		);
 
 		// First timeout in current period on Thrice timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 1 * fee_lock_amount,
 				reserved: 1 * fee_lock_amount,
@@ -507,7 +507,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 1 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -515,11 +515,11 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::CantUnlockFeeYet
 		);
 
@@ -529,10 +529,10 @@ fn unlock_fee_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Once timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 1 * fee_lock_amount,
 				reserved: 1 * fee_lock_amount,
@@ -541,7 +541,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 1 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -549,19 +549,19 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::CantUnlockFeeYet
 		);
 
 		// Second timeout
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u64));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 2 * fee_lock_amount,
 				reserved: 2 * fee_lock_amount,
@@ -570,7 +570,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 2 * fee_lock_amount,
 				last_fee_lock_block: now,
@@ -578,11 +578,11 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::CantUnlockFeeYet
 		);
 
@@ -591,11 +591,11 @@ fn unlock_fee_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128));
-		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64));
+		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()));
 
 		assert_eq!(
-			Tokens::accounts(0u128, token_id),
+			Tokens::accounts(0u64, token_id),
 			AccountData {
 				free: 2_000_000__u128 - 0 * fee_lock_amount,
 				reserved: 0 * fee_lock_amount,
@@ -604,7 +604,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_eq!(
-			FeeLock::get_account_fee_lock_data(0u128),
+			FeeLock::get_account_fee_lock_data(0u64),
 			AccountFeeLockDataInfo {
 				total_fee_lock_amount: 0 * fee_lock_amount,
 				last_fee_lock_block: 0 * now,
@@ -612,11 +612,11 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u64),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
-			FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()),
+			FeeLock::unlock_fee(RuntimeOrigin::signed(0u64).into()),
 			Error::<Test>::NotFeeLocked
 		);
 	})
@@ -752,9 +752,9 @@ fn whitelist_and_valuation_works() {
 const PERIOD_LENGTH: u64 = 10;
 const FEE_LOCK_AMOUNT: u128 = 1000;
 const SWAP_VALUE_THRESHOLD: u128 = 1000;
-const ALICE: u128 = 0u128;
-const BOB: u128 = 1u128;
-const CHARLIE: u128 = 2u128;
+const ALICE: u64 = 0;
+const BOB: u64 = 1;
+const CHARLIE: u64 = 2;
 const INITIAL_AMOUNT: Balance = 2_000_000__u128;
 const UNLIMITED_WEIGHT: Weight = Weight::from_parts(u64::MAX, 0);
 const ACCOUNT_WITHOUT_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {

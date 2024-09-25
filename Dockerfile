@@ -1,4 +1,4 @@
-FROM mangatasolutions/node-builder:multi-nightly-2023-05-22 AS builder
+FROM mangatasolutions/node-builder:multi-1.77-nightly-2024-01-20 AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     fi \
 		# copy build artifacts to the root directory to avoid issues with accessing cache mount from 2nd stage
 		&& cp target/release/rollup-node ./node \
-		&& cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime.compact.compressed.wasm 
+		&& cp target/release/wbuild/rollup-runtime/rollup_runtime.compact.compressed.wasm ./rollup_runtime.compact.compressed.wasm
 
 FROM debian:buster AS runner
 

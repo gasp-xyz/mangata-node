@@ -196,7 +196,7 @@ mod test {
 	use alloy_sol_types::SolValue;
 	use hex_literal::hex;
 	use serial_test::serial;
-	use sha3::{Digest, Keccak256};
+	use sp_crypto_hashing::keccak_256;
 
 	pub trait Keccak256Hash {
 		fn keccak256_hash(&self) -> [u8; 32];
@@ -207,7 +207,7 @@ mod test {
 		T: SolValue,
 	{
 		fn keccak256_hash(&self) -> [u8; 32] {
-			Into::<[u8; 32]>::into(Keccak256::digest(&self.abi_encode()[..]))
+			Into::<[u8; 32]>::into(keccak_256(&self.abi_encode()[..]))
 		}
 	}
 

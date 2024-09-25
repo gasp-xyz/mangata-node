@@ -86,7 +86,7 @@ pub mod runtime_types {
 		frame_system::CheckEra<Runtime>,
 		frame_system::CheckNonce<Runtime>,
 		frame_system::CheckWeight<Runtime>,
-		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
+		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		frame_system::CheckNonZeroSender<Runtime>,
 	);
 
@@ -262,6 +262,7 @@ pub mod config {
 			pub const SpendPeriod: BlockNumber = 1 * consts::DAYS;
 			pub const Burn: Permill = Permill::from_percent(0);
 			pub const MaxApprovals: u32 = 100;
+			pub const SpendPayoutPeriod: BlockNumber = 30 * consts::DAYS;
 		}
 	}
 
@@ -347,7 +348,6 @@ pub mod config {
 					decimals,
 					existential_deposit: Default::default(),
 					additional: Default::default(),
-					location: None,
 				};
 				::orml_asset_registry::Pallet::<T>::do_register_asset_without_asset_processor(
 					metadata, asset,
@@ -388,7 +388,6 @@ pub mod config {
 								None,
 								None,
 								None,
-								None,
 								Some(additional),
 							) {
 								Ok(_) => {},
@@ -405,7 +404,7 @@ pub mod config {
 		}
 	}
 
-	pub mod pallet_transaction_payment_mangata {
+	pub mod pallet_transaction_payment {
 		use crate::*;
 
 		parameter_types! {
@@ -471,7 +470,7 @@ pub mod config {
 		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
 		impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
 		where
-			T: pallet_transaction_payment_mangata::Config
+			T: pallet_transaction_payment::Config
 				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
 			T::LengthToFee: frame_support::weights::WeightToFee<
@@ -697,7 +696,7 @@ pub mod config {
 		/// then tip.
 		impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 		where
-			T: pallet_transaction_payment_mangata::Config
+			T: pallet_transaction_payment::Config
 				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
 			<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
@@ -943,7 +942,7 @@ pub mod config {
 		/// then tip.
 		impl<T, C, OU, T1, T2, SF, TE> OnChargeTransaction<T> for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>
 		where
-			T: pallet_transaction_payment_mangata::Config,
+			T: pallet_transaction_payment::Config,
 			TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance: From<u128>,
 			C::CurrencyId: Into<u32>,
@@ -1283,7 +1282,6 @@ pub mod config {
 					name: b"L1Asset".to_vec().try_into().unwrap(),
 					symbol: b"L1Asset".to_vec().try_into().unwrap(),
 					existential_deposit: Zero::zero(),
-					location: None,
 					additional: CustomMetadata { xcm: None, xyk: None },
 				};
 
@@ -1295,15 +1293,18 @@ pub mod config {
 	pub mod pallet_identity {
 		use crate::*;
 		parameter_types! {
-			// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
-			pub const BasicDeposit: Balance = deposit(1, 270);
-			// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
-			pub const FieldDeposit: Balance = deposit(0, 66);
+			// difference of 26 bytes on-chain for the registration and 9 bytes on-chain for the identity
+			// information, already accounted for by the byte deposit
+			pub const BasicDeposit: Balance = deposit(1, 17);
+			pub const ByteDeposit: Balance = deposit(0, 1);
 			// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
 			pub const SubAccountDeposit: Balance = deposit(1, 97);
 			pub const MaxSubAccounts: u32 = 100;
 			pub const MaxAdditionalFields: u32 = 100;
 			pub const MaxRegistrars: u32 = 20;
+			pub const PendingUsernameExpiration: u32 = 7 * consts::DAYS;
+			pub const MaxSuffixLength: u32 = 7;
+			pub const MaxUsernameLength: u32 = 32;
 		}
 
 		pub type IdentityForceOrigin = EnsureRoot<AccountId>;

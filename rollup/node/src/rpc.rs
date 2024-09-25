@@ -45,7 +45,7 @@ where
 		+ BlockBackend<Block>
 		+ 'static,
 	C: Send + Sync + 'static,
-	C::Api: pallet_transaction_payment_mangata_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_runtime_api::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>,
@@ -60,7 +60,7 @@ where
 	P: TransactionPool + 'static,
 {
 	use metamask_signature_rpc::MetamaskSignature;
-	use pallet_transaction_payment_mangata_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
 	use rolldown_rpc::{Rolldown, RolldownApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};

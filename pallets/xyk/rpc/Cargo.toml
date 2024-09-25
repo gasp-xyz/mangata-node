@@ -7,18 +7,18 @@ description = "RPC calls for xyk"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0" }
-jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
-serde = { version = "1.0.126", features = ["derive"], optional = true }
+codec = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 # Substrate packages
 
-sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-api = { workspace = true, default-features = false }
+sp-blockchain = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-rpc = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
 
 # local packages
 

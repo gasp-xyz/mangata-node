@@ -27,7 +27,7 @@ use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_core::{H256, U256};
 use sp_crypto_hashing::keccak_256;
-use sp_runtime::traits::{AccountIdConversion, Convert, Zero};
+use sp_runtime::traits::{AccountIdConversion, Convert, ConvertBack, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
 pub type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
@@ -66,6 +66,14 @@ impl Convert<[u8; 20], sp_runtime::AccountId20>
 	}
 }
 
+impl ConvertBack<[u8; 20], sp_runtime::AccountId20>
+	for EthereumAddressConverter<sp_runtime::AccountId20>
+{
+	fn convert_back(eth_addr: sp_runtime::AccountId20) -> [u8; 20] {
+		eth_addr.into()
+	}
+}
+
 #[derive(Clone)]
 pub struct Keccak256Hasher {}
 
@@ -81,6 +89,23 @@ impl Hasher for Keccak256Hasher {
 }
 
 #[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum L1DepositProcessingError {
+	Overflow,
+	AssetRegistrationProblem,
+	MintError,
+}
+
+impl<T> From<L1DepositProcessingError> for Error<T> {
+	fn from(e: L1DepositProcessingError) -> Self {
+		match e {
+			L1DepositProcessingError::Overflow => Error::<T>::BalanceOverflow,
+			L1DepositProcessingError::AssetRegistrationProblem => Error::<T>::L1AssetCreationFailed,
+			L1DepositProcessingError::MintError => Error::<T>::MintError,
+		}
+	}
+}
+
+#[derive(PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum L1RequestProcessingError {
 	Overflow,
 	AssetRegistrationProblem,
@@ -88,6 +113,16 @@ pub enum L1RequestProcessingError {
 	NotEnoughtCancelRights,
 	WrongCancelRequestId,
 	SequencerNotSlashed,
+}
+
+impl From<L1DepositProcessingError> for L1RequestProcessingError {
+	fn from(err: L1DepositProcessingError) -> Self {
+		match err {
+			L1DepositProcessingError::Overflow => Self::Overflow,
+			L1DepositProcessingError::AssetRegistrationProblem => Self::AssetRegistrationProblem,
+			L1DepositProcessingError::MintError => Self::MintError,
+		}
+	}
 }
 
 #[cfg(test)]
@@ -155,9 +190,13 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
+	pub type FerriedDeposits<T: Config> =
+		StorageMap<_, Blake2_128Concat, (T::ChainId, H256), T::AccountId, OptionQuery>;
+
+	#[pallet::storage]
 	/// stores id of the failed depoisit, so it can be  refunded using [`Pallet::refund_failed_deposit`]
 	pub type FailedL1Deposits<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::AccountId, T::ChainId, u128), (), OptionQuery>;
+		StorageMap<_, Blake2_128Concat, (T::ChainId, u128), (T::AccountId, H256), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_last_processed_request_on_l2)]
@@ -239,8 +278,8 @@ pub mod pallet {
 	pub type AwaitingCancelResolution<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(T::ChainId, T::AccountId),
-		BTreeSet<(u128, DisputeRole)>,
+		T::ChainId,
+		BTreeSet<(T::AccountId, u128, DisputeRole)>,
 		ValueQuery,
 	>;
 
@@ -313,11 +352,13 @@ pub mod pallet {
 			token_address: [u8; 20],
 			amount: u128,
 			hash: H256,
+			ferry_tip: u128,
 		},
 		ManualBatchExtraFeeSet(BalanceOf<T>),
 		DepositRefundCreated {
 			chain: ChainIdOf<T>,
 			refunded_request_id: RequestId,
+			ferry: Option<AccountIdOf<T>>,
 		},
 		L1ReadScheduledForExecution {
 			chain: T::ChainId,
@@ -326,6 +367,11 @@ pub mod pallet {
 		L1ReadIgnoredBecauseOfMaintenanceMode {
 			chain: T::ChainId,
 			hash: H256,
+		},
+		DepositFerried {
+			chain: T::ChainId,
+			deposit: messages::Deposit,
+			deposit_hash: H256,
 		},
 	}
 
@@ -356,10 +402,14 @@ pub mod pallet {
 		InvalidRange,
 		NonExistingRequestId,
 		UnknownAliasAccount,
-		FailedDepositDoesExists,
+		FailedDepositDoesNotExist,
 		EmptyBatch,
 		TokenDoesNotExist,
-		NotDepositRecipient,
+		NotEligibleForRefund,
+		FerryHashMismatch,
+		MintError,
+		AssetRegistrationProblem,
+		UpdateHashMishmatch,
 	}
 
 	#[pallet::config]
@@ -371,7 +421,7 @@ pub mod pallet {
 			ChainIdOf<Self>,
 		>;
 		type SequencerStakingRewards: SequencerStakingRewardsTrait<Self::AccountId, RoundIndex>;
-		type AddressConverter: Convert<[u8; 20], Self::AccountId>;
+		type AddressConverter: ConvertBack<[u8; 20], Self::AccountId>;
 		// Dummy so that we can have the BalanceOf type here for the SequencerStakingProviderTrait
 		type Tokens: MultiTokenCurrency<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>
@@ -435,8 +485,13 @@ pub mod pallet {
 		pub fn update_l2_from_l1(
 			origin: OriginFor<T>,
 			requests: messages::L1Update,
+			update_hash: H256,
 		) -> DispatchResult {
 			let sequencer = ensure_signed(origin)?;
+
+			let hash = requests.abi_encode_hash();
+			ensure!(update_hash == hash, Error::<T>::UpdateHashMishmatch);
+
 			Self::update_impl(sequencer, requests)
 		}
 
@@ -499,11 +554,11 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| {
-				v.insert((l2_request_id, DisputeRole::Submitter))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((submitter.clone(), l2_request_id, DisputeRole::Submitter))
 			});
-			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| {
-				v.insert((l2_request_id, DisputeRole::Canceler))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((canceler, l2_request_id, DisputeRole::Canceler))
 			});
 
 			L2Requests::<T>::insert(
@@ -529,6 +584,7 @@ pub mod pallet {
 			recipient: [u8; 20],
 			token_address: [u8; 20],
 			amount: u128,
+			ferry_tip: Option<u128>,
 		) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin)?;
 
@@ -586,6 +642,7 @@ pub mod pallet {
 				withdrawalRecipient: recipient.clone(),
 				tokenAddress: token_address.clone(),
 				amount: U256::from(amount),
+				ferryTip: U256::from(ferry_tip.unwrap_or_default()),
 			};
 			// add cancel request to pending updates
 			L2Requests::<T>::insert(
@@ -604,6 +661,7 @@ pub mod pallet {
 				token_address,
 				amount,
 				hash: withdrawal_update.abi_encode_hash(),
+				ferry_tip: ferry_tip.unwrap_or_default(),
 			});
 			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
 
@@ -693,14 +751,19 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			// NOTE: failed deposits are not reachable at this point
-			let _ = FailedL1Deposits::<T>::take((sender, chain, request_id))
-				.ok_or(Error::<T>::FailedDepositDoesExists)?;
+			let (author, deposit_hash) = FailedL1Deposits::<T>::take((chain, request_id))
+				.ok_or(Error::<T>::FailedDepositDoesNotExist)?;
+
+			let ferry = FerriedDeposits::<T>::get((chain, deposit_hash));
+			let eligible_for_refund = ferry.clone().unwrap_or(author.clone());
+			ensure!(eligible_for_refund == sender, Error::<T>::NotEligibleForRefund);
 
 			let l2_request_id = Self::acquire_l2_request_id(chain);
 
 			let failed_deposit_resolution = FailedDepositResolution {
 				requestId: RequestId { origin: Origin::L2, id: l2_request_id },
 				originRequestId: request_id,
+				ferry: ferry.clone().map(T::AddressConverter::convert_back).unwrap_or([0u8; 20]),
 			};
 
 			L2Requests::<T>::insert(
@@ -715,6 +778,7 @@ pub mod pallet {
 			Self::deposit_event(Event::DepositRefundCreated {
 				refunded_request_id: RequestId { origin: Origin::L1, id: request_id },
 				chain,
+				ferry,
 			});
 
 			Ok(().into())
@@ -749,6 +813,74 @@ pub mod pallet {
 
 			Self::persist_batch_and_deposit_event(chain, range, sequencer_account);
 			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn ferry_deposit(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: RequestId,
+			deposit_recipient: [u8; 20],
+			token_address: [u8; 20],
+			amount: u128,
+			timestamp: u128,
+			ferry_tip: u128,
+			deposit_hash: H256,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let deposit = messages::Deposit {
+				depositRecipient: deposit_recipient,
+				requestId: request_id,
+				tokenAddress: token_address,
+				amount: amount.into(),
+				timeStamp: timestamp.into(),
+				ferryTip: ferry_tip.into(),
+			};
+
+			ensure!(deposit.abi_encode_hash() == deposit_hash, Error::<T>::FerryHashMismatch);
+			Self::ferry_desposit_impl(sender, chain, deposit)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn ferry_deposit_unsafe(
+			origin: OriginFor<T>,
+			chain: T::ChainId,
+			request_id: RequestId,
+			deposit_recipient: [u8; 20],
+			token_address: [u8; 20],
+			amount: u128,
+			timestamp: u128,
+			ferry_tip: u128,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			let deposit = messages::Deposit {
+				depositRecipient: deposit_recipient,
+				requestId: request_id,
+				tokenAddress: token_address,
+				amount: amount.into(),
+				timeStamp: timestamp.into(),
+				ferryTip: ferry_tip.into(),
+			};
+
+			Self::ferry_desposit_impl(sender, chain, deposit)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 3).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		pub fn update_l2_from_l1_unsafe(
+			origin: OriginFor<T>,
+			requests: messages::L1Update,
+		) -> DispatchResult {
+			let sequencer = ensure_signed(origin)?;
+			Self::update_impl(sequencer, requests)
 		}
 	}
 }
@@ -882,12 +1014,18 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let status = match request.clone() {
-			messages::L1UpdateRequest::Deposit(deposit) => Self::process_deposit(l1, &deposit)
-				.or_else(|err| {
+			messages::L1UpdateRequest::Deposit(deposit) => {
+				let deposit_status = Self::process_deposit(l1, &deposit);
+				TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
+				deposit_status.or_else(|err| {
 					let who: T::AccountId = T::AddressConverter::convert(deposit.depositRecipient);
-					FailedL1Deposits::<T>::insert((who, l1, deposit.requestId.id), ());
-					Err(err)
-				}),
+					FailedL1Deposits::<T>::insert(
+						(l1, deposit.requestId.id),
+						(who, deposit.abi_encode_hash()),
+					);
+					Err(err.into())
+				})
+			},
 			messages::L1UpdateRequest::CancelResolution(cancel) =>
 				Self::process_cancel_resolution(l1, &cancel).or_else(|err| {
 					T::MaintenanceStatusProvider::trigger_maintanance_mode();
@@ -985,30 +1123,26 @@ impl<T: Config> Pallet<T> {
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	fn process_deposit(
 		l1: T::ChainId,
-		deposit_request_details: &messages::Deposit,
-	) -> Result<(), L1RequestProcessingError> {
-		let account: T::AccountId =
-			T::AddressConverter::convert(deposit_request_details.depositRecipient);
-
-		let amount = TryInto::<u128>::try_into(deposit_request_details.amount)
-			.map_err(|_| L1RequestProcessingError::Overflow)?
+		deposit: &messages::Deposit,
+	) -> Result<(), L1DepositProcessingError> {
+		let amount = TryInto::<u128>::try_into(deposit.amount)
+			.map_err(|_| L1DepositProcessingError::Overflow)?
 			.try_into()
-			.map_err(|_| L1RequestProcessingError::Overflow)?;
+			.map_err(|_| L1DepositProcessingError::Overflow)?;
 
-		let eth_asset =
-			T::AssetAddressConverter::convert((l1, deposit_request_details.tokenAddress));
+		let eth_asset = T::AssetAddressConverter::convert((l1, deposit.tokenAddress));
 
 		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
 			Some(id) => id,
 			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
-				.map_err(|_| L1RequestProcessingError::AssetRegistrationProblem)?,
+				.map_err(|_| L1DepositProcessingError::AssetRegistrationProblem)?,
 		};
 
-		T::Tokens::mint(asset_id, &account, amount)
-			.map_err(|_| L1RequestProcessingError::MintError)?;
+		let account = FerriedDeposits::<T>::get((l1, deposit.abi_encode_hash()))
+			.unwrap_or(T::AddressConverter::convert(deposit.depositRecipient));
 
-		TotalNumberOfDeposits::<T>::mutate(|v| *v = v.saturating_add(One::one()));
-		log!(debug, "Deposit processed successfully: {:?}", deposit_request_details);
+		T::Tokens::mint(asset_id, &account, amount)
+			.map_err(|_| L1DepositProcessingError::MintError)?;
 
 		Ok(())
 	}
@@ -1054,11 +1188,11 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Submitter))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(updater, cancel_request_id, DisputeRole::Submitter))
 		});
-		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Canceler))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(canceler, cancel_request_id, DisputeRole::Canceler))
 		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
@@ -1277,9 +1411,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		read_rights.saturating_accrue(
-			AwaitingCancelResolution::<T>::get((chain, sequencer))
+			AwaitingCancelResolution::<T>::get(chain)
 				.iter()
-				.filter(|(_, role)| *role == DisputeRole::Submitter)
+				.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Submitter)
 				.count() as u128,
 		);
 
@@ -1290,9 +1424,9 @@ impl<T: Config> Pallet<T> {
 		chain: ChainIdOf<T>,
 		sequencer: &AccountIdOf<T>,
 	) -> usize {
-		AwaitingCancelResolution::<T>::get((chain, sequencer))
+		AwaitingCancelResolution::<T>::get(chain)
 			.iter()
-			.filter(|(_, role)| *role == DisputeRole::Canceler)
+			.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Canceler)
 			.count()
 	}
 
@@ -1489,6 +1623,38 @@ impl<T: Config> Pallet<T> {
 			Ok(sender.clone())
 		}
 	}
+
+	fn ferry_desposit_impl(
+		sender: T::AccountId,
+		chain: T::ChainId,
+		deposit: messages::Deposit,
+	) -> Result<(), Error<T>> {
+		let deposit_hash = deposit.abi_encode_hash();
+
+		let amount = deposit
+			.amount
+			.checked_sub(deposit.ferryTip)
+			.and_then(|v| TryInto::<u128>::try_into(v).ok())
+			.and_then(|v| TryInto::<BalanceOf<T>>::try_into(v).ok())
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		let eth_asset = T::AssetAddressConverter::convert((chain, deposit.tokenAddress));
+		let asset_id = match T::AssetRegistryProvider::get_l1_asset_id(eth_asset.clone()) {
+			Some(id) => id,
+			None => T::AssetRegistryProvider::create_l1_asset(eth_asset)
+				.map_err(|_| Error::<T>::AssetRegistrationProblem)?,
+		};
+
+		let account = T::AddressConverter::convert(deposit.depositRecipient);
+
+		T::Tokens::transfer(asset_id, &sender, &account, amount, ExistenceRequirement::KeepAlive)
+			.map_err(|_| Error::<T>::NotEnoughAssets)?;
+		FerriedDeposits::<T>::insert((chain, deposit_hash), sender);
+
+		Self::deposit_event(Event::DepositFerried { chain, deposit, deposit_hash });
+
+		Ok(().into())
+	}
 }
 
 impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T> {
@@ -1508,8 +1674,13 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 				},
 			);
 
-			for (_, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
-				rights.cancel_rights.saturating_accrue(T::RightsMultiplier::get())
+			let sequencer_count = (sequencer_set.len() as u128).saturating_sub(1u128);
+
+			for (s, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
+				rights.cancel_rights =
+					T::RightsMultiplier::get().saturating_mul(sequencer_count).saturating_sub(
+						Pallet::<T>::count_of_cancel_rights_under_dispute(chain, s) as u128,
+					)
 			}
 		});
 	}

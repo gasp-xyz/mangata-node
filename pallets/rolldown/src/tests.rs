@@ -20,23 +20,24 @@ pub const ETH_RECIPIENT_ACCOUNT_MGX: AccountId = CHARLIE;
 
 pub type TokensOf<Test> = <Test as crate::Config>::Tokens;
 
-struct L1UpdateBuilder(Option<u128>, Vec<L1UpdateRequest>);
+pub(crate) struct L1UpdateBuilder(Option<u128>, Vec<L1UpdateRequest>);
+
 impl L1UpdateBuilder {
-	fn new() -> Self {
+	pub fn new() -> Self {
 		Self(None, Default::default())
 	}
 
-	fn with_offset(mut self, offset: u128) -> Self {
+	pub fn with_offset(mut self, offset: u128) -> Self {
 		self.0 = Some(offset);
 		self
 	}
 
-	fn with_requests(mut self, requests: Vec<L1UpdateRequest>) -> Self {
+	pub fn with_requests(mut self, requests: Vec<L1UpdateRequest>) -> Self {
 		self.1 = requests;
 		self
 	}
 
-	fn build(self) -> messages::L1Update {
+	pub fn build(self) -> messages::L1Update {
 		let mut update = messages::L1Update::default();
 
 		for (id, r) in self.1.into_iter().enumerate() {
@@ -69,7 +70,7 @@ fn error_on_empty_update() {
 		forward_to_block::<Test>(36);
 		let update = L1UpdateBuilder::default().build();
 		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update),
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update),
 			Error::<Test>::EmptyUpdate
 		);
 	});
@@ -97,15 +98,31 @@ fn process_single_deposit() {
 		let update = L1UpdateBuilder::default()
 			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 			.build();
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 
 		assert_event_emitted!(Event::L1ReadStored {
 			chain: messages::Chain::Ethereum,
 			sequencer: ALICE,
 			dispute_period_end: current_block_number + dispute_period,
 			range: (1u128, 1u128).into(),
-			hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19").into()
+			hash: hex!("75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398").into()
 		});
+	});
+}
+
+#[test]
+#[serial]
+fn test_reject_update_with_wrong_hash() {
+	ExtBuilder::new().execute_with_default_mocks(|| {
+		forward_to_block::<Test>(36);
+		let update = L1UpdateBuilder::default()
+			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+			.build();
+
+		assert_err!(
+			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update, H256::zero()),
+			Error::<Test>::UpdateHashMishmatch
+		);
 	});
 }
 
@@ -126,10 +143,10 @@ fn l2_counter_updates_when_requests_are_processed() {
 
 		forward_to_block::<Test>(10);
 		assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 0_u128.into());
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update1).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update1).unwrap();
 
 		forward_to_block::<Test>(11);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update2).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), update2).unwrap();
 
 		forward_to_block::<Test>(15);
 		forward_to_next_block::<Test>();
@@ -154,10 +171,11 @@ fn deposit_executed_after_dispute_period() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
 			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
@@ -185,10 +203,11 @@ fn deposit_fail_creates_update_with_status_false() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(14);
 			assert!(!L2Requests::<Test>::contains_key(
 				Chain::Ethereum,
@@ -196,7 +215,7 @@ fn deposit_fail_creates_update_with_status_false() {
 			));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 
-			assert!(!FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
+			assert!(!FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
 
 			forward_to_block::<Test>(20);
 
@@ -206,7 +225,7 @@ fn deposit_fail_creates_update_with_status_false() {
 				status: Err(L1RequestProcessingError::Overflow),
 			});
 
-			assert!(FailedL1Deposits::<Test>::contains_key((CHARLIE, consts::CHAIN, 1u128)));
+			assert!(FailedL1Deposits::<Test>::contains_key((consts::CHAIN, 1u128)));
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
 		});
 }
@@ -225,10 +244,11 @@ fn test_refund_of_failed_withdrawal() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(20);
 			assert_event_emitted!(Event::RequestProcessedOnL2 {
 				chain: messages::Chain::Ethereum,
@@ -241,7 +261,8 @@ fn test_refund_of_failed_withdrawal() {
 
 			assert_event_emitted!(Event::DepositRefundCreated {
 				refunded_request_id: RequestId::new(Origin::L1, 1u128),
-				chain: Chain::Ethereum
+				chain: Chain::Ethereum,
+				ferry: None
 			});
 		});
 }
@@ -260,10 +281,11 @@ fn test_withdrawal_can_be_refunded_only_once() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(20);
 			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
 				.unwrap();
@@ -273,7 +295,7 @@ fn test_withdrawal_can_be_refunded_only_once() {
 					consts::CHAIN,
 					1u128
 				),
-				Error::<Test>::FailedDepositDoesExists
+				Error::<Test>::FailedDepositDoesNotExist
 			);
 		});
 }
@@ -292,15 +314,16 @@ fn test_withdrawal_can_be_refunded_only_by_account_deposit_recipient() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from("3402823669209384634633746074317682114560"),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 			forward_to_block::<Test>(20);
 
 			assert_err!(
 				Rolldown::refund_failed_deposit(RuntimeOrigin::signed(ALICE), consts::CHAIN, 1u128),
-				Error::<Test>::FailedDepositDoesExists
+				Error::<Test>::NotEligibleForRefund
 			);
 
 			Rolldown::refund_failed_deposit(RuntimeOrigin::signed(CHARLIE), consts::CHAIN, 1u128)
@@ -322,6 +345,7 @@ fn l1_upate_executed_immaidately_if_force_submitted() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
@@ -354,12 +378,14 @@ fn each_request_executed_only_once() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update.clone()).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update.clone())
+				.unwrap();
 
 			forward_to_block::<Test>(11);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), update).unwrap();
 
 			forward_to_block::<Test>(14);
 			assert!(!L2Requests::<Test>::contains_key(
@@ -398,7 +424,8 @@ fn test_cancel_removes_pending_requests() {
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
@@ -426,7 +453,8 @@ fn test_cancel_produce_update_with_correct_hash() {
 				.build();
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 
 			Rolldown::cancel_requests_from_l1(
 				RuntimeOrigin::signed(BOB),
@@ -444,7 +472,7 @@ fn test_cancel_produce_update_with_correct_hash() {
 					updater: ALICE,
 					canceler: BOB,
 					range: (1u128, 1u128).into(),
-					hash: hex!("2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19")
+					hash: hex!("75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398")
 						.into()
 				}
 				.into()
@@ -489,7 +517,8 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			);
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
@@ -505,7 +534,8 @@ fn test_malicious_sequencer_is_slashed_when_honest_sequencer_cancels_malicious_r
 			);
 
 			forward_to_block::<Test>(12);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), cancel_resolution)
+				.unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
 				SequencerRights { read_rights: 0u128, cancel_rights: 1u128 }
@@ -568,7 +598,8 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 			);
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
@@ -584,7 +615,8 @@ fn test_malicious_canceler_is_slashed_when_honest_read_is_canceled() {
 			);
 
 			forward_to_block::<Test>(12);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), cancel_resolution)
+				.unwrap();
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
@@ -632,7 +664,8 @@ fn test_trigger_maintanance_mode_when_processing_cancel_resolution_triggers_an_e
 				.with_offset(1u128)
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), cancel_resolution)
+				.unwrap();
 
 			forward_to_block::<Test>(15);
 			forward_to_next_block::<Test>();
@@ -700,7 +733,8 @@ fn test_cancel_removes_cancel_right() {
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
@@ -729,7 +763,8 @@ fn test_cancel_removes_cancel_right() {
 			);
 
 			forward_to_block::<Test>(11);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), cancel_resolution)
+				.unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
 				SequencerRights { read_rights: 0u128, cancel_rights: 1u128 }
@@ -746,36 +781,6 @@ fn test_cancel_removes_cancel_right() {
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
 		});
-}
-
-#[test]
-#[serial]
-// this test ensures that the hash calculated on rust side matches hash calculated in contract
-fn test_l1_update_hash_compare_with_solidty() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		let update = L1UpdateBuilder::new()
-			.with_requests(vec![
-				L1UpdateRequest::Deposit(messages::Deposit {
-					requestId: RequestId::new(Origin::L1, 1u128),
-					depositRecipient: hex!("0000000000000000000000000000000000000002"),
-					tokenAddress: hex!("0000000000000000000000000000000000000003"),
-					amount: 4u128.into(),
-					timeStamp: sp_core::U256::from(1),
-				}),
-				L1UpdateRequest::CancelResolution(messages::CancelResolution {
-					requestId: RequestId::new(Origin::L1, 6u128),
-					l2RequestId: 7u128,
-					cancelJustified: true,
-					timeStamp: sp_core::U256::from(2),
-				}),
-			])
-			.build();
-		let hash = Rolldown::calculate_hash_of_sequencer_update(update);
-		assert_eq!(
-			hash,
-			hex!("af1c7908d0762a131c827a13d9a6afde3e6f1a4a842d96708935d57fc2a0af7a").into()
-		);
-	});
 }
 
 #[test]
@@ -797,7 +802,8 @@ fn cancel_request_as_council_executed_immadiately() {
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { read_rights: 1u128, cancel_rights: 2u128 }
 			);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&ALICE).unwrap(),
 				SequencerRights { read_rights: 0u128, cancel_rights: 2u128 }
@@ -826,7 +832,7 @@ fn execute_a_lot_of_requests_in_following_blocks() {
 		let requests = vec![L1UpdateRequest::Deposit(messages::Deposit::default()); requests_count];
 
 		let deposit_update = L1UpdateBuilder::default().with_requests(requests).build();
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
 
 		forward_to_block::<Test>(14);
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
@@ -864,10 +870,10 @@ fn ignore_duplicated_requests_when_already_executed() {
 			L1UpdateBuilder::default().with_requests(vec![dummy_request; 6]).build();
 
 		forward_to_block::<Test>(10);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 		forward_to_block::<Test>(11);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), second_update).unwrap();
 
 		forward_to_block::<Test>(14);
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
@@ -893,10 +899,10 @@ fn process_l1_reads_in_order() {
 			L1UpdateBuilder::default().with_requests(vec![dummy_request; 20]).build();
 
 		forward_to_block::<Test>(10);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 		forward_to_block::<Test>(11);
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), second_update).unwrap();
 
 		forward_to_block::<Test>(14);
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
@@ -917,7 +923,7 @@ fn check_request_ids_starts_from_one() {
 		let requests = vec![L1UpdateRequest::Deposit(Default::default())];
 
 		assert_err!(
-			Rolldown::update_l2_from_l1(
+			Rolldown::update_l2_from_l1_unsafe(
 				RuntimeOrigin::signed(ALICE),
 				L1UpdateBuilder::new()
 					.with_requests(requests.clone())
@@ -928,7 +934,7 @@ fn check_request_ids_starts_from_one() {
 		);
 
 		assert_err!(
-			Rolldown::update_l2_from_l1(
+			Rolldown::update_l2_from_l1_unsafe(
 				RuntimeOrigin::signed(ALICE),
 				L1UpdateBuilder::new().with_requests(requests).with_offset(2u128).build()
 			),
@@ -949,7 +955,7 @@ fn reject_consecutive_update_with_invalid_counters() {
 			.build();
 
 		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update),
 			Error::<Test>::WrongRequestId
 		);
 	});
@@ -967,7 +973,7 @@ fn reject_update_with_invalid_too_high_request_id() {
 			.build();
 
 		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update),
 			Error::<Test>::WrongRequestId
 		);
 	});
@@ -982,9 +988,10 @@ fn reject_second_update_in_the_same_block() {
 			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 			.build();
 
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update.clone()).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update.clone())
+			.unwrap();
 		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update),
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), deposit_update),
 			Error::<Test>::MultipleUpdatesInSingleBlock
 		)
 	});
@@ -997,7 +1004,7 @@ fn accept_consecutive_update_split_into_two() {
 		forward_to_block::<Test>(10);
 
 		// imagine that there are 20 request on L1 waiting to be processed
-		// they need to be split into 2 update_l2_from_l1 calls
+		// they need to be split into 2 update_l2_from_l1_unsafe calls
 
 		let dummy_update = L1UpdateRequest::Deposit(Default::default());
 
@@ -1009,7 +1016,7 @@ fn accept_consecutive_update_split_into_two() {
 			.with_offset(1u128)
 			.build();
 
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 		forward_to_next_block::<Test>();
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0);
@@ -1041,6 +1048,7 @@ fn execute_two_consecutive_incremental_reqeusts() {
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: sp_core::U256::from(MILLION),
 				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
 			});
 
 			let first_update = L1UpdateBuilder::default()
@@ -1054,10 +1062,10 @@ fn execute_two_consecutive_incremental_reqeusts() {
 				.build();
 
 			forward_to_block::<Test>(10);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 			forward_to_block::<Test>(11);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), second_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), second_update).unwrap();
 
 			forward_to_block::<Test>(14);
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE), 0_u128);
@@ -1100,6 +1108,7 @@ fn test_withdraw() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -1108,6 +1117,7 @@ fn test_withdraw() {
 				withdrawalRecipient: ETH_RECIPIENT_ACCOUNT,
 				tokenAddress: ETH_TOKEN_ADDRESS,
 				amount: U256::from(1_000_000u128),
+				ferryTip: U256::from(0),
 			};
 			// check iftokens were burned
 			assert_eq!(TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE), 0_u128);
@@ -1152,6 +1162,7 @@ fn test_withdraw_of_non_existing_token_returns_token_does_not_exist_error() {
 					ETH_RECIPIENT_ACCOUNT,
 					hex!("0123456789012345678901234567890123456789"),
 					1_000_000u128,
+					0u128.into(),
 				),
 				Error::<Test>::TokenDoesNotExist
 			);
@@ -1170,7 +1181,8 @@ fn error_on_withdraw_too_much() {
 					consts::CHAIN,
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
-					10_000_000u128
+					10_000_000u128,
+					0u128.into(),
 				),
 				Error::<Test>::NotEnoughAssets
 			);
@@ -1192,6 +1204,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
+						ferryTip: sp_core::U256::from(0),
 					}),
 					L1UpdateRequest::Deposit(messages::Deposit {
 						requestId: RequestId::new(Origin::L1, 2u128),
@@ -1199,6 +1212,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 						tokenAddress: ETH_TOKEN_ADDRESS,
 						amount: sp_core::U256::from(MILLION),
 						timeStamp: sp_core::U256::from(1),
+						ferryTip: sp_core::U256::from(0),
 					}),
 				])
 				.with_offset(1u128)
@@ -1211,11 +1225,12 @@ fn test_reproduce_bug_with_incremental_updates() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
 			forward_to_block::<Test>(10);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), first_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), first_update).unwrap();
 
 			forward_to_block::<Test>(20);
 			assert!(!L2Requests::<Test>::contains_key(
@@ -1228,6 +1243,7 @@ fn test_reproduce_bug_with_incremental_updates() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				10u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_eq!(Rolldown::get_last_processed_request_on_l2(Chain::Ethereum), 2_u128.into());
@@ -1235,7 +1251,8 @@ fn test_reproduce_bug_with_incremental_updates() {
 				L2Requests::<Test>::get(Chain::Ethereum, RequestId::new(Origin::L2, 1u128));
 			assert!(matches!(withdrawal_update, Some((L2Request::Withdrawal(_), _))));
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), second_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), second_update)
+				.unwrap();
 
 			forward_to_block::<Test>(40);
 			assert!(!L2Requests::<Test>::contains_key(
@@ -1289,18 +1306,19 @@ fn test_sequencer_unstaking() {
 		assert_ok!(Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE));
 		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), 0);
 
-		AwaitingCancelResolution::<Test>::insert(
-			(consts::CHAIN, ALICE),
-			BTreeSet::from([(0, DisputeRole::Canceler)]),
-		);
+		AwaitingCancelResolution::<Test>::mutate(consts::CHAIN, |v| {
+			v.insert((ALICE, 0u128, DisputeRole::Canceler))
+		});
 		assert_err!(
 			Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE),
 			Error::<Test>::SequencerAwaitingCancelResolution
 		);
 
-		AwaitingCancelResolution::<Test>::remove((consts::CHAIN, ALICE));
+		AwaitingCancelResolution::<Test>::mutate(consts::CHAIN, |v| {
+			v.remove(&(ALICE, 0u128, DisputeRole::Canceler))
+		});
 		assert_ok!(Rolldown::sequencer_unstaking(consts::CHAIN, &ALICE));
-		assert_eq!(AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)), BTreeSet::new());
+		assert_eq!(AwaitingCancelResolution::<Test>::get(consts::CHAIN), BTreeSet::new());
 	});
 }
 
@@ -1316,7 +1334,7 @@ fn test_last_update_by_sequencer_is_updated() {
 		let update = L1UpdateBuilder::default()
 			.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 			.build();
-		Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), update).unwrap();
+		Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
 
 		assert_eq!(LastUpdateBySequencer::<Test>::get((consts::CHAIN, ALICE)), block.into());
 	});
@@ -1340,8 +1358,11 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 			assert!(!PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update.clone())
-				.unwrap();
+			Rolldown::update_l2_from_l1_unsafe(
+				RuntimeOrigin::signed(ALICE),
+				deposit_update.clone(),
+			)
+			.unwrap();
 			assert!(PendingSequencerUpdates::<Test>::contains_key(15u128, Chain::Ethereum));
 
 			let l2_request_id = Rolldown::get_next_l2_request_id(Chain::Ethereum);
@@ -1360,12 +1381,11 @@ fn test_cancel_updates_awaiting_cancel_resolution() {
 
 			// Assert
 			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
-				BTreeSet::from([(1, DisputeRole::Submitter)])
-			);
-			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
-				BTreeSet::from([(1, DisputeRole::Canceler)])
+				AwaitingCancelResolution::<Test>::get(consts::CHAIN),
+				BTreeSet::from([
+					(ALICE, 1, DisputeRole::Submitter),
+					(BOB, 1, DisputeRole::Canceler),
+				])
 			);
 		});
 }
@@ -1399,20 +1419,24 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 				.build();
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			forward_to_block::<Test>(11);
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
 				.unwrap();
 			forward_to_block::<Test>(12);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), cancel_resolution).unwrap();
-			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
-				BTreeSet::from([(1, DisputeRole::Submitter)])
-			);
-			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
-				BTreeSet::from([(1, DisputeRole::Canceler)])
-			);
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), cancel_resolution)
+				.unwrap();
+			assert!(AwaitingCancelResolution::<Test>::get(consts::CHAIN).contains(&(
+				ALICE,
+				1,
+				DisputeRole::Submitter
+			)));
+			assert!(AwaitingCancelResolution::<Test>::get(consts::CHAIN).contains(&(
+				BOB,
+				1,
+				DisputeRole::Canceler
+			)));
 			forward_to_block::<Test>(16);
 
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
@@ -1426,14 +1450,8 @@ fn test_cancel_resolution_updates_awaiting_cancel_resolution() {
 			forward_to_block::<Test>(17);
 			forward_to_next_block::<Test>();
 
-			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, ALICE)),
-				BTreeSet::new()
-			);
-			assert_eq!(
-				AwaitingCancelResolution::<Test>::get((consts::CHAIN, BOB)),
-				BTreeSet::new()
-			);
+			assert_eq!(AwaitingCancelResolution::<Test>::get(consts::CHAIN), BTreeSet::new());
+			assert_eq!(AwaitingCancelResolution::<Test>::get(consts::CHAIN), BTreeSet::new());
 		})
 }
 
@@ -1479,7 +1497,7 @@ fn test_maintenance_mode_blocks_extrinsics() {
 		is_maintenance_mock.expect().return_const(true);
 
 		assert_err!(
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), Default::default()),
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), Default::default()),
 			Error::<Test>::BlockedByMaintenanceMode
 		);
 		assert_err!(
@@ -1500,7 +1518,8 @@ fn test_maintenance_mode_blocks_extrinsics() {
 				consts::CHAIN,
 				Default::default(),
 				Default::default(),
-				Default::default()
+				Default::default(),
+				Default::default(),
 			),
 			Error::<Test>::BlockedByMaintenanceMode
 		);
@@ -1541,7 +1560,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_same_blo
 			);
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
@@ -1585,7 +1604,7 @@ fn test_single_sequencer_cannot_cancel_request_without_cancel_rights_in_next_blo
 			);
 
 			// Act
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), deposit_update).unwrap();
 
 			assert_eq!(
 				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
@@ -1615,7 +1634,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
 			slash_sequencer_mock
 				.expect()
-				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.cloned() == None)
+				.withf(|chain, a, b| *chain == consts::CHAIN && *a == ALICE && b.is_none())
 				.times(2)
 				.return_const(Ok(().into()));
 
@@ -1625,23 +1644,19 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 				.build();
 
 			forward_to_block::<Test>(10);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
-			Rolldown::cancel_requests_from_l1(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				15u128.into(),
-			)
-			.unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), honest_update.clone())
+				.unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, 15u128)
+				.unwrap();
 
 			forward_to_block::<Test>(11);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(CHARLIE), honest_update.clone())
-				.unwrap();
-			Rolldown::cancel_requests_from_l1(
-				RuntimeOrigin::signed(ALICE),
-				consts::CHAIN,
-				16u128.into(),
+			Rolldown::update_l2_from_l1_unsafe(
+				RuntimeOrigin::signed(CHARLIE),
+				honest_update.clone(),
 			)
 			.unwrap();
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, 16u128)
+				.unwrap();
 
 			// lets pretned that alice misbehaved and got slashed, as a result her stake dropped below
 			// active sequencer threshold and she got immadietely removed from sequencers set
@@ -1699,7 +1714,8 @@ fn consider_awaiting_l1_sequencer_update_in_dispute_period_when_assigning_initia
 				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
 				.build();
 			forward_to_block::<Test>(10);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), honest_update.clone())
+				.unwrap();
 
 			// accidently canceling honest update
 			forward_to_block::<Test>(11);
@@ -1718,7 +1734,8 @@ fn consider_awaiting_l1_sequencer_update_in_dispute_period_when_assigning_initia
 					}),
 				])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(CHARLIE), honest_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(CHARLIE), honest_update)
+				.unwrap();
 
 			forward_to_block::<Test>(15);
 			let honest_update = L1UpdateBuilder::default()
@@ -1733,7 +1750,8 @@ fn consider_awaiting_l1_sequencer_update_in_dispute_period_when_assigning_initia
 					L1UpdateRequest::Deposit(Default::default()),
 				])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), honest_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), honest_update)
+				.unwrap();
 
 			forward_to_block::<Test>(17);
 			// at this point alice will be slashed by cancel resolution provided by CHALIE in block 12
@@ -1772,12 +1790,13 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 				.build();
 
 			forward_to_block::<Test>(10);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(BOB), honest_update.clone()).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(BOB), honest_update.clone())
+				.unwrap();
 			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(ALICE), consts::CHAIN, 15u128)
 				.unwrap();
 
 			forward_to_block::<Test>(15);
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), honest_update.clone())
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), honest_update.clone())
 				.unwrap();
 			// lets assume single person controls multiple sequencers (alice&charlie) and charlie intentionally cancels honest update
 			Rolldown::cancel_requests_from_l1(
@@ -1788,7 +1807,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 			.unwrap();
 
 			// and then CHARLIE provbides honest update - as a result ALICE will be slashed
-			Rolldown::update_l2_from_l1(
+			Rolldown::update_l2_from_l1_unsafe(
 				RuntimeOrigin::signed(CHARLIE),
 				L1UpdateBuilder::default()
 					.with_requests(vec![
@@ -1809,7 +1828,7 @@ fn consider_awaiting_cancel_resolutions_and_cancel_disputes_when_assigning_initi
 			// alice is slashed for her first malicious cancel but then she got slashed with honest update but that has not been yet processed
 			Rolldown::handle_sequencer_deactivations(consts::CHAIN, vec![ALICE]);
 
-			Rolldown::update_l2_from_l1(
+			Rolldown::update_l2_from_l1_unsafe(
 				RuntimeOrigin::signed(CHARLIE),
 				L1UpdateBuilder::default()
 					.with_requests(vec![L1UpdateRequest::CancelResolution(
@@ -1853,6 +1872,7 @@ fn test_merkle_proof_works() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					i as u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1899,6 +1919,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1911,6 +1932,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN), None);
@@ -1928,6 +1950,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -1944,6 +1967,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -1984,6 +2008,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2001,6 +2026,7 @@ fn test_batch_is_created_automatically_when_merkle_root_automatic_batch_period_p
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2055,6 +2081,7 @@ fn test_batch_is_created_automatically_whenever_new_request_is_created_and_time_
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2101,6 +2128,7 @@ fn test_period_based_batch_respects_sized_batches() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1000u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2115,6 +2143,7 @@ fn test_period_based_batch_respects_sized_batches() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2147,6 +2176,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
@@ -2164,6 +2194,7 @@ fn test_create_manual_batch_works() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2198,6 +2229,7 @@ fn test_create_manual_batch_fails_for_invalid_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2228,6 +2260,7 @@ fn test_create_manual_batch_work_for_alias_account() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2259,6 +2292,7 @@ fn test_merkle_proof_for_single_element_tree_is_empty() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2329,6 +2363,7 @@ fn do_not_allow_for_batches_when_there_are_no_pending_requests2() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2360,6 +2395,7 @@ fn manual_batches_not_allowed_in_maintanance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2393,6 +2429,7 @@ fn automatic_batches_triggered_by_period_blocked_maintenance_mode() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 			is_maintenance_mock.checkpoint();
@@ -2425,6 +2462,7 @@ fn automatic_batches_triggered_by_pending_requests_blocked_maintenance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128.into(),
 				)
 				.unwrap();
 			}
@@ -2455,6 +2493,7 @@ fn test_withdrawals_are_not_allowed_in_maintanance_mode() {
 					ETH_RECIPIENT_ACCOUNT,
 					ETH_TOKEN_ADDRESS,
 					1_000u128,
+					0u128.into(),
 				),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
@@ -2477,7 +2516,8 @@ fn test_cancels_are_not_allowed_in_maintanance_mode() {
 					L1UpdateRequest::Deposit(Default::default()),
 				])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			is_maintenance_mock.checkpoint();
 
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2510,7 +2550,7 @@ fn test_updates_are_not_allowed_in_maintanance_mode() {
 				])
 				.build();
 			assert_err!(
-				Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update),
+				Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update),
 				Error::<Test>::BlockedByMaintenanceMode
 			);
 		})
@@ -2537,10 +2577,12 @@ fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
 					tokenAddress: ETH_TOKEN_ADDRESS,
 					amount: sp_core::U256::from(MILLION),
 					timeStamp: sp_core::U256::from(1),
+					ferryTip: sp_core::U256::from(0),
 				})])
 				.build();
 
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			is_maintenance_mock.checkpoint();
 
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2552,7 +2594,7 @@ fn test_sequencer_updates_are_ignored_and_removed_in_maintanance_mode() {
 			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"81edcec3dc1c825d51e584bc1026167892d961b26a60ac745a97fb197473ab6f"
+					"6b5cabff8b0f12e9fac3708cad00edba4cdb2b3b8a3ab935073a303c53333c2b"
 				)),
 			});
 		})
@@ -2570,7 +2612,8 @@ fn test_reqeust_scheduled_for_execution_are_not_execute_in_the_same_block() {
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 
 			forward_to_block::<Test>(15);
@@ -2578,7 +2621,7 @@ fn test_reqeust_scheduled_for_execution_are_not_execute_in_the_same_block() {
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 
@@ -2606,7 +2649,8 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_executed_in_ma
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 
 			forward_to_block::<Test>(15);
@@ -2614,7 +2658,7 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_executed_in_ma
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 			is_maintenance_mock.checkpoint();
@@ -2647,7 +2691,8 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_scheduled_for_
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 			forward_to_block::<Test>(14);
 			is_maintenance_mock.checkpoint();
@@ -2659,7 +2704,7 @@ fn test_sequencer_updates_that_went_though_dispute_period_are_not_scheduled_for_
 			assert_event_emitted!(Event::L1ReadIgnoredBecauseOfMaintenanceMode {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 
@@ -2682,14 +2727,15 @@ fn test_sequencer_can_submit_same_update_again_after_maintenance_mode() {
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 
 			forward_to_block::<Test>(15);
 			assert_event_emitted!(Event::L1ReadScheduledForExecution {
 				chain: consts::CHAIN,
 				hash: H256::from(hex!(
-					"2bc9e0914fd9ecb6db43aa2db62e53cdc70fdcbf0d232e840d61f01fecfa5f19"
+					"75207958ce929568193284a176e012a8cf5058dc19d73dafee61a419eb667398"
 				)),
 			});
 			is_maintenance_mock.checkpoint();
@@ -2707,7 +2753,8 @@ fn test_sequencer_can_submit_same_update_again_after_maintenance_mode() {
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 			forward_to_block::<Test>(26);
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 1u128.into());
@@ -2729,7 +2776,8 @@ fn test_sequencer_rights_are_returned_when_maintanance_mode_is_triggered_and_pen
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 			is_maintenance_mock.checkpoint();
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2766,7 +2814,8 @@ fn test_sequencer_rights_are_returned_when_maintanance_mode_is_turned_off_before
 			let deposit_update = L1UpdateBuilder::default()
 				.with_requests(vec![L1UpdateRequest::Deposit(messages::Deposit::default())])
 				.build();
-			Rolldown::update_l2_from_l1(RuntimeOrigin::signed(ALICE), deposit_update).unwrap();
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
+				.unwrap();
 			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128.into());
 			is_maintenance_mock.checkpoint();
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
@@ -2832,6 +2881,7 @@ fn test_force_create_batch_fails_for_invalid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2862,6 +2912,7 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 				ETH_RECIPIENT_ACCOUNT,
 				ETH_TOKEN_ADDRESS,
 				1_000u128,
+				0u128.into(),
 			)
 			.unwrap();
 
@@ -2876,4 +2927,322 @@ fn test_force_create_batch_succeeds_for_valid_range() {
 				range: (1, 1),
 			});
 		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_with_wrong_hash_fails() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: Default::default(),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+
+			assert_err!(
+				Rolldown::ferry_deposit(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					deposit.requestId,
+					deposit.depositRecipient,
+					deposit.tokenAddress,
+					deposit.amount.try_into().unwrap(),
+					deposit.timeStamp.try_into().unwrap(),
+					deposit.ferryTip.try_into().unwrap(),
+					H256::zero()
+				),
+				Error::<Test>::FerryHashMismatch
+			);
+
+			forward_to_block::<Test>(14);
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_without_tip() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
+
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				charlie_balance_after
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE),
+				alice_balance_before + deposit.ferryTip.saturated_into::<u128>()
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_deposit_ferry_with_tip() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(10 * THOUSAND),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
+
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE),
+				charlie_balance_after
+			);
+			assert_eq!(
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE),
+				alice_balance_before + deposit.ferryTip.saturated_into::<u128>()
+			);
+		})
+}
+
+#[test]
+#[serial]
+fn test_ferry_deposit_that_fails() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, u128::MAX)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(u128::MAX),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(1u128),
+			};
+
+			let alice_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_before =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::ferry_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId,
+				deposit.depositRecipient,
+				deposit.tokenAddress,
+				deposit.amount.saturated_into::<u128>(),
+				deposit.timeStamp.saturated_into::<u128>(),
+				deposit.ferryTip.saturated_into::<u128>(),
+				deposit.abi_encode_hash(),
+			)
+			.unwrap();
+
+			let alice_balance_after = TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &ALICE);
+			let charlie_balance_after =
+				TokensOf::<Test>::free_balance(ETH_TOKEN_ADDRESS_MGX, &CHARLIE);
+			let ferried_amount = deposit.amount - deposit.ferryTip;
+
+			assert_eq!(
+				alice_balance_before - alice_balance_after,
+				ferried_amount.try_into().unwrap()
+			);
+			assert_eq!(
+				charlie_balance_after - charlie_balance_before,
+				ferried_amount.try_into().unwrap()
+			);
+
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
+
+			forward_to_block::<Test>(16);
+
+			assert_event_emitted!(Event::RequestProcessedOnL2 {
+				chain: messages::Chain::Ethereum,
+				request_id: 1u128,
+				status: Err(L1RequestProcessingError::MintError),
+			});
+
+			assert_err!(
+				Rolldown::refund_failed_deposit(
+					RuntimeOrigin::signed(CHARLIE),
+					consts::CHAIN,
+					deposit.requestId.id
+				),
+				Error::<Test>::NotEligibleForRefund
+			);
+
+			Rolldown::refund_failed_deposit(
+				RuntimeOrigin::signed(ALICE),
+				consts::CHAIN,
+				deposit.requestId.id,
+			)
+			.unwrap();
+
+			assert_event_emitted!(Event::DepositRefundCreated {
+				refunded_request_id: RequestId::new(Origin::L1, 1u128),
+				chain: Chain::Ethereum,
+				ferry: Some(ALICE),
+			});
+		})
+}
+
+#[test]
+#[serial]
+fn test_reproduce_bug_with_sequencer_being_able_to_get_more_cancel_rights_than_he_should() {
+	ExtBuilder::new()
+		.issue(ETH_RECIPIENT_ACCOUNT_MGX, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			// Arrange
+			let slash_sequencer_mock = MockSequencerStakingProviderApi::slash_sequencer_context();
+			slash_sequencer_mock.expect().times(1).return_const(Ok(().into()));
+
+			let honest_update = L1UpdateBuilder::default()
+				.with_requests(vec![L1UpdateRequest::Deposit(Default::default())])
+				.build();
+			forward_to_block::<Test>(10);
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), honest_update.clone())
+				.unwrap();
+
+			// accidently canceling honest update
+			forward_to_block::<Test>(11);
+			Rolldown::cancel_requests_from_l1(RuntimeOrigin::signed(BOB), consts::CHAIN, 15u128)
+				.unwrap();
+
+			forward_to_block::<Test>(15);
+			let cancel_resolution = L1UpdateBuilder::default()
+				.with_requests(vec![
+					// L1UpdateRequest::Deposit(Default::default()),
+					L1UpdateRequest::CancelResolution(messages::CancelResolution {
+						requestId: Default::default(),
+						l2RequestId: 1u128,
+						cancelJustified: false,
+						timeStamp: sp_core::U256::from(1),
+					}),
+					L1UpdateRequest::Deposit(Default::default()),
+				])
+				.build();
+
+			Rolldown::handle_sequencer_deactivations(consts::CHAIN, vec![ALICE, BOB, CHARLIE]);
+			Rolldown::new_sequencer_active(consts::CHAIN, &BOB);
+			Rolldown::new_sequencer_active(consts::CHAIN, &CHARLIE);
+
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 0u128 }
+			);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&CHARLIE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
+			);
+
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(CHARLIE), cancel_resolution)
+				.unwrap();
+
+			forward_to_block::<Test>(21);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&BOB).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
+			);
+			assert_eq!(
+				*SequencersRights::<Test>::get(consts::CHAIN).get(&CHARLIE).unwrap(),
+				SequencerRights { read_rights: 1u128, cancel_rights: 1u128 }
+			);
+		});
 }

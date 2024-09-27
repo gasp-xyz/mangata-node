@@ -3246,3 +3246,42 @@ fn test_reproduce_bug_with_sequencer_being_able_to_get_more_cancel_rights_than_h
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn ferry_already_executed_deposit_fails() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+			let deposit = messages::Deposit {
+				requestId: RequestId::new(Origin::L1, 1u128),
+				depositRecipient: DummyAddressConverter::convert_back(CHARLIE),
+				tokenAddress: ETH_TOKEN_ADDRESS,
+				amount: sp_core::U256::from(MILLION),
+				timeStamp: sp_core::U256::from(1),
+				ferryTip: sp_core::U256::from(0),
+			};
+			let update =
+				L1UpdateBuilder::default().with_requests(vec![deposit.clone().into()]).build();
+
+			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), update).unwrap();
+			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 0u128);
+			forward_to_block::<Test>(16);
+			assert_eq!(LastProcessedRequestOnL2::<Test>::get(Chain::Ethereum), 1u128);
+
+			assert_err!(
+				Rolldown::ferry_deposit_unsafe(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					deposit.requestId,
+					deposit.depositRecipient,
+					deposit.tokenAddress,
+					deposit.amount.try_into().unwrap(),
+					deposit.timeStamp.try_into().unwrap(),
+					deposit.ferryTip.try_into().unwrap(),
+				),
+				Error::<Test>::AlreadyExecuted
+			);
+		});
+}

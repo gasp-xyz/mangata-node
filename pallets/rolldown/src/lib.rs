@@ -410,6 +410,7 @@ pub mod pallet {
 		MintError,
 		AssetRegistrationProblem,
 		UpdateHashMishmatch,
+		AlreadyExecuted,
 	}
 
 	#[pallet::config]
@@ -1630,6 +1631,10 @@ impl<T: Config> Pallet<T> {
 		deposit: messages::Deposit,
 	) -> Result<(), Error<T>> {
 		let deposit_hash = deposit.abi_encode_hash();
+
+		if deposit.requestId.id <= LastProcessedRequestOnL2::<T>::get(chain) {
+			return Err(Error::<T>::AlreadyExecuted);
+		}
 
 		let amount = deposit
 			.amount

@@ -459,8 +459,7 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 		/// Withdrawals flat fee
-		#[pallet::constant]
-		type WithdrawFee: Get<BalanceOf<Self>>;
+		type WithdrawFee: Convert<ChainIdOf<Self>, BalanceOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -608,7 +607,7 @@ pub mod pallet {
 			)
 			.or(Err(Error::<T>::NotEnoughAssets))?;
 
-			let extra_fee = <<T as Config>::WithdrawFee>::get();
+			let extra_fee = <<T as Config>::WithdrawFee>::convert(chain);
 			if !extra_fee.is_zero() {
 				<T as Config>::Tokens::ensure_can_withdraw(
 					Self::native_token_id(),

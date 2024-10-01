@@ -1433,7 +1433,6 @@ pub mod config {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 			pub const RequestsPerBlock: u128 = 50;
 			pub const RightsMultiplier: u128 = 1;
-			pub const WithdrawFee: Balance = 50 * currency::DOLLARS;
 		}
 
 		#[cfg(feature = "fast-runtime")]
@@ -1448,6 +1447,16 @@ pub mod config {
 			pub const DisputePeriodLength: u32 = 300;
 			pub const MerkleRootAutomaticBatchPeriod: u128 = 1200;
 			pub const MerkleRootAutomaticBatchSize: u128 = 1024;
+		}
+
+		pub struct WithdrawFee;
+		impl Convert<::pallet_rolldown::messages::Chain, Balance> for WithdrawFee {
+			fn convert(chain: ::pallet_rolldown::messages::Chain) -> Balance {
+				match chain {
+					::pallet_rolldown::messages::Chain::Ethereum => 50 * currency::DOLLARS,
+					::pallet_rolldown::messages::Chain::Arbitrum => 50 * currency::DOLLARS,
+				}
+			}
 		}
 	}
 }

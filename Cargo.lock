@@ -5727,6 +5727,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-membership"
+version = "28.0.0"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e34e375e0f740a2ea7262946d0b52a9f8d26c8c3"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-metamask-signature"
 version = "0.1.0"
 dependencies = [
@@ -6149,8 +6166,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes",
- "rand 0.7.3",
- "rand_core 0.5.1",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
  "serde",
  "unicode-normalization",
 ]
@@ -7383,6 +7400,7 @@ dependencies = [
  "frame-system",
  "futures",
  "hex",
+ "hex-literal 0.3.4",
  "jsonrpsee",
  "log",
  "mangata-rpc-nonce",
@@ -7457,7 +7475,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.3.4",
  "log",
  "mangata-support",
  "mangata-types",
@@ -7475,6 +7492,7 @@ dependencies = [
  "pallet-identity",
  "pallet-issuance",
  "pallet-maintenance",
+ "pallet-membership",
  "pallet-metamask-signature",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
@@ -7539,6 +7557,7 @@ dependencies = [
  "pallet-identity",
  "pallet-issuance",
  "pallet-maintenance",
+ "pallet-membership",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
  "pallet-proxy",
@@ -11075,7 +11094,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

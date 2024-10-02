@@ -1,6 +1,7 @@
 #!/bin/bash
 REPO_ROOT=$(dirname $(readlink -f $0))/../
 
+rm -rf ./benchmarks
 mkdir ./benchmarks
 
 benchmarks=(
@@ -23,6 +24,8 @@ benchmarks=(
     "pallet_proof_of_stake"
 )
 
-for bench in ${benchmarks[@]}; do
-    ${REPO_ROOT}/scripts/run_benchmark.sh $bench
-done
+# for bench in ${benchmarks[@]}; do
+    # ${REPO_ROOT}/scripts/run_benchmark.sh $bench
+# done
+
+${REPO_ROOT}/scripts/run_benchmark_overhead.sh

@@ -17,15 +17,17 @@ name = "rollup-node"
 
 [dependencies]
 clap = { version = "4.4.2", features = ["derive", "env"] }
-codec = { package = "parity-scale-codec", version = "3.0.0" }
-futures = "0.3.28"
-hex = "0.4.0"
-jsonrpsee = { version = "0.16.2", features = ["server"] }
-log = "0.4.20"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.105"
-array-bytes = { version = "6.2.0" }
+codec = { workspace = true }
+futures = { workspace = true }
+hex = { workspace = true }
+hex-literal = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server"] }
+log = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+array-bytes = { workspace = true }
 rand = "0.8.5"
+color-print = "0.3.4"
 
 # Local
 rollup-runtime = { path = "../runtime/" }
@@ -37,73 +39,70 @@ rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
-pallet-rolldown = { path = "../../pallets/rolldown"}
+pallet-rolldown = { path = "../../pallets/rolldown" }
 
 # Substrate
-frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-frame-benchmarking-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-chain-spec = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-client-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-executor = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-network = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-network-sync = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-rpc-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-service = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-sysinfo = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-telemetry = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-tracing = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-transaction-pool-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-block-builder = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-consensus = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sc-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-consensus-grandpa = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-inherents = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-keyring = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-keystore = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-timestamp = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-transaction-pool = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", features = [
-	"helpers",
-] }
-substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../../rpc/nonce" }
-substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-try-runtime-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", optional = true}
+frame-benchmarking = { workspace = true }
+frame-benchmarking-cli = { workspace = true }
+frame-system = { workspace = true }
+pallet-transaction-payment = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
+sc-basic-authorship-ver = { workspace = true }
+sc-chain-spec = { workspace = true }
+sc-cli = { workspace = true }
+sc-client-api = { workspace = true }
+sc-executor = { workspace = true }
+sc-network = { workspace = true }
+sc-network-sync = { workspace = true }
+sc-offchain = { workspace = true }
+sc-rpc = { workspace = true }
+sc-rpc-api = { workspace = true }
+sc-service = { workspace = true }
+sc-sysinfo = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-tracing = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-blockchain = { workspace = true }
+sc-consensus-aura = { workspace = true }
+sp-consensus-aura = { workspace = true }
+sc-consensus = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
+sp-consensus-grandpa = { workspace = true }
+sp-statement-store = { workspace = true }
+sp-std = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-inherents = { workspace = true }
+sp-keyring = { workspace = true }
+sp-keystore = { workspace = true }
+sp-offchain = { workspace = true }
+sp-runtime = { workspace = true }
+sp-session = { workspace = true }
+sp-timestamp = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-ver = { workspace = true, features = ["helpers"] }
+substrate-prometheus-endpoint = { workspace = true }
+ver-api = { workspace = true }
+try-runtime-cli = { workspace = true, optional = true }
 
-color-print = "0.3.4"
+substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../../rpc/nonce" }
 
 [dev-dependencies]
 tempfile = "3.8.0"
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+substrate-build-script-utils = { workspace = true }
 
 [features]
-default = [ "std"
-]
+default = ["std"]
 std = [
 	"rollup-runtime/std",
 	"xyk-rpc/std",
 	"rolldown-rpc/std",
-	]
+]
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
 	"frame-benchmarking-cli/runtime-benchmarks",
@@ -118,7 +117,7 @@ runtime-benchmarks = [
 try-runtime = [
 	"frame-system/try-runtime",
 	"rollup-runtime/try-runtime",
-	"pallet-transaction-payment-mangata/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
 	"try-runtime-cli/try-runtime",
 ]

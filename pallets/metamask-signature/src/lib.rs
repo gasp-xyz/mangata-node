@@ -114,7 +114,13 @@ pub mod pallet {
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			panic!("you should provide config yourself");
+			Self {
+				name: Default::default(),
+				version: Default::default(),
+				chain_id: Default::default(),
+				decode_url: Default::default(),
+				_phantom: Default::default(),
+			}
 		}
 	}
 

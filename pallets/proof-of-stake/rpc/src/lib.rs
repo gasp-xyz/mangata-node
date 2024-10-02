@@ -2,9 +2,9 @@
 
 use codec::Codec;
 use jsonrpsee::{
-	core::{async_trait, Error as JsonRpseeError, RpcResult},
+	core::{async_trait, RpcResult},
 	proc_macros::rpc,
-	types::error::{CallError, ErrorObject},
+	types::error::ErrorObject,
 };
 pub use proof_of_stake_runtime_api::ProofOfStakeApi as ProofOfStakeRuntimeApi;
 use sp_api::ProvideRuntimeApi;
@@ -92,11 +92,7 @@ where
 		api.calculate_native_rewards_amount(at, account, liquidity_token)
 			.map(Into::<NumberOrHex>::into)
 			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 	}
 
@@ -113,11 +109,7 @@ where
 		api.calculate_3rdparty_rewards_amount(at, account, liquidity_token, reward_token)
 			.map(Into::<NumberOrHex>::into)
 			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 	}
 
@@ -138,11 +130,7 @@ where
 					.collect()
 			})
 			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
 	}
 }

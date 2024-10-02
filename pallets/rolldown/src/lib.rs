@@ -25,8 +25,8 @@ use mangata_support::traits::{
 };
 use mangata_types::assets::L1Asset;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
+use sp_crypto_hashing::keccak_256;
 use sp_runtime::traits::{AccountIdConversion, Convert, ConvertBack, Zero};
 use sp_std::{collections::btree_set::BTreeSet, convert::TryInto, prelude::*, vec::Vec};
 
@@ -82,7 +82,7 @@ impl Hasher for Keccak256Hasher {
 
 	fn hash(data: &[u8]) -> [u8; 32] {
 		let mut output = [0u8; 32];
-		let hash = Keccak256::digest(&data[..]);
+		let hash = keccak_256(&data[..]);
 		output.copy_from_slice(&hash[..]);
 		output
 	}
@@ -278,8 +278,8 @@ pub mod pallet {
 	pub type AwaitingCancelResolution<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(T::ChainId, T::AccountId),
-		BTreeSet<(u128, DisputeRole)>,
+		T::ChainId,
+		BTreeSet<(T::AccountId, u128, DisputeRole)>,
 		ValueQuery,
 	>;
 
@@ -410,6 +410,7 @@ pub mod pallet {
 		MintError,
 		AssetRegistrationProblem,
 		UpdateHashMishmatch,
+		AlreadyExecuted,
 	}
 
 	#[pallet::config]
@@ -458,8 +459,7 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 		/// Withdrawals flat fee
-		#[pallet::constant]
-		type WithdrawFee: Get<BalanceOf<Self>>;
+		type WithdrawFee: Convert<ChainIdOf<Self>, BalanceOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -554,11 +554,11 @@ pub mod pallet {
 				hash: hash_of_pending_request,
 			};
 
-			AwaitingCancelResolution::<T>::mutate((chain, submitter), |v| {
-				v.insert((l2_request_id, DisputeRole::Submitter))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((submitter.clone(), l2_request_id, DisputeRole::Submitter))
 			});
-			AwaitingCancelResolution::<T>::mutate((chain, canceler), |v| {
-				v.insert((l2_request_id, DisputeRole::Canceler))
+			AwaitingCancelResolution::<T>::mutate(chain, |v| {
+				v.insert((canceler, l2_request_id, DisputeRole::Canceler))
 			});
 
 			L2Requests::<T>::insert(
@@ -607,7 +607,7 @@ pub mod pallet {
 			)
 			.or(Err(Error::<T>::NotEnoughAssets))?;
 
-			let extra_fee = <<T as Config>::WithdrawFee>::get();
+			let extra_fee = <<T as Config>::WithdrawFee>::convert(chain);
 			if !extra_fee.is_zero() {
 				<T as Config>::Tokens::ensure_can_withdraw(
 					Self::native_token_id(),
@@ -1188,11 +1188,11 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		AwaitingCancelResolution::<T>::mutate((l1, &updater), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Submitter))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(updater, cancel_request_id, DisputeRole::Submitter))
 		});
-		AwaitingCancelResolution::<T>::mutate((l1, &canceler), |v| {
-			v.remove(&(cancel_request_id, DisputeRole::Canceler))
+		AwaitingCancelResolution::<T>::mutate(l1, |v| {
+			v.remove(&(canceler, cancel_request_id, DisputeRole::Canceler))
 		});
 
 		// slash is after adding rights, since slash can reduce stake below required level and remove all rights
@@ -1204,7 +1204,7 @@ impl<T: Config> Pallet<T> {
 
 	fn calculate_hash_of_sequencer_update(update: messages::L1Update) -> H256 {
 		let update: messages::eth_abi::L1Update = update.into();
-		let hash: [u8; 32] = Keccak256::digest(&update.abi_encode()[..]).into();
+		let hash: [u8; 32] = keccak_256(&update.abi_encode()[..]).into();
 		H256::from(hash)
 	}
 
@@ -1372,7 +1372,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let update: messages::eth_abi::L1Update = read.clone().into();
-		let request_hash = Keccak256::digest(&update.abi_encode());
+		let request_hash = keccak_256(&update.abi_encode());
 		let l1_read_hash = H256::from_slice(request_hash.as_slice());
 
 		PendingSequencerUpdates::<T>::insert(
@@ -1411,9 +1411,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		read_rights.saturating_accrue(
-			AwaitingCancelResolution::<T>::get((chain, sequencer))
+			AwaitingCancelResolution::<T>::get(chain)
 				.iter()
-				.filter(|(_, role)| *role == DisputeRole::Submitter)
+				.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Submitter)
 				.count() as u128,
 		);
 
@@ -1424,9 +1424,9 @@ impl<T: Config> Pallet<T> {
 		chain: ChainIdOf<T>,
 		sequencer: &AccountIdOf<T>,
 	) -> usize {
-		AwaitingCancelResolution::<T>::get((chain, sequencer))
+		AwaitingCancelResolution::<T>::get(chain)
 			.iter()
-			.filter(|(_, role)| *role == DisputeRole::Canceler)
+			.filter(|(acc, _, role)| acc == sequencer && *role == DisputeRole::Canceler)
 			.count()
 	}
 
@@ -1631,6 +1631,10 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), Error<T>> {
 		let deposit_hash = deposit.abi_encode_hash();
 
+		if deposit.requestId.id <= LastProcessedRequestOnL2::<T>::get(chain) {
+			return Err(Error::<T>::AlreadyExecuted);
+		}
+
 		let amount = deposit
 			.amount
 			.checked_sub(deposit.ferryTip)
@@ -1674,8 +1678,13 @@ impl<T: Config> RolldownProviderTrait<ChainIdOf<T>, AccountIdOf<T>> for Pallet<T
 				},
 			);
 
-			for (_, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
-				rights.cancel_rights.saturating_accrue(T::RightsMultiplier::get())
+			let sequencer_count = (sequencer_set.len() as u128).saturating_sub(1u128);
+
+			for (s, rights) in sequencer_set.iter_mut().filter(|(s, _)| *s != sequencer) {
+				rights.cancel_rights =
+					T::RightsMultiplier::get().saturating_mul(sequencer_count).saturating_sub(
+						Pallet::<T>::count_of_cancel_rights_under_dispute(chain, s) as u128,
+					)
 			}
 		});
 	}

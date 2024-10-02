@@ -17,9 +17,7 @@ fn system_set_code_works_with_maintenance_mode() {
 
 		assert_ok!(Maintenance::switch_maintenance_mode_on(
 			RuntimeOrigin::signed(
-				FoundationAccountsProvider::<Runtime>::get()
-					.pop()
-					.expect("There atleast 1 F acc")
+				FoundationAccountsProvider::get().pop().expect("There atleast 1 F acc")
 			)
 			.into()
 		));
@@ -30,9 +28,7 @@ fn system_set_code_works_with_maintenance_mode() {
 
 		assert_ok!(Maintenance::switch_upgradability_in_maintenance_mode_on(
 			RuntimeOrigin::signed(
-				FoundationAccountsProvider::<Runtime>::get()
-					.pop()
-					.expect("There atleast 1 F acc")
+				FoundationAccountsProvider::get().pop().expect("There atleast 1 F acc")
 			)
 			.into()
 		));
@@ -43,9 +39,7 @@ fn system_set_code_works_with_maintenance_mode() {
 
 		assert_ok!(Maintenance::switch_upgradability_in_maintenance_mode_off(
 			RuntimeOrigin::signed(
-				FoundationAccountsProvider::<Runtime>::get()
-					.pop()
-					.expect("There atleast 1 F acc")
+				FoundationAccountsProvider::get().pop().expect("There atleast 1 F acc")
 			)
 			.into()
 		));
@@ -56,9 +50,7 @@ fn system_set_code_works_with_maintenance_mode() {
 
 		assert_ok!(Maintenance::switch_maintenance_mode_off(
 			RuntimeOrigin::signed(
-				FoundationAccountsProvider::<Runtime>::get()
-					.pop()
-					.expect("There atleast 1 F acc")
+				FoundationAccountsProvider::get().pop().expect("There atleast 1 F acc")
 			)
 			.into()
 		));

@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::{Call, Config, Pallet, WRAPPED_BYTES_POSTFIX, WRAPPED_BYTES_PREFIX};
+use codec::{alloc::string::String, Encode};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	assert_ok,
@@ -9,7 +10,6 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use parity_scale_codec::{alloc::string::String, Encode};
 use sp_application_crypto::{ecdsa::Public, RuntimePublic};
 use sp_runtime::{
 	account::EthereumSignature,

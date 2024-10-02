@@ -67,7 +67,6 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use orml_tokens::MultiTokenCurrencyExtended;
-use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	account::EthereumSignature,
 	traits::{AtLeast32BitUnsigned, BlockNumberProvider, CheckedSub, Saturating, Verify},
@@ -620,10 +619,7 @@ pub mod pallet {
 					// I am erroring here as I think it is good to know the reason in the single-case
 					// signature
 					ensure!(
-						signature.verify(
-							Keccak256::digest(payload.clone()).as_slice(),
-							&relay_account.clone().into()
-						),
+						signature.verify(payload.as_slice(), &relay_account.clone().into()),
 						Error::<T>::InvalidClaimSignature
 					);
 					voted.insert(relay_account, ());

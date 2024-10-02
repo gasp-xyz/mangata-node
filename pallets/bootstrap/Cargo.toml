@@ -9,42 +9,42 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-log = { version = "0.4.14", default-features = false }
-scale-info = { version = "2.0.0", features = ["derive"], default-features = false }
-serde = { version = "1.0.126", optional = true }
+codec = { workspace = true, default-features = false }
+log = { workspace = true, default-features = false }
+scale-info = { workspace = true, features = ["derive"], default-features = false }
+serde = { workspace = true, optional = true }
 
-frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-executive = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-frame-try-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", optional = true, branch = "develop", default-features = false }
-mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-vesting-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-arithmetic = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+frame-benchmarking = { workspace = true, default-features = false }
+frame-executive = { workspace = true, default-features = false }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+frame-try-runtime = { workspace = true, optional = true, default-features = false }
+mangata-support = { workspace = true, default-features = false }
+mangata-types = { workspace = true, default-features = false }
+pallet-vesting-mangata = { workspace = true, default-features = false }
+sp-arithmetic = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
 
-orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
+orml-tokens = { workspace = true, default-features = false }
 
 [dev-dependencies]
-lazy_static = "1.1.1"
-mockall = "0.11.0"
-serial_test = "0.6.0"
-test-case = "2.0.2"
+lazy_static.workspace = true
+mockall.workspace = true
+serial_test.workspace = true
+test-case.workspace = true
 
 pallet-issuance = { path = "../issuance", default-features = false }
 pallet-proof-of-stake = { path = "../proof-of-stake" }
 pallet-xyk = { path = "../xyk" }
 
-mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+mangata-support = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
 
-orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]

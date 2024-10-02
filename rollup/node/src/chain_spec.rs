@@ -2,10 +2,11 @@ use crate::command::{EvmChain, InitialSequencersSet};
 use rand::{thread_rng, Rng};
 use rollup_runtime::{
 	config::orml_asset_registry::AssetMetadataOf, tokens::RX_TOKEN_ID, AccountId, AuraConfig,
-	AuraId, CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
+	CustomMetadata, GrandpaConfig, L1Asset, RuntimeGenesisConfig, Signature, SudoConfig,
 	SystemConfig, XcmMetadata, WASM_BINARY,
 };
 use sc_service::ChainType;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{ecdsa, ByteArray, Encode, Pair, Public, H256};
 use sp_keyring::EthereumKeyring;
@@ -110,6 +111,7 @@ pub fn rollup_local_config(
 	let decode_url = decode_url.unwrap_or(String::from(
 		"https://polkadot.js.org/apps/?rpc=ws%253A%252F%252F127.0.0.1%253A9944#/extrinsics/decode/",
 	));
+	// todo builder
 	ChainSpec::from_genesis(
 		// Name
 		"Rollup Local",
@@ -191,7 +193,6 @@ pub fn rollup_local_config(
 							symbol: BoundedVec::truncate_from(b"GASP".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
-							location: None,
 						},
 						Some(L1Asset::Ethereum(gasp_token_address)),
 					),
@@ -203,7 +204,6 @@ pub fn rollup_local_config(
 							symbol: BoundedVec::truncate_from(b"GETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
-							location: None,
 						},
 						Some(L1Asset::Ethereum(
 							array_bytes::hex2array("0x0000000000000000000000000000000000000001")
@@ -229,6 +229,8 @@ pub fn rollup_local_config(
 		Some(properties),
 		// Extensions
 		None,
+		// code
+		rollup_runtime::WASM_BINARY.expect("WASM binary was not build, please build it!"),
 	)
 }
 
@@ -250,12 +252,7 @@ fn rollup_genesis(
 	let initial_sequencers_stake = 10_000_000_u128;
 
 	rollup_runtime::RuntimeGenesisConfig {
-		system: rollup_runtime::SystemConfig {
-			code: rollup_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
-			..Default::default()
-		},
+		system: rollup_runtime::SystemConfig { ..Default::default() },
 		tokens: rollup_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
 				.iter()
@@ -405,6 +402,21 @@ fn rollup_genesis(
 			chain_id,
 			decode_url,
 			_phantom: Default::default(),
+		},
+		foundation_members: rollup_runtime::FoundationMembersConfig {
+			members: BoundedVec::truncate_from(
+				[
+					// TODO AccountId20
+					// Change the following
+					hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"],
+					hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a"],
+					hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"],
+				]
+				.iter()
+				.map(|acc| sp_runtime::AccountId20::from(*acc))
+				.collect::<Vec<_>>(),
+			),
+			phantom: Default::default(),
 		},
 	}
 }

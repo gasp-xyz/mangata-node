@@ -317,7 +317,7 @@ pub mod pallet {
 				&sender,
 				liquidity_token_id.into(),
 				selected_relock_instance.amount,
-				Some(selected_relock_instance.starting_block.into()),
+				Some(selected_relock_instance.starting_block),
 				selected_relock_instance.ending_block_as_balance,
 			)?;
 

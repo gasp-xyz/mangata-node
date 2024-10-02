@@ -4,28 +4,29 @@ version = "0.1.0"
 edition = "2021"
 
 [dev-dependencies]
-env_logger = "0.9.1"
-log = "0.4.17"
+env_logger.workspace = true
+log.workspace = true
 
 # Substrate
-frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-mangata-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-balances = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-identity = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-sp-storage = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
-hex-literal = { version = "0.3.4" }
-codec = { package = "parity-scale-codec", version = "3.0.0" }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+mangata-support = { workspace = true, default-features = false }
+mangata-types = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-identity = { workspace = true }
+pallet-membership = { workspace = true }
+pallet-proxy = { workspace = true }
+pallet-session = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-storage = { workspace = true }
+hex-literal = { workspace = true }
+codec = { workspace = true }
 
 # Open-Runtime-Module-Library Dependencies
-orml-asset-registry = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
-orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
-orml-traits = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop" }
+orml-asset-registry = { workspace = true }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true }
 
 # Local
 rollup-runtime = { path = "../" }

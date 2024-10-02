@@ -17,7 +17,6 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 				decimals: 18,
 				name: BoundedVec::truncate_from(b"Asset".to_vec()),
 				symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-				location: None,
 				existential_deposit: Default::default(),
 				additional: CustomMetadata {
 					xyk: Some(XykMetadata { operations_disabled: true }),

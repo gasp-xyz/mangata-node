@@ -5,6 +5,7 @@
 
 <h2 align="center">Mangata Node</h2>
 
+
 <p align="center">
     Omnichain zk-rollup for L1-grade native liquidity. Implementation includes <a href="https://blog.mangata.finance/blog/2021-10-10-themis-protocol/" target="_blank" rel="noopener noreferrer">MEV solution</a>, Proof-of-Liquidity, gas-free swaps, algorithmic buy & burn, weight voting & liquidity gauges, time-incentivized liquidity provision, 3rd party incentives, and more.
 </p>

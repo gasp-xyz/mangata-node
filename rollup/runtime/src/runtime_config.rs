@@ -1099,26 +1099,18 @@ pub mod config {
 		pub type SetMembersOrigin<AccountId> = EnsureRoot<AccountId>;
 	}
 
-	pub mod pallet_maintenance {
+	pub mod pallet_membership {
 		use crate::*;
-		pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
-		impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
-			fn get() -> Vec<T::AccountId> {
-				let accounts: Vec<_> = [
-					// TODO AccountId20
-					// Change the following
-					hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"],
-					hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a"],
-					hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"],
-				]
-				.iter()
-				.map(|acc| sp_runtime::AccountId20::from(*acc))
-				.collect();
 
-				accounts
-					.into_iter()
-					.map(|acc| T::AccountId::decode(&mut acc.as_ref()).unwrap())
-					.collect()
+		parameter_types! {
+			pub const MaxMembers: u32 = 3;
+		}
+
+		// todo change the `Get` to `Contains` trait and use membership pallet directly
+		pub struct FoundationAccountsProvider;
+		impl Get<Vec<AccountId>> for FoundationAccountsProvider {
+			fn get() -> Vec<AccountId> {
+				FoundationMembers::members().to_vec()
 			}
 		}
 	}
@@ -1433,7 +1425,6 @@ pub mod config {
 			pub const CancellerRewardPercentage: Permill = Permill::from_percent(20);
 			pub const RequestsPerBlock: u128 = 50;
 			pub const RightsMultiplier: u128 = 1;
-			pub const WithdrawFee: Balance = 50 * currency::DOLLARS;
 		}
 
 		#[cfg(feature = "fast-runtime")]
@@ -1448,6 +1439,16 @@ pub mod config {
 			pub const DisputePeriodLength: u32 = 300;
 			pub const MerkleRootAutomaticBatchPeriod: u128 = 1200;
 			pub const MerkleRootAutomaticBatchSize: u128 = 1024;
+		}
+
+		pub struct WithdrawFee;
+		impl Convert<::pallet_rolldown::messages::Chain, Balance> for WithdrawFee {
+			fn convert(chain: ::pallet_rolldown::messages::Chain) -> Balance {
+				match chain {
+					::pallet_rolldown::messages::Chain::Ethereum => 50 * currency::DOLLARS,
+					::pallet_rolldown::messages::Chain::Arbitrum => 50 * currency::DOLLARS,
+				}
+			}
 		}
 	}
 }

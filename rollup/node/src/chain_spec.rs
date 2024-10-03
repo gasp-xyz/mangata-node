@@ -403,5 +403,20 @@ fn rollup_genesis(
 			decode_url,
 			_phantom: Default::default(),
 		},
+		foundation_members: rollup_runtime::FoundationMembersConfig {
+			members: BoundedVec::truncate_from(
+				[
+					// TODO AccountId20
+					// Change the following
+					hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c104"],
+					hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a"],
+					hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"],
+				]
+				.iter()
+				.map(|acc| sp_runtime::AccountId20::from(*acc))
+				.collect::<Vec<_>>(),
+			),
+			phantom: Default::default(),
+		},
 	}
 }

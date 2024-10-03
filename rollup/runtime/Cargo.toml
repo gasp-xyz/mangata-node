@@ -17,7 +17,6 @@ substrate-wasm-builder = { workspace = true }
 [dependencies]
 codec = { workspace = true, default-features = false, features = ["derive"] }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
-hex-literal = { workspace = true }
 log = { workspace = true, default-features = false }
 array-bytes = { workspace = true }
 smallvec = "1.6.1"
@@ -81,6 +80,7 @@ pallet-grandpa = { workspace = true, default-features = false }
 pallet-authorship = { workspace = true, default-features = false }
 pallet-collective-mangata = { workspace = true, default-features = false }
 pallet-identity = { workspace = true, default-features = false }
+pallet-membership = { workspace = true, default-features = false }
 pallet-proxy = { workspace = true, default-features = false }
 pallet-session = { workspace = true, default-features = false }
 pallet-sudo-mangata = { workspace = true, default-features = false }
@@ -121,6 +121,7 @@ std = [
 	"pallet-identity/std",
 	"pallet-issuance/std",
 	"pallet-maintenance/std",
+	"pallet-membership/std",
 	"pallet-metamask-signature/std",
 	"pallet-multipurpose-liquidity/std",
 	"pallet-proof-of-stake/std",
@@ -180,6 +181,7 @@ try-runtime = [
 	"pallet-identity/try-runtime",
 	"pallet-issuance/try-runtime",
 	"pallet-maintenance/try-runtime",
+	"pallet-membership/try-runtime",
 	"pallet-multipurpose-liquidity/try-runtime",
 	"pallet-proof-of-stake/try-runtime",
 	"pallet-proxy/try-runtime",
@@ -217,6 +219,7 @@ runtime-benchmarks = [
 	"pallet-identity/runtime-benchmarks",
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-maintenance/runtime-benchmarks",
+	"pallet-membership/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"pallet-proof-of-stake/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",

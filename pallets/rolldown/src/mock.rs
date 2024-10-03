@@ -12,7 +12,10 @@ use frame_support::traits::ConstU128;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use mangata_types::assets::L1Asset;
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::ConvertBack, BuildStorage, Saturating};
+use sp_runtime::{
+	traits::{ConvertBack, ConvertToValue},
+	BuildStorage, Saturating,
+};
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;
@@ -146,7 +149,7 @@ impl rolldown::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type NativeCurrencyId = NativeCurrencyId;
 	type SequencerStakingRewards = ();
-	type WithdrawFee = ConstU128<500>;
+	type WithdrawFee = ConvertToValue<ConstU128<500>>;
 }
 
 pub struct ExtBuilder {

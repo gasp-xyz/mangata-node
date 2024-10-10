@@ -134,6 +134,9 @@ jobs:
             fast: true
           - command: "yarn test-rolldownWithdrawal"
             fast: true
+          - command: "yarn test-rolldownPreOperationWithdrawal"
+            fast: true
+
 
 
     runs-on: [e2e-gke]

@@ -3,6 +3,12 @@
 use messages::{EthAbi, EthAbiHash};
 pub mod messages;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::WeightInfo;
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -460,6 +466,8 @@ pub mod pallet {
 		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 		/// Withdrawals flat fee
 		type WithdrawFee: Convert<ChainIdOf<Self>, BalanceOf<Self>>;
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::genesis_config]
@@ -729,7 +737,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
+		#[pallet::weight(<T as Config>::WeightInfo::set_manual_batch_extra_fee())]
 		pub fn set_manual_batch_extra_fee(
 			origin: OriginFor<T>,
 			balance: BalanceOf<T>,

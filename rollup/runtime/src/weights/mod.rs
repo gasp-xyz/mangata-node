@@ -23,6 +23,7 @@ pub mod pallet_utility_mangata;
 pub mod pallet_vesting_mangata;
 pub mod pallet_xyk;
 pub mod parachain_staking;
+pub mod pallet_rolldown;
 
 pub use self::{
 	frame_system as frame_system_weights, orml_asset_registry as orml_asset_registry_weights,
@@ -37,4 +38,5 @@ pub use self::{
 	pallet_utility_mangata as pallet_utility_mangata_weights,
 	pallet_vesting_mangata as pallet_vesting_mangata_weights, pallet_xyk as pallet_xyk_weights,
 	parachain_staking as parachain_staking_weights,
+	pallet_rolldown as pallet_rolldown_weights,
 };

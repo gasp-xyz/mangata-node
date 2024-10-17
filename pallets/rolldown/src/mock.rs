@@ -152,6 +152,10 @@ impl rolldown::Config for Test {
 	type WithdrawFee = ConvertToValue<ConstU128<500>>;
 }
 
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	ExtBuilder::new()
+}
+
 pub struct ExtBuilder {
 	ext: sp_io::TestExternalities,
 }

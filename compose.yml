@@ -16,7 +16,7 @@ services:
       - --rpc-cors=all
       - --unsafe-rpc-external
       - --node-key=0000000000000000000000000000000000000000000000000000000000000001
-      - --rpc-methods=unsafe    
+      - --rpc-methods=unsafe
     ports:
       - 9944:9944
       - 30333:30333

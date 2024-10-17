@@ -30,6 +30,7 @@ pallet-maintenance = { path = "../../pallets/maintenance", default-features = fa
 pallet-multipurpose-liquidity = { path = "../../pallets/multipurpose-liquidity", default-features = false }
 pallet-metamask-signature = { path = "../../pallets/metamask-signature", default-features = false }
 pallet-proof-of-stake = { path = "../../pallets/proof-of-stake", default-features = false, version = "0.1.0" }
+pallet-stable-swap = { path = "../../pallets/stable-swap", default-features = false }
 pallet-sudo-origin = { path = "../../pallets/sudo-origin", default-features = false }
 pallet-xyk = { path = "../../pallets/xyk", default-features = false, version = "0.1.0" }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
@@ -63,6 +64,7 @@ sp-ver = { workspace = true, default-features = false }
 sp-version = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 sp-application-crypto = { workspace = true, default-features = false }
+primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "num-traits", "scale-info"] }
 
 ## Substrate FRAME Dependencies
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
@@ -109,6 +111,7 @@ std = [
 	"log/std",
 	"mangata-support/std",
 	"mangata-types/std",
+	"metamask-signature-runtime-api/std",
 	"orml-asset-registry/std",
 	"orml-tokens/std",
 	"orml-traits/std",
@@ -118,6 +121,7 @@ std = [
 	"pallet-collective-mangata/std",
 	"pallet-crowdloan-rewards/std",
 	"pallet-fee-lock/std",
+	"pallet-grandpa/std",
 	"pallet-identity/std",
 	"pallet-issuance/std",
 	"pallet-maintenance/std",
@@ -126,7 +130,10 @@ std = [
 	"pallet-multipurpose-liquidity/std",
 	"pallet-proof-of-stake/std",
 	"pallet-proxy/std",
+	"pallet-rolldown/std",
+	"pallet-sequencer-staking/std",
 	"pallet-session/std",
+	"pallet-stable-swap/std",
 	"pallet-sudo-mangata/std",
 	"pallet-sudo-origin/std",
 	"pallet-timestamp/std",
@@ -138,11 +145,13 @@ std = [
 	"pallet-xyk/std",
 	"parachain-staking/std",
 	"proof-of-stake-runtime-api/std",
-	"metamask-signature-runtime-api/std",
+	"rolldown-runtime-api/std",
 	"scale-info/std",
 	"sp-api/std",
+	"sp-application-crypto/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
+	"sp-consensus-grandpa/std",
 	"sp-core/std",
 	"sp-inherents/std",
 	"sp-io/std",
@@ -157,12 +166,6 @@ std = [
 	"sp-weights/std",
 	"ver-api/std",
 	"xyk-runtime-api/std",
-	"sp-consensus-grandpa/std",
-	"pallet-grandpa/std",
-	"sp-application-crypto/std",
-	"rolldown-runtime-api/std",
-	"pallet-rolldown/std",
-	"pallet-sequencer-staking/std",
 ]
 
 try-runtime = [
@@ -178,6 +181,7 @@ try-runtime = [
 	"pallet-collective-mangata/try-runtime",
 	"pallet-crowdloan-rewards/try-runtime",
 	"pallet-fee-lock/try-runtime",
+	"pallet-grandpa/try-runtime",
 	"pallet-identity/try-runtime",
 	"pallet-issuance/try-runtime",
 	"pallet-maintenance/try-runtime",
@@ -185,7 +189,10 @@ try-runtime = [
 	"pallet-multipurpose-liquidity/try-runtime",
 	"pallet-proof-of-stake/try-runtime",
 	"pallet-proxy/try-runtime",
+	"pallet-rolldown/try-runtime",
+	"pallet-sequencer-staking/try-runtime",
 	"pallet-session/try-runtime",
+	"pallet-stable-swap/try-runtime",
 	"pallet-sudo-mangata/try-runtime",
 	"pallet-sudo-origin/try-runtime",
 	"pallet-timestamp/try-runtime",
@@ -196,9 +203,6 @@ try-runtime = [
 	"pallet-xyk/try-runtime",
 	"parachain-staking/try-runtime",
 	"sp-runtime/try-runtime",
-	"pallet-grandpa/try-runtime",
-	"pallet-rolldown/try-runtime",
-	"pallet-sequencer-staking/try-runtime",
 ]
 
 fast-runtime = []
@@ -216,6 +220,7 @@ runtime-benchmarks = [
 	"pallet-collective-mangata/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",
 	"pallet-fee-lock/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
 	"pallet-identity/runtime-benchmarks",
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-maintenance/runtime-benchmarks",
@@ -223,6 +228,10 @@ runtime-benchmarks = [
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"pallet-proof-of-stake/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
+	"pallet-rolldown/runtime-benchmarks",
+	"pallet-sequencer-staking/runtime-benchmarks",
+	"pallet-session/runtime-benchmarks",
+	"pallet-stable-swap/runtime-benchmarks",
 	"pallet-sudo-mangata/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
@@ -231,8 +240,4 @@ runtime-benchmarks = [
 	"pallet-xyk/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"pallet-grandpa/runtime-benchmarks",
-	"pallet-rolldown/runtime-benchmarks",
-	"pallet-sequencer-staking/runtime-benchmarks",
-	"pallet-session/runtime-benchmarks",
 ]

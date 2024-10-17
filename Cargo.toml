@@ -2,6 +2,7 @@
 authors = ["Mangata Team"]
 edition = "2018"
 repository = "https://github.com/gasp-xyz/mangata-node.git"
+homepage = "https://gasp.xyz"
 
 [profile.dev]
 split-debuginfo = "unpacked"

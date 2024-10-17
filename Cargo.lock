@@ -3606,6 +3606,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "impl-num-traits"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "951641f13f873bff03d4bf19ae8bec531935ac0ac2cc775f84d7edfdcfed3f17"
+dependencies = [
+ "integer-sqrt",
+ "num-traits",
+ "uint",
+]
+
+[[package]]
 name = "impl-serde"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5928,6 +5939,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-stable-swap"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "mangata-support",
+ "mangata-types",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-sudo-mangata"
 version = "28.0.0"
 source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e34e375e0f740a2ea7262946d0b52a9f8d26c8c3"
@@ -6680,6 +6712,7 @@ checksum = "0b34d9fd68ae0b74a41b21c03c2f62847aa0ffea044eee893b4c140b37e244e2"
 dependencies = [
  "fixed-hash",
  "impl-codec",
+ "impl-num-traits",
  "impl-serde 0.4.0",
  "scale-info",
  "uint",
@@ -7500,6 +7533,7 @@ dependencies = [
  "pallet-rolldown",
  "pallet-sequencer-staking",
  "pallet-session",
+ "pallet-stable-swap",
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
@@ -7511,6 +7545,7 @@ dependencies = [
  "pallet-xyk",
  "parachain-staking",
  "parity-scale-codec",
+ "primitive-types",
  "proof-of-stake-runtime-api",
  "rolldown-runtime-api",
  "scale-info",

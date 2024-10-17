@@ -10,7 +10,7 @@ use codec::{alloc::string::String, Decode, Encode, MaxEncodedLen};
 use sp_api::impl_runtime_apis;
 use sp_application_crypto::ByteArray;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, U256};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -326,6 +326,24 @@ impl pallet_xyk::Config for Runtime {
 		(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
 	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
+}
+
+impl pallet_stable_swap::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type Balance = Balance;
+	type HigherPrecisionBalance = sp_core::U256;
+	type CurrencyId = TokenId;
+	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
+	// type DisallowedPools = Bootstrap;
+	// type DisabledTokens =
+	// 	(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
+	type PoolFeePercentage = cfg::pallet_xyk::PoolFeePercentage;
+	type TreasuryFeePercentage = cfg::pallet_xyk::TreasuryFeePercentage;
+	type BuyAndBurnFeePercentage = cfg::pallet_xyk::BuyAndBurnFeePercentage;
+	type MaxApmCoeff = ConstU128<1_000_000>;
+	type MaxAssetsInPool = ConstU32<8>;
+	type WeightInfo = ();
 }
 
 impl pallet_proof_of_stake::Config for Runtime {
@@ -838,6 +856,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment = 11,
 
 		// Xyk stuff
+		StablePool: pallet_stable_swap = 12,
 		Xyk: pallet_xyk = 13,
 		ProofOfStake: pallet_proof_of_stake = 14,
 

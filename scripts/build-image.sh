@@ -15,7 +15,7 @@ else
     DOCKER_LABEL=${GIT_REV}-dirty
 fi
 
-DOCKER_IMAGE_TAG=${@:-mangatasolutions/rollup-node:dev}
+DOCKER_IMAGE_TAG=${@:-mangatasolutions/rollup-node:local}
 DOCKER_TAGS=""
 
 echo "building docker image ${DOCKER_IMAGE_TAG} with tags:"

@@ -9,7 +9,7 @@ use frame_support::{
 		tokens::{Balance, CurrencyId},
 		Currency, ExistenceRequirement, MultiTokenCurrency, WithdrawReasons,
 	},
-	PalletId,
+	transactional, PalletId,
 };
 use frame_system::pallet_prelude::*;
 
@@ -18,7 +18,7 @@ use sp_runtime::traits::{
 	checked_pow, AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Ensure, One,
 	TrailingZeroInput, Zero,
 };
-use sp_std::{convert::TryInto, vec, vec::Vec};
+use sp_std::{convert::TryInto, fmt::Debug, vec, vec::Vec};
 
 use orml_tokens::MultiTokenCurrencyExtended;
 
@@ -54,6 +54,11 @@ pub struct PoolInfo<Id: CurrencyId, B: Balance, MaxAssets: Get<u32>> {
 	pub amp_coeff: u128,
 	pub rate_multipliers: BoundedVec<B, MaxAssets>,
 }
+impl<Id: CurrencyId, B: Balance, MaxAssets: Get<u32>> PoolInfo<Id, B, MaxAssets> {
+	fn get_asset_index<T: Config>(&self, id: Id) -> Result<usize, Error<T>> {
+		self.assets.iter().position(|x| *x == id).ok_or(Error::<T>::NoSuchAssetInPool)
+	}
+}
 
 pub type PoolIdOf<T> = <T as Config>::CurrencyId;
 pub type PoolInfoOf<T> =
@@ -63,10 +68,6 @@ pub type BalancesOf<T> = BoundedVec<<T as Config>::Balance, <T as Config>::MaxAs
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::fmt::Debug;
-
-	use frame_support::transactional;
-
 	use super::*;
 
 	#[pallet::pallet]
@@ -359,19 +360,19 @@ pub mod pallet {
 				ensure!(T::Currency::exists(id), Error::<T>::AssetDoesNotExist)
 			}
 
-			let pool_account = Self::get_pool_account(&assets);
+			let lp_token: T::CurrencyId = T::Currency::create(&sender, T::Balance::zero())
+				.map_err(|_| Error::<T>::LiquidityTokenCreationFailed)?
+				.into();
+			let pool_account = Self::get_pool_account(&lp_token);
 			ensure!(
 				!frame_system::Pallet::<T>::account_exists(&pool_account),
 				Error::<T>::PoolAlreadyExists
 			);
 			frame_system::Pallet::<T>::inc_providers(&pool_account);
 
-			let lp_token: T::CurrencyId = T::Currency::create(&sender, T::Balance::zero())
-				.map_err(|_| Error::<T>::LiquidityTokenCreationFailed)?
-				.into();
-
 			let assets = AssetIdsOf::<T>::truncate_from(assets);
 			let rates = BalancesOf::<T>::truncate_from(rates);
+			let amp_coeff = amp_coeff * Self::A_PRECISION;
 			let pool_info = PoolInfo {
 				lp_token: lp_token.clone(),
 				assets: assets.clone(),
@@ -408,19 +409,11 @@ pub mod pallet {
 			// ensure pool exists
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
-			let pool_account = Self::get_pool_account(&pool.assets);
+			let pool_account = Self::get_pool_account(&pool_id);
 
 			// ensure assets in pool
-			let i = pool
-				.assets
-				.iter()
-				.position(|x| *x == asset_in)
-				.ok_or(Error::<T>::NoSuchAssetInPool)?;
-			let j = pool
-				.assets
-				.iter()
-				.position(|x| *x == asset_out)
-				.ok_or(Error::<T>::NoSuchAssetInPool)?;
+			let i = pool.get_asset_index::<T>(asset_in)?;
+			let j = pool.get_asset_index::<T>(asset_out)?;
 
 			// old balances
 			let (_, xp) = Self::get_balances_xp_pool(&pool_account, &pool)?;
@@ -434,34 +427,18 @@ pub mod pallet {
 				ExistenceRequirement::AllowDeath,
 			)?;
 
-			// invariant
-			let x = Self::checked_mul_div_u128(
-				&T::HigherPrecisionBalance::from(dx),
-				&T::HigherPrecisionBalance::from(pool.rate_multipliers[i]),
-				Self::PRECISION,
-			)?
-			.checked_add(&xp[i])
-			.ok_or(Error::<T>::MathOverflow)?;
-			let d = Self::get_invariant(&xp, pool.amp_coeff)?;
-			let y = Self::get_y(i, j, &x, &xp, pool.amp_coeff, &d)?;
-			// -1 in case of rounding error
-			let dy = xp[j]
-				.checked_sub(&y)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_sub(&One::one())
-				.ok_or(Error::<T>::MathOverflow)?;
-
-			// fees
-			let (fee, trsy_fee, m) = Self::fees();
-			let dyn_fee = Self::dynamic_fee(
-				Self::checked_add_div_2(&xp[i], &x)?,
-				Self::checked_add_div_2(&xp[j], &y)?,
-				fee,
-				m,
+			// get dy for dx
+			let (dy, dy_fee) = Self::calc_dy(
+				i,
+				j,
+				T::HigherPrecisionBalance::from(dx),
+				pool.amp_coeff,
+				&xp,
+				pool.rate_multipliers.to_vec(),
 			)?;
-			let dy_fee = Self::checked_mul_div_u128(&dy, &dyn_fee, Self::FEE_DENOMINATOR)?;
+
 			let to_treasury = Self::checked_mul_div_to_balance(
-				&Self::checked_mul_div_u128(&dy_fee, &trsy_fee, Self::FEE_DENOMINATOR)?,
+				&Self::checked_mul_div_u128(&dy_fee, &Self::get_trsy_fee(), Self::FEE_DENOMINATOR)?,
 				pool.rate_multipliers[j],
 			)?
 			.try_into()
@@ -476,7 +453,10 @@ pub mod pallet {
 			)?;
 
 			// real units
-			let dy = Self::checked_mul_div_to_balance(&dy, pool.rate_multipliers[j])?;
+			let dy = Self::checked_mul_div_to_balance(
+				&dy.checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?,
+				pool.rate_multipliers[j],
+			)?;
 			ensure!(dy >= min_dy, Error::<T>::InsufficientOutputAmount);
 
 			T::Currency::transfer(
@@ -513,7 +493,7 @@ pub mod pallet {
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
 			ensure!(amounts.len() == pool.assets.len(), Error::<T>::ArgumentsLengthMismatch);
-			let pool_account = Self::get_pool_account(&pool.assets);
+			let pool_account = Self::get_pool_account(&pool_id);
 			let asset_amounts = pool.assets.iter().zip(amounts.iter());
 			let total_supply = T::Currency::total_issuance(pool.lp_token);
 			let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
@@ -554,9 +534,8 @@ pub mod pallet {
 			let mut fees_b: Vec<T::Balance> = vec![];
 			// LPs also incur fees. A swap between A & B would pay roughly the same amount of fees as depositing A into the pool and then withdrawing B.
 			let mint_amount = if total_supply > Zero::zero() {
-				let (d_1, fees) = Self::handle_imbalanced_liquidity_fees(
+				let (d_1, fees) = Self::calc_imbalanced_liquidity_fees(
 					&pool,
-					&pool_account,
 					&n,
 					&d_0,
 					&d_1,
@@ -564,7 +543,23 @@ pub mod pallet {
 					&balances_1,
 				)?;
 
-				for f in fees {
+				for (&id, &f) in pool.assets.iter().zip(fees.iter()) {
+					let to_treasury = Self::checked_mul_div_u128(
+						&f,
+						&Self::get_trsy_fee(),
+						Self::FEE_DENOMINATOR,
+					)?
+					.try_into()
+					.map_err(|_| Error::<T>::MathOverflow)?;
+
+					T::Currency::transfer(
+						id,
+						&pool_account,
+						&Self::treasury_account_id(),
+						to_treasury,
+						ExistenceRequirement::AllowDeath,
+					)?;
+
 					fees_b.push(f.try_into().map_err(|_| Error::<T>::MathOverflow)?)
 				}
 
@@ -616,7 +611,7 @@ pub mod pallet {
 
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
-			let pool_account = Self::get_pool_account(&pool.assets);
+			let pool_account = Self::get_pool_account(&pool_id);
 
 			let (dy, trsy_fee) =
 				Self::calc_withdraw_one(&pool_account, &pool, asset_id, burn_amount)?;
@@ -669,7 +664,7 @@ pub mod pallet {
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
 			ensure!(amounts.len() == pool.assets.len(), Error::<T>::ArgumentsLengthMismatch);
-			let pool_account = Self::get_pool_account(&pool.assets);
+			let pool_account = Self::get_pool_account(&pool_id);
 			let asset_amounts = pool.assets.iter().zip(amounts.iter());
 			let total_supply = T::Currency::total_issuance(pool.lp_token);
 			let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
@@ -688,9 +683,8 @@ pub mod pallet {
 			}
 
 			let (balances_1, d_1) = Self::get_invariant_pool(&pool_account, &pool)?;
-			let (d_1, fees) = Self::handle_imbalanced_liquidity_fees(
+			let (d_1, fees) = Self::calc_imbalanced_liquidity_fees(
 				&pool,
-				&pool_account,
 				&n,
 				&d_0,
 				&d_1,
@@ -716,7 +710,20 @@ pub mod pallet {
 			T::Currency::burn_and_settle(pool.lp_token, &sender, burn_amount)?;
 
 			let mut fees_b: Vec<T::Balance> = vec![];
-			for f in fees {
+			for (&id, &f) in pool.assets.iter().zip(fees.iter()) {
+				let to_treasury =
+					Self::checked_mul_div_u128(&f, &Self::get_trsy_fee(), Self::FEE_DENOMINATOR)?
+						.try_into()
+						.map_err(|_| Error::<T>::MathOverflow)?;
+
+				T::Currency::transfer(
+					id,
+					&pool_account,
+					&Self::treasury_account_id(),
+					to_treasury,
+					ExistenceRequirement::AllowDeath,
+				)?;
+
 				fees_b.push(f.try_into().map_err(|_| Error::<T>::MathOverflow)?)
 			}
 
@@ -748,10 +755,8 @@ pub mod pallet {
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
 			ensure!(min_amounts.len() == pool.assets.len(), Error::<T>::ArgumentsLengthMismatch);
-			let pool_account = Self::get_pool_account(&pool.assets);
-			// let asset_amounts = pool.assets.iter().zip(amounts.iter());
+			let pool_account = Self::get_pool_account(&pool_id);
 			let total_supply = T::Currency::total_issuance(pool.lp_token);
-			// let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
 
 			let (balances, _) = Self::get_balances_xp_pool(&pool_account, &pool)?;
 
@@ -788,58 +793,6 @@ pub mod pallet {
 
 			Ok(())
 		}
-
-		// #[pallet::call_index(1)]
-		// #[pallet::weight((<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
-		// pub fn multiswap_sell_asset(
-		// 	origin: OriginFor<T>,
-		// 	swap_token_list: Vec<T::CurrencyId>,
-		// 	sold_asset_amount: T::Balance,
-		// 	min_amount_out: T::Balance,
-		// ) -> DispatchResultWithPostInfo {
-		// 	let sender = ensure_signed(origin)?;
-
-		// 	Ok(Pays::No.into())
-		// }
-
-		// #[pallet::call_index(2)]
-		// #[pallet::weight((<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
-		// pub fn multiswap_buy_asset(
-		// 	origin: OriginFor<T>,
-		// 	swap_token_list: Vec<T::CurrencyId>,
-		// 	bought_asset_amount: T::Balance,
-		// 	max_amount_in: T::Balance,
-		// ) -> DispatchResultWithPostInfo {
-		// 	let sender = ensure_signed(origin)?;
-
-		// 	Ok(Pays::No.into())
-		// }
-
-		// #[pallet::call_index(3)]
-		// #[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity())]
-		// pub fn mint_liquidity(
-		// 	origin: OriginFor<T>,
-		// 	first_asset_id: T::CurrencyId,
-		// 	second_asset_id: T::CurrencyId,
-		// 	first_asset_amount: T::Balance,
-		// 	expected_second_asset_amount: T::Balance,
-		// ) -> DispatchResult {
-		// 	let sender = ensure_signed(origin)?;
-
-		// 	Ok(())
-		// }
-
-		// #[pallet::call_index(4)]
-		// #[pallet::weight(<<T as Config>::WeightInfo>::burn_liquidity())]
-		// pub fn burn_liquidity(
-		// 	origin: OriginFor<T>,
-		// 	first_asset_id: T::CurrencyId,
-		// 	second_asset_id: T::CurrencyId,
-		// 	liquidity_asset_amount: T::Balance,
-		// ) -> DispatchResult {
-		// 	let sender = ensure_signed(origin)?;
-		// 	Ok(())
-		// }
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -847,14 +800,12 @@ pub mod pallet {
 		const FEE_DENOMINATOR: u128 = 10_u128.pow(10);
 		const A_PRECISION: u128 = 100;
 
-		/// The account ID of the pool.
+		/// The account of the pool that store asset balances.
 		///
 		/// This actually does computation. If you need to keep using it, then make sure you cache
 		/// the value and only call this once.
-		pub fn get_pool_account(assets: &Vec<T::CurrencyId>) -> T::AccountId {
-			let mut sorted = assets.clone();
-			sorted.sort();
-			let encoded_pool_id = sp_io::hashing::blake2_256(&Encode::encode(&sorted));
+		pub fn get_pool_account(pool_id: &PoolIdOf<T>) -> T::AccountId {
+			let encoded_pool_id = sp_io::hashing::blake2_256(&Encode::encode(&pool_id));
 
 			Decode::decode(&mut TrailingZeroInput::new(encoded_pool_id.as_ref()))
 				.expect("infinite length input; no invalid inputs for type; qed")
@@ -865,7 +816,7 @@ pub mod pallet {
 		pub fn get_virtual_price(pool_id: &PoolIdOf<T>) -> Result<T::Balance, Error<T>> {
 			let maybe_pool = Pools::<T>::get(pool_id.clone());
 			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
-			let pool_account = Self::get_pool_account(&pool.assets);
+			let pool_account = Self::get_pool_account(&pool_id);
 
 			let total_supply: <T as Config>::Balance = T::Currency::total_issuance(pool.lp_token);
 			let (_, d) = Self::get_invariant_pool(&pool_account, pool)?;
@@ -878,20 +829,165 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::MathOverflow)
 		}
 
-		// 0.3% total fee, 50% of fee to treasury, dyn fee 2* mul
-		fn fees(
-		) -> (T::HigherPrecisionBalance, T::HigherPrecisionBalance, T::HigherPrecisionBalance) {
-			(
-				T::HigherPrecisionBalance::from(30_000_000_u128),
-				T::HigherPrecisionBalance::from(5_000_000_000_u128),
-				T::HigherPrecisionBalance::from(20_000_000_000_u128),
+		/// Calculate the current input dx given output dy.
+		/// A swap can yield a lower output dy due to dynamic fee,
+		/// which is computed *after* applying dx,dy to reserves
+		pub fn get_dx(
+			pool_id: &PoolIdOf<T>,
+			asset_in: T::CurrencyId,
+			asset_out: T::CurrencyId,
+			dy: T::Balance,
+		) -> Result<T::Balance, Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+			let (_, xp) = Self::get_balances_xp_pool(&pool_account, &pool)?;
+			let i = pool.get_asset_index::<T>(asset_in)?;
+			let j = pool.get_asset_index::<T>(asset_out)?;
+
+			let (_, d) = Self::get_invariant_pool(&pool_account, &pool)?;
+
+			let dyn_fee = Self::dynamic_fee(&xp[i], &xp[j])?;
+			let dy_fee = Self::checked_mul_div_u128(
+				&T::HigherPrecisionBalance::from(dy),
+				&T::HigherPrecisionBalance::from(pool.rate_multipliers[j]),
+				Self::PRECISION,
+			)?
+			.checked_add(&One::one())
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_mul(&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR))
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_div(
+				&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR)
+					.checked_sub(&dyn_fee)
+					.ok_or(Error::<T>::MathOverflow)?,
+			)
+			.ok_or(Error::<T>::MathOverflow)?;
+
+			let y = xp[j].checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?;
+			let x = Self::get_y(j, i, &y, &xp, pool.amp_coeff, &d)?;
+
+			Self::checked_mul_div_to_balance(
+				&x.checked_sub(&xp[i]).ok_or(Error::<T>::MathOverflow)?,
+				pool.rate_multipliers[i],
 			)
 		}
+
+		pub fn get_dy(
+			pool_id: &PoolIdOf<T>,
+			asset_in: T::CurrencyId,
+			asset_out: T::CurrencyId,
+			dx: T::Balance,
+		) -> Result<T::Balance, Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+			let (_, xp) = Self::get_balances_xp_pool(&pool_account, &pool)?;
+			let i = pool.get_asset_index::<T>(asset_in)?;
+			let j = pool.get_asset_index::<T>(asset_out)?;
+
+			let (dy, dy_fee) = Self::calc_dy(
+				i,
+				j,
+				T::HigherPrecisionBalance::from(dx),
+				pool.amp_coeff,
+				&xp,
+				pool.rate_multipliers.to_vec(),
+			)?;
+
+			Self::checked_mul_div_to_balance(
+				&dy.checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?,
+				pool.rate_multipliers[j],
+			)
+		}
+
+		pub fn calc_lp_token_amount(
+			pool_id: &PoolIdOf<T>,
+			amounts: Vec<T::Balance>,
+			is_deposit: bool,
+		) -> Result<T::Balance, Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+
+			let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
+			let total_supply: <T as Config>::Balance = T::Currency::total_issuance(pool.lp_token);
+			
+			let (balances_0, d_0) = Self::get_invariant_pool(&pool_account, &pool)?;
+			
+			let mut balances_1 = vec![Zero::zero(); pool.assets.len()];
+			for i in 0..balances_0.len() {
+				let amount = T::HigherPrecisionBalance::from(amounts[i]);
+				balances_1[i] = if is_deposit {
+					balances_0[i].checked_add(&amount).ok_or(Error::<T>::MathOverflow)?
+				} else {
+					balances_0[i].checked_sub(&amount).ok_or(Error::<T>::MathOverflow)?
+				}
+			}
+			let xp_1 = Self::xp(&pool.rate_multipliers, &balances_1)?;
+			let d_1 = Self::get_invariant(&xp_1, pool.amp_coeff)?;
+			
+			let d_2 = if total_supply > Zero::zero() {
+				let (d, _) = Self::calc_imbalanced_liquidity_fees(
+					&pool,
+					&n,
+					&d_0,
+					&d_1,
+					&balances_0,
+					&balances_1,
+				)?;
+				d
+			} else {
+				d_1
+			};
+
+			let diff = if is_deposit {
+				d_2.checked_sub(&d_0).ok_or(Error::<T>::MathOverflow)?
+			} else {
+				d_0.checked_sub(&d_2).ok_or(Error::<T>::MathOverflow)?
+			};
+
+			let r = diff
+				.checked_mul(&T::HigherPrecisionBalance::from(total_supply))
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_div(&d_0)
+				.ok_or(Error::<T>::MathOverflow)?
+				.try_into()
+				.map_err(|_| Error::<T>::MathOverflow)?;
+
+			Ok(r)
+		}
+
+		fn treasury_account_id() -> T::AccountId {
+			T::TreasuryPalletId::get().into_account_truncating()
+		}
+
+		fn account_id() -> T::AccountId {
+			PalletId(*b"py/stbsw").into_account_truncating()
+		}
+
+		// 0.3% total fee
+		fn get_fee() -> T::HigherPrecisionBalance {
+			T::HigherPrecisionBalance::from(30_000_000_u128)
+		}
+
+		// 50% of fee to treasury
+		fn get_trsy_fee() -> T::HigherPrecisionBalance {
+			T::HigherPrecisionBalance::from(5_000_000_000_u128)
+		}
+
+		// dyn fee 2* mul
+		fn get_fee_dyn_mul() -> T::HigherPrecisionBalance {
+			T::HigherPrecisionBalance::from(20_000_000_000_u128)
+			// T::HigherPrecisionBalance::from(1_u128)
+		}
+
+		// stable swap maths
 
 		fn base_fee(
 			n: &T::HigherPrecisionBalance,
 		) -> Result<<T as Config>::HigherPrecisionBalance, Error<T>> {
-			let (fee, _, _) = Self::fees();
+			let fee = Self::get_fee();
 			fee.checked_mul(n)
 				.ok_or(Error::<T>::MathOverflow)?
 				.checked_div(
@@ -903,107 +999,51 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathOverflow)
 		}
 
-		fn treasury_account_id() -> T::AccountId {
-			T::TreasuryPalletId::get().into_account_truncating()
+		fn dynamic_fee(
+			xpi: &T::HigherPrecisionBalance,
+			xpj: &T::HigherPrecisionBalance,
+		) -> Result<T::HigherPrecisionBalance, Error<T>> {
+			let fee = Self::get_fee();
+			let mul = Self::get_fee_dyn_mul();
+			Self::calc_dynamic_fee(xpi, xpj, &fee, &mul)
 		}
 
-		fn account_id() -> T::AccountId {
-			PalletId(*b"py/stbsw").into_account_truncating()
-		}
-
-		// common
-		fn handle_imbalanced_liquidity_fees(
-			pool: &PoolInfoOf<T>,
-			pool_account: &T::AccountId,
+		fn dynamic_fee_base(
+			xpi: &T::HigherPrecisionBalance,
+			xpj: &T::HigherPrecisionBalance,
 			n: &T::HigherPrecisionBalance,
-			d_0: &T::HigherPrecisionBalance,
-			d_1: &T::HigherPrecisionBalance,
-			balances_0: &Vec<T::HigherPrecisionBalance>,
-			balances_1: &Vec<T::HigherPrecisionBalance>,
-		) -> Result<(T::HigherPrecisionBalance, Vec<T::HigherPrecisionBalance>), DispatchError> {
-			let mut fees = vec![];
-			let (fee, trsy_fee, m) = Self::fees();
-			let base_fee = Self::base_fee(n)?;
-			let ys = d_0
-				.checked_add(d_1)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_div(n)
-				.ok_or(Error::<T>::MathOverflow)?;
-
-			let mut balances_mint = balances_1.clone();
-
-			for i in 0..pool.assets.len() {
-				let ideal_balance = d_1
-					.checked_mul(&balances_0[i])
-					.ok_or(Error::<T>::MathOverflow)?
-					.checked_div(d_0)
-					.ok_or(Error::<T>::MathOverflow)?;
-
-				let diff = if ideal_balance > balances_1[i] {
-					ideal_balance - balances_1[i]
-				} else {
-					balances_1[i] - ideal_balance
-				};
-
-				let xs = Self::checked_mul_div_u128(
-					&balances_0[i].checked_add(&balances_1[i]).ok_or(Error::<T>::MathOverflow)?,
-					&T::HigherPrecisionBalance::from(pool.rate_multipliers[i]),
-					Self::PRECISION,
-				)?;
-
-				let dyn_fee = Self::dynamic_fee(xs, ys, base_fee, m)?;
-				fees.push(Self::checked_mul_div_u128(&diff, &dyn_fee, Self::FEE_DENOMINATOR)?);
-				let to_treasury =
-					Self::checked_mul_div_u128(&fees[i], &trsy_fee, Self::FEE_DENOMINATOR)?
-						.try_into()
-						.map_err(|_| Error::<T>::MathOverflow)?;
-
-				balances_mint[i] =
-					balances_mint[i].checked_sub(&fees[i]).ok_or(Error::<T>::MathOverflow)?;
-
-				T::Currency::transfer(
-					pool.assets[i],
-					&pool_account,
-					&Self::treasury_account_id(),
-					to_treasury,
-					ExistenceRequirement::AllowDeath,
-				)?;
-			}
-
-			let xp = Self::xp(&pool.rate_multipliers, &balances_mint)?;
-			let d_1 = Self::get_invariant(&xp, pool.amp_coeff)?;
-
-			Ok((d_1, fees))
+		) -> Result<T::HigherPrecisionBalance, Error<T>> {
+			let fee = Self::base_fee(n)?;
+			let mul = Self::get_fee_dyn_mul();
+			Self::calc_dynamic_fee(xpi, xpj, &fee, &mul)
 		}
-
-		// stable swap maths
 
 		// https://www.desmos.com/calculator/zhrwbvcipo
-		fn dynamic_fee(
-			xpi: T::HigherPrecisionBalance,
-			xpj: T::HigherPrecisionBalance,
-			fee: T::HigherPrecisionBalance,
-			m: T::HigherPrecisionBalance,
+		fn calc_dynamic_fee(
+			xpi: &T::HigherPrecisionBalance,
+			xpj: &T::HigherPrecisionBalance,
+			fee: &T::HigherPrecisionBalance,
+			m: &T::HigherPrecisionBalance,
 		) -> Result<T::HigherPrecisionBalance, Error<T>> {
 			let den = T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR);
-			if m < den {
-				return Ok(fee);
+			if *m < den {
+				return Ok(*fee);
 			}
 
-			let xps2 = checked_pow(xpi.checked_add(&xpj).ok_or(Error::<T>::MathOverflow)?, 2)
+			let xps2 = checked_pow(xpi.checked_add(xpj).ok_or(Error::<T>::MathOverflow)?, 2)
 				.ok_or(Error::<T>::MathOverflow)?;
 
 			let res = fee
-				.checked_mul(&m)
+				.checked_mul(m)
 				.ok_or(Error::<T>::MathOverflow)?
 				.checked_div(
 					&m.checked_sub(&den)
 						.ok_or(Error::<T>::MathOverflow)?
 						.checked_mul(&T::HigherPrecisionBalance::from(4_u32))
 						.ok_or(Error::<T>::MathOverflow)?
-						.checked_mul(&xpi)
+						.checked_mul(xpi)
 						.ok_or(Error::<T>::MathOverflow)?
-						.checked_mul(&xpj)
+						.checked_mul(xpj)
 						.ok_or(Error::<T>::MathOverflow)?
 						.checked_div(&xps2)
 						.ok_or(Error::<T>::MathOverflow)?
@@ -1291,11 +1331,7 @@ pub mod pallet {
 			burn_amount: T::Balance,
 		) -> Result<(T::Balance, T::Balance), Error<T>> {
 			let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
-			let i = pool
-				.assets
-				.iter()
-				.position(|x| *x == asset_id)
-				.ok_or(Error::<T>::NoSuchAssetInPool)?;
+			let i = pool.get_asset_index(asset_id)?;
 
 			let (_, xp) = Self::get_balances_xp_pool(pool_account, pool)?;
 			let (_, d_0) = Self::get_invariant_pool(pool_account, pool)?;
@@ -1312,7 +1348,6 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathOverflow)?;
 
 			let new_y = Self::get_y_d(i, &xp, pool.amp_coeff, &d_1)?;
-			let base_fee = Self::base_fee(&n)?;
 
 			let ys = d_0
 				.checked_add(&d_1)
@@ -1339,7 +1374,7 @@ pub mod pallet {
 					dx_exp = xp[j].checked_sub(&xpjdd).ok_or(Error::<T>::MathOverflow)?;
 					xavg = xp[j]
 				}
-				let dyn_fee = Self::dynamic_fee(xavg, ys, base_fee, Self::fees().2)?;
+				let dyn_fee = Self::dynamic_fee_base(&xavg, &ys, &n)?;
 				xp_reduced.push(
 					xp[j]
 						.checked_sub(&Self::checked_mul_div_u128(
@@ -1367,11 +1402,94 @@ pub mod pallet {
 				dy_0.checked_sub(&dy).ok_or(Error::<T>::MathOverflow)?,
 			);
 			let trsy_fee =
-				Self::checked_mul_div_u128(&fee, &Self::fees().1, Self::FEE_DENOMINATOR)?
+				Self::checked_mul_div_u128(&fee, &Self::get_trsy_fee(), Self::FEE_DENOMINATOR)?
 					.try_into()
 					.map_err(|_| Error::<T>::MathOverflow)?;
 
 			Ok((dy, trsy_fee))
+		}
+
+		fn calc_dy(
+			i: usize,
+			j: usize,
+			dx: T::HigherPrecisionBalance,
+			amp: u128,
+			xp: &Vec<T::HigherPrecisionBalance>,
+			rates: Vec<T::Balance>,
+		) -> Result<(T::HigherPrecisionBalance, T::HigherPrecisionBalance), Error<T>> {
+			let x = Self::checked_mul_div_u128(
+				&dx,
+				&T::HigherPrecisionBalance::from(rates[i]),
+				Self::PRECISION,
+			)?
+			.checked_add(&xp[i])
+			.ok_or(Error::<T>::MathOverflow)?;
+
+			let d = Self::get_invariant(&xp, amp)?;
+			let y = Self::get_y(i, j, &x, xp, amp, &d)?;
+			// -1 in case of rounding error
+			let dy = xp[j]
+				.checked_sub(&y)
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_sub(&One::one())
+				.ok_or(Error::<T>::MathOverflow)?;
+
+			// fees
+			let dyn_fee = Self::dynamic_fee(
+				&Self::checked_add_div_2(&xp[i], &x)?,
+				&Self::checked_add_div_2(&xp[j], &y)?,
+			)?;
+			let dy_fee = Self::checked_mul_div_u128(&dy, &dyn_fee, Self::FEE_DENOMINATOR)?;
+			Ok((dy, dy_fee))
+		}
+
+		fn calc_imbalanced_liquidity_fees(
+			pool: &PoolInfoOf<T>,
+			n: &T::HigherPrecisionBalance,
+			d_0: &T::HigherPrecisionBalance,
+			d_1: &T::HigherPrecisionBalance,
+			balances_0: &Vec<T::HigherPrecisionBalance>,
+			balances_1: &Vec<T::HigherPrecisionBalance>,
+		) -> Result<(T::HigherPrecisionBalance, Vec<T::HigherPrecisionBalance>), Error<T>> {
+			let mut fees = vec![];
+			let ys = d_0
+				.checked_add(d_1)
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_div(n)
+				.ok_or(Error::<T>::MathOverflow)?;
+
+			let mut balances_mint = balances_1.clone();
+
+			for i in 0..pool.assets.len() {
+				let ideal_balance = d_1
+					.checked_mul(&balances_0[i])
+					.ok_or(Error::<T>::MathOverflow)?
+					.checked_div(d_0)
+					.ok_or(Error::<T>::MathOverflow)?;
+
+				let diff = if ideal_balance > balances_1[i] {
+					ideal_balance - balances_1[i]
+				} else {
+					balances_1[i] - ideal_balance
+				};
+
+				let xs = Self::checked_mul_div_u128(
+					&balances_0[i].checked_add(&balances_1[i]).ok_or(Error::<T>::MathOverflow)?,
+					&T::HigherPrecisionBalance::from(pool.rate_multipliers[i]),
+					Self::PRECISION,
+				)?;
+
+				let dyn_fee = Self::dynamic_fee_base(&xs, &ys, n)?;
+				fees.push(Self::checked_mul_div_u128(&diff, &dyn_fee, Self::FEE_DENOMINATOR)?);
+
+				balances_mint[i] =
+					balances_mint[i].checked_sub(&fees[i]).ok_or(Error::<T>::MathOverflow)?;
+			}
+
+			let xp = Self::xp(&pool.rate_multipliers, &balances_mint)?;
+			let d_1 = Self::get_invariant(&xp, pool.amp_coeff)?;
+
+			Ok((d_1, fees))
 		}
 
 		// math

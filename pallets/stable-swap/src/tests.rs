@@ -174,33 +174,40 @@ fn add_liquidity_should_work() {
 
 		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1 * UNIT);
 
+		let amounts = vec![5 * mint, mint, 40 * mint];
+		let expected = StableSwap::calc_lp_token_amount(
+			&3,
+			amounts.clone(),
+			true,
+		).unwrap();
+
 		// imbalanced add, should have fees
 		assert_ok!(StableSwap::add_liquidity(
 			RuntimeOrigin::signed(account),
 			3,
-			vec![5 * mint, mint, 40 * mint],
+			amounts.clone(),
 			1,
 		));
 
 		assert_event_emitted!(Event::LiquidityMinted {
 			who: 2,
 			pool_id: 3,
-			amounts_provided: BoundedVec::truncate_from(vec![5 * mint, mint, 40 * mint]),
+			amounts_provided: BoundedVec::truncate_from(amounts),
 			lp_token: 3,
-			lp_token_minted: 32_257_188_974_406_171_723_750,
-			total_supply: 3_000 * UNIT + 32_257_188_974_406_171_723_750,
+			lp_token_minted: expected,
+			total_supply: 3_000 * UNIT + 45322880144288283584179,
 			fees: BoundedVec::truncate_from(vec![
-				6_789_799_786_180_899_753,
-				13_614_384_181_261_910_763,
-				38_328_883_124_617_667_627
+				12498711677479364060,
+				21094110011003080268,
+				30692298654602638774
 			]),
 		});
 
 		// half of fees goes to treasury
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 3_394_899_893_090_449_876);
-		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 6_807_192_090_630_955_381);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 19_164_441_562_308_833_813);
-		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1_001_083_007_429_485_699);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 6249355838739682030);
+		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 10547055005501540134);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 15346149327301319387);
+		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1000721478556158249);
 	});
 }
 
@@ -224,12 +231,12 @@ fn remove_liquidity_one_asset_should_work() {
 			pool_id: 3,
 			asset_id: 0,
 			// a bit less then 10, minus fees
-			amount: 9_973_889_203_590_967_782,
+			amount: 9_984_833_787_927_106_037,
 			burned_amount: 10 * UNIT,
 			total_supply: total_supply - 10 * UNIT,
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 7_481_199_984_725_130);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 7499724481278582);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});
@@ -257,12 +264,12 @@ fn remove_liquidity_imbalanced_should_work() {
 			who: 2,
 			pool_id: 3,
 			amounts: BoundedVec::truncate_from(amounts.clone()),
-			burned_amount: 35_038_472_342_948_464_202,
+			burned_amount: 35019044399900264325,
 			total_supply,
 			fees: BoundedVec::truncate_from(vec![
-				1_882_389_867_551_015,
-				9_367_630_116_683_933,
-				7_507_399_877_404_172,
+				1875110298930542,
+				9374909700834153,
+				7500120299077607,
 			]),
 		});
 
@@ -270,11 +277,11 @@ fn remove_liquidity_imbalanced_should_work() {
 		assert_eq!(StableSwap::balance(0, 2), balance - mint + amounts[0]);
 		assert_eq!(StableSwap::balance(1, 2), balance - mint + amounts[1]);
 		assert_eq!(StableSwap::balance(2, 2), balance - mint + amounts[2]);
-		assert_eq!(StableSwap::balance(3, 2), 3 * mint - 35_038_472_342_948_464_202);
+		assert_eq!(StableSwap::balance(3, 2), 3 * mint - 35019044399900264325);
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 941_194_933_775_507);
-		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 4_683_815_058_341_966);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 3_753_699_938_702_086);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 937555149465271);
+		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 4687454850417076);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 3750060149538803);
 	});
 }
 
@@ -314,9 +321,11 @@ fn remove_liquidity_to_zero_should_work() {
 
 // swaps
 #[test]
-fn swap_should_work() {
+fn swap_should_work_dy() {
 	new_test_ext().execute_with(|| {
 		let (account, _, _) = prep_pool();
+
+		let dy = StableSwap::get_dy(&3, 0, 2, 100 * UNIT).unwrap();
 
 		assert_ok!(StableSwap::swap(RuntimeOrigin::signed(account), 3, 0, 2, 100 * UNIT, 0));
 
@@ -326,10 +335,34 @@ fn swap_should_work() {
 			asset_in: 0,
 			amount_in: 100 * UNIT,
 			asset_out: 2,
-			amount_out: 96_760_741_606_773_957_079
+			amount_out: dy
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 145_316_636_395_435_623);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150112205918755700);
+		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
+	});
+}
+
+#[test]
+fn swap_should_work_dx() {
+	new_test_ext().execute_with(|| {
+		let (account, _, _) = prep_pool();
+
+		let dx = StableSwap::get_dx(&3, 0, 2, 100 * UNIT).unwrap();
+
+		assert_ok!(StableSwap::swap(RuntimeOrigin::signed(account), 3, 0, 2, dx, 0));
+
+		assert_event_emitted!(Event::AssetsSwapped {
+			who: 2,
+			pool_id: 3,
+			asset_in: 0,
+			amount_in: dx,
+			asset_out: 2,
+			amount_out: 99999620952858575727
+		});
+
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150640877632898696);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});

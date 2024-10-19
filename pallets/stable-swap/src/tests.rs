@@ -175,11 +175,7 @@ fn add_liquidity_should_work() {
 		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1 * UNIT);
 
 		let amounts = vec![5 * mint, mint, 40 * mint];
-		let expected = StableSwap::calc_lp_token_amount(
-			&3,
-			amounts.clone(),
-			true,
-		).unwrap();
+		let expected = StableSwap::calc_lp_token_amount(&3, amounts.clone(), true).unwrap();
 
 		// imbalanced add, should have fees
 		assert_ok!(StableSwap::add_liquidity(
@@ -359,10 +355,10 @@ fn swap_should_work_dx() {
 			asset_in: 0,
 			amount_in: dx,
 			asset_out: 2,
-			amount_out: 99999620952858575727
+			amount_out: 100 * UNIT,
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150640877632898696);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150641448635003547);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});

@@ -847,30 +847,43 @@ pub mod pallet {
 
 			let (_, d) = Self::get_invariant_pool(&pool_account, &pool)?;
 
-			let dyn_fee = Self::dynamic_fee(&xp[i], &xp[j])?;
-			let dy_fee = Self::checked_mul_div_u128(
-				&T::HigherPrecisionBalance::from(dy),
-				&T::HigherPrecisionBalance::from(pool.rate_multipliers[j]),
-				Self::PRECISION,
-			)?
-			.checked_add(&One::one())
-			.ok_or(Error::<T>::MathOverflow)?
-			.checked_mul(&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR))
-			.ok_or(Error::<T>::MathOverflow)?
-			.checked_div(
-				&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR)
-					.checked_sub(&dyn_fee)
-					.ok_or(Error::<T>::MathOverflow)?,
-			)
-			.ok_or(Error::<T>::MathOverflow)?;
+			let mut x = xp[i];
+			let mut y = xp[j];
+			for _i in 0..255 {
+				let x_prev = x;
+				let dyn_fee = Self::dynamic_fee(
+					&Self::checked_add_div_2(&xp[i], &x)?,
+					&Self::checked_add_div_2(&xp[j], &y)?,
+				)?;
+				let dy_fee = Self::checked_mul_div_u128(
+					&T::HigherPrecisionBalance::from(dy),
+					&T::HigherPrecisionBalance::from(pool.rate_multipliers[j]),
+					Self::PRECISION,
+				)?
+				.checked_add(&One::one())
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_mul(&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR))
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_div(
+					&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR)
+						.checked_sub(&dyn_fee)
+						.ok_or(Error::<T>::MathOverflow)?,
+				)
+				.ok_or(Error::<T>::MathOverflow)?;
 
-			let y = xp[j].checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?;
-			let x = Self::get_y(j, i, &y, &xp, pool.amp_coeff, &d)?;
+				y = xp[j].checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?;
+				x = Self::get_y(j, i, &y, &xp, pool.amp_coeff, &d)?;
 
-			Self::checked_mul_div_to_balance(
-				&x.checked_sub(&xp[i]).ok_or(Error::<T>::MathOverflow)?,
-				pool.rate_multipliers[i],
-			)
+				// if we don't have dynamic fee we can return immediatelly, otherwise loop with adjusted fee
+				if !Self::has_dynamic_fee() || Self::check_diff_le_one(&x, &x_prev) {
+					return Ok(Self::checked_mul_div_to_balance(
+						&x.checked_sub(&xp[i]).ok_or(Error::<T>::MathOverflow)?,
+						pool.rate_multipliers[i],
+					)?);
+				}
+			}
+
+			Err(Error::<T>::UnexpectedFailure)
 		}
 
 		pub fn get_dy(
@@ -912,9 +925,9 @@ pub mod pallet {
 
 			let n = T::HigherPrecisionBalance::from(pool.assets.len() as u128);
 			let total_supply: <T as Config>::Balance = T::Currency::total_issuance(pool.lp_token);
-			
+
 			let (balances_0, d_0) = Self::get_invariant_pool(&pool_account, &pool)?;
-			
+
 			let mut balances_1 = vec![Zero::zero(); pool.assets.len()];
 			for i in 0..balances_0.len() {
 				let amount = T::HigherPrecisionBalance::from(amounts[i]);
@@ -926,7 +939,7 @@ pub mod pallet {
 			}
 			let xp_1 = Self::xp(&pool.rate_multipliers, &balances_1)?;
 			let d_1 = Self::get_invariant(&xp_1, pool.amp_coeff)?;
-			
+
 			let d_2 = if total_supply > Zero::zero() {
 				let (d, _) = Self::calc_imbalanced_liquidity_fees(
 					&pool,
@@ -982,6 +995,12 @@ pub mod pallet {
 			// T::HigherPrecisionBalance::from(1_u128)
 		}
 
+		fn has_dynamic_fee() -> bool {
+			let m = Self::get_fee_dyn_mul();
+			let den = T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR);
+			return m > den
+		}
+
 		// stable swap maths
 
 		fn base_fee(
@@ -1026,7 +1045,7 @@ pub mod pallet {
 			m: &T::HigherPrecisionBalance,
 		) -> Result<T::HigherPrecisionBalance, Error<T>> {
 			let den = T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR);
-			if *m < den {
+			if *m <= den {
 				return Ok(*fee);
 			}
 
@@ -1162,10 +1181,7 @@ pub mod pallet {
 					)
 					.ok_or(Error::<T>::MathOverflow)?;
 
-				if d.checked_sub(&d_prev).map_or(false, |diff| diff.le(&One::one())) {
-					return Ok(d);
-				}
-				if d_prev.checked_sub(&d).map_or(false, |diff| diff.le(&One::one())) {
+				if Self::check_diff_le_one(&d, &d_prev) {
 					return Ok(d);
 				}
 			}
@@ -1313,10 +1329,7 @@ pub mod pallet {
 					)
 					.ok_or(Error::<T>::MathOverflow)?;
 
-				if y.checked_sub(&y_prev).map_or(false, |diff| diff.le(&One::one())) {
-					return Ok(y);
-				}
-				if y_prev.checked_sub(&y).map_or(false, |diff| diff.le(&One::one())) {
+				if Self::check_diff_le_one(&y, &y_prev) {
 					return Ok(y);
 				}
 			}
@@ -1360,13 +1373,13 @@ pub mod pallet {
 
 			let mut xp_reduced = vec![];
 			for j in 0..pool.assets.len() {
-				let mut xavg = Zero::zero();
-				let mut dx_exp = Zero::zero();
 				let xpjdd = xp[j]
 					.checked_mul(&d_1)
 					.ok_or(Error::<T>::MathOverflow)?
 					.checked_div(&d_0)
 					.ok_or(Error::<T>::MathOverflow)?;
+				let xavg: T::HigherPrecisionBalance;
+				let dx_exp: T::HigherPrecisionBalance;
 				if i == j {
 					dx_exp = xpjdd.checked_sub(&new_y).ok_or(Error::<T>::MathOverflow)?;
 					xavg = Self::checked_add_div_2(&xp[j], &new_y)?;
@@ -1524,6 +1537,16 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathOverflow)?
 				.try_into()
 				.map_err(|_| Error::<T>::MathOverflow)
+		}
+
+		fn check_diff_le_one(a: &T::HigherPrecisionBalance, b: &T::HigherPrecisionBalance) -> bool {
+			if a.checked_sub(&b).map_or(false, |diff| diff.le(&One::one())) {
+				return true;
+			}
+			if b.checked_sub(&a).map_or(false, |diff| diff.le(&One::one())) {
+				return true;
+			}
+			return false;
 		}
 	}
 }

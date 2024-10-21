@@ -143,9 +143,6 @@ sol! {
 	#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
 	enum Chain{ Ethereum, Arbitrum }
 
-	#[derive(Debug, Eq, PartialEq, Encode, Decode, TypeInfo)]
-	enum L2RequestType{ Withdrawal, Cancel, FailedDepositResolution }
-
 	#[derive(Debug)]
 	struct L1Update {
 		Chain chain;

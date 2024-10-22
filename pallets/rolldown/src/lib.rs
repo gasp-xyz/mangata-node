@@ -561,10 +561,13 @@ pub mod pallet {
 				v.insert((canceler, l2_request_id, DisputeRole::Canceler))
 			});
 
+			let l2_request_cancel = L2Request::Cancel(cancel_request);
+			let l2_request_cancel_hash = l2_request_cancel.abi_encode_hash();
+
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(L2Request::Cancel(cancel_request.clone()), cancel_request.abi_encode_hash()),
+				(l2_request_cancel, l2_request_cancel_hash),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
@@ -644,14 +647,13 @@ pub mod pallet {
 				amount: U256::from(amount),
 				ferryTip: U256::from(ferry_tip.unwrap_or_default()),
 			};
-			// add cancel request to pending updates
+
+			let l2_request_withdrawal = L2Request::Withdrawal(withdrawal_update);
+			let l2_request_withdrawal_hash = l2_request_withdrawal.abi_encode_hash();
 			L2Requests::<T>::insert(
 				chain,
 				request_id.clone(),
-				(
-					L2Request::Withdrawal(withdrawal_update.clone()),
-					withdrawal_update.abi_encode_hash(),
-				),
+				(l2_request_withdrawal, l2_request_withdrawal_hash),
 			);
 
 			Pallet::<T>::deposit_event(Event::WithdrawalRequestCreated {
@@ -660,7 +662,7 @@ pub mod pallet {
 				recipient,
 				token_address,
 				amount,
-				hash: withdrawal_update.abi_encode_hash(),
+				hash: l2_request_withdrawal_hash,
 				ferry_tip: ferry_tip.unwrap_or_default(),
 			});
 			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
@@ -766,13 +768,13 @@ pub mod pallet {
 				ferry: ferry.clone().map(T::AddressConverter::convert_back).unwrap_or([0u8; 20]),
 			};
 
+			let l2_request_failed_deposit =
+				L2Request::FailedDepositResolution(failed_deposit_resolution);
+			let l2_request_failed_deposit_hash = l2_request_failed_deposit.abi_encode_hash();
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(
-					L2Request::FailedDepositResolution(failed_deposit_resolution),
-					failed_deposit_resolution.abi_encode_hash(),
-				),
+				(l2_request_failed_deposit, l2_request_failed_deposit_hash),
 			);
 
 			Self::deposit_event(Event::DepositRefundCreated {
@@ -1552,9 +1554,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
-		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|(req, _hash)| req.abi_encode())
-			.unwrap_or_default()
+		match L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id))) {
+			Some((L2Request::FailedDepositResolution(deposit), _)) => deposit.abi_encode(),
+			Some((L2Request::Cancel(cancel), _)) => cancel.abi_encode(),
+			Some((L2Request::Withdrawal(withdrawal), _)) => withdrawal.abi_encode(),
+			None => Default::default(),
+		}
 	}
 
 	fn get_batch_range_from_available_requests(

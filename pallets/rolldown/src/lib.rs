@@ -1554,9 +1554,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
-		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|(_req, hash)| hash.as_ref().to_vec())
-			.unwrap_or_default()
+		match L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id))) {
+			Some((L2Request::FailedDepositResolution(deposit), _)) => deposit.abi_encode(),
+			Some((L2Request::Cancel(cancel), _)) => cancel.abi_encode(),
+			Some((L2Request::Withdrawal(withdrawal), _)) => withdrawal.abi_encode(),
+			None => Default::default(),
+		}
 	}
 
 	fn get_batch_range_from_available_requests(

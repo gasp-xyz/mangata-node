@@ -939,33 +939,31 @@ impl<T: Config> Pallet<T> {
 			};
 
 			if let Some(trigger) = trigger {
-				if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
-					let batch_id = last_batch_id.saturating_add(1);
-					let range_start = last_id_in_batch.saturating_add(1);
-					let range_end = sp_std::cmp::min(
-						range_start.saturating_add(batch_size.saturating_sub(1)),
-						last_id,
+				let updater = T::SequencerStakingProvider::selected_sequencer(*chain)
+					.unwrap_or(T::AddressConverter::convert([0u8; 20]));
+
+				let batch_id = last_batch_id.saturating_add(1);
+				let range_start = last_id_in_batch.saturating_add(1);
+				let range_end = sp_std::cmp::min(
+					range_start.saturating_add(batch_size.saturating_sub(1)),
+					last_id,
+				);
+				if range_end >= range_start {
+					L2RequestsBatch::<T>::insert(
+						(chain, batch_id),
+						(now, (range_start, range_end), updater.clone()),
 					);
-					if range_end >= range_start {
-						L2RequestsBatch::<T>::insert(
-							(chain, batch_id),
-							(now, (range_start, range_end), updater.clone()),
-						);
-						L2RequestsBatchLast::<T>::mutate(|batches| {
-							batches
-								.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
-						});
-						Pallet::<T>::deposit_event(Event::TxBatchCreated {
-							chain: *chain,
-							source: trigger,
-							assignee: updater,
-							batch_id,
-							range: (range_start, range_end),
-						});
-						break
-					}
-				} else {
-					continue
+					L2RequestsBatchLast::<T>::mutate(|batches| {
+						batches.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
+					});
+					Pallet::<T>::deposit_event(Event::TxBatchCreated {
+						chain: *chain,
+						source: trigger,
+						assignee: updater,
+						batch_id,
+						range: (range_start, range_end),
+					});
+					break
 				}
 			}
 		}

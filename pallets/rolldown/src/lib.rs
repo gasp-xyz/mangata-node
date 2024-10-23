@@ -1571,7 +1571,12 @@ impl<T: Config> Pallet<T> {
 			.map(|(_block_number, _batch_id, range)| range.1)
 			.unwrap_or_default();
 		let range_start = last_request_id.saturating_add(1u128);
-		let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+		let latest_req_id = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+
+		let range_end = std::cmp::min(
+			range_start.saturating_add(Self::automatic_batch_size().saturating_sub(1)),
+			latest_req_id,
+		);
 
 		if L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range_start }) {
 			Ok((range_start, range_end))

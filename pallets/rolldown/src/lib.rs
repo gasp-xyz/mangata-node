@@ -1573,7 +1573,7 @@ impl<T: Config> Pallet<T> {
 		let range_start = last_request_id.saturating_add(1u128);
 		let latest_req_id = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
 
-		let range_end = std::cmp::min(
+		let range_end = sp_std::cmp::min(
 			range_start.saturating_add(Self::automatic_batch_size().saturating_sub(1)),
 			latest_req_id,
 		);

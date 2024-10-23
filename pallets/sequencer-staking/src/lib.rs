@@ -653,14 +653,14 @@ impl<T: Config> Pallet<T> {
 
 		ActiveSequencers::<T>::mutate(|active_set| {
 			if let Some(set) = active_set.get_mut(&chain) {
-				set.retain(|elem| !deactivating_sequencers.contains(&elem))
+				set.retain(|elem| !deactivating_sequencers.contains(elem))
 			}
 		});
 
 		SelectedSequencer::<T>::mutate(|selected| {
 			if matches!(
 				selected.get(&chain),
-				Some(elem) if deactivating_sequencers.contains(&elem))
+				Some(elem) if deactivating_sequencers.contains(elem))
 			{
 				selected.remove(&chain);
 			}

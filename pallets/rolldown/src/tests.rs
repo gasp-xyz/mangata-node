@@ -1940,7 +1940,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 			forward_to_block::<Test>(12);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 
 			for _ in 0..Rolldown::automatic_batch_size() - 1 {
@@ -1958,7 +1958,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 			forward_to_block::<Test>(13);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 
 			Rolldown::withdraw(
@@ -1973,12 +1973,12 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 			forward_to_block::<Test>(14);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(14u64.into(), 2u128, (11, 20)))
+				Some(&(14u64, 2u128, (11, 20)))
 			);
 		});
 }

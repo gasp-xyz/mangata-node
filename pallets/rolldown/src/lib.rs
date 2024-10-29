@@ -592,10 +592,13 @@ pub mod pallet {
 				v.insert((canceler, l2_request_id, DisputeRole::Canceler))
 			});
 
+			let l2_request_cancel = L2Request::Cancel(cancel_request);
+			let l2_request_cancel_hash = l2_request_cancel.abi_encode_hash();
+
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(L2Request::Cancel(cancel_request.clone()), cancel_request.abi_encode_hash()),
+				(l2_request_cancel, l2_request_cancel_hash),
 			);
 
 			Pallet::<T>::deposit_event(Event::L1ReadCanceled {
@@ -675,14 +678,13 @@ pub mod pallet {
 				amount: U256::from(amount),
 				ferryTip: U256::from(ferry_tip.unwrap_or_default()),
 			};
-			// add cancel request to pending updates
+
+			let l2_request_withdrawal = L2Request::Withdrawal(withdrawal_update);
+			let l2_request_withdrawal_hash = l2_request_withdrawal.abi_encode_hash();
 			L2Requests::<T>::insert(
 				chain,
 				request_id.clone(),
-				(
-					L2Request::Withdrawal(withdrawal_update.clone()),
-					withdrawal_update.abi_encode_hash(),
-				),
+				(l2_request_withdrawal, l2_request_withdrawal_hash),
 			);
 
 			Pallet::<T>::deposit_event(Event::WithdrawalRequestCreated {
@@ -691,7 +693,7 @@ pub mod pallet {
 				recipient,
 				token_address,
 				amount,
-				hash: withdrawal_update.abi_encode_hash(),
+				hash: l2_request_withdrawal_hash,
 				ferry_tip: ferry_tip.unwrap_or_default(),
 			});
 			TotalNumberOfWithdrawals::<T>::mutate(|v| *v = v.saturating_add(One::one()));
@@ -797,13 +799,13 @@ pub mod pallet {
 				ferry: ferry.clone().map(T::AddressConverter::convert_back).unwrap_or([0u8; 20]),
 			};
 
+			let l2_request_failed_deposit =
+				L2Request::FailedDepositResolution(failed_deposit_resolution);
+			let l2_request_failed_deposit_hash = l2_request_failed_deposit.abi_encode_hash();
 			L2Requests::<T>::insert(
 				chain,
 				RequestId::from((Origin::L2, l2_request_id)),
-				(
-					L2Request::FailedDepositResolution(failed_deposit_resolution),
-					failed_deposit_resolution.abi_encode_hash(),
-				),
+				(l2_request_failed_deposit, l2_request_failed_deposit_hash),
 			);
 
 			Self::deposit_event(Event::DepositRefundCreated {
@@ -980,40 +982,38 @@ impl<T: Config> Pallet<T> {
 			if let Some(trigger) = trigger {
 				// weight for selected_sequencer
 				total_weight = total_weight.saturating_add(T::DbWeight::get().reads(1));
-				if let Some(updater) = T::SequencerStakingProvider::selected_sequencer(*chain) {
-					let batch_id = last_batch_id.saturating_add(1);
-					let range_start = last_id_in_batch.saturating_add(1);
-					let range_end = sp_std::cmp::min(
-						range_start.saturating_add(batch_size.saturating_sub(1)),
-						last_id,
+				let updater = T::SequencerStakingProvider::selected_sequencer(*chain)
+					.unwrap_or(T::AddressConverter::convert([0u8; 20]));
+				let batch_id = last_batch_id.saturating_add(1);
+				let range_start = last_id_in_batch.saturating_add(1);
+				let range_end = sp_std::cmp::min(
+					range_start.saturating_add(batch_size.saturating_sub(1)),
+					last_id,
+				);
+				if range_end >= range_start {
+					L2RequestsBatch::<T>::insert(
+						(chain, batch_id),
+						(now, (range_start, range_end), updater.clone()),
 					);
-					if range_end >= range_start {
-						L2RequestsBatch::<T>::insert(
-							(chain, batch_id),
-							(now, (range_start, range_end), updater.clone()),
-						);
-						// weight for L2RequestsBatch
-						total_weight = total_weight.saturating_add(T::DbWeight::get().writes(1));
-						L2RequestsBatchLast::<T>::mutate(|batches| {
-							batches
-								.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
-						});
-						// weight for L2RequestsBatchLast
-						total_weight = total_weight.saturating_add(T::DbWeight::get().writes(1));
-						Pallet::<T>::deposit_event(Event::TxBatchCreated {
-							chain: *chain,
-							source: trigger,
-							assignee: updater,
-							batch_id,
-							range: (range_start, range_end),
-						});
-						// Not sure about this - not sure exactly what is cached and how across extrinsics (/hooks)
-						// weight for deposit_event
-						total_weight = total_weight.saturating_add(T::DbWeight::get().reads_writes(2, 3));
-						break
-					}
-				} else {
-					continue
+					// weight for L2RequestsBatch
+					total_weight = total_weight.saturating_add(T::DbWeight::get().writes(1));
+					L2RequestsBatchLast::<T>::mutate(|batches| {
+						batches
+							.insert(chain.clone(), (now, batch_id, (range_start, range_end)));
+					});
+					// weight for L2RequestsBatchLast
+					total_weight = total_weight.saturating_add(T::DbWeight::get().writes(1));
+					Pallet::<T>::deposit_event(Event::TxBatchCreated {
+						chain: *chain,
+						source: trigger,
+						assignee: updater,
+						batch_id,
+						range: (range_start, range_end),
+					});
+					// Not sure about this - not sure exactly what is cached and how across extrinsics (/hooks)
+					// weight for deposit_event
+					total_weight = total_weight.saturating_add(T::DbWeight::get().reads_writes(2, 3));
+					break
 				}
 			}
 		}
@@ -1668,9 +1668,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_abi_encoded_l2_request(chain: ChainIdOf<T>, request_id: u128) -> Vec<u8> {
-		L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id)))
-			.map(|(req, _hash)| req.abi_encode())
-			.unwrap_or_default()
+		match L2Requests::<T>::get(chain, RequestId::from((Origin::L2, request_id))) {
+			Some((L2Request::FailedDepositResolution(deposit), _)) => deposit.abi_encode(),
+			Some((L2Request::Cancel(cancel), _)) => cancel.abi_encode(),
+			Some((L2Request::Withdrawal(withdrawal), _)) => withdrawal.abi_encode(),
+			None => Default::default(),
+		}
 	}
 
 	fn get_batch_range_from_available_requests(
@@ -1682,7 +1685,12 @@ impl<T: Config> Pallet<T> {
 			.map(|(_block_number, _batch_id, range)| range.1)
 			.unwrap_or_default();
 		let range_start = last_request_id.saturating_add(1u128);
-		let range_end = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+		let latest_req_id = Self::get_latest_l2_request_id(chain).ok_or(Error::<T>::EmptyBatch)?;
+
+		let range_end = sp_std::cmp::min(
+			range_start.saturating_add(Self::automatic_batch_size().saturating_sub(1)),
+			latest_req_id,
+		);
 
 		if L2Requests::<T>::contains_key(chain, RequestId { origin: Origin::L2, id: range_start }) {
 			Ok((range_start, range_end))

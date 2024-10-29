@@ -58,9 +58,25 @@ where
 impl<AccountId: Clone> EthAbi for L2Request<AccountId> {
 	fn abi_encode(&self) -> Vec<u8> {
 		match self {
-			L2Request::FailedDepositResolution(deposit) => deposit.abi_encode(),
-			L2Request::Cancel(cancel) => cancel.abi_encode(),
-			L2Request::Withdrawal(withdrawal) => withdrawal.abi_encode(),
+			L2Request::FailedDepositResolution(deposit) =>
+				eth_abi::L2RequestType::FailedDepositResolution
+					.abi_encode()
+					.iter()
+					.chain(deposit.abi_encode().iter())
+					.cloned()
+					.collect(),
+			L2Request::Cancel(cancel) => eth_abi::L2RequestType::Cancel
+				.abi_encode()
+				.iter()
+				.chain(cancel.abi_encode().iter())
+				.cloned()
+				.collect(),
+			L2Request::Withdrawal(withdrawal) => eth_abi::L2RequestType::Withdrawal
+				.abi_encode()
+				.iter()
+				.chain(withdrawal.abi_encode().iter())
+				.cloned()
+				.collect(),
 		}
 	}
 }

@@ -61,43 +61,13 @@ impl Default for L1UpdateBuilder {
 	}
 }
 
-// It seems time vs size is ~0.0025 until 64,000 bytes (10^2 -> 10^4) => (25 -> 50)
-// Writes goes upto 200-250 until 40,000 bytes (10^2 -> 10^4) => (100 -> 200) gradient ~0.01
-// Post 100k bytes (10^5 -> 10^6) => (2*10^2 -> 4*10^3) so time vs size gradient is ~0.004 over this
-// Beyond 10^6 we don't know
-
-
-// update impl has unbounded write O(update_size)
-// so does schedule update - perhaps everywhere where the update touches storage...
-
-// schedule_request_for_execution_if_dispute_period_has_passsed is O(l1)
-
-// where exactly is the size (number of requests) of an update checked?
-
-// what happens when execute_requests_from_execute_queue is only able to process a part of an item in UpdatesExecutionQueue
-
-// Is there a reason why L1UpdateRequest::CancelResolution doesn't have Default
-
-// force cancel read rights set to 1
-
-// so only one batch (from any number of l1) is created at a time in maybe_create_batch in on_init?
-
-// Ferry deposit impl if we are just creating the asset then how does anyone have that asset to be transferred...
-
-// Shouldn't minimal_stake_amount: 1_000_000_u128 and slash_fine_amount: 100_000_u128 be 10^18+ ?
-
-// trait bounds for basic types are a mess!
-
 #[benchmarks(where T::AccountId: From<[u8;20]>, BalanceOf<T>: From<u128>, CurrencyIdOf<T>: From<u32>, <T as pallet_sequencer_staking::Config>::ChainId: From<crate::messages::Chain>)]
 mod benchmarks {
 	use super::*;
 
 	const MANUAL_BATCH_EXTRA_FEE: u128 = 700u128;
 
-	// #[cfg(not(test))]
 	const TOKEN_ID: u32 = 1u32; // ETH token
-	// #[cfg(test)]
-	// const TOKEN_ID: CurrencyIdOf<T> = crate::tests::ETH_TOKEN_ADDRESS_MGX.into(); // ETH token
 
 	const WITHDRAWAL_AMOUNT: u128 = 1000u128;
 	const MINT_AMOUNT: u128 = 1_000_000_000__000_000_000_000_000_000u128;
@@ -652,8 +622,4 @@ mod benchmarks {
 		Ok(())
 	}
 
-	// maybe create batch in on_init is O(l1) i think
-	// so is schedule_request_for_execution_if_dispute_period_has_passsed i think
-
-	// impl_benchmark_test_suite!(Rolldown, crate::mock::new_test_ext(), crate::mock::Test);
 }

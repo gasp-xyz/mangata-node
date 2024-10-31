@@ -85,7 +85,7 @@ mockall::mock! {
 	impl AssetRegistryProviderTrait<TokenId> for AssetRegistryProviderApi {
 		fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
 		fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
-		fn asset_id_to_l1_id(asset_id: TokenId) -> Option<L1Asset>;
+		fn get_asset_l1_id(asset_id: TokenId) -> Option<L1Asset>;
 	}
 }
 
@@ -133,6 +133,8 @@ parameter_types! {
 	pub const NativeCurrencyId: u32 = 0;
 }
 
+impl rolldown::RolldownBenchmarkingConfig for Test {}
+
 impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SequencerStakingProvider = MockSequencerStakingProviderApi;
@@ -151,10 +153,7 @@ impl rolldown::Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type SequencerStakingRewards = ();
 	type WithdrawFee = ConvertToValue<ConstU128<500>>;
-}
-
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	ExtBuilder::new()
+	type WeightInfo = ();
 }
 
 pub struct ExtBuilder {
@@ -231,8 +230,6 @@ impl ExtBuilder {
 			Mocks::SelectedSequencer,
 			Mocks::GetL1AssetId,
 			Mocks::MaintenanceMode,
-			Mocks::GetAssetL1Id,
-			Mocks::IsActiveSequencerAlias,
 		]
 		.iter()
 		.cloned()
@@ -260,12 +257,9 @@ impl ExtBuilder {
 			let is_selected_sequencer_mock =
 				MockSequencerStakingProviderApi::is_selected_sequencer_context();
 			let get_l1_asset_id_mock = MockAssetRegistryProviderApi::get_l1_asset_id_context();
-			// let asset_id_to_l1_id_mock = MockAssetRegistryProviderApi::asset_id_to_l1_id_context();
 			let is_maintenance_mock = MockMaintenanceStatusProviderApi::is_maintenance_context();
 			let selected_sequencer_mock =
 				MockSequencerStakingProviderApi::selected_sequencer_context();
-			// let is_active_sequencer_alias_mock =
-			// 	MockSequencerStakingProviderApi::is_active_sequencer_alias_context();
 
 			if mocks.contains(&Mocks::IsActiveSequencer) {
 				is_liquidity_token_mock.expect().return_const(true);
@@ -279,17 +273,9 @@ impl ExtBuilder {
 				get_l1_asset_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS_MGX);
 			}
 
-			// if mocks.contains(&Mocks::GetAssetL1Id) {
-			// 	asset_id_to_l1_id_mock.expect().return_const(crate::tests::ETH_TOKEN_ADDRESS);
-			// }
-
 			if mocks.contains(&Mocks::SelectedSequencer) {
 				selected_sequencer_mock.expect().return_const(None);
 			}
-
-			// if mocks.contains(&Mocks::IsActiveSequencerAlias) {
-			// 	is_active_sequencer_alias_mock.expect().return_const(true);
-			// }
 
 			if mocks.contains(&Mocks::MaintenanceMode) {
 				is_maintenance_mock.expect().return_const(false);
@@ -307,8 +293,6 @@ pub enum Mocks {
 	SelectedSequencer,
 	GetL1AssetId,
 	MaintenanceMode,
-	GetAssetL1Id,
-	IsActiveSequencerAlias,
 }
 
 pub fn forward_to_next_block<T>()

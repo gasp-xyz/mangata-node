@@ -308,7 +308,7 @@ pub enum Mocks {
 	GetL1AssetId,
 	MaintenanceMode,
 	GetAssetL1Id,
-	IsActiveSequencerAlias
+	IsActiveSequencerAlias,
 }
 
 pub fn forward_to_next_block<T>()

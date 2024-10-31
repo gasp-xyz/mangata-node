@@ -136,6 +136,9 @@ jobs:
             fast: true
           - command: "yarn test-rolldownPreOperationWithdrawal"
             fast: true
+          - command: "yarn test-sequencerRewards"
+            fast: true
+
 
 
 

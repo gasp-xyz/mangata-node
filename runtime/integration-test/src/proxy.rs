@@ -115,3 +115,64 @@ fn proxy_permissions_correct() {
 		);
 	});
 }
+
+
+#[test]
+fn proxy_multiswap_asset_test() {
+    new_test_ext().execute_with(|| {
+        // Alice gives multiswap permissions to Bob
+        assert_ok!(Proxy::add_proxy(
+            RuntimeOrigin::signed(AccountId::from(ALICE)),
+            AccountId::from(BOB).into(),
+            ProxyType::MultiswapAsset,
+            0
+        ));
+
+        // Bob can proxy multiswap sell asset call for Alice
+        let multiswap_sell_call = RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {
+            swap_token_list: vec![ASSET_ID_1, ASSET_ID_2],
+            sold_asset_amount: 100 * UNIT,
+            min_amount_out: 1 * UNIT,
+        });
+
+        assert_ok!(Proxy::proxy(
+            RuntimeOrigin::signed(AccountId::from(BOB)),
+            AccountId::from(ALICE).into(),
+            Some(ProxyType::MultiswapAsset),
+            Box::new(multiswap_sell_call.clone())
+        ));
+
+        // Bob can proxy multiswap buy asset call for Alice
+        let multiswap_buy_call = RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {
+            swap_token_list: vec![ASSET_ID_2, ASSET_ID_3],
+            bought_asset_amount: 50 * UNIT,
+            max_amount_in: 100 * UNIT,
+        });
+
+        assert_ok!(Proxy::proxy(
+            RuntimeOrigin::signed(AccountId::from(BOB)),
+            AccountId::from(ALICE).into(),
+            Some(ProxyType::MultiswapAsset),
+            Box::new(multiswap_buy_call.clone())
+        ));
+
+        // Bob cannot proxy calls not allowed by MultiswapAsset
+        let unauthorized_call = RuntimeCall::Balances(pallet_balances::Call::transfer {
+            dest: AccountId::from(CHARLIE).into(),
+            value: 10 * UNIT,
+        });
+
+        assert_noop!(
+            Proxy::proxy(
+                RuntimeOrigin::signed(AccountId::from(BOB)),
+                AccountId::from(ALICE).into(),
+                Some(ProxyType::MultiswapAsset),
+                Box::new(unauthorized_call.clone())
+            ),
+            pallet_proxy::Error::<Runtime>::ProxyDefinitionNotFound
+        );
+    });
+}
+
+
+

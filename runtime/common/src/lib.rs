@@ -1456,6 +1456,7 @@ where
 		)]
 		pub enum ProxyType {
 			AutoCompound,
+			MultiswapAsset
 		}
 
 		impl Default for ProxyType {
@@ -1463,6 +1464,8 @@ where
 				Self::AutoCompound
 			}
 		}
+
+		
 
 		parameter_types! {
 			pub const ProxyDepositBase: Balance = deposit(1, 16);

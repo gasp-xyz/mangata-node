@@ -936,9 +936,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(11)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_native_rewards())]
-		pub fn trigger_event(
-			origin: OriginFor<T>,
-		) -> DispatchResult {
+		pub fn trigger_event(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			Pallet::<T>::deposit_event(Event::RewardsClaimed(

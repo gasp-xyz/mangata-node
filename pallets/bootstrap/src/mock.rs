@@ -135,6 +135,7 @@ impl pallet_xyk::Config for Test {
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 	type AssetMetadataMutation = AssetMetadataMutation;
+	type FeeLockWeight = ();
 }
 
 impl pallet_proof_of_stake::Config for Test {

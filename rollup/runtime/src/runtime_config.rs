@@ -194,6 +194,8 @@ pub mod config {
 		pub type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 		parameter_types! {
+			pub const BaseWeightOffset: Weight = Weight::from_parts(<Runtime as ::frame_system::Config>::DbWeight::get().read, 0);
+			pub const VerExtrinsicBaseWeight: Weight = weights::VerExtrinsicBaseWeight::get().saturating_add(BaseWeightOffset::get());
 			pub const BlockHashCount: BlockNumber = 2400;
 			pub const Version: sp_version::RuntimeVersion = crate::VERSION;
 			// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
@@ -205,7 +207,7 @@ pub mod config {
 			pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 				.base_block(weights::VerBlockExecutionWeight::get())
 				.for_class(DispatchClass::all(), |weights| {
-					weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+					weights.base_extrinsic = VerExtrinsicBaseWeight::get();
 				})
 				.for_class(DispatchClass::Normal, |weights| {
 					weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);

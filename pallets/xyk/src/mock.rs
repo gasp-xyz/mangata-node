@@ -274,6 +274,7 @@ impl Config for Test {
 	type DisallowedPools = DummyBlacklistedPool;
 	type DisabledTokens = Nothing;
 	type AssetMetadataMutation = MockAssetRegister;
+	type FeeLockWeight = ();
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -294,6 +295,7 @@ impl Config for Test {
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
 	type AssetMetadataMutation = MockAssetRegister;
+	type FeeLockWeight = ();
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]

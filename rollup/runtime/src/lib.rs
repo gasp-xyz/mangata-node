@@ -325,6 +325,7 @@ impl pallet_xyk::Config for Runtime {
 	type DisabledTokens =
 		(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
 	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
+	type FeeLockWeight = pallet_fee_lock::FeeLockWeightProvider<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

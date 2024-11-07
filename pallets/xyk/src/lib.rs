@@ -450,6 +450,7 @@ pub mod pallet {
 			Moment = BlockNumberFor<Self>,
 		>;
 		type AssetMetadataMutation: AssetMetadataMutationTrait<CurrencyIdOf<Self>>;
+		type FeeLockWeight: Get<Weight>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -677,7 +678,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::create_pool())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::create_pool().saturating_add(T::FeeLockWeight::get()))]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			first_asset_id: CurrencyIdOf<T>,
@@ -724,7 +725,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the sold token being sold
 		/// - `min_amount_out` - The minimum amount of bought asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(1)]
-		#[pallet::weight((<<T as Config>::WeightInfo>::sell_asset(), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::sell_asset().saturating_add(T::FeeLockWeight::get()), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_sell_asset should be used instead")]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
@@ -769,7 +770,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the first asset sold
 		/// - `min_amount_out` - The minimum amount of last asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(2)]
-		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32).saturating_add(T::FeeLockWeight::get()), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<CurrencyIdOf<T>>,
@@ -826,7 +827,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the bought token being bought
 		/// - `max_amount_in` - The maximum amount of sold asset that must be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(3)]
-		#[pallet::weight((<<T as Config>::WeightInfo>::buy_asset(), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::buy_asset().saturating_add(T::FeeLockWeight::get()), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_buy_asset should be used instead")]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -874,7 +875,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the last asset bought
 		/// - `max_amount_in` - The maximum amount of first asset that can be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(4)]
-		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32).saturating_add(T::FeeLockWeight::get()), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<CurrencyIdOf<T>>,
@@ -917,7 +918,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens().saturating_add(T::FeeLockWeight::get()))]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
 			origin: OriginFor<T>,
@@ -977,7 +978,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens().saturating_add(T::FeeLockWeight::get()))]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
@@ -1034,7 +1035,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity().saturating_add(T::FeeLockWeight::get()))]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: CurrencyIdOf<T>,
@@ -1063,7 +1064,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards().saturating_add(T::FeeLockWeight::get()))]
 		#[transactional]
 		pub fn compound_rewards(
 			origin: OriginFor<T>,
@@ -1082,7 +1083,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::provide_liquidity_with_conversion())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provide_liquidity_with_conversion().saturating_add(T::FeeLockWeight::get()))]
 		#[transactional]
 		pub fn provide_liquidity_with_conversion(
 			origin: OriginFor<T>,
@@ -1114,7 +1115,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::burn_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::burn_liquidity().saturating_add(T::FeeLockWeight::get()))]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: CurrencyIdOf<T>,

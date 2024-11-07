@@ -260,6 +260,7 @@ impl pallet_xyk::Config for Test {
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 	type AssetMetadataMutation = AssetMetadataMutation;
+	type FeeLockWeight = ();
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]

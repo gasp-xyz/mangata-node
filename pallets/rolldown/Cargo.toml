@@ -67,6 +67,6 @@ std = [
 	"pallet-sequencer-staking/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "pallet-sequencer-staking/runtime-benchmarks"]
 
 try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime", "orml-tokens/try-runtime", "sp-runtime/try-runtime"]

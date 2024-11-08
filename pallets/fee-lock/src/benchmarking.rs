@@ -33,7 +33,7 @@ const MGA_TOKEN_ID: u32 = 0;
 benchmarks! {
 
 	process_fee_lock{
-		
+
 		let caller: T::AccountId = whitelisted_caller();
 		let period_length: BlockNumberFor<T> = 10u32.into();
 		let fee_lock_amount: BalanceOf<T> = 1000_u32.into();
@@ -76,7 +76,7 @@ benchmarks! {
 			initial_user_reserved_balance + fee_lock_amount);
 		assert_eq!(<T as Config>::Tokens::locked_balance(token_id, &caller.clone()),
 			initial_user_locked_balance);
-		
+
 		assert_eq!(FeeLock::<T>::get_account_fee_lock_data(caller.clone()), AccountFeeLockDataInfo{
 			total_fee_lock_amount: fee_lock_amount,
 			last_fee_lock_block: now,
@@ -89,7 +89,7 @@ benchmarks! {
 		let mint_amount: BalanceOf<T> = 1_000_000u32.into();
 		let pool_amount: BalanceOf<T> = 100_000u32.into();
 		let token_id = MGA_TOKEN_ID.into();
-		
+
 		// This should be a while loop
 		// But this is fine here since token_id is 0
 		if <T as Config>::Tokens::get_next_currency_id() > token_id {

@@ -228,7 +228,8 @@ pub mod pallet {
 		#[cfg(not(all(feature = "runtime-benchmarks", not(test))))]
 		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>;
 		#[cfg(all(feature = "runtime-benchmarks", not(test)))]
-		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>> + XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
+		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>
+			+ XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
 		#[pallet::constant]
 		type NativeTokenId: Get<CurrencyIdOf<Self>>;
 		type WeightInfo: WeightInfo;
@@ -560,7 +561,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 pub struct FeeLockWeightProvider<T>(PhantomData<T>);
 
 impl<T: Config> Get<Weight> for FeeLockWeightProvider<T> {
-	fn get() -> Weight{
+	fn get() -> Weight {
 		// We assume that process_fee_lock is heavier than unlock_fee
 		// The FeeLockMetadata read is not accounted for since it is called no matter the extrinsic and hence would be accounted for in the ExtrinsicBaseWeight
 		T::WeightInfo::process_fee_lock()
@@ -568,4 +569,3 @@ impl<T: Config> Get<Weight> for FeeLockWeightProvider<T> {
 			.saturating_add(Weight::from_parts(40_000_000, 0))
 	}
 }
-

@@ -42,6 +42,7 @@ benchmarks! {
 		<frame_system::Pallet<T>>::set_block_number(1u32.into());
 		let now= <frame_system::Pallet<T>>::block_number();
 		let mint_amount: BalanceOf<T> = 1_000_000u32.into();
+		let swap_value_threshold: BalanceOf<T> = 1000_u32.into();
 
 		// This should be a while loop
 		// But this is fine here since token_id is 0
@@ -51,7 +52,7 @@ benchmarks! {
 			assert_eq!(<T as Config>::Tokens::create(&caller.clone(), mint_amount).unwrap(), token_id);
 		}
 
-		assert_ok!(FeeLock::<T>::update_fee_lock_metadata(RawOrigin::Root.into(), Some(period_length), Some(fee_lock_amount), None, None));
+		assert_ok!(FeeLock::<T>::update_fee_lock_metadata(RawOrigin::Root.into(), Some(period_length), Some(fee_lock_amount), Some(swap_value_threshold), None));
 
 		FeeLockMetadataQeueuePosition::<T>::insert(caller.clone(), queue_position);
 		UnlockQueue::<T>::insert(queue_position, caller.clone());
@@ -87,8 +88,6 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let mint_amount: BalanceOf<T> = 1_000_000u32.into();
 		let pool_amount: BalanceOf<T> = 100_000u32.into();
-		let valuating_token_amount: BalanceOf<T> = 1000_u32.into();
-		let valuating_token_id = <T as Config>::Tokens::create(&caller.clone(), mint_amount)?;
 		let token_id = MGA_TOKEN_ID.into();
 		
 		// This should be a while loop
@@ -99,14 +98,18 @@ benchmarks! {
 			assert_eq!(<T as Config>::Tokens::create(&caller.clone(), mint_amount).unwrap(), token_id);
 		}
 
+		let valuating_token_amount: BalanceOf<T> = 1000_u32.into();
+		let valuating_token_id = <T as Config>::Tokens::create(&caller.clone(), mint_amount)?;
+
 		// Order of tokens in the create_pool call below is important
 		#[cfg(not(test))]
-		assert_ok!(<T as Config>::PoolReservesProvider::create_pool(caller, valuating_token_id, pool_amount.saturating_mul(2u8.into()), token_id, pool_amount));
+		assert_ok!(<T as Config>::PoolReservesProvider::create_pool(caller, valuating_token_id, pool_amount, token_id, pool_amount.saturating_mul(2u8.into())));
 
+		// We want to avoid having the value being 1000, since that is what get_swap_valuation_for_token returns if the valuating_token_id is the native token id
 		#[cfg(test)]
-		let value: BalanceOf<T> = 2000_u32.into();
-		#[cfg(not(test))]
 		let value: BalanceOf<T> = 500_u32.into();
+		#[cfg(not(test))]
+		let value: BalanceOf<T> = 2000_u32.into();
 		let mut valuation: Option<BalanceOf<T>> = None;
 	}: {valuation = FeeLock::<T>::get_swap_valuation_for_token(valuating_token_id, valuating_token_amount);}
 	verify{

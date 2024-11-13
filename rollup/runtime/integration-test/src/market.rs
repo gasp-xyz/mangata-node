@@ -184,5 +184,41 @@ fn multiswap_should_work_mixed() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
+
+		System::assert_last_event(RuntimeEvent::Market(pallet_market::Event::AssetsSwapped {
+			who: AccountId::from(ALICE),
+			swap_pool_list: vec![6, 7, 8],
+			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
+			amount_in: UNIT,
+			amount_out: 826609041367995045,
+		}));
+	})
+}
+
+#[test]
+fn multiswap_buy_should_work_mixed() {
+	test_env().execute_with(|| {
+		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
+		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
+
+		assert_ok!(Market::multiswap_asset_buy(
+			origin(),
+			vec![POOL_ID_1, POOL_ID_2, POOL_ID_3],
+			ASSET_ID_3,
+			UNIT,
+			NATIVE_ASSET_ID,
+			2 * UNIT,
+		));
+
+		System::assert_last_event(RuntimeEvent::Market(pallet_market::Event::AssetsSwapped {
+			who: AccountId::from(ALICE),
+			swap_pool_list: vec![6, 7, 8],
+			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
+			amount_in: 1262436229778965569,
+			amount_out: UNIT,
+		}));
+
+		println!("{:?}", events());
 	})
 }

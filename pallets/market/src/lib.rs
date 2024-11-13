@@ -52,7 +52,7 @@ pub enum PoolKind {
 	StableSwap,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PoolInfo<CurrencyId> {
 	pool_id: CurrencyId,
 	kind: PoolKind,
@@ -147,6 +147,8 @@ pub mod pallet {
 		DisallowedPool,
 		/// Insufficient output amount does not meet min requirements
 		InsufficientOutputAmount,
+		/// Excesive input amount does not meet max requirements
+		ExcesiveInputAmount,
 		/// Pool is not paired with native currency id
 		NotPairedWithNativeAsset,
 		/// Not a promoted pool
@@ -491,12 +493,6 @@ pub mod pallet {
 		///
 		/// Multiswaps must fee lock instead of paying transaction fees.
 		///
-		/// First the multiswap is prevalidated, if it is successful then the extrinsic is accepted
-		/// and the exchange commission will be charged upon execution on the **first** swap using **sold_asset_amount**.
-		///
-		/// Upon failure of an atomic swap or bad slippage, all the atomic swaps are reverted and the exchange commission is charged.
-		/// Upon such a failure, the extrinsic is marked "successful", but an event for the failure is emitted
-		///
 		/// # Args:
 		/// - `swap_token_list` - This list of tokens is the route of the atomic swaps, starting with the asset sold and ends with the asset finally bought
 		/// - `asset_id_in`: The id of the asset sold
@@ -525,44 +521,7 @@ pub mod pallet {
 				Error::<T>::TradingBlockedByMaintenanceMode
 			);
 
-			// let path = Self::get_path_for_in(&swap_pool_list)?;
-			// Self::validate_path()?;
-
-			// at least one swap
-			ensure!(swap_pool_list.len() > 0, Error::<T>::NoSuchPool);
-
-			// check pools repetition
-			let mut dedup = swap_pool_list.clone();
-			dedup.sort();
-			dedup.dedup();
-			ensure!(dedup.len() == swap_pool_list.len(), Error::<T>::MultiSwapSamePool);
-
-			let mut path: Vec<AssetPairOf<T>> = vec![];
-			let mut pools: Vec<PoolInfoOf<T>> = vec![];
-			for &pool_id in swap_pool_list.iter() {
-				let pool_info = Self::get_pool_info(pool_id)?;
-				pools.push(pool_info.clone());
-				// function not available for tokens
-				Self::check_assets_allowed(pool_info.pool)?;
-
-				// check pools' asset connection
-				// first is asset_id_in, last is asset_id_out
-				let prev_asset_id =
-					if let Some(&last) = path.last() { last.1 } else { asset_id_in };
-
-				if pool_info.pool.0 == prev_asset_id {
-					path.push(pool_info.pool);
-				} else if pool_info.pool.1 == prev_asset_id {
-					path.push((pool_info.pool.1, pool_info.pool.0));
-				} else {
-					fail!(Error::<T>::MultiSwapPathInvalid)
-				}
-			}
-
-			ensure!(
-				path.last().is_some_and(|&l| l.1 == asset_id_out),
-				Error::<T>::MultiSwapPathInvalid
-			);
+			let (pools, path) = Self::get_valid_path(&swap_pool_list, asset_id_in, asset_id_out)?;
 
 			let amount_out =
 				Self::do_swaps(&sender, pools, path.clone(), asset_amount_in, min_amount_out)?;
@@ -572,6 +531,56 @@ pub mod pallet {
 				swap_pool_list: swap_pool_list.clone(),
 				swap_assets_list: path,
 				amount_in: asset_amount_in,
+				amount_out,
+			});
+
+			// total swaps inc
+
+			Ok(Pays::No.into())
+		}
+
+		/// Buy variant of the multiswap, a precise output amount should be provided instead.
+		#[pallet::call_index(7)]
+		#[pallet::weight((T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		pub fn multiswap_asset_buy(
+			origin: OriginFor<T>,
+			swap_pool_list: Vec<PoolIdOf<T>>,
+			asset_id_out: T::CurrencyId,
+			asset_amount_out: T::Balance,
+			asset_id_in: T::CurrencyId,
+			max_amount_in: T::Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			// ensure maintenance mode
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::TradingBlockedByMaintenanceMode
+			);
+
+			let (pools, path) = Self::get_valid_path(&swap_pool_list, asset_id_in, asset_id_out)?;
+			// calc input amount
+			let mut id = asset_id_out;
+			let mut amount_in = asset_amount_out;
+			for (pool, swap) in pools.iter().rev().zip(path.iter().rev()) {
+				amount_in = Self::calculate_buy_price(pool.pool_id, id, amount_in).ok_or(Error::<T>::UnexpectedFailure)?;
+				id = if id == swap.0 {
+					swap.1
+				} else {
+					swap.0
+				};
+			}
+
+			ensure!(amount_in < max_amount_in, Error::<T>::ExcesiveInputAmount);
+
+			let amount_out =
+				Self::do_swaps(&sender, pools, path.clone(), amount_in, asset_amount_out)?;
+
+			Self::deposit_event(Event::AssetsSwapped {
+				who: sender.clone(),
+				swap_pool_list: swap_pool_list.clone(),
+				swap_assets_list: path,
+				amount_in,
 				amount_out,
 			});
 
@@ -610,9 +619,9 @@ pub mod pallet {
 				pool_info.pool.0
 			};
 			match pool_info.kind {
-				PoolKind::Xyk => T::Xyk::get_dy(pool_id, asset_in, bought_asset_id, buy_amount),
+				PoolKind::Xyk => T::Xyk::get_dx(pool_id, asset_in, bought_asset_id, buy_amount),
 				PoolKind::StableSwap =>
-					T::StableSwap::get_dy(pool_id, asset_in, bought_asset_id, buy_amount),
+					T::StableSwap::get_dx(pool_id, asset_in, bought_asset_id, buy_amount),
 			}
 		}
 
@@ -647,12 +656,56 @@ pub mod pallet {
 			return Err(Error::<T>::NoSuchPool);
 		}
 
-		fn check_assets_allowed(assets: AssetPairOf<T>) -> DispatchResult {
+		fn check_assets_allowed(assets: AssetPairOf<T>) -> Result<(), Error<T>> {
 			ensure!(
 				!T::DisabledTokens::contains(&assets.0) && !T::DisabledTokens::contains(&assets.1),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 			Ok(())
+		}
+
+		fn get_valid_path(
+			swap_pool_list: &Vec<PoolIdOf<T>>,
+			asset_in: T::CurrencyId,
+			asset_out: T::CurrencyId,
+		) -> Result<(Vec<PoolInfoOf<T>>, Vec<AssetPairOf<T>>), Error<T>> {
+			// at least one swap
+			ensure!(swap_pool_list.len() > 0, Error::<T>::NoSuchPool);
+
+			// check pools repetition
+			let mut dedup = swap_pool_list.clone();
+			dedup.sort();
+			dedup.dedup();
+			ensure!(dedup.len() == swap_pool_list.len(), Error::<T>::MultiSwapSamePool);
+
+			let mut path: Vec<AssetPairOf<T>> = vec![];
+			let mut pools: Vec<PoolInfoOf<T>> = vec![];
+			for &pool_id in swap_pool_list.iter() {
+				let pool_info = Self::get_pool_info(pool_id)?;
+				pools.push(pool_info.clone());
+				// function not available for tokens
+				Self::check_assets_allowed(pool_info.pool)?;
+
+				// check pools' asset connection
+				// first is asset_id_in, last is asset_id_out
+				let prev_asset_id =
+					if let Some(&last) = path.last() { last.1 } else { asset_in };
+
+				if pool_info.pool.0 == prev_asset_id {
+					path.push(pool_info.pool);
+				} else if pool_info.pool.1 == prev_asset_id {
+					path.push((pool_info.pool.1, pool_info.pool.0));
+				} else {
+					fail!(Error::<T>::MultiSwapPathInvalid)
+				}
+			}
+
+			ensure!(
+				path.last().is_some_and(|&l| l.1 == asset_out),
+				Error::<T>::MultiSwapPathInvalid
+			);
+
+			Ok((pools, path))
 		}
 
 		fn do_mint_liquidity(

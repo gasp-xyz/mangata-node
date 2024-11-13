@@ -227,7 +227,6 @@ fn add_liquidity_balanced_for_single_asset() {
 			1,
 		));
 
-		
 		let input_0 = 100_000 * UNIT;
 		let input_1 = 50_000 * UNIT;
 		// let input_1 = StableSwap::get_dy(&3, 0, 1, input_0).unwrap();

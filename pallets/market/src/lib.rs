@@ -2,32 +2,31 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use codec::Codec;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
 	ensure, fail,
 	pallet_prelude::*,
 	traits::{
 		tokens::{currency::MultiTokenVestingLocks, Balance, CurrencyId},
-		Contains, Currency, ExistenceRequirement, MultiTokenCurrency, WithdrawReasons,
+		Contains,
 	},
-	transactional, PalletId,
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::{
 	pools::{Inspect, Mutate, SwapResult, TreasuryBurn},
 	traits::{
-		ActivationReservesProviderTrait, AssetRegistryProviderTrait, GetMaintenanceStatusTrait,
-		ProofOfStakeRewardsApi, XykFunctionsTrait,
+		AssetRegistryProviderTrait, GetMaintenanceStatusTrait, ProofOfStakeRewardsApi,
+		XykFunctionsTrait,
 	},
 };
 use mangata_types::multipurpose_liquidity::ActivateKind;
 
-use sp_arithmetic::traits::Unsigned;
 use sp_runtime::{
-	traits::{
-		checked_pow, AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Ensure,
-		One, Saturating, TrailingZeroInput, Zero,
-	},
+	traits::{MaybeDisplay, Saturating, Zero},
 	ModuleError,
 };
 use sp_std::{convert::TryInto, fmt::Debug, vec, vec::Vec};
@@ -565,54 +564,16 @@ pub mod pallet {
 				Error::<T>::MultiSwapPathInvalid
 			);
 
-			// due to fee lock
-			// check sender's balance to pay for the trade fee not needed
-			// such check should be in `OnChargeTransaction` for runtime to allow fee lock
+			let amount_out =
+				Self::do_swaps(&sender, pools, path.clone(), asset_amount_in, min_amount_out)?;
 
-			match frame_support::storage::with_storage_layer(
-				|| -> Result<T::Balance, DispatchError> {
-					// atomic swaps, reverts on error
-					Self::do_swaps(&sender, pools, path.clone(), asset_amount_in, min_amount_out)
-				},
-			) {
-				Ok(amount_out) => {
-					// deposit event swapped ok
-					Self::deposit_event(Event::AssetsSwapped {
-						who: sender.clone(),
-						swap_pool_list: swap_pool_list.clone(),
-						swap_assets_list: path,
-						amount_in: asset_amount_in,
-						amount_out,
-					});
-
-					Ok(())
-				},
-				Err(e) => {
-					// charge fee
-					// deposit failed event
-					if let DispatchError::Module(module_err) = e {
-						Self::deposit_event(Event::MultiSwapAssetFailedOnAtomicSwap {
-							who: sender.clone(),
-							swap_pool_list: swap_pool_list.clone(),
-							swap_assets_list: path,
-							module_err,
-						});
-						Err(e)
-					} else {
-						Err(Error::<T>::UnexpectedFailure.into())
-					}
-				},
-			}
-			// unexpected error within above
-			.map_err(|err| DispatchErrorWithPostInfo {
-				post_info: PostDispatchInfo {
-					actual_weight: Some(
-						T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32),
-					),
-					pays_fee: Pays::Yes,
-				},
-				error: err,
-			})?;
+			Self::deposit_event(Event::AssetsSwapped {
+				who: sender.clone(),
+				swap_pool_list: swap_pool_list.clone(),
+				swap_assets_list: path,
+				amount_in: asset_amount_in,
+				amount_out,
+			});
 
 			// total swaps inc
 
@@ -621,6 +582,60 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		// impl for runtime apis, rather do the composition here with traits then in runtime with pallets
+		pub fn calculate_sell_price(
+			pool_id: T::CurrencyId,
+			sell_asset_id: T::CurrencyId,
+			sell_amount: T::Balance,
+		) -> Option<T::Balance> {
+			let pool_info = Self::get_pool_info(pool_id).ok()?;
+			let asset_out =
+				if pool_info.pool.0 == sell_asset_id { pool_info.pool.1 } else { pool_info.pool.0 };
+			match pool_info.kind {
+				PoolKind::Xyk => T::Xyk::get_dy(pool_id, sell_asset_id, asset_out, sell_amount),
+				PoolKind::StableSwap =>
+					T::StableSwap::get_dy(pool_id, sell_asset_id, asset_out, sell_amount),
+			}
+		}
+
+		pub fn calculate_buy_price(
+			pool_id: T::CurrencyId,
+			bought_asset_id: T::CurrencyId,
+			buy_amount: T::Balance,
+		) -> Option<T::Balance> {
+			let pool_info = Self::get_pool_info(pool_id).ok()?;
+			let asset_in = if pool_info.pool.0 == bought_asset_id {
+				pool_info.pool.1
+			} else {
+				pool_info.pool.0
+			};
+			match pool_info.kind {
+				PoolKind::Xyk => T::Xyk::get_dy(pool_id, asset_in, bought_asset_id, buy_amount),
+				PoolKind::StableSwap =>
+					T::StableSwap::get_dy(pool_id, asset_in, bought_asset_id, buy_amount),
+			}
+		}
+
+		pub fn get_burn_amount(
+			pool_id: T::CurrencyId,
+			lp_burn_amount: T::Balance,
+		) -> Option<(T::Balance, T::Balance)> {
+			T::Xyk::get_burn_amounts(pool_id, lp_burn_amount)
+				.or_else(|| T::StableSwap::get_burn_amounts(pool_id, lp_burn_amount))
+		}
+
+		pub fn get_pools_for_trading() -> Vec<T::CurrencyId> {
+			let mut assets = vec![];
+			if let Some(pools) = T::Xyk::get_non_empty_pools() {
+				assets.extend(pools.iter());
+			}
+			if let Some(pools) = T::StableSwap::get_non_empty_pools() {
+				assets.extend(pools.iter());
+			}
+			assets
+		}
+
+		// private helpers
 		fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {
 			if let Some(pool) = T::Xyk::get_pool_info(pool_id) {
 				return Ok(PoolInfo { pool_id, kind: PoolKind::Xyk, pool })
@@ -732,30 +747,40 @@ pub mod pallet {
 	}
 }
 
-// sp_api::decl_runtime_apis! {
+#[derive(Clone, Eq, PartialEq, Encode, Decode, Default, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RpcAssetMetadata<TokenId> {
+	pub token_id: TokenId,
+	pub decimals: u32,
+	pub name: Vec<u8>,
+	pub symbol: Vec<u8>,
+}
+
+sp_api::decl_runtime_apis! {
 // 	/// This runtime api allows people to query the size of the liquidity pools
 // 	/// and quote prices for swaps.
-// 	pub trait MarketApi<Balance, AssetId>
-// 	where
-// 		Balance: frame_support::traits::tokens::Balance + MaybeDisplay,
-// 		AssetId: Codec,
-// 	{
-// 		fn calculate_sell_price(
-// 			pool_id: AssetId,
-// 			sell_asset_id: AssetId,
-// 			sell_amount: Balance
-// 		) -> Balance;
+	pub trait MarketApi<Balance, AssetId>
+	where
+		Balance: frame_support::traits::tokens::Balance + MaybeDisplay,
+		AssetId: Codec,
+	{
+		fn calculate_sell_price(
+			pool_id: AssetId,
+			sell_asset_id: AssetId,
+			sell_amount: Balance
+		) -> Option<Balance>;
 
-// 		fn calculate_buy_price(
-// 			pool_id: AssetId,
-// 			buy_asset_id: AssetId,
-// 			buy_amount: Balance
-// 		) -> Balance;
+		fn calculate_buy_price(
+			pool_id: AssetId,
+			buy_asset_id: AssetId,
+			buy_amount: Balance
+		) -> Option<Balance>;
 
-// 		fn get_burn_amount(
-// 			pool_id: AssetId,
-// 			lp_burn_amount: Balance,
-// 		) -> (Balance, Balance);
+		fn get_burn_amount(
+			pool_id: AssetId,
+			lp_burn_amount: Balance,
+		) -> Option<(Balance, Balance)>;
 
 // 		fn get_max_instant_burn_amount(
 // 			user: AccountId,
@@ -787,11 +812,11 @@ pub mod pallet {
 // 			input_amount: Balance,
 // 		) -> Option<bool>;
 
-// 		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<AssetId>>;
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<AssetId>>;
 
-// 		fn get_pools_for_trading(
-// 		) -> Vec<AssetId>;
+		fn get_pools_for_trading(
+		) -> Vec<AssetId>;
 
 // 		fn get_total_number_of_swaps() -> u128;
-// 	}
-// }
+	}
+}

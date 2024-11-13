@@ -1,11 +1,12 @@
 #![cfg(test)]
 
-mod setup;
-mod xyk;
-mod proof_of_stake;
 mod bootstrap;
-mod proxy;
+mod fee_lock;
 mod identity;
 mod maintenance;
-mod membership;
 mod market;
+mod membership;
+mod proof_of_stake;
+mod proxy;
+mod setup;
+mod xyk;

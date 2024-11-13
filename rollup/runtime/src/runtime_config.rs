@@ -68,6 +68,8 @@ pub mod fees {
 	pub type MarketTreasuryFeePart = ConstU128<3_333_333_334>;
 	// 50% of treasury fee gets to burn
 	pub type MarketBnBFeePart = ConstU128<5_000_000_000>;
+
+	pub const FEE_PRECISION: u128 = pallet_stable_swap::Pallet::<Runtime>::FEE_DENOMINATOR;
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -178,6 +180,13 @@ pub enum CallType {
 	UnlockFee,
 	UtilityInnerCall,
 	Other,
+	Swap {
+		swap_pool_list: Vec<TokenId>,
+		asset_id_in: TokenId,
+		asset_amount_in: Balance,
+		asset_id_out: TokenId,
+		asset_amount_out: Balance,
+	},
 }
 
 pub mod config {
@@ -267,8 +276,9 @@ pub mod config {
 
 	pub mod pallet_treasury {
 		use super::*;
+
 		parameter_types! {
-		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+			pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 		}
 
 		parameter_types! {
@@ -284,6 +294,7 @@ pub mod config {
 
 	pub mod orml_tokens {
 		use super::*;
+
 		parameter_types! {
 			pub const MaxLocks: u32 = 50;
 		}
@@ -305,8 +316,8 @@ pub mod config {
 	}
 
 	pub mod pallet_xyk {
-
 		use super::*;
+
 		parameter_types! {
 			pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 		}
@@ -478,6 +489,8 @@ pub mod config {
 		pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
 			Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
 			FeeLock,
+			FeeLockImbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
+			FeeLockFree((T::RuntimeCall, C::CurrencyId, C::Balance)),
 		}
 
 		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
@@ -697,6 +710,66 @@ pub mod config {
 				})?;
 				Ok(Some(LiquidityInfoEnum::FeeLock))
 			}
+
+			pub fn can_withdraw_fee(
+				who: &<T>::AccountId,
+				call: &T::RuntimeCall,
+				fee: Balance,
+				fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+				swap_pool_list: Vec<TokenId>,
+				asset_id_in: TokenId,
+				asset_amount_in: Balance,
+				asset_id_out: TokenId,
+				asset_amount_out: Balance,
+			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+				// allowed high value single pool swap, should have enough `asset_id_in` tokens to pay for fee
+				return if swap_pool_list.len() == 1 &&
+					(Self::is_high_value_swap(&fee_lock_metadata, asset_id_in, asset_amount_in) ||
+						Self::is_high_value_swap(
+							&fee_lock_metadata,
+							asset_id_out,
+							asset_amount_out,
+						)) {
+					let _ = OFLA::unlock_fee(who);
+					let fee = sp_runtime::helpers_128bit::multiply_by_rational_with_rounding(
+						asset_amount_in,
+						fees::MarketTotalFee::get(),
+						fees::FEE_PRECISION,
+						sp_runtime::Rounding::Down,
+					);
+					let balance =
+						orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::available_balance(
+							asset_id_in,
+							&who.clone().into(),
+						);
+					if fee.map_or(false, |f| f > balance) {
+						return Err(TransactionValidityError::Invalid(
+							InvalidTransaction::SwapPrevalidation.into(),
+						));
+					}
+
+					Ok(Some(LiquidityInfoEnum::FeeLockFree((
+						call.clone(),
+						asset_id_in,
+						fee.unwrap(),
+					))))
+				// fee lock, withdraw native `max(fee_lock_amount, fee)` amount
+				} else {
+					match C::withdraw(
+						tokens::RxTokenId::get().into(),
+						who,
+						sp_std::cmp::max(fee, fee_lock_metadata.fee_lock_amount),
+						WithdrawReasons::TRANSACTION_PAYMENT,
+						ExistenceRequirement::KeepAlive,
+					) {
+						Ok(imbalance) => Ok(Some(LiquidityInfoEnum::FeeLockImbalance((
+							tokens::RxTokenId::get().into(),
+							imbalance,
+						)))),
+						Err(_) => Err(InvalidTransaction::Payment.into()),
+					}
+				}
+			}
 		}
 
 		const SINGLE_HOP_MULTISWAP: usize = 2;
@@ -710,9 +783,11 @@ pub mod config {
 		impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 		where
 			T: pallet_transaction_payment::Config
+				+ pallet_treasury::Config
 				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
-			<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
+			<T as frame_system::Config>::RuntimeCall:
+				Into<crate::CallType> + Dispatchable<PostInfo = PostDispatchInfo>,
 			T::LengthToFee: frame_support::weights::WeightToFee<
 				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
 			>,
@@ -758,6 +833,7 @@ pub mod config {
 				let call_type: crate::CallType = (*call).clone().into();
 
 				match call_type {
+					crate::CallType::Swap { .. } |
 					crate::CallType::MultiSell { .. } |
 					crate::CallType::MultiBuy { .. } |
 					crate::CallType::AtomicBuy { .. } |
@@ -905,6 +981,26 @@ pub mod config {
 						})?;
 						Ok(Some(LiquidityInfoEnum::FeeLock))
 					},
+					(
+						CallType::Swap {
+							swap_pool_list,
+							asset_id_in,
+							asset_amount_in,
+							asset_id_out,
+							asset_amount_out,
+						},
+						Some(fee_lock_metadata),
+					) => FeeHelpers::<T, C, OU, OCA, OFLA>::can_withdraw_fee(
+						who,
+						call,
+						fee,
+						fee_lock_metadata,
+						swap_pool_list,
+						asset_id_in,
+						asset_amount_in,
+						asset_id_out,
+						asset_amount_out,
+					),
 					_ => OCA::withdraw_fee(who, call, info, fee, tip),
 				}
 			}
@@ -917,7 +1013,7 @@ pub mod config {
 			fn correct_and_deposit_fee(
 				who: &T::AccountId,
 				dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-				post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+				post_info: &PostDispatchInfo,
 				corrected_fee: Self::Balance,
 				tip: Self::Balance,
 				already_withdrawn: Self::LiquidityInfo,
@@ -932,6 +1028,65 @@ pub mod config {
 						already_withdrawn,
 					),
 					Some(LiquidityInfoEnum::FeeLock) => Ok(()),
+					// fallback to normal fee or charge portion of swap input asset id
+					Some(LiquidityInfoEnum::FeeLockFree((call, asset_id, amount))) => {
+						if post_info.pays_fee == Pays::Yes {
+							OCA::withdraw_fee(who, &call, dispatch_info, corrected_fee, tip)
+								.and_then(|imbalance| {
+									OCA::correct_and_deposit_fee(
+										who,
+										dispatch_info,
+										post_info,
+										corrected_fee,
+										tip,
+										imbalance,
+									)
+								})
+								.or_else(|_| {
+									C::transfer(
+										asset_id,
+										who,
+										&config::TreasuryAccountIdOf::<T>::get().into(),
+										amount,
+										ExistenceRequirement::AllowDeath,
+									)
+								})
+								.map_err(|_| {
+									TransactionValidityError::Invalid(
+										InvalidTransaction::Payment.into(),
+									)
+								})?;
+						}
+
+						Ok(())
+					},
+					// The feelocked calls should not pay fee, refund all and lock
+					// on failure pays corrected consumed weight
+					Some(LiquidityInfoEnum::FeeLockImbalance(imbalance)) => {
+						let corrected_fee = if post_info.pays_fee == Pays::Yes {
+							corrected_fee
+						} else {
+							Zero::zero()
+						};
+
+						OCA::correct_and_deposit_fee(
+							who,
+							dispatch_info,
+							post_info,
+							corrected_fee,
+							Zero::zero(),
+							Some(LiquidityInfoEnum::Imbalance(imbalance)),
+						)?;
+
+						if post_info.pays_fee == Pays::No {
+							OFLA::process_fee_lock(who).map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::ProcessFeeLock.into(),
+								)
+							})?;
+						}
+						Ok(())
+					},
 					None => Ok(()),
 				}
 			}
@@ -972,7 +1127,7 @@ pub mod config {
 				Opposite = C::PositiveImbalance,
 			>,
 			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
 				scale_info::TypeInfo,
 			T1: Get<C::CurrencyId>,
@@ -1002,6 +1157,8 @@ pub mod config {
 					WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 				};
 
+				let fee_2 = fee / SF::get().into();
+
 				match C::withdraw(
 					T1::get(),
 					who,
@@ -1009,16 +1166,18 @@ pub mod config {
 					withdraw_reason,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
-					// TODO make sure atleast 1 planck KSM is charged
+					Ok(imbalance) =>
+						Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
+					Err(_) if fee_2.is_zero() => Err(InvalidTransaction::Payment.into()),
 					Err(_) => match C::withdraw(
 						T2::get(),
 						who,
-						fee / SF::get().into(),
+						fee_2,
 						withdraw_reason,
 						ExistenceRequirement::KeepAlive,
 					) {
-						Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
+						Ok(imbalance) =>
+							Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
 						Err(_) => Err(InvalidTransaction::Payment.into()),
 					},
 				}
@@ -1051,9 +1210,11 @@ pub mod config {
 					let refund_imbalance = C::deposit_into_existing(token_id, &who, refund_amount)
 						.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id));
 					// merge the imbalance caused by paying the fees and refunding parts of it again.
-					let adjusted_paid = paid
-						.offset(refund_imbalance)
-						.same()
+					let adjusted_paid = match paid.offset(refund_imbalance) {
+							SameOrOther::Same(a) => Ok(a),
+							SameOrOther::None => Ok(C::NegativeImbalance::from_zero(token_id)),
+							SameOrOther::Other(b) => Err(b),
+						}
 						.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 					// Call someone else to handle the imbalance (fee and tip separately)
 					let (tip_imb, fee) = adjusted_paid.split(tip);
@@ -1306,8 +1467,8 @@ pub mod config {
 				asset_2: T::AssetId,
 			) -> DispatchResult {
 				let name_lp = format_u128_with_leading_zeros(lp_asset, 8);
-				let name_asset_1 = format_u128_with_leading_zeros(lp_asset, 8);
-				let name_asset_2 = format_u128_with_leading_zeros(lp_asset, 8);
+				let name_asset_1 = format_u128_with_leading_zeros(asset_1, 8);
+				let name_asset_2 = format_u128_with_leading_zeros(asset_2, 8);
 
 				let mut name: Vec<u8> = Vec::<u8>::new();
 				name.extend_from_slice(LIQUIDITY_TOKEN_IDENTIFIER);
@@ -1373,7 +1534,6 @@ pub mod config {
 				current /= 10;
 			}
 
-			result.reverse();
 			result
 		}
 	}
@@ -1426,6 +1586,7 @@ pub mod config {
 				let call: crate::CallType = (c.clone()).into();
 
 				match call {
+					CallType::Swap { .. } |
 					CallType::MultiSell { .. } |
 					CallType::MultiBuy { .. } |
 					CallType::AtomicBuy { .. } |

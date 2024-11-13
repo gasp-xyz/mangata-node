@@ -3682,6 +3682,36 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 	fn get_pool_info(pool_id: Self::CurrencyId) -> Option<PoolInfo<Self::CurrencyId>> {
 		LiquidityPools::<T>::get(pool_id)
 	}
+
+	fn get_dy(
+		_: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dx: Self::Balance,
+	) -> Option<Self::Balance> {
+		Self::calculate_sell_price_id(asset_in, asset_out, dx).ok()
+	}
+
+	fn get_dx(
+		_: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dy: Self::Balance,
+	) -> Option<Self::Balance> {
+		Self::calculate_buy_price_id(asset_in, asset_out, dy).ok()
+	}
+
+	fn get_burn_amounts(
+		pool_id: Self::CurrencyId,
+		lp_burn_amount: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		let pool = Self::get_pool_info(pool_id)?;
+		Self::get_burn_amount(pool.0, pool.1, lp_burn_amount).ok()
+	}
+
+	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
+		Self::get_liq_tokens_for_trading().ok()
+	}
 }
 
 impl<T: Config> TreasuryBurn<T::AccountId> for Pallet<T> {

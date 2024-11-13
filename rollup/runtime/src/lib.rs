@@ -18,8 +18,8 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, Convert, ConvertInto, DispatchInfoOf,
-		Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert, NumberFor,
-		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
+		Dispatchable, Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert,
+		NumberFor, PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, ExtrinsicInclusionMode, FixedPointNumber,
@@ -46,7 +46,7 @@ pub use mangata_types::assets::{CustomMetadata, L1Asset, XcmMetadata, XykMetadat
 pub use frame_support::traits::OriginTrait;
 pub use frame_support::{
 	construct_runtime,
-	dispatch::{DispatchClass, DispatchResult},
+	dispatch::{DispatchClass, DispatchResult, Pays},
 	ensure, parameter_types,
 	traits::{
 		tokens::{
@@ -68,10 +68,12 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
+use frame_support::{dispatch::PostDispatchInfo, traits::SameOrOther};
 pub use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	Call as SystemCall, ConsumedWeight, EnsureRoot, EnsureRootWithSuccess, SetCode,
 };
+
 pub use orml_tokens::Call as TokensCall;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use runtime_config::*;
@@ -412,6 +414,19 @@ where
 impl Into<CallType> for RuntimeCall {
 	fn into(self) -> CallType {
 		match self {
+			RuntimeCall::Market(pallet_market::Call::multiswap_asset {
+				swap_pool_list,
+				asset_id_in,
+				asset_amount_in,
+				asset_id_out,
+				min_amount_out,
+			}) => CallType::Swap {
+				swap_pool_list,
+				asset_id_in,
+				asset_amount_in,
+				asset_id_out,
+				asset_amount_out: min_amount_out,
+			},
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
 				sold_asset_id,
 				sold_asset_amount,
@@ -1342,6 +1357,45 @@ impl_runtime_apis! {
 
 		fn get_total_number_of_swaps() -> u128 {
 			Xyk::get_total_number_of_swaps()
+		}
+	}
+
+	impl pallet_market::MarketApi<Block, Balance, TokenId> for Runtime {
+		fn calculate_sell_price(pool_id: TokenId, sell_asset_id: TokenId, sell_amount: Balance) -> Option<Balance> {
+			Market::calculate_sell_price(pool_id, sell_asset_id, sell_amount)
+		}
+
+		fn calculate_buy_price(pool_id: TokenId, buy_asset_id: TokenId, buy_amount: Balance) -> Option<Balance> {
+			Market::calculate_buy_price(pool_id, buy_asset_id, buy_amount)
+		}
+
+		fn get_burn_amount(pool_id: TokenId, lp_burn_amount: Balance) -> Option<(Balance, Balance)> {
+			Market::get_burn_amount(pool_id, lp_burn_amount)
+		}
+
+		fn get_tradeable_tokens() -> Vec<pallet_market::RpcAssetMetadata<TokenId>> {
+			orml_asset_registry::Metadata::<Runtime>::iter()
+			.filter_map(|(token_id, metadata)| {
+				if !metadata.name.is_empty()
+					&& !metadata.symbol.is_empty()
+					&& metadata.additional.xyk.as_ref().map_or(true, |xyk| !xyk.operations_disabled)
+				{
+					let rpc_metadata = pallet_market::RpcAssetMetadata {
+						token_id: token_id,
+						decimals: metadata.decimals,
+						name: metadata.name.to_vec(),
+						symbol: metadata.symbol.to_vec(),
+					};
+					Some(rpc_metadata)
+				} else {
+					None
+				}
+			})
+			.collect::<Vec<_>>()
+		}
+
+		fn get_pools_for_trading() -> Vec<TokenId> {
+			Market::get_pools_for_trading()
 		}
 	}
 

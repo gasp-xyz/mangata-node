@@ -19,9 +19,10 @@ mod rollup_imports {
 			pallet_membership::{FoundationAccountsProvider, MaxMembers},
 			pallet_proxy::ProxyType,
 		},
-		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, FoundationMembers, Identity,
-		Maintenance, ProofOfStake, Proxy, Rolldown, Runtime, RuntimeCall, RuntimeEvent,
-		RuntimeOrigin, System, TokenId, Tokens, UncheckedExtrinsic, Xyk, XykMetadata,
+		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, DispatchClass, FeeLock,
+		FoundationMembers, Identity, Maintenance, OnChargeTransaction, Pays, ProofOfStake, Proxy,
+		Rolldown, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, System, TokenId, Tokens,
+		UncheckedExtrinsic, Weight, Xyk, XykMetadata,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;
@@ -47,17 +48,14 @@ pub fn microcent(decimals: u32) -> Balance {
 	millicent(decimals) / 1000
 }
 
-const PARA_ID: u32 = 2110;
-
 pub struct ExtBuilder {
-	pub parachain_id: u32,
 	pub assets: Vec<(TokenId, AssetMetadataOf)>,
 	pub balances: Vec<(AccountId, TokenId, Balance)>,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self { parachain_id: PARA_ID, assets: vec![], balances: vec![] }
+		Self { assets: vec![], balances: vec![] }
 	}
 }
 
@@ -69,11 +67,6 @@ impl ExtBuilder {
 
 	pub fn balances(mut self, balances: Vec<(AccountId, TokenId, Balance)>) -> Self {
 		self.balances = balances;
-		self
-	}
-
-	pub fn parachain_id(mut self, parachain_id: u32) -> Self {
-		self.parachain_id = parachain_id;
 		self
 	}
 

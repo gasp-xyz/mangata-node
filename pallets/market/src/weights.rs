@@ -8,7 +8,7 @@ pub trait WeightInfo {
 	fn create_pool() -> Weight;
 	fn mint_liquidity() -> Weight;
 	fn burn_liquidity() -> Weight;
-	fn multiswap_asset(x: u32, ) -> Weight;
+	fn multiswap_asset(x: u32) -> Weight;
 }
 
 impl WeightInfo for () {

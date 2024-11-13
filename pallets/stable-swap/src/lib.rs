@@ -69,8 +69,6 @@ pub type BalancesOf<T> = BoundedVec<<T as Config>::Balance, <T as Config>::MaxAs
 
 #[frame_support::pallet]
 pub mod pallet {
-	use mangata_support::pools::SwapResult;
-
 	use super::*;
 
 	#[pallet::pallet]
@@ -507,7 +505,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Withdraw assets from the pool in an imbalanced amounts
+		/// Withdraw balanced assets from the pool given LP tokens amount to burn
 		#[pallet::call_index(5)]
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
@@ -535,8 +533,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub const FEE_DENOMINATOR: u128 = 10_u128.pow(10);
 		const PRECISION: u128 = 10_u128.pow(18);
-		const FEE_DENOMINATOR: u128 = 10_u128.pow(10);
 		const A_PRECISION: u128 = 100;
 
 		// calls impl
@@ -990,6 +988,32 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::MathOverflow)?;
 
 			Ok(r)
+		}
+
+		pub fn get_burn_amounts(
+			pool_id: &PoolIdOf<T>,
+			burn_amount: T::Balance,
+		) -> Result<Vec<T::Balance>, DispatchError> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+			let total_supply = T::Currency::total_issuance(pool.lp_token);
+
+			let (balances, _) = Self::get_balances_xp_pool(&pool_account, &pool)?;
+
+			let mut amounts = vec![];
+			for i in 0..pool.assets.len() {
+				let value = balances[i]
+					.checked_mul(&T::HigherPrecisionBalance::from(burn_amount))
+					.ok_or(Error::<T>::MathOverflow)?
+					.checked_div(&T::HigherPrecisionBalance::from(total_supply))
+					.ok_or(Error::<T>::MathOverflow)?
+					.try_into()
+					.map_err(|_| Error::<T>::MathOverflow)?;
+				amounts.push(value);
+			}
+
+			Ok(amounts)
 		}
 
 		fn treasury_account_id() -> T::AccountId {
@@ -1593,7 +1617,47 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 	fn get_pool_info(
 		pool_id: Self::CurrencyId,
 	) -> Option<mangata_support::pools::PoolInfo<Self::CurrencyId>> {
-		Pools::<T>::get(pool_id).map(|info| (info.assets[0], info.assets[1]))
+		let info = Pools::<T>::get(pool_id)?;
+		let asset1 = info.assets.get(0)?;
+		let asset2 = info.assets.get(1)?;
+		Some((*asset1, *asset2))
+	}
+
+	fn get_dy(
+		pool_id: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dx: Self::Balance,
+	) -> Option<Self::Balance> {
+		Self::get_dy(&pool_id, asset_in, asset_out, dx).ok()
+	}
+
+	fn get_dx(
+		pool_id: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dy: Self::Balance,
+	) -> Option<Self::Balance> {
+		Self::get_dx(&pool_id, asset_in, asset_out, dy).ok()
+	}
+
+	fn get_burn_amounts(
+		pool_id: Self::CurrencyId,
+		lp_burn_amount: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		let amounts = Self::get_burn_amounts(&pool_id, lp_burn_amount).ok()?;
+		let asset1 = amounts.get(0)?;
+		let asset2 = amounts.get(1)?;
+		Some((*asset1, *asset2))
+	}
+
+	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
+		let result = Pools::<T>::iter_values()
+			.map(|v| v.lp_token)
+			.filter(|v| !T::Currency::total_issuance((*v).into()).is_zero())
+			.collect();
+
+		Some(result)
 	}
 }
 

@@ -148,8 +148,6 @@ fn multiswap_should_work_xyk() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
-
-		println!("{:#?}", events());
 	})
 }
 
@@ -168,8 +166,6 @@ fn multiswap_should_work_stable_swap() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
-
-		println!("{:#?}", events());
 	})
 }
 
@@ -188,7 +184,5 @@ fn multiswap_should_work_mixed() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
-
-		println!("{:#?}", events());
 	})
 }

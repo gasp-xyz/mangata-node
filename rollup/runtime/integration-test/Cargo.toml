@@ -17,6 +17,7 @@ pallet-identity = { workspace = true }
 pallet-membership = { workspace = true }
 pallet-proxy = { workspace = true }
 pallet-session = { workspace = true }
+pallet-transaction-payment = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-storage = { workspace = true }
@@ -31,6 +32,7 @@ orml-traits = { workspace = true }
 # Local
 pallet-bootstrap = { path = "../../../pallets/bootstrap" }
 pallet-issuance = { path = "../../../pallets/issuance" }
+pallet-fee-lock = { path = "../../../pallets/fee-lock" }
 pallet-maintenance = { path = "../../../pallets/maintenance" }
 pallet-market = { path = "../../../pallets/market" }
 pallet-multipurpose-liquidity = { path = "../../../pallets/multipurpose-liquidity" }

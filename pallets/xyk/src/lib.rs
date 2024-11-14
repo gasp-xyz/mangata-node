@@ -293,7 +293,7 @@ use frame_support::{
 	assert_ok,
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
-	traits::{tokens::CurrencyId, Contains},
+	traits::{tokens::CurrencyId, Contains, Equals},
 	PalletId,
 };
 use frame_system::ensure_signed;
@@ -955,7 +955,7 @@ pub mod pallet {
 			)
 			.map(|x| (x.0, x.1, x.2))?;
 
-			let (liquidity_token_id, liquidity_assets_minted) = <Self as XykFunctionsTrait<
+			let (liquidity_token_id, liquidity_assets_minted, _) = <Self as XykFunctionsTrait<
 				T::AccountId,
 				BalanceOf<T>,
 				CurrencyIdOf<T>,
@@ -1012,7 +1012,7 @@ pub mod pallet {
 			)
 			.map(|x| (x.0, x.1))?;
 
-			let (liquidity_token_id, liquidity_assets_minted) = <Self as XykFunctionsTrait<
+			let (liquidity_token_id, liquidity_assets_minted, _) = <Self as XykFunctionsTrait<
 				T::AccountId,
 				BalanceOf<T>,
 				CurrencyIdOf<T>,
@@ -2195,7 +2195,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		first_asset_amount: BalanceOf<T>,
 		second_asset_id: CurrencyIdOf<T>,
 		second_asset_amount: BalanceOf<T>,
-	) -> DispatchResult {
+	) -> Result<CurrencyIdOf<T>, DispatchError> {
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
 		// Ensure pool is not created with zero amount
@@ -2312,7 +2312,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			second_asset_amount,
 		));
 
-		Ok(())
+		Ok(liquidity_asset_id)
 	}
 
 	// To put it comprehensively the only reason that the user should lose out on swap fee
@@ -2976,7 +2976,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		first_asset_amount: BalanceOf<T>,
 		expected_second_asset_amount: BalanceOf<T>,
 		activate_minted_liquidity: bool,
-	) -> Result<(CurrencyIdOf<T>, BalanceOf<T>), DispatchError> {
+	) -> Result<(CurrencyIdOf<T>, BalanceOf<T>, BalanceOf<T>), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
 		// Ensure pool exists
@@ -3149,7 +3149,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			liquidity_assets_minted,
 		));
 
-		Ok((liquidity_asset_id, liquidity_assets_minted))
+		Ok((liquidity_asset_id, liquidity_assets_minted, second_asset_amount))
 	}
 
 	fn do_compound_rewards(
@@ -3268,14 +3268,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		// we swap the order of the pairs to handle rounding
 		// we spend all of the Y
 		// and have some surplus amount of X that equals to the rounded part of Y
-		<Self as XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::mint_liquidity(
+		let (lp, lp_amount, _) = <Self as XykFunctionsTrait<
+			T::AccountId,
+			BalanceOf<T>,
+			CurrencyIdOf<T>,
+		>>::mint_liquidity(
 			sender,
 			other_asset_id,
 			provided_asset_id,
 			bought_amount,
 			BalanceOf::<T>::max_value(),
 			activate_minted_liquidity,
-		)
+		)?;
+		Ok((lp, lp_amount))
 	}
 
 	fn burn_liquidity(
@@ -3283,7 +3288,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 		first_asset_id: CurrencyIdOf<T>,
 		second_asset_id: CurrencyIdOf<T>,
 		liquidity_asset_amount: BalanceOf<T>,
-	) -> DispatchResult {
+	) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
 		ensure!(
@@ -3456,7 +3461,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 			liquidity_asset_amount,
 		));
 
-		Ok(())
+		Ok((first_asset_amount, second_asset_amount))
 	}
 
 	// This function has not been verified
@@ -3512,6 +3517,28 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 
 	fn is_liquidity_token(liquidity_asset_id: CurrencyIdOf<T>) -> bool {
 		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
+	}
+
+	// copypasta from mint_liquidity
+	fn expected_amount_for_minting(
+		liquidity_asset_id: CurrencyIdOf<T>,
+		asset_id: CurrencyIdOf<T>,
+		amount: BalanceOf<T>,
+	) -> Option<BalanceOf<T>> {
+		let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(liquidity_asset_id)?;
+		let (first_asset_reserve, second_asset_reserve) =
+			Pallet::<T>::get_reserves(first_asset_id, second_asset_id).ok()?;
+
+		let (b, c) = if asset_id == first_asset_id {
+			(second_asset_reserve, first_asset_reserve)
+		} else {
+			(first_asset_reserve, second_asset_reserve)
+		};
+
+		multiply_by_rational_with_rounding(amount.into(), b.into(), c.into(), Rounding::Down)?
+			.checked_add(1)?
+			.try_into()
+			.ok()
 	}
 }
 
@@ -3711,6 +3738,51 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 
 	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
 		Self::get_liq_tokens_for_trading().ok()
+	}
+
+	fn get_mint_amount(
+		pool_id: Self::CurrencyId,
+		amounts: (Self::Balance, Self::Balance),
+	) -> Option<Self::Balance> {
+		if amounts.0.is_zero() && amounts.1.is_zero() {
+			return None;
+		}
+
+		// could use
+		// calculate_balanced_sell_amount
+		// calculate_sell_price
+		// expected_amount_for_minting
+		// the provide_liq_with_conversion does a swap inside which alters the state
+		// so expected_amount_for_minting returns a diff amount
+		// would need quite some work "fake swap" in memory and compute,
+		// so return None for now
+		if amounts.0.is_zero() || amounts.1.is_zero() {
+			return  None;
+		}
+
+		let pool = Self::get_pool_info(pool_id)?;
+		let reserves = Pools::<T>::get(pool);
+		let supply = T::Currency::total_issuance(pool_id);
+
+		let exp_1 = Self::expected_amount_for_minting(pool_id, pool.0, amounts.0)?;
+		let exp_0 = Self::expected_amount_for_minting(pool_id, pool.1, amounts.1)?;
+
+		let (amount, reserve) = if exp_1 == amounts.1 {
+			(amounts.0, reserves.0)
+		} else if exp_0 == amounts.0 {
+			(amounts.1, reserves.1)
+		} else {
+			return None;
+		};
+
+		multiply_by_rational_with_rounding(
+			amount.into(),
+			supply.into(),
+			reserve.into(),
+			Rounding::Down,
+		)?
+		.try_into()
+		.ok()
 	}
 }
 

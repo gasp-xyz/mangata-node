@@ -11,7 +11,10 @@ use frame_support::{
 	ensure, fail,
 	pallet_prelude::*,
 	traits::{
-		tokens::{currency::MultiTokenVestingLocks, Balance, CurrencyId},
+		tokens::{
+			currency::{MultiTokenCurrency, MultiTokenVestingLocks},
+			Balance, CurrencyId,
+		},
 		Contains,
 	},
 };
@@ -64,6 +67,7 @@ pub type PoolIdOf<T> = <T as Config>::CurrencyId;
 // pools are composed of a pair of assets
 pub type PoolInfoOf<T> = PoolInfo<<T as Config>::CurrencyId>;
 pub type AssetPairOf<T> = (<T as Config>::CurrencyId, <T as Config>::CurrencyId);
+pub type BalancePairOf<T> = (<T as Config>::Balance, <T as Config>::Balance);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -171,21 +175,62 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Atomic swap failed
-		MultiSwapAssetFailedOnAtomicSwap {
+		/// Assets were swapped successfully
+		AssetsSwapped {
+			/// The account that initiated the swap
 			who: T::AccountId,
+			/// List of pools that were used for swap
 			swap_pool_list: Vec<PoolIdOf<T>>,
+			/// Path of the atomic asset swaps
 			swap_assets_list: Vec<AssetPairOf<T>>,
-			module_err: ModuleError,
+			/// The amount that was withdrawn from the user
+			amount_in: T::Balance,
+			/// The amount that was deposited to the user
+			amount_out: T::Balance,
 		},
 
-		/// Assets where swapped successfully
-		AssetsSwapped {
+		/// A successful call of the `CretaPool` extrinsic will create this event.
+		PoolCreated {
+			/// The account that created the pool.
+			creator: T::AccountId,
+			/// The pool id and the account ID of the pool.
+			pool_id: PoolIdOf<T>,
+			/// The id of the liquidity tokens that will be minted when assets are added to this
+			/// pool.
+			lp_token: T::CurrencyId,
+			/// The asset ids associated with the pool. Note that the order of the assets may not be
+			/// the same as the order specified in the create pool extrinsic.
+			assets: AssetPairOf<T>,
+		},
+
+		/// A successful call of the `AddLiquidity` extrinsic will create this event.
+		LiquidityMinted {
+			/// The account that the liquidity was taken from.
 			who: T::AccountId,
-			swap_pool_list: Vec<PoolIdOf<T>>,
-			swap_assets_list: Vec<AssetPairOf<T>>,
-			amount_in: T::Balance,
-			amount_out: T::Balance,
+			/// The id of the pool that the liquidity was added to.
+			pool_id: PoolIdOf<T>,
+			/// The amounts of the assets that were added to the pool.
+			amounts_provided: BalancePairOf<T>,
+			/// The id of the LP token that was minted.
+			lp_token: T::CurrencyId,
+			/// The amount of lp tokens that were minted of that id.
+			lp_token_minted: T::Balance,
+			/// The new total supply of the associated LP token.
+			total_supply: T::Balance,
+		},
+
+		/// A successful call of the `RemoveLiquidity` extrinsic will create this event.
+		LiquidityBurned {
+			/// The account that the liquidity token was taken from.
+			who: T::AccountId,
+			/// The id of the pool that the liquidity was taken from.
+			pool_id: PoolIdOf<T>,
+			/// The amount of the asset that was received.
+			amounts: BalancePairOf<T>,
+			/// The amount of the associated LP token that was burned.
+			burned_amount: T::Balance,
+			/// The new total supply of the associated LP token.
+			total_supply: T::Balance,
 		},
 	}
 
@@ -219,14 +264,17 @@ pub mod pallet {
 				Error::<T>::DisallowedPool,
 			);
 
-			match kind {
-				PoolKind::Xyk => T::Xyk::create_pool(
-					sender,
-					first_asset_id,
-					first_asset_amount,
-					second_asset_id,
-					second_asset_amount,
-				)?,
+			let lp_token = match kind {
+				PoolKind::Xyk => {
+					let lp_token = T::Xyk::create_pool(
+						sender.clone(),
+						first_asset_id,
+						first_asset_amount,
+						second_asset_id,
+						second_asset_amount,
+					)?;
+					lp_token
+				},
 				PoolKind::StableSwap => {
 					let first_decimal = T::AssetRegistry::metadata(&first_asset_id)
 						.map(|meta| meta.decimals)
@@ -251,8 +299,26 @@ pub mod pallet {
 					)?;
 
 					T::AssetRegistry::create_pool_asset(lp_token, first_asset_id, second_asset_id)?;
+					lp_token
 				},
-			}
+			};
+
+			Self::deposit_event(Event::PoolCreated {
+				creator: sender.clone(),
+				pool_id: lp_token,
+				lp_token,
+				assets: (first_asset_id, second_asset_id),
+			});
+
+			let lp_supply = T::Currency::total_issuance(lp_token);
+			Self::deposit_event(Event::LiquidityMinted {
+				who: sender,
+				pool_id: lp_token,
+				amounts_provided: (first_asset_amount, second_asset_amount),
+				lp_token,
+				lp_token_minted: lp_supply,
+				total_supply: lp_supply,
+			});
 
 			Ok(())
 		}
@@ -276,7 +342,7 @@ pub mod pallet {
 			let pool_info = Self::get_pool_info(pool_id)?;
 			Self::check_assets_allowed(pool_info.pool)?;
 
-			Self::do_mint_liquidity(
+			let (lp_amount, other_asset_amount) = Self::do_mint_liquidity(
 				&sender,
 				pool_info,
 				asset_id,
@@ -284,6 +350,17 @@ pub mod pallet {
 				max_other_asset_amount,
 				true,
 			)?;
+
+			let lp_supply = T::Currency::total_issuance(pool_id);
+			Self::deposit_event(Event::LiquidityMinted {
+				who: sender,
+				pool_id,
+				amounts_provided: (asset_amount, other_asset_amount),
+				lp_token: pool_id,
+				lp_token_minted: lp_amount,
+				total_supply: lp_supply,
+			});
+
 			Ok(())
 		}
 
@@ -304,7 +381,7 @@ pub mod pallet {
 			let pool_info = Self::get_pool_info(pool_id)?;
 			Self::check_assets_allowed(pool_info.pool)?;
 
-			match pool_info.kind {
+			let lp_amount = match pool_info.kind {
 				PoolKind::Xyk => {
 					ensure!(
 						amounts.0 == Zero::zero() || amounts.1 == Zero::zero(),
@@ -317,15 +394,16 @@ pub mod pallet {
 						(pool_info.pool.1, amounts.1)
 					};
 
-					let (_, lp_amout) = T::Xyk::provide_liquidity_with_conversion(
-						sender,
+					let (_, lp_amount) = T::Xyk::provide_liquidity_with_conversion(
+						sender.clone(),
 						pool_info.pool.0,
 						pool_info.pool.1,
 						id,
 						amount,
 						true,
 					)?;
-					ensure!(lp_amout > min_amount_lp_tokens, Error::<T>::InsufficientOutputAmount);
+					ensure!(lp_amount > min_amount_lp_tokens, Error::<T>::InsufficientOutputAmount);
+					lp_amount
 				},
 				PoolKind::StableSwap => {
 					let amount = T::StableSwap::add_liquidity(
@@ -334,14 +412,27 @@ pub mod pallet {
 						amounts,
 						min_amount_lp_tokens,
 					)?;
-					T::Rewards::activate_liquidity(
-						sender.clone(),
-						pool_id,
-						amount,
-						Some(ActivateKind::AvailableBalance),
-					)?;
+					if T::Rewards::native_rewards_enabled(pool_info.pool_id) {
+						T::Rewards::activate_liquidity(
+							sender.clone(),
+							pool_id,
+							amount,
+							Some(ActivateKind::AvailableBalance),
+						)?;
+					}
+					amount
 				},
-			}
+			};
+
+			let lp_supply = T::Currency::total_issuance(pool_id);
+			Self::deposit_event(Event::LiquidityMinted {
+				who: sender,
+				pool_id,
+				amounts_provided: amounts,
+				lp_token: pool_id,
+				lp_token_minted: lp_amount,
+				total_supply: lp_supply,
+			});
 
 			Ok(())
 		}
@@ -379,7 +470,7 @@ pub mod pallet {
 					vesting_native_asset_unlock_some_amount_or_all,
 				)?;
 
-			let lp_amount = Self::do_mint_liquidity(
+			let (lp_amount, other_asset_amount) = Self::do_mint_liquidity(
 				&sender,
 				pool_info,
 				native_id,
@@ -395,6 +486,16 @@ pub mod pallet {
 				Some(vesting_starting_block),
 				vesting_ending_block_as_balance,
 			)?;
+
+			let lp_supply = T::Currency::total_issuance(pool_id);
+			Self::deposit_event(Event::LiquidityMinted {
+				who: sender,
+				pool_id,
+				amounts_provided: (unlocked_amount, other_asset_amount),
+				lp_token: pool_id,
+				lp_token_minted: lp_amount,
+				total_supply: lp_supply,
+			});
 
 			Ok(())
 		}
@@ -423,7 +524,7 @@ pub mod pallet {
 			let (vesting_starting_block, vesting_ending_block_as_balance) =
 				T::Vesting::unlock_tokens(&sender, native_id, native_asset_vesting_amount)?;
 
-			let lp_amount = Self::do_mint_liquidity(
+			let (lp_amount, other_asset_amount) = Self::do_mint_liquidity(
 				&sender,
 				pool_info,
 				native_id,
@@ -439,6 +540,16 @@ pub mod pallet {
 				Some(vesting_starting_block),
 				vesting_ending_block_as_balance,
 			)?;
+
+			let lp_supply = T::Currency::total_issuance(pool_id);
+			Self::deposit_event(Event::LiquidityMinted {
+				who: sender,
+				pool_id,
+				amounts_provided: (native_asset_vesting_amount, other_asset_amount),
+				lp_token: pool_id,
+				lp_token_minted: lp_amount,
+				total_supply: lp_supply,
+			});
 
 			Ok(())
 		}
@@ -460,15 +571,23 @@ pub mod pallet {
 			let pool_info = Self::get_pool_info(pool_id)?;
 			Self::check_assets_allowed(pool_info.pool)?;
 
-			match pool_info.kind {
+			let amounts = match pool_info.kind {
 				PoolKind::Xyk => {
-					// todo min amouonts
-					T::Xyk::burn_liquidity(
-						sender,
+					let amounts = T::Xyk::burn_liquidity(
+						sender.clone(),
 						pool_info.pool.0,
 						pool_info.pool.1,
 						liquidity_burn_amount,
 					)?;
+					ensure!(
+						amounts.0 >= min_first_asset_amount,
+						Error::<T>::InsufficientOutputAmount
+					);
+					ensure!(
+						amounts.1 >= min_second_asset_amount,
+						Error::<T>::InsufficientOutputAmount
+					);
+					amounts
 				},
 				PoolKind::StableSwap => {
 					// deactivate liquidity if low balance
@@ -477,14 +596,24 @@ pub mod pallet {
 					// noop on zero amount
 					T::Rewards::deactivate_liquidity(sender.clone(), pool_id, deactivate)?;
 
-					T::StableSwap::remove_liquidity(
+					let amounts = T::StableSwap::remove_liquidity(
 						&sender,
 						pool_id,
 						liquidity_burn_amount,
 						(min_first_asset_amount, min_second_asset_amount),
 					)?;
+					amounts
 				},
-			}
+			};
+
+			let lp_supply = T::Currency::total_issuance(pool_id);
+			Self::deposit_event(Event::LiquidityBurned {
+				who: sender,
+				pool_id,
+				amounts,
+				burned_amount: liquidity_burn_amount,
+				total_supply: lp_supply,
+			});
 
 			Ok(())
 		}
@@ -563,12 +692,9 @@ pub mod pallet {
 			let mut id = asset_id_out;
 			let mut amount_in = asset_amount_out;
 			for (pool, swap) in pools.iter().rev().zip(path.iter().rev()) {
-				amount_in = Self::calculate_buy_price(pool.pool_id, id, amount_in).ok_or(Error::<T>::UnexpectedFailure)?;
-				id = if id == swap.0 {
-					swap.1
-				} else {
-					swap.0
-				};
+				amount_in = Self::calculate_buy_price(pool.pool_id, id, amount_in)
+					.ok_or(Error::<T>::UnexpectedFailure)?;
+				id = if id == swap.0 { swap.1 } else { swap.0 };
 			}
 
 			ensure!(amount_in < max_amount_in, Error::<T>::ExcesiveInputAmount);
@@ -644,6 +770,29 @@ pub mod pallet {
 			assets
 		}
 
+		pub fn calculate_expected_amount_for_minting(
+			pool_id: PoolIdOf<T>,
+			asset_id: T::CurrencyId,
+			amount: T::Balance,
+		) -> Option<T::Balance> {
+			let pool_info = Self::get_pool_info(pool_id).ok()?;
+			match pool_info.kind {
+				PoolKind::Xyk => T::Xyk::expected_amount_for_minting(pool_id, asset_id, amount),
+				PoolKind::StableSwap => Some(amount),
+			}
+		}
+
+		pub fn calculate_expected_lp_minted(
+			pool_id: PoolIdOf<T>,
+			amounts: BalancePairOf<T>,
+		) -> Option<T::Balance> {
+			let pool_info = Self::get_pool_info(pool_id).ok()?;
+			match pool_info.kind {
+				PoolKind::Xyk => T::Xyk::get_mint_amount(pool_id, amounts),
+				PoolKind::StableSwap => T::StableSwap::get_mint_amount(pool_id, amounts),
+			}
+		}
+
 		// private helpers
 		fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {
 			if let Some(pool) = T::Xyk::get_pool_info(pool_id) {
@@ -688,8 +837,7 @@ pub mod pallet {
 
 				// check pools' asset connection
 				// first is asset_id_in, last is asset_id_out
-				let prev_asset_id =
-					if let Some(&last) = path.last() { last.1 } else { asset_in };
+				let prev_asset_id = if let Some(&last) = path.last() { last.1 } else { asset_in };
 
 				if pool_info.pool.0 == prev_asset_id {
 					path.push(pool_info.pool);
@@ -715,16 +863,16 @@ pub mod pallet {
 			amount: T::Balance,
 			max_amount: T::Balance,
 			activate: bool,
-		) -> Result<T::Balance, DispatchError> {
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
 			let (asset_with_amount, asset_other) = if asset_id == pool_info.pool.0 {
 				pool_info.pool
 			} else {
 				(pool_info.pool.1, pool_info.pool.0)
 			};
 
-			let lp_amount = match pool_info.kind {
+			let amounts = match pool_info.kind {
 				PoolKind::Xyk => {
-					let (_, amount) = T::Xyk::mint_liquidity(
+					let (_, lp_amount, second_asset_withdrawn) = T::Xyk::mint_liquidity(
 						sender.clone(),
 						asset_with_amount,
 						asset_other,
@@ -732,11 +880,11 @@ pub mod pallet {
 						max_amount,
 						activate,
 					)?;
-					amount
+					(lp_amount, second_asset_withdrawn)
 				},
 				PoolKind::StableSwap => {
 					// use 1:1 rate for amounts
-					let amount = T::StableSwap::add_liquidity(
+					let lp_amount = T::StableSwap::add_liquidity(
 						&sender,
 						pool_info.pool_id,
 						(amount, amount),
@@ -750,11 +898,11 @@ pub mod pallet {
 							Some(ActivateKind::AvailableBalance),
 						)?;
 					}
-					amount
+					(lp_amount, amount)
 				},
 			};
 
-			Ok(lp_amount)
+			Ok(amounts)
 		}
 
 		fn do_swaps(
@@ -834,6 +982,17 @@ sp_api::decl_runtime_apis! {
 			pool_id: AssetId,
 			lp_burn_amount: Balance,
 		) -> Option<(Balance, Balance)>;
+		
+		fn calculate_expected_amount_for_minting(
+			pool_id: AssetId,
+			asset_id:AssetId,
+			amount: Balance,
+		) -> Option<Balance>;
+
+		fn calculate_expected_lp_minted(
+			pool_id: AssetId,
+			amounts: (Balance, Balance),
+		) -> Option<Balance>;
 
 // 		fn get_max_instant_burn_amount(
 // 			user: AccountId,

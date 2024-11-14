@@ -195,7 +195,7 @@ pub mod pallet {
 			who: T::AccountId,
 			/// The id of the pool that the liquidity was added to.
 			pool_id: PoolIdOf<T>,
-			/// The amount of the first asset that was added to the pool.
+			/// The amounts of the assets that were added to the pool.
 			amounts_provided: BalancesOf<T>,
 			/// The id of the LP token that was minted.
 			lp_token: T::CurrencyId,
@@ -224,7 +224,7 @@ pub mod pallet {
 		},
 		/// A successful call of the `RemoveLiquidityOneAsset` extrinsic will create this event.
 		LiquidityBurnedOne {
-			/// Which account was the instigator of the swap.
+			/// The account that the liquidity token was taken from.
 			who: T::AccountId,
 			/// The id of the pool where assets were swapped.
 			pool_id: PoolIdOf<T>,
@@ -239,7 +239,7 @@ pub mod pallet {
 		},
 		/// A successful call of the `RemoveLiquidityImbalanced` & `RemoveLiquidity` extrinsic will create this event.
 		LiquidityBurned {
-			/// Which account was the instigator of the swap.
+			/// The account that the liquidity token was taken from.
 			who: T::AccountId,
 			/// The id of the pool where assets were swapped.
 			pool_id: PoolIdOf<T>,
@@ -1659,6 +1659,13 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 
 		Some(result)
 	}
+
+	fn get_mint_amount(
+		pool_id: Self::CurrencyId,
+		amounts: (Self::Balance, Self::Balance),
+	) -> Option<Self::Balance> {
+		Self::calc_lp_token_amount(&pool_id, vec![amounts.0, amounts.1], true).ok()
+	}
 }
 
 impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
@@ -1693,10 +1700,13 @@ impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
 		pool_id: Self::CurrencyId,
 		liquidity_asset_amount: Self::Balance,
 		min_asset_amounts_out: (Self::Balance, Self::Balance),
-	) -> DispatchResult {
+	) -> Result<(T::Balance, T::Balance), DispatchError> {
 		let min_amounts = vec![min_asset_amounts_out.0, min_asset_amounts_out.1];
-		let _ = Self::do_remove_liquidity(&sender, pool_id, liquidity_asset_amount, min_amounts)?;
-		Ok(())
+		let amounts =
+			Self::do_remove_liquidity(&sender, pool_id, liquidity_asset_amount, min_amounts)?;
+		let asset1 = amounts.get(0).ok_or(Error::<T>::UnexpectedFailure)?;
+		let asset2 = amounts.get(1).ok_or(Error::<T>::UnexpectedFailure)?;
+		Ok((*asset1, *asset2))
 	}
 
 	fn swap(

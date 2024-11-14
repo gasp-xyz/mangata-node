@@ -1,6 +1,6 @@
 use crate::setup::*;
 
-use pallet_market::PoolKind;
+use pallet_market::{Event, PoolKind};
 use sp_runtime::{traits::Zero, DispatchResult};
 
 const ASSET_ID_1: u32 = 1;
@@ -89,7 +89,7 @@ fn origin() -> RuntimeOrigin {
 }
 
 fn create_pool(kind: PoolKind, assets: (u32, u32)) -> DispatchResult {
-	Market::create_pool(origin(), kind, assets.0, 10 * UNIT, assets.1, 10 * UNIT)
+	Market::create_pool(origin(), kind, assets.0, 10 * UNIT, assets.1, 5 * UNIT)
 }
 
 pub(crate) fn events() -> Vec<RuntimeEvent> {
@@ -107,7 +107,36 @@ pub(crate) fn events() -> Vec<RuntimeEvent> {
 fn create_pool_works() {
 	test_env().execute_with(|| {
 		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		System::assert_has_event(RuntimeEvent::Market(Event::PoolCreated {
+			creator: AccountId::from(ALICE),
+			pool_id: 6,
+			lp_token: 6,
+			assets: (0, 1),
+		}));
+		System::assert_has_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 6,
+			amounts_provided: (10000000000000000000, 5000000000000000000),
+			lp_token: 6,
+			lp_token_minted: 7500000000000000000,
+			total_supply: 7500000000000000000,
+		}));
+
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		System::assert_has_event(RuntimeEvent::Market(Event::PoolCreated {
+			creator: AccountId::from(ALICE),
+			pool_id: 7,
+			lp_token: 7,
+			assets: (0, 1),
+		}));
+		System::assert_has_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 7,
+			amounts_provided: (10000000000000000000, 5000000000000000000),
+			lp_token: 7,
+			lp_token_minted: 14999063611862273044,
+			total_supply: 14999063611862273044,
+		}));
 	})
 }
 
@@ -117,8 +146,58 @@ fn add_liquidity_works() {
 		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
 
+		let expected = Market::calculate_expected_amount_for_minting(POOL_ID_1, NATIVE_ASSET_ID, UNIT).unwrap();
+		let lp_expected = Market::calculate_expected_lp_minted(POOL_ID_1, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_1, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 6,
+			amounts_provided: (1000000000000000000, expected),
+			lp_token: 6,
+			lp_token_minted: lp_expected,
+			total_supply: 8250000000000000000,
+		}));
+		
+		let expected = Market::calculate_expected_amount_for_minting(POOL_ID_2, NATIVE_ASSET_ID, UNIT).unwrap();
+		let lp_expected = Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 7,
+			amounts_provided: (1000000000000000000, expected),
+			lp_token: 7,
+			lp_token_minted: lp_expected,
+			total_supply: 16998182477145509576,
+		}));
+	})
+}
+
+#[test]
+fn add_liquidity_fixed_works() {
+	test_env().execute_with(|| {
+		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+
+		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_1, (UNIT, 0), 0));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 6,
+			amounts_provided: (1000000000000000000, 0),
+			lp_token: 6,
+			lp_token_minted: 365524961509654622,
+			total_supply: 7865524961509654622,
+		}));
+		
+		let expected = Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, 5 * UNIT)).unwrap();
+		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_2, (UNIT, 5 * UNIT), 0));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: 7,
+			amounts_provided: (1000000000000000000, 5000000000000000000),
+			lp_token: 7,
+			lp_token_minted: expected,
+			total_supply: 20990943480975169792,
+		}));
 	})
 }
 
@@ -129,7 +208,22 @@ fn remove_liquidity_works() {
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
 
 		assert_ok!(Market::burn_liquidity(origin(), POOL_ID_1, UNIT, 0, 0));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityBurned {
+			who: AccountId::from(ALICE),
+			pool_id: 6,
+			amounts: (1333333333333333333, 666666666666666666),
+			burned_amount: 1000000000000000000,
+			total_supply: 6500000000000000000,
+		}));
+
 		assert_ok!(Market::burn_liquidity(origin(), POOL_ID_2, UNIT, 0, 0));
+		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityBurned {
+			who: AccountId::from(ALICE),
+			pool_id: 7,
+			amounts: (666708286515387818, 333354143257693909),
+			burned_amount: 1000000000000000000,
+			total_supply: 13999063611862273044,
+		}));
 	})
 }
 
@@ -148,6 +242,14 @@ fn multiswap_should_work_xyk() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
+
+		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
+			who: AccountId::from(ALICE),
+			swap_pool_list: vec![6, 7, 8],
+			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
+			amount_in: 1000000000000000000,
+			amount_out: 105502376567411557,
+		}));
 	})
 }
 
@@ -166,6 +268,13 @@ fn multiswap_should_work_stable_swap() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
+		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
+			who: AccountId::from(ALICE),
+			swap_pool_list: vec![6, 7, 8],
+			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
+			amount_in: 1000000000000000000,
+			amount_out: 986850235267668399,
+		}));
 	})
 }
 
@@ -185,12 +294,12 @@ fn multiswap_should_work_mixed() {
 			Zero::zero(),
 		));
 
-		System::assert_last_event(RuntimeEvent::Market(pallet_market::Event::AssetsSwapped {
+		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
 			swap_pool_list: vec![6, 7, 8],
 			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
 			amount_in: UNIT,
-			amount_out: 826609041367995045,
+			amount_out: 215337820687860400,
 		}));
 	})
 }
@@ -206,19 +315,17 @@ fn multiswap_buy_should_work_mixed() {
 			origin(),
 			vec![POOL_ID_1, POOL_ID_2, POOL_ID_3],
 			ASSET_ID_3,
-			UNIT,
+			UNIT / 100,
 			NATIVE_ASSET_ID,
-			2 * UNIT,
+			UNIT,
 		));
 
-		System::assert_last_event(RuntimeEvent::Market(pallet_market::Event::AssetsSwapped {
+		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
 			swap_pool_list: vec![6, 7, 8],
 			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
-			amount_in: 1262436229778965569,
-			amount_out: UNIT,
+			amount_in: 40648650414565365,
+			amount_out: 10000000000000000,
 		}));
-
-		println!("{:?}", events());
 	})
 }

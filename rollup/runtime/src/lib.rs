@@ -1397,6 +1397,21 @@ impl_runtime_apis! {
 		fn get_pools_for_trading() -> Vec<TokenId> {
 			Market::get_pools_for_trading()
 		}
+
+		fn calculate_expected_amount_for_minting(
+			pool_id: TokenId,
+			asset_id: TokenId,
+			amount: Balance,
+		) -> Option<Balance> {
+			Market::calculate_expected_amount_for_minting(pool_id, asset_id, amount)
+		}
+
+		fn calculate_expected_lp_minted(
+			pool_id: TokenId,
+			amounts: (Balance, Balance),
+		) -> Option<Balance> {
+			Market::calculate_expected_lp_minted(pool_id, amounts)
+		}
 	}
 
 	impl sp_api::Core<Block> for Runtime {

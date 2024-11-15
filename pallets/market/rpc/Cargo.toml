@@ -1,0 +1,33 @@
+[package]
+name = "market-rpc"
+description = "RPC for market APIs"
+version = "1.0.0"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+edition.workspace = true
+
+[dependencies]
+codec = { workspace = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+serde = { workspace = true, features = ["derive"], optional = true }
+
+sp-api = { workspace = true, default-features = false }
+sp-blockchain = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-rpc = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+
+pallet-market = { path = "../", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"serde",
+	"sp-api/std",
+	"sp-core/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"pallet-market/std",
+]

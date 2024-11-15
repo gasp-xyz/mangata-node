@@ -4805,6 +4805,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
+name = "market-rpc"
+version = "1.0.0"
+dependencies = [
+ "jsonrpsee",
+ "pallet-market",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "match_cfg"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7462,7 +7478,9 @@ dependencies = [
  "jsonrpsee",
  "log",
  "mangata-rpc-nonce",
+ "market-rpc",
  "metamask-signature-rpc",
+ "pallet-market",
  "pallet-rolldown",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",

@@ -34,12 +34,13 @@ rollup-runtime = { path = "../runtime/" }
 xyk-rpc = { path = "../../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
 rolldown-rpc = { path = "../../pallets/rolldown/rpc" }
-
 rolldown-runtime-api = { path = "../../pallets/rolldown/runtime-api" }
 proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api' }
 proof-of-stake-rpc = { path = '../../pallets/proof-of-stake/rpc' }
 metamask-signature-rpc = { path = '../../pallets/metamask-signature-rpc/' }
 pallet-rolldown = { path = "../../pallets/rolldown" }
+market-rpc = { path = "../../pallets/market/rpc" }
+pallet-market = { path = "../../pallets/market" }
 
 # Substrate
 frame-benchmarking = { workspace = true }
@@ -101,6 +102,8 @@ default = ["std"]
 std = [
 	"rollup-runtime/std",
 	"xyk-rpc/std",
+	"market-rpc/std",
+	"pallet-market/std",
 	"rolldown-rpc/std",
 ]
 # Dependencies that are only required if runtime benchmarking should be build.

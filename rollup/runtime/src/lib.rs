@@ -1360,7 +1360,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_market::MarketApi<Block, Balance, TokenId> for Runtime {
+	impl pallet_market::MarketRuntimeApi<Block, Balance, TokenId> for Runtime {
 		fn calculate_sell_price(pool_id: TokenId, sell_asset_id: TokenId, sell_amount: Balance) -> Option<Balance> {
 			Market::calculate_sell_price(pool_id, sell_asset_id, sell_amount)
 		}

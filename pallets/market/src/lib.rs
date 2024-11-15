@@ -7,7 +7,6 @@ use codec::Codec;
 use serde::{Deserialize, Serialize};
 
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
 	ensure, fail,
 	pallet_prelude::*,
 	traits::{
@@ -28,10 +27,7 @@ use mangata_support::{
 };
 use mangata_types::multipurpose_liquidity::ActivateKind;
 
-use sp_runtime::{
-	traits::{MaybeDisplay, Saturating, Zero},
-	ModuleError,
-};
+use sp_runtime::traits::{MaybeDisplay, MaybeFromStr, Saturating, Zero};
 use sp_std::{convert::TryInto, fmt::Debug, vec, vec::Vec};
 
 use orml_tokens::MultiTokenCurrencyExtended;
@@ -961,10 +957,10 @@ pub struct RpcAssetMetadata<TokenId> {
 sp_api::decl_runtime_apis! {
 // 	/// This runtime api allows people to query the size of the liquidity pools
 // 	/// and quote prices for swaps.
-	pub trait MarketApi<Balance, AssetId>
+	pub trait MarketRuntimeApi<Balance, AssetId>
 	where
-		Balance: frame_support::traits::tokens::Balance + MaybeDisplay,
-		AssetId: Codec,
+		Balance: Codec + MaybeDisplay + MaybeFromStr,
+		AssetId: Codec + MaybeDisplay + MaybeFromStr,
 	{
 		fn calculate_sell_price(
 			pool_id: AssetId,
@@ -982,10 +978,10 @@ sp_api::decl_runtime_apis! {
 			pool_id: AssetId,
 			lp_burn_amount: Balance,
 		) -> Option<(Balance, Balance)>;
-		
+
 		fn calculate_expected_amount_for_minting(
 			pool_id: AssetId,
-			asset_id:AssetId,
+			asset_id: AssetId,
 			amount: Balance,
 		) -> Option<Balance>;
 

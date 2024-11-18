@@ -10,7 +10,7 @@ use frame_support::{
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use mangata_support::traits::{FeeLockTriggerTrait, Valuate};
+use mangata_support::traits::{FeeLockTriggerTrait, Valuate, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
@@ -225,7 +225,11 @@ pub mod pallet {
 		type MaxCuratedTokens: Get<u32>;
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
+		#[cfg(not(all(feature = "runtime-benchmarks", not(test))))]
 		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>;
+		#[cfg(all(feature = "runtime-benchmarks", not(test)))]
+		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>
+			+ XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
 		#[pallet::constant]
 		type NativeTokenId: Get<CurrencyIdOf<Self>>;
 		type WeightInfo: WeightInfo;
@@ -551,5 +555,17 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 		));
 
 		Ok(())
+	}
+}
+
+pub struct FeeLockWeightProvider<T>(PhantomData<T>);
+
+impl<T: Config> Get<Weight> for FeeLockWeightProvider<T> {
+	fn get() -> Weight {
+		// We assume that process_fee_lock is heavier than unlock_fee
+		// The FeeLockMetadata read is not accounted for since it is called no matter the extrinsic and hence would be accounted for in the ExtrinsicBaseWeight
+		T::WeightInfo::process_fee_lock()
+			.saturating_add(T::WeightInfo::get_swap_valuation_for_token())
+			.saturating_add(Weight::from_parts(40_000_000, 0))
 	}
 }

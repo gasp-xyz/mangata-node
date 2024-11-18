@@ -424,6 +424,11 @@ pub mod pallet {
 					!Self::is_active_sequencer(chain, &alias_account),
 					Error::<T>::AliasAccountIsActiveSequencer
 				);
+
+				if let Some(prev_alias) = AliasAccount::<T>::take((sender.clone(), chain)) {
+					AliasAccountInUse::<T>::remove(prev_alias);
+				}
+
 				AliasAccount::<T>::insert((sender.clone(), chain), alias_account.clone());
 				AliasAccountInUse::<T>::insert(alias_account.clone(), ());
 			}
@@ -653,14 +658,14 @@ impl<T: Config> Pallet<T> {
 
 		ActiveSequencers::<T>::mutate(|active_set| {
 			if let Some(set) = active_set.get_mut(&chain) {
-				set.retain(|elem| !deactivating_sequencers.contains(&elem))
+				set.retain(|elem| !deactivating_sequencers.contains(elem))
 			}
 		});
 
 		SelectedSequencer::<T>::mutate(|selected| {
 			if matches!(
 				selected.get(&chain),
-				Some(elem) if deactivating_sequencers.contains(&elem))
+				Some(elem) if deactivating_sequencers.contains(elem))
 			{
 				selected.remove(&chain);
 			}

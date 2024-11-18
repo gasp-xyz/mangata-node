@@ -33,6 +33,8 @@ sp-crypto-hashing = { workspace = true, default-features = false }
 
 orml-tokens = { workspace = true, default-features = false }
 
+pallet-sequencer-staking = { path = "../sequencer-staking", default-features = false }
+
 [dev-dependencies]
 env_logger.workspace = true
 lazy_static.workspace = true
@@ -62,8 +64,9 @@ std = [
 	"sp-std/std",
 	"sp-core/std",
 	"sp-runtime/std",
+	"pallet-sequencer-staking/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "pallet-sequencer-staking/runtime-benchmarks"]
 
 try-runtime = ["frame-support/try-runtime", "frame-system/try-runtime", "orml-tokens/try-runtime", "sp-runtime/try-runtime"]

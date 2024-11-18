@@ -71,12 +71,12 @@ pub fn rollup_local_config(
 			17000u64,
 		),
 		EvmChain::Anvil => (
-			array_bytes::hex2array("0xc351628EB244ec633d5f21fBD6621e1a683B1181")
+			array_bytes::hex2array("0xFD471836031dc5108809D173A067e8486B9047A3")
 				.expect("is correct address"),
 			31337u64,
 		),
 		EvmChain::Reth => (
-			array_bytes::hex2array("0xc351628EB244ec633d5f21fBD6621e1a683B1181")
+			array_bytes::hex2array("0xFD471836031dc5108809D173A067e8486B9047A3")
 				.expect("is correct address"),
 			1337u64,
 		),

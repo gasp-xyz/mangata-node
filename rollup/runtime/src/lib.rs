@@ -327,6 +327,7 @@ impl pallet_xyk::Config for Runtime {
 	type DisabledTokens =
 		(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
 	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
+	type FeeLockWeight = pallet_fee_lock::FeeLockWeightProvider<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
@@ -829,7 +830,10 @@ impl pallet_rolldown::Config for Runtime {
 	type NativeCurrencyId = tokens::RxTokenId;
 	type SequencerStakingRewards = SequencerStaking;
 	type WithdrawFee = cfg::pallet_rolldown::WithdrawFee;
+	type WeightInfo = weights::pallet_rolldown::ModuleWeight<Runtime>;
 }
+
+impl pallet_rolldown::RolldownBenchmarkingConfig for Runtime {}
 
 impl pallet_sequencer_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -958,6 +962,7 @@ mod benches {
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 		[pallet_fee_lock, FeeLock]
 		[pallet_proof_of_stake, ProofOfStake]
+		[pallet_rolldown, Rolldown]
 	);
 }
 use codec::alloc::string::ToString;

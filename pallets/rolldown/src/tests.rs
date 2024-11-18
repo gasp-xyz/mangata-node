@@ -1940,7 +1940,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 			forward_to_block::<Test>(12);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 
 			for _ in 0..Rolldown::automatic_batch_size() - 1 {
@@ -1958,7 +1958,7 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 			forward_to_block::<Test>(13);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 
 			Rolldown::withdraw(
@@ -1973,12 +1973,12 @@ fn test_batch_is_created_automatically_when_l2requests_count_exceeds_merkle_root
 
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(12u64.into(), 1u128, (1, 10)))
+				Some(&(12u64, 1u128, (1, 10)))
 			);
 			forward_to_block::<Test>(14);
 			assert_eq!(
 				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN),
-				Some(&(14u64.into(), 2u128, (11, 20)))
+				Some(&(14u64, 2u128, (11, 20)))
 			);
 		});
 }
@@ -2206,6 +2206,38 @@ fn test_create_manual_batch_works() {
 				batch_id: 2,
 				range: (2, 2),
 			});
+		})
+}
+
+#[test]
+#[serial]
+fn test_size_of_manually_created_batch_is_limited() {
+	ExtBuilder::new()
+		.issue(ALICE, ETH_TOKEN_ADDRESS_MGX, MILLION)
+		.issue(ALICE, NativeCurrencyId::get(), MILLION)
+		.execute_with_default_mocks(|| {
+			forward_to_block::<Test>(10);
+
+			for _ in (0..2 * Rolldown::automatic_batch_size()) {
+				Rolldown::withdraw(
+					RuntimeOrigin::signed(ALICE),
+					consts::CHAIN,
+					ETH_RECIPIENT_ACCOUNT,
+					ETH_TOKEN_ADDRESS,
+					1_000u128,
+					0u128.into(),
+				)
+				.unwrap();
+			}
+
+			assert_ok!(Rolldown::create_batch(RuntimeOrigin::signed(ALICE), consts::CHAIN, None));
+
+			assert_eq!(L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN).unwrap().2 .0, 1u128);
+
+			assert_eq!(
+				L2RequestsBatchLast::<Test>::get().get(&consts::CHAIN).unwrap().2 .1,
+				Rolldown::automatic_batch_size()
+			);
 		})
 }
 

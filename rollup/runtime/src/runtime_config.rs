@@ -219,6 +219,8 @@ pub mod config {
 		pub type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 		parameter_types! {
+			pub const BaseWeightOffset: Weight = Weight::from_parts(<Runtime as ::frame_system::Config>::DbWeight::get().read, 0);
+			pub const VerExtrinsicBaseWeight: Weight = weights::VerExtrinsicBaseWeight::get().saturating_add(BaseWeightOffset::get());
 			pub const BlockHashCount: BlockNumber = 2400;
 			pub const Version: sp_version::RuntimeVersion = crate::VERSION;
 			// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
@@ -230,7 +232,7 @@ pub mod config {
 			pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 				.base_block(weights::VerBlockExecutionWeight::get())
 				.for_class(DispatchClass::all(), |weights| {
-					weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+					weights.base_extrinsic = VerExtrinsicBaseWeight::get();
 				})
 				.for_class(DispatchClass::Normal, |weights| {
 					weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);
@@ -1459,6 +1461,10 @@ pub mod config {
 				};
 
 				orml_asset_registry::Pallet::<T>::do_register_l1_asset(metadata, None, l1_asset)
+			}
+
+			fn get_asset_l1_id(asset_id: T::AssetId) -> Option<L1Asset> {
+				orml_asset_registry::IdToL1Asset::<T>::get(asset_id)
 			}
 
 			fn create_pool_asset(

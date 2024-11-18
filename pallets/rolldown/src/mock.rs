@@ -85,6 +85,7 @@ mockall::mock! {
 	impl AssetRegistryProviderTrait<TokenId> for AssetRegistryProviderApi {
 		fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
 		fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
+		fn get_asset_l1_id(asset_id: TokenId) -> Option<L1Asset>;
 	}
 }
 
@@ -132,6 +133,8 @@ parameter_types! {
 	pub const NativeCurrencyId: u32 = 0;
 }
 
+impl rolldown::RolldownBenchmarkingConfig for Test {}
+
 impl rolldown::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SequencerStakingProvider = MockSequencerStakingProviderApi;
@@ -150,6 +153,7 @@ impl rolldown::Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type SequencerStakingRewards = ();
 	type WithdrawFee = ConvertToValue<ConstU128<500>>;
+	type WeightInfo = ();
 }
 
 pub struct ExtBuilder {

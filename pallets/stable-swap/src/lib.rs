@@ -7,9 +7,9 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{Balance, CurrencyId},
-		ExistenceRequirement, MultiTokenCurrency, WithdrawReasons,
+		ExistenceRequirement, MultiTokenCurrency,
 	},
-	transactional, PalletId,
+	PalletId,
 };
 use frame_system::pallet_prelude::*;
 
@@ -678,6 +678,15 @@ pub mod pallet {
 				dy,
 				ExistenceRequirement::AllowDeath,
 			)?;
+
+			Self::deposit_event(Event::AssetsSwapped {
+				who: sender.clone(),
+				pool_id,
+				asset_in,
+				amount_in: dx,
+				asset_out,
+				amount_out: dy,
+			});
 
 			Ok(SwapResult {
 				amount_out: dy,
@@ -1621,6 +1630,18 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		let asset1 = info.assets.get(0)?;
 		let asset2 = info.assets.get(1)?;
 		Some((*asset1, *asset2))
+	}
+
+	fn get_pool_reserves(
+		pool_id: Self::CurrencyId,
+	) -> Option<mangata_support::pools::PoolReserves<Self::Balance>> {
+		let account = Self::get_pool_account(&pool_id);
+		let info = Pools::<T>::get(pool_id)?;
+		let asset1 = info.assets.get(0)?;
+		let asset2 = info.assets.get(1)?;
+		let balance1 = T::Currency::available_balance(*asset1, &account);
+		let balance2 = T::Currency::available_balance(*asset2, &account);
+		Some((balance1, balance2))
 	}
 
 	fn get_dy(

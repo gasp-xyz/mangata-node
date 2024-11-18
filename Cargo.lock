@@ -2421,7 +2421,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "derive_more",
  "log",
@@ -2604,7 +2604,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fork-tree"
 version = "12.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -2627,7 +2627,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -2652,7 +2652,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "32.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "Inflector",
  "array-bytes 6.2.3",
@@ -2706,7 +2706,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "aquamarine 0.3.3",
  "extrinsic-shuffler",
@@ -2762,7 +2762,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "aquamarine 0.5.0",
  "array-bytes 6.2.3",
@@ -2804,7 +2804,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -2823,7 +2823,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 3.2.0",
@@ -2835,7 +2835,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2845,7 +2845,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "cfg-if",
  "docify",
@@ -2867,7 +2867,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2882,7 +2882,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -2891,7 +2891,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3501,7 +3501,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite 0.2.14",
- "socket2 0.4.10",
+ "socket2 0.5.7",
  "tokio",
  "tower-service",
  "tracing",
@@ -4775,7 +4775,7 @@ dependencies = [
 [[package]]
 name = "mangata-support"
 version = "0.1.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "mangata-types",
@@ -4788,7 +4788,7 @@ dependencies = [
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -5490,7 +5490,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5507,7 +5507,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5522,7 +5522,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5546,7 +5546,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -5594,7 +5594,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective-mangata"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5665,7 +5665,7 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5688,7 +5688,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -5781,7 +5781,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5883,7 +5883,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5959,7 +5959,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6003,7 +6003,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo-mangata"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6037,7 +6037,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6057,7 +6057,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6073,7 +6073,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6089,7 +6089,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -6101,7 +6101,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6120,7 +6120,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6136,7 +6136,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6152,7 +6152,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6239,8 +6239,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e69bf016dc406eff7d53a7d3f7cf1c2e72c82b9088aac1118591e36dd2cd3e9"
 dependencies = [
  "bitcoin_hashes",
- "rand 0.7.3",
- "rand_core 0.5.1",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
  "serde",
  "unicode-normalization",
 ]
@@ -7975,7 +7975,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "log",
  "sp-core",
@@ -7986,7 +7986,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "aquamarine 0.3.3",
  "futures",
@@ -8012,7 +8012,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -8027,7 +8027,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder-ver"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "aquamarine 0.1.12",
  "extrinsic-shuffler",
@@ -8047,7 +8047,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "docify",
@@ -8073,7 +8073,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "proc-macro-crate 3.2.0",
  "proc-macro2",
@@ -8084,7 +8084,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.36.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "chrono",
@@ -8125,7 +8125,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "fnv",
  "futures",
@@ -8152,7 +8152,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -8178,7 +8178,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8203,7 +8203,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8232,7 +8232,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa"
 version = "0.19.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "ahash 0.8.11",
  "array-bytes 6.2.3",
@@ -8275,7 +8275,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8300,7 +8300,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -8323,7 +8323,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "polkavm",
  "sc-allocator",
@@ -8336,7 +8336,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-polkavm"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "log",
  "polkavm",
@@ -8347,7 +8347,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -8365,7 +8365,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "ansi_term",
  "futures",
@@ -8382,7 +8382,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "25.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "parking_lot 0.12.3",
@@ -8396,7 +8396,7 @@ dependencies = [
 [[package]]
 name = "sc-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 4.2.0",
  "arrayvec 0.7.6",
@@ -8425,7 +8425,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8468,7 +8468,7 @@ dependencies = [
 [[package]]
 name = "sc-network-bitswap"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-channel",
  "cid",
@@ -8488,7 +8488,7 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -8505,7 +8505,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "ahash 0.8.11",
  "futures",
@@ -8524,7 +8524,7 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8545,7 +8545,7 @@ dependencies = [
 [[package]]
 name = "sc-network-sync"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8581,7 +8581,7 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "futures",
@@ -8600,7 +8600,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "bytes",
@@ -8634,7 +8634,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.17.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -8643,7 +8643,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -8675,7 +8675,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -8695,7 +8695,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "futures",
  "governor",
@@ -8713,7 +8713,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "futures",
@@ -8744,7 +8744,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "directories",
@@ -8809,7 +8809,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.30.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -8820,7 +8820,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "derive_more",
  "futures",
@@ -8841,7 +8841,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "15.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "chrono",
  "futures",
@@ -8860,7 +8860,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "ansi_term",
  "chrono",
@@ -8890,7 +8890,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "proc-macro-crate 3.2.0",
  "proc-macro2",
@@ -8901,7 +8901,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8928,7 +8928,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -8944,7 +8944,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-channel",
  "futures",
@@ -9490,7 +9490,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "hash-db",
  "log",
@@ -9512,7 +9512,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "15.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "Inflector",
  "blake2 0.10.6",
@@ -9526,7 +9526,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9539,7 +9539,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -9571,7 +9571,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "sp-api",
  "sp-inherents",
@@ -9582,7 +9582,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "futures",
  "log",
@@ -9600,7 +9600,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "futures",
@@ -9615,7 +9615,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -9632,7 +9632,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -9651,7 +9651,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-grandpa"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -9669,7 +9669,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9681,7 +9681,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "bandersnatch_vrfs",
@@ -9749,7 +9749,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing"
 version = "0.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -9762,7 +9762,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing-proc-macro"
 version = "0.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "quote",
  "sp-crypto-hashing",
@@ -9772,7 +9772,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.3",
@@ -9781,7 +9781,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9791,7 +9791,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -9802,7 +9802,7 @@ dependencies = [
 [[package]]
 name = "sp-genesis-builder"
 version = "0.7.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "serde_json",
  "sp-api",
@@ -9813,7 +9813,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -9827,7 +9827,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "bytes",
  "ed25519-dalek",
@@ -9853,7 +9853,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "31.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -9863,7 +9863,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -9874,7 +9874,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "thiserror",
  "zstd 0.12.4",
@@ -9883,7 +9883,7 @@ dependencies = [
 [[package]]
 name = "sp-metadata-ir"
 version = "0.6.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -9894,7 +9894,7 @@ dependencies = [
 [[package]]
 name = "sp-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9906,7 +9906,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -9916,7 +9916,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -9926,7 +9926,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -9936,7 +9936,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "31.0.1"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -9967,7 +9967,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -9986,7 +9986,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "Inflector",
  "expander",
@@ -9999,7 +9999,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10014,7 +10014,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -10028,7 +10028,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "hash-db",
  "log",
@@ -10049,7 +10049,7 @@ dependencies = [
 [[package]]
 name = "sp-statement-store"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "aes-gcm",
  "curve25519-dalek 4.1.1",
@@ -10074,12 +10074,12 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -10092,7 +10092,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10105,7 +10105,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "sp-std",
@@ -10117,7 +10117,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "sp-api",
  "sp-runtime",
@@ -10126,7 +10126,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10141,7 +10141,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "ahash 0.8.11",
  "hash-db",
@@ -10165,7 +10165,7 @@ dependencies = [
 [[package]]
 name = "sp-ver"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10182,7 +10182,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -10199,7 +10199,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -10210,7 +10210,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
@@ -10223,7 +10223,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "bounded-collections",
  "parity-scale-codec",
@@ -10382,7 +10382,7 @@ dependencies = [
 [[package]]
 name = "substrate-bip39"
 version = "0.4.7"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "hmac 0.12.1",
  "pbkdf2",
@@ -10394,12 +10394,12 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.17.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "hyper",
  "log",
@@ -10424,7 +10424,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-client"
 version = "2.0.1"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "async-trait",
@@ -10451,7 +10451,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-runtime"
 version = "2.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "array-bytes 6.2.3",
  "frame-executive",
@@ -10494,7 +10494,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-runtime-client"
 version = "2.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "futures",
  "sc-block-builder",
@@ -10513,7 +10513,7 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "17.0.0"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "build-helper",
  "cargo_metadata",
@@ -11176,7 +11176,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
@@ -11315,7 +11315,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 [[package]]
 name = "ver-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#216eb4164eb65ee023ee11f42856d9f4fbb22a32"
+source = "git+https://github.com/gasp-xyz//polkadot-sdk?branch=feature/stable-pool-mgx-1307#8d5464b70990a76a4b32ea872cc9518a53a065e1"
 dependencies = [
  "derive_more",
  "frame-support",

@@ -1412,6 +1412,18 @@ impl_runtime_apis! {
 		) -> Option<Balance> {
 			Market::calculate_expected_lp_minted(pool_id, amounts)
 		}
+
+		fn get_pools(pool_id: Option<TokenId>) -> Vec<pallet_market::RpcPoolInfo<TokenId, Balance>> {
+			Market::get_pools(pool_id).into_iter()
+				.map(|(info, reserve)| pallet_market::RpcPoolInfo {
+					pool_id: info.pool_id,
+					kind: info.kind,
+					lp_token_id: info.pool_id,
+					assets: vec![info.pool.0, info.pool.1],
+					reserves: vec![reserve.0, reserve.1],
+				})
+				.collect()
+		}
 	}
 
 	impl sp_api::Core<Block> for Runtime {

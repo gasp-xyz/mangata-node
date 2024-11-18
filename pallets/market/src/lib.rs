@@ -43,6 +43,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Debug, Clone, TypeInfo)]
 pub enum PoolKind {
 	/// Classic XYK invariant
@@ -53,9 +54,19 @@ pub enum PoolKind {
 
 #[derive(Clone, Debug)]
 pub struct PoolInfo<CurrencyId> {
-	pool_id: CurrencyId,
-	kind: PoolKind,
-	pool: mangata_support::pools::PoolInfo<CurrencyId>,
+	pub pool_id: CurrencyId,
+	pub kind: PoolKind,
+	pub pool: mangata_support::pools::PoolInfo<CurrencyId>,
+}
+
+#[derive(Encode, Decode, Eq, PartialEq, Debug, Clone, TypeInfo)]
+pub struct AtomicSwap<CurrencyId, Balance> {
+	pub pool_id: CurrencyId,
+	pub kind: PoolKind,
+	pub asset_in: CurrencyId,
+	pub asset_out: CurrencyId,
+	pub amount_in: Balance,
+	pub amount_out: Balance,
 }
 
 // use LP token as pool id, extra type for readability
@@ -64,6 +75,7 @@ pub type PoolIdOf<T> = <T as Config>::CurrencyId;
 pub type PoolInfoOf<T> = PoolInfo<<T as Config>::CurrencyId>;
 pub type AssetPairOf<T> = (<T as Config>::CurrencyId, <T as Config>::CurrencyId);
 pub type BalancePairOf<T> = (<T as Config>::Balance, <T as Config>::Balance);
+pub type AtomicSwapOf<T> = AtomicSwap<<T as Config>::CurrencyId, <T as Config>::Balance>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -175,14 +187,8 @@ pub mod pallet {
 		AssetsSwapped {
 			/// The account that initiated the swap
 			who: T::AccountId,
-			/// List of pools that were used for swap
-			swap_pool_list: Vec<PoolIdOf<T>>,
-			/// Path of the atomic asset swaps
-			swap_assets_list: Vec<AssetPairOf<T>>,
-			/// The amount that was withdrawn from the user
-			amount_in: T::Balance,
-			/// The amount that was deposited to the user
-			amount_out: T::Balance,
+			/// List of the atomic asset swaps
+			swaps: Vec<AtomicSwapOf<T>>,
 		},
 
 		/// A successful call of the `CretaPool` extrinsic will create this event.
@@ -629,7 +635,7 @@ pub mod pallet {
 		// `OnChargeTransaction` impl should check whether the sender has funds to cover such fee
 		// or consider transaction invalid
 		#[pallet::call_index(6)]
-		#[pallet::weight((T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight(T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32))]
 		pub fn multiswap_asset(
 			origin: OriginFor<T>,
 			swap_pool_list: Vec<PoolIdOf<T>>,
@@ -648,16 +654,10 @@ pub mod pallet {
 
 			let (pools, path) = Self::get_valid_path(&swap_pool_list, asset_id_in, asset_id_out)?;
 
-			let amount_out =
+			let swaps =
 				Self::do_swaps(&sender, pools, path.clone(), asset_amount_in, min_amount_out)?;
 
-			Self::deposit_event(Event::AssetsSwapped {
-				who: sender.clone(),
-				swap_pool_list: swap_pool_list.clone(),
-				swap_assets_list: path,
-				amount_in: asset_amount_in,
-				amount_out,
-			});
+			Self::deposit_event(Event::AssetsSwapped { who: sender.clone(), swaps });
 
 			// total swaps inc
 
@@ -666,7 +666,7 @@ pub mod pallet {
 
 		/// Buy variant of the multiswap, a precise output amount should be provided instead.
 		#[pallet::call_index(7)]
-		#[pallet::weight((T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight((T::WeightInfo::multiswap_asset_buy(swap_pool_list.len() as u32), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_asset_buy(
 			origin: OriginFor<T>,
 			swap_pool_list: Vec<PoolIdOf<T>>,
@@ -695,16 +695,9 @@ pub mod pallet {
 
 			ensure!(amount_in < max_amount_in, Error::<T>::ExcesiveInputAmount);
 
-			let amount_out =
-				Self::do_swaps(&sender, pools, path.clone(), amount_in, asset_amount_out)?;
+			let swaps = Self::do_swaps(&sender, pools, path.clone(), amount_in, asset_amount_out)?;
 
-			Self::deposit_event(Event::AssetsSwapped {
-				who: sender.clone(),
-				swap_pool_list: swap_pool_list.clone(),
-				swap_assets_list: path,
-				amount_in,
-				amount_out,
-			});
+			Self::deposit_event(Event::AssetsSwapped { who: sender.clone(), swaps });
 
 			// total swaps inc
 
@@ -764,6 +757,25 @@ pub mod pallet {
 				assets.extend(pools.iter());
 			}
 			assets
+		}
+
+		pub fn get_pools(pool_id: Option<T::CurrencyId>) -> Vec<(PoolInfoOf<T>, BalancePairOf<T>)> {
+			let pool_ids = if pool_id.is_some() {
+				vec![pool_id.unwrap()]
+			} else {
+				Self::get_pools_for_trading()
+			};
+			let mut pools = vec![];
+			for id in pool_ids.into_iter() {
+				if let Some(info) = Self::get_pool_info(id).ok() {
+					let balances = match info.kind {
+						PoolKind::Xyk => T::Xyk::get_pool_reserves(info.pool_id),
+						PoolKind::StableSwap => T::StableSwap::get_pool_reserves(info.pool_id),
+					};
+					pools.push((info, balances.unwrap_or_default()))
+				}
+			}
+			pools
 		}
 
 		pub fn calculate_expected_amount_for_minting(
@@ -904,12 +916,14 @@ pub mod pallet {
 		fn do_swaps(
 			sender: &T::AccountId,
 			pools: Vec<PoolInfoOf<T>>,
-			swaps: Vec<AssetPairOf<T>>,
+			path: Vec<AssetPairOf<T>>,
 			amount_in: T::Balance,
 			min_amount_out: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
+		) -> Result<Vec<AtomicSwapOf<T>>, DispatchError> {
+			let mut swaps: Vec<AtomicSwapOf<T>> = vec![];
 			let mut amount_out = amount_in;
-			for (pool, swap) in pools.iter().zip(swaps.into_iter()) {
+			for (pool, swap) in pools.iter().zip(path.into_iter()) {
+				let amount_in = amount_out;
 				amount_out = match pool.kind {
 					PoolKind::StableSwap => {
 						let SwapResult { amount_out, treasury_fee, bnb_fee, .. } =
@@ -918,7 +932,7 @@ pub mod pallet {
 								pool.pool_id,
 								swap.0,
 								swap.1,
-								amount_out,
+								amount_in,
 								Zero::zero(),
 							)?;
 
@@ -930,16 +944,25 @@ pub mod pallet {
 						sender.clone(),
 						swap.0,
 						swap.1,
-						amount_out,
+						amount_in,
 						Zero::zero(),
 						true,
 					)?,
-				}
+				};
+
+				swaps.push(AtomicSwap {
+					pool_id: pool.pool_id,
+					kind: pool.kind.clone(),
+					asset_in: swap.0,
+					asset_out: swap.1,
+					amount_in,
+					amount_out,
+				});
 			}
 
 			ensure!(amount_out >= min_amount_out, Error::<T>::InsufficientOutputAmount);
 
-			Ok(amount_out)
+			Ok(swaps)
 		}
 	}
 }
@@ -952,6 +975,17 @@ pub struct RpcAssetMetadata<TokenId> {
 	pub decimals: u32,
 	pub name: Vec<u8>,
 	pub symbol: Vec<u8>,
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RpcPoolInfo<TokenId, Balance> {
+	pub pool_id: TokenId,
+	pub kind: PoolKind,
+	pub lp_token_id: TokenId,
+	pub assets: Vec<TokenId>,
+	pub reserves: Vec<Balance>,
 }
 
 sp_api::decl_runtime_apis! {
@@ -1022,8 +1056,9 @@ sp_api::decl_runtime_apis! {
 
 		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<AssetId>>;
 
-		fn get_pools_for_trading(
-		) -> Vec<AssetId>;
+		fn get_pools_for_trading() -> Vec<AssetId>;
+
+		fn get_pools(pool_id: Option<AssetId>) -> Vec<RpcPoolInfo<AssetId, Balance>>;
 
 // 		fn get_total_number_of_swaps() -> u128;
 	}

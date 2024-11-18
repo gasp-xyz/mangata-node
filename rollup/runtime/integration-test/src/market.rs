@@ -1,6 +1,6 @@
 use crate::setup::*;
 
-use pallet_market::{Event, PoolKind};
+use pallet_market::{AtomicSwap, Event, PoolKind};
 use sp_runtime::{traits::Zero, DispatchResult};
 
 const ASSET_ID_1: u32 = 1;
@@ -146,8 +146,11 @@ fn add_liquidity_works() {
 		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
 
-		let expected = Market::calculate_expected_amount_for_minting(POOL_ID_1, NATIVE_ASSET_ID, UNIT).unwrap();
-		let lp_expected = Market::calculate_expected_lp_minted(POOL_ID_1, (UNIT, expected)).unwrap();
+		let expected =
+			Market::calculate_expected_amount_for_minting(POOL_ID_1, NATIVE_ASSET_ID, UNIT)
+				.unwrap();
+		let lp_expected =
+			Market::calculate_expected_lp_minted(POOL_ID_1, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_1, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
@@ -157,9 +160,12 @@ fn add_liquidity_works() {
 			lp_token_minted: lp_expected,
 			total_supply: 8250000000000000000,
 		}));
-		
-		let expected = Market::calculate_expected_amount_for_minting(POOL_ID_2, NATIVE_ASSET_ID, UNIT).unwrap();
-		let lp_expected = Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
+
+		let expected =
+			Market::calculate_expected_amount_for_minting(POOL_ID_2, NATIVE_ASSET_ID, UNIT)
+				.unwrap();
+		let lp_expected =
+			Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
@@ -187,7 +193,7 @@ fn add_liquidity_fixed_works() {
 			lp_token_minted: 365524961509654622,
 			total_supply: 7865524961509654622,
 		}));
-		
+
 		let expected = Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, 5 * UNIT)).unwrap();
 		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_2, (UNIT, 5 * UNIT), 0));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
@@ -243,12 +249,36 @@ fn multiswap_should_work_xyk() {
 			Zero::zero(),
 		));
 
+		println!("{:#?}", events());
+
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
-			swap_pool_list: vec![6, 7, 8],
-			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
-			amount_in: 1000000000000000000,
-			amount_out: 105502376567411557,
+			swaps: vec![
+				AtomicSwap {
+					pool_id: 6,
+					kind: PoolKind::Xyk,
+					asset_in: 0,
+					asset_out: 1,
+					amount_in: 1000000000000000000,
+					amount_out: 453305446940074565,
+				},
+				AtomicSwap {
+					pool_id: 7,
+					kind: PoolKind::Xyk,
+					asset_in: 1,
+					asset_out: 2,
+					amount_in: 453305446940074565,
+					amount_out: 216201629292906575,
+				},
+				AtomicSwap {
+					pool_id: 8,
+					kind: PoolKind::Xyk,
+					asset_in: 2,
+					asset_out: 3,
+					amount_in: 216201629292906575,
+					amount_out: 105502376567411557,
+				},
+			],
 		}));
 	})
 }
@@ -268,12 +298,37 @@ fn multiswap_should_work_stable_swap() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
+
+		println!("{:#?}", events());
+
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
-			swap_pool_list: vec![6, 7, 8],
-			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
-			amount_in: 1000000000000000000,
-			amount_out: 986850235267668399,
+			swaps: vec![
+				AtomicSwap {
+					pool_id: 6,
+					kind: PoolKind::StableSwap,
+					asset_in: 0,
+					asset_out: 1,
+					amount_in: 1000000000000000000,
+					amount_out: 995595345298031754,
+				},
+				AtomicSwap {
+					pool_id: 7,
+					kind: PoolKind::StableSwap,
+					asset_in: 1,
+					asset_out: 2,
+					amount_in: 995595345298031754,
+					amount_out: 991212132384121611,
+				},
+				AtomicSwap {
+					pool_id: 8,
+					kind: PoolKind::StableSwap,
+					asset_in: 2,
+					asset_out: 3,
+					amount_in: 991212132384121611,
+					amount_out: 986850235267668399,
+				},
+			],
 		}));
 	})
 }
@@ -294,12 +349,36 @@ fn multiswap_should_work_mixed() {
 			Zero::zero(),
 		));
 
+		println!("{:#?}", events());
+
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
-			swap_pool_list: vec![6, 7, 8],
-			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
-			amount_in: UNIT,
-			amount_out: 215337820687860400,
+			swaps: vec![
+				AtomicSwap {
+					pool_id: 6,
+					kind: PoolKind::Xyk,
+					asset_in: 0,
+					asset_out: 1,
+					amount_in: 1000000000000000000,
+					amount_out: 453305446940074565,
+				},
+				AtomicSwap {
+					pool_id: 7,
+					kind: PoolKind::StableSwap,
+					asset_in: 1,
+					asset_out: 2,
+					amount_in: 453305446940074565,
+					amount_out: 451412806019623895,
+				},
+				AtomicSwap {
+					pool_id: 8,
+					kind: PoolKind::Xyk,
+					asset_in: 2,
+					asset_out: 3,
+					amount_in: 451412806019623895,
+					amount_out: 215337820687860400,
+				},
+			],
 		}));
 	})
 }
@@ -320,12 +399,36 @@ fn multiswap_buy_should_work_mixed() {
 			UNIT,
 		));
 
+		println!("{:#?}", events());
+
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
-			swap_pool_list: vec![6, 7, 8],
-			swap_assets_list: vec![(0, 1), (1, 2), (2, 3)],
-			amount_in: 40648650414565365,
-			amount_out: 10000000000000000,
+			swaps: vec![
+				AtomicSwap {
+					pool_id: 6,
+					kind: PoolKind::Xyk,
+					asset_in: 0,
+					asset_out: 1,
+					amount_in: 40648650414565365,
+					amount_out: 20181563007698743,
+				},
+				AtomicSwap {
+					pool_id: 7,
+					kind: PoolKind::StableSwap,
+					asset_in: 1,
+					asset_out: 2,
+					amount_in: 20181563007698743,
+					amount_out: 20100381304233342,
+				},
+				AtomicSwap {
+					pool_id: 8,
+					kind: PoolKind::Xyk,
+					asset_in: 2,
+					asset_out: 3,
+					amount_in: 20100381304233342,
+					amount_out: 10000000000000000,
+				},
+			],
 		}));
 	})
 }

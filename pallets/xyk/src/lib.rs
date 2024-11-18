@@ -309,7 +309,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::{
-	pools::{Inspect, PoolInfo, TreasuryBurn},
+	pools::{Inspect, PoolInfo, PoolReserves, TreasuryBurn},
 	traits::{
 		ActivationReservesProviderTrait, GetMaintenanceStatusTrait, PoolCreateApi,
 		PreValidateSwaps, ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
@@ -3710,6 +3710,11 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		LiquidityPools::<T>::get(pool_id)
 	}
 
+	fn get_pool_reserves(pool_id: Self::CurrencyId) -> Option<PoolReserves<Self::Balance>> {
+		let info = Self::get_pool_info(pool_id)?;
+		Some(Pools::<T>::get(info))
+	}
+
 	fn get_dy(
 		_: Self::CurrencyId,
 		asset_in: Self::CurrencyId,
@@ -3757,7 +3762,7 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		// would need quite some work "fake swap" in memory and compute,
 		// so return None for now
 		if amounts.0.is_zero() || amounts.1.is_zero() {
-			return  None;
+			return None;
 		}
 
 		let pool = Self::get_pool_info(pool_id)?;

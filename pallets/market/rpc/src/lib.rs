@@ -150,7 +150,7 @@ where
 		let at = self.client.info().best_hash;
 
 		api.get_burn_amount(at, pool_id, liquidity_asset_amount.try_into_balance()?)
-            .map(|val| val.unwrap_or_default())
+			.map(|val| val.unwrap_or_default())
 			.map(|(val1, val2)| (val1.into(), val2.into()))
 			.map_err(|e| {
 				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))

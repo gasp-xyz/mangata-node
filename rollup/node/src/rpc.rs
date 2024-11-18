@@ -60,13 +60,13 @@ where
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 {
+	use market_rpc::{Market, MarketApiServer};
 	use metamask_signature_rpc::MetamaskSignature;
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
 	use rolldown_rpc::{Rolldown, RolldownApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use xyk_rpc::{Xyk, XykApiServer};
-	use market_rpc::{Market, MarketApiServer};
 
 	let mut module = RpcModule::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;

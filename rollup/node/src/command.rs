@@ -82,21 +82,28 @@ impl SubstrateCli for Cli {
 		} else {
 			self.override_arb_sequencers.iter().map(parse_accounts).collect()
 		};
+
+		let base_sequencers = if self.override_base_sequencers.is_empty() {
+			[crate::chain_spec::get_account_id_from_seed::<sp_core::ecdsa::Public>("Dorothy")]
+				.to_vec()
+		} else {
+			self.override_base_sequencers.iter().map(parse_accounts).collect()
+		};
 		Ok(match id {
 			"" | "rollup-local" =>
-				Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
+				Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, base_sequencers, EvmChain::Anvil,
 				None
 				)),
-			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
+			"rollup-local-seq" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, base_sequencers, EvmChain::Anvil,
 				None
 			)),
-			"anvil" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Anvil,
+			"anvil" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, base_sequencers, EvmChain::Anvil,
 				None
 			)),
-			"reth" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Reth,
+			"reth" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, base_sequencers, EvmChain::Reth,
 				None
 			)),
-			"holesky" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, EvmChain::Holesky,
+			"holesky" => Box::new(chain_spec::rollup_local_config(self.randomize_chain_genesis_salt, self.chain_genesis_salt.clone(), eth_sequencers, arb_sequencers, base_sequencers, EvmChain::Holesky,
 				Some(String::from("https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frollup-holesky-rpc.gasp.xyz#/extrinsics/decode/"))
 			)),
 			path =>

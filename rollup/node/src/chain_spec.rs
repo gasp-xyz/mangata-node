@@ -61,6 +61,7 @@ pub fn rollup_local_config(
 	chain_genesis_salt: Option<String>,
 	eth_sequencers: Vec<AccountId>,
 	arb_sequencers: Vec<AccountId>,
+	base_sequencers: Vec<AccountId>,
 	evm_chain: EvmChain,
 	decode_url: Option<String>,
 ) -> ChainSpec {
@@ -121,10 +122,12 @@ pub fn rollup_local_config(
 		move || {
 			let eth = eth_sequencers.clone();
 			let arb = arb_sequencers.clone();
+			let base = base_sequencers.clone();
 
 			let tokens_endowment = [
 				eth_sequencers.clone(),
 				arb_sequencers.clone(),
+				base_sequencers.clone(),
 				vec![
 					get_account_id_from_seed::<ecdsa::Public>("Alith"),
 					get_account_id_from_seed::<ecdsa::Public>("Baltathar"),
@@ -213,6 +216,7 @@ pub fn rollup_local_config(
 				],
 				eth,
 				arb,
+				base,
 				eth_chain_id,
 				decode_url.clone(),
 			)
@@ -246,6 +250,7 @@ fn rollup_genesis(
 	register_assets: Vec<(u32, AssetMetadataOf, Option<L1Asset>)>,
 	eth_initial_sequencers: Vec<AccountId>,
 	arb_initial_sequencers: Vec<AccountId>,
+	base_initial_sequencers: Vec<AccountId>,
 	chain_id: u64,
 	decode_url: String,
 ) -> rollup_runtime::RuntimeGenesisConfig {
@@ -388,6 +393,10 @@ fn rollup_genesis(
 				arb_initial_sequencers
 					.into_iter()
 					.map(|seq| (seq, pallet_rolldown::messages::Chain::Arbitrum, 10_000_000_u128))
+					.collect::<Vec<_>>(),
+				base_initial_sequencers
+					.into_iter()
+					.map(|seq| (seq, pallet_rolldown::messages::Chain::Base, 10_000_000_u128))
 					.collect::<Vec<_>>(),
 			]
 			.iter()

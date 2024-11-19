@@ -5,7 +5,7 @@ use jsonrpsee::{
 	types::error::ErrorObject,
 };
 pub use pallet_market::MarketRuntimeApi;
-use pallet_market::RpcAssetMetadata;
+use pallet_market::{RpcAssetMetadata, RpcPoolInfo};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
@@ -67,6 +67,13 @@ pub trait MarketApi<BlockHash, Balance, TokenId> {
 		&self,
 		at: Option<BlockHash>,
 	) -> RpcResult<sp_std::vec::Vec<RpcAssetMetadata<TokenId>>>;
+
+	#[method(name = "market_get_pools")]
+	fn get_pools(
+		&self,
+		pool_id: Option<TokenId>,
+		at: Option<BlockHash>,
+	) -> RpcResult<sp_std::vec::Vec<RpcPoolInfo<TokenId, Balance>>>;
 }
 
 pub struct Market<C, M> {
@@ -215,5 +222,18 @@ where
 			.map_err(|e| {
 				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
+	}
+
+	fn get_pools(
+		&self,
+		pool_id: Option<TokenId>,
+		_at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<RpcPoolInfo<TokenId, Balance>>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.get_pools(at, pool_id).map_err(|e| {
+			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
+		})
 	}
 }

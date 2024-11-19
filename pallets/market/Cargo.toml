@@ -33,6 +33,11 @@ orml-tokens = { workspace = true, default-features = false }
 
 [dev-dependencies]
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "num-traits", "scale-info"] }
+mockall.workspace = true
+
+pallet-xyk = { path = "../xyk"}
+pallet-stable-swap = { path = "../stable-swap" }
+pallet-vesting-mangata = { workspace = true }
 
 [features]
 default = ["std"]

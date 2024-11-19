@@ -963,6 +963,7 @@ mod benches {
 		[pallet_fee_lock, FeeLock]
 		[pallet_proof_of_stake, ProofOfStake]
 		[pallet_rolldown, Rolldown]
+		[pallet_market, Market]
 	);
 }
 use codec::alloc::string::ToString;

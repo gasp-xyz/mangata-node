@@ -38,6 +38,8 @@ use crate::weights::WeightInfo;
 
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -278,12 +280,8 @@ pub mod pallet {
 					lp_token
 				},
 				PoolKind::StableSwap => {
-					let first_decimal = T::AssetRegistry::metadata(&first_asset_id)
-						.map(|meta| meta.decimals)
-						.ok_or(Error::<T>::AssetDoesNotExists)?;
-					let second_decimal = T::AssetRegistry::metadata(&second_asset_id)
-						.map(|meta| meta.decimals)
-						.ok_or(Error::<T>::AssetDoesNotExists)?;
+					let first_decimal = Self::get_decimals(&first_asset_id)?;
+					let second_decimal = Self::get_decimals(&second_asset_id)?;
 
 					let lp_token = T::StableSwap::create_pool(
 						&sender,
@@ -802,6 +800,18 @@ pub mod pallet {
 		}
 
 		// private helpers
+		#[cfg(not(feature = "runtime-benchmarks"))]
+		fn get_decimals(asset_id: &T::CurrencyId) -> Result<u32, Error<T>> {
+			T::AssetRegistry::metadata(&asset_id).map(|meta| meta.decimals)
+			.ok_or(Error::<T>::AssetDoesNotExists)
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		/// use default decimals to avoid asset registry setup
+		fn get_decimals(asset_id: &T::CurrencyId) -> Result<u32, Error<T>> {
+			Ok(18)
+		}
+
 		fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {
 			if let Some(pool) = T::Xyk::get_pool_info(pool_id) {
 				return Ok(PoolInfo { pool_id, kind: PoolKind::Xyk, pool })
@@ -989,8 +999,8 @@ pub struct RpcPoolInfo<TokenId, Balance> {
 }
 
 sp_api::decl_runtime_apis! {
- 	/// This runtime api allows people to query the size of the liquidity pools
- 	/// and quote prices for swaps.
+	 /// This runtime api allows people to query the size of the liquidity pools
+	 /// and quote prices for swaps.
 	pub trait MarketRuntimeApi<Balance, AssetId>
 	where
 		Balance: Codec + MaybeDisplay + MaybeFromStr,

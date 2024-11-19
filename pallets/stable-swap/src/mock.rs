@@ -58,6 +58,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
@@ -83,9 +84,10 @@ impl swap::Config for Test {
 	type HigherPrecisionBalance = sp_core::U256;
 	type CurrencyId = TokenId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type PoolFeePercentage = ConstU128<20>;
-	type TreasuryFeePercentage = ConstU128<5>;
-	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type MarketTotalFee = ConstU128<30_000_000>;
+	type MarketTreasuryFeePart = ConstU128<3_333_333_334>;
+	type MarketBnBFeePart = ConstU128<5_000_000_000>;
 	type MaxApmCoeff = ConstU128<1_000_000>;
 	type DefaultApmCoeff = ConstU128<1_000>;
 	type MaxAssetsInPool = ConstU32<8>;

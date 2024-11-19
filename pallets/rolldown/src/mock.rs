@@ -86,6 +86,7 @@ mockall::mock! {
 		fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
 		fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
 		fn get_asset_l1_id(asset_id: TokenId) -> Option<L1Asset>;
+		fn create_pool_asset(lp_asset: TokenId, asset_1: TokenId, asset_2: TokenId) -> DispatchResult;
 	}
 }
 

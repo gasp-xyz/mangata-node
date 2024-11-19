@@ -840,6 +840,18 @@ pub mod pallet {
 				.expect("infinite length input; no invalid inputs for type; qed")
 		}
 
+		pub fn get_pool_reserves(pool_id: &PoolIdOf<T>) -> Result<Vec<T::Balance>, Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+
+			Ok(pool
+				.assets
+				.iter()
+				.map(|&id| T::Currency::available_balance(id, &pool_account))
+				.collect())
+		}
+
 		/// The current virtual price of the pool LP token, useful for calculating profits.
 		/// Returns LP token virtual price normalized to 1e18.
 		pub fn get_virtual_price(pool_id: &PoolIdOf<T>) -> Result<T::Balance, Error<T>> {
@@ -1635,13 +1647,10 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 	fn get_pool_reserves(
 		pool_id: Self::CurrencyId,
 	) -> Option<mangata_support::pools::PoolReserves<Self::Balance>> {
-		let account = Self::get_pool_account(&pool_id);
-		let info = Pools::<T>::get(pool_id)?;
-		let asset1 = info.assets.get(0)?;
-		let asset2 = info.assets.get(1)?;
-		let balance1 = T::Currency::available_balance(*asset1, &account);
-		let balance2 = T::Currency::available_balance(*asset2, &account);
-		Some((balance1, balance2))
+		let reserves = Self::get_pool_reserves(&pool_id).ok()?;
+		let balance1 = reserves.get(0)?;
+		let balance2 = reserves.get(1)?;
+		Some((*balance1, *balance2))
 	}
 
 	fn get_dy(

@@ -114,7 +114,7 @@ impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 		_first_asset_amount: Balance,
 		_second_asset_id: TokenId,
 		_second_asset_amount: Balance,
-	) -> DispatchResult {
+	) -> Result<TokenId, DispatchError> {
 		unimplemented!()
 	}
 
@@ -186,7 +186,7 @@ impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 		_first_asset_amount: Balance,
 		_expected_second_asset_amount: Balance,
 		_activate_minted_liquidity: bool,
-	) -> Result<(TokenId, Balance), DispatchError> {
+	) -> Result<(TokenId, Balance, Balance), DispatchError> {
 		unimplemented!()
 	}
 
@@ -206,7 +206,7 @@ impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 		_first_asset_id: TokenId,
 		_second_asset_id: TokenId,
 		_liquidity_asset_amount: Balance,
-	) -> DispatchResult {
+	) -> Result<(Balance, Balance), DispatchError> {
 		unimplemented!()
 	}
 
@@ -226,6 +226,10 @@ impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 		_liquidity_asset_id: TokenId,
 		_amount_permille: Permill,
 	) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn expected_amount_for_minting(_: u32, _: u32, _: u128) -> Option<u128> {
 		unimplemented!()
 	}
 }

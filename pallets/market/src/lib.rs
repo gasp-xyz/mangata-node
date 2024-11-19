@@ -989,8 +989,8 @@ pub struct RpcPoolInfo<TokenId, Balance> {
 }
 
 sp_api::decl_runtime_apis! {
-// 	/// This runtime api allows people to query the size of the liquidity pools
-// 	/// and quote prices for swaps.
+ 	/// This runtime api allows people to query the size of the liquidity pools
+ 	/// and quote prices for swaps.
 	pub trait MarketRuntimeApi<Balance, AssetId>
 	where
 		Balance: Codec + MaybeDisplay + MaybeFromStr,

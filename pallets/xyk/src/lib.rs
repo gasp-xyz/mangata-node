@@ -3768,7 +3768,7 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 
 		let pool = Self::get_pool_info(pool_id)?;
 		let reserves = Pools::<T>::get(pool);
-		let supply = T::Currency::total_issuance(pool_id);
+		let supply = <T as Config>::Currency::total_issuance(pool_id);
 
 		let exp_1 = Self::expected_amount_for_minting(pool_id, pool.0, amounts.0)?;
 		let exp_0 = Self::expected_amount_for_minting(pool_id, pool.1, amounts.1)?;

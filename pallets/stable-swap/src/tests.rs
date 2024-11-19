@@ -200,42 +200,42 @@ fn add_liquidity_should_work() {
 		});
 
 		// half of fees goes to treasury
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 6249355838739682030);
-		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 10547055005501540134);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 15346149327301319387);
-		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1000721478556158249);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 4166237226659702131);
+		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 7031370005073967423);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 10230766220247032834);
+		assert_eq!(StableSwap::get_virtual_price(&3).unwrap(), 1000961844675256200);
 	});
 }
 
 #[test]
-fn add_liquidity_balanced_for_single_asset() {
+fn add_liquidity_balanced_for_single_asset_minimal_fees() {
 	new_test_ext().execute_with(|| {
 		let account: AccountId = 2;
 		let amount: Balance = 1_000_000 * UNIT;
-		let mint: Balance = 1_000 * UNIT;
 
 		StableSwap::create_new_token(&account, amount);
 		StableSwap::create_new_token(&account, amount);
 		StableSwap::create_new_token(&account, amount);
-		StableSwap::create_pool(RuntimeOrigin::signed(account), vec![0, 1], vec![UNIT, UNIT], 200)
-			.unwrap();
+		StableSwap::create_pool(
+			RuntimeOrigin::signed(account),
+			vec![0, 1, 2],
+			vec![UNIT, UNIT, UNIT],
+			200,
+		)
+		.unwrap();
 
 		assert_ok!(StableSwap::add_liquidity(
 			RuntimeOrigin::signed(account),
 			3,
-			vec![2 * UNIT, 2 * UNIT],
+			vec![2 * UNIT, 3 * UNIT, 10 * UNIT],
 			1,
 		));
 
-		let input_0 = 100_000 * UNIT;
-		let input_1 = 50_000 * UNIT;
-		// let input_1 = StableSwap::get_dy(&3, 0, 1, input_0).unwrap();
-		let amounts = vec![input_0, 0];
-		println!("amounts: {:?}", amounts.clone());
-		let exp = Pallet::<Test>::calc_lp_token_amount(&3, amounts, true).unwrap();
-		println!("exp: {:?}", exp);
-		// let amounts = vec![input_0, input_0, input_0];
-		// let expected = StableSwap::calc_lp_token_amount(&3, amounts.clone(), true).unwrap();
+		let input_0 = 10_000 * UNIT;
+		let reserves = StableSwap::get_pool_reserves(&3).unwrap();
+		let rate = input_0 / reserves[0];
+		let amounts = vec![input_0, reserves[1] * rate, reserves[2] * rate];
+		let exp = Pallet::<Test>::calc_lp_token_amount(&3, amounts.clone(), true).unwrap();
 
 		assert_ok!(StableSwap::add_liquidity(
 			RuntimeOrigin::signed(account),
@@ -246,12 +246,12 @@ fn add_liquidity_balanced_for_single_asset() {
 
 		assert_event_emitted!(Event::LiquidityMinted {
 			who: 2,
-			pool_id: 2,
+			pool_id: 3,
 			amounts_provided: BoundedVec::truncate_from(amounts),
-			lp_token: 2,
-			lp_token_minted: 0,
-			total_supply: 58495909140835157013204,
-			fees: BoundedVec::truncate_from(vec![]),
+			lp_token: 3,
+			lp_token_minted: exp,
+			total_supply: 74881186777958934408403,
+			fees: BoundedVec::truncate_from(vec![0, 0, 1]),
 		});
 	});
 }
@@ -281,7 +281,7 @@ fn remove_liquidity_one_asset_should_work() {
 			total_supply: total_supply - 10 * UNIT,
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 7499724481278582);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 4999816321852351);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});
@@ -324,9 +324,9 @@ fn remove_liquidity_imbalanced_should_work() {
 		assert_eq!(StableSwap::balance(2, 2), balance - mint + amounts[2]);
 		assert_eq!(StableSwap::balance(3, 2), 3 * mint - 35019044399900264325);
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 937555149465271);
-		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 4687454850417076);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 3750060149538803);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 625036766435188);
+		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 3124969900903044);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 2500040100192543);
 	});
 }
 
@@ -383,7 +383,7 @@ fn swap_should_work_dy() {
 			amount_out: dy
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150112205918755700);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 50037401982926047);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});
@@ -407,7 +407,7 @@ fn swap_should_work_dx() {
 			amount_out: 100 * UNIT,
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 150641448635003547);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 50213816221710612);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
 	});

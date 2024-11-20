@@ -23,6 +23,7 @@ benchmarks=(
     "pallet_fee_lock"
     "pallet_proof_of_stake"
     "pallet_rolldown"
+    "pallet_market"
 )
 
 for bench in ${benchmarks[@]}; do

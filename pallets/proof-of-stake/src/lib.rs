@@ -1732,6 +1732,10 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<
 	) -> Result<BalanceOf<T>, DispatchError> {
 		Self::calculate_native_rewards_amount(user, liquidity_asset_id)
 	}
+
+	fn rewards_period() -> u32 {
+		Self::rewards_period()
+	}
 }
 
 impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {

@@ -27,6 +27,9 @@ use mangata_support::{
 };
 use mangata_types::multipurpose_liquidity::ActivateKind;
 
+#[cfg(feature = "runtime-benchmarks")]
+use mangata_support::traits::ComputeIssuance;
+
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr, Saturating, Zero};
 use sp_std::{convert::TryInto, fmt::Debug, vec, vec::Vec};
 
@@ -121,12 +124,6 @@ pub mod pallet {
 		/// Reward apis for native asset LP tokens activation
 		type Rewards: ProofOfStakeRewardsApi<Self::AccountId, Self::Balance, Self::CurrencyId>;
 
-		// type LiquidityReservations: ActivationReservesProviderTrait<
-		// 	Self::AccountId,
-		// 	Self::Balance,
-		// 	Self::CurrencyId,
-		// >;
-
 		/// Vesting apis for providing native vested liquidity
 		type Vesting: MultiTokenVestingLocks<
 			Self::AccountId,
@@ -149,6 +146,9 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type ComputeIssuance: ComputeIssuance;
 	}
 
 	#[pallet::error]
@@ -177,8 +177,6 @@ pub mod pallet {
 		MultiSwapSamePool,
 		/// Input asset id is not connected with output asset id for given pools
 		MultiSwapPathInvalid,
-		/// Unexpected failure
-		UnexpectedFailure,
 	}
 
 	// Pallet's events.
@@ -687,7 +685,7 @@ pub mod pallet {
 			let mut amount_in = asset_amount_out;
 			for (pool, swap) in pools.iter().rev().zip(path.iter().rev()) {
 				amount_in = Self::calculate_buy_price(pool.pool_id, id, amount_in)
-					.ok_or(Error::<T>::UnexpectedFailure)?;
+					.ok_or(Error::<T>::ExcesiveInputAmount)?;
 				id = if id == swap.0 { swap.1 } else { swap.0 };
 			}
 
@@ -800,17 +798,10 @@ pub mod pallet {
 		}
 
 		// private helpers
-		#[cfg(not(feature = "runtime-benchmarks"))]
 		fn get_decimals(asset_id: &T::CurrencyId) -> Result<u32, Error<T>> {
 			T::AssetRegistry::metadata(&asset_id)
 				.map(|meta| meta.decimals)
 				.ok_or(Error::<T>::AssetDoesNotExists)
-		}
-
-		#[cfg(feature = "runtime-benchmarks")]
-		/// use default decimals to avoid asset registry setup
-		fn get_decimals(asset_id: &T::CurrencyId) -> Result<u32, Error<T>> {
-			Ok(18)
 		}
 
 		fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {

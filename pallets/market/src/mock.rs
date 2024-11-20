@@ -10,7 +10,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use mangata_support::traits::ActivationReservesProviderTrait;
+use mangata_support::traits::{ActivationReservesProviderTrait, ComputeIssuance};
 use mangata_types::assets::L1Asset;
 use sp_runtime::{traits::AccountIdConversion, BuildStorage};
 use std::convert::TryFrom;
@@ -65,6 +65,7 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
+	pub const NativeCurrencyId: u32 = 0_u32;
 }
 
 impl orml_tokens::Config for Test {
@@ -117,116 +118,250 @@ impl pallet_stable_swap::Config for Test {
 	type WeightInfo = ();
 }
 
-mockall::mock! {
-	pub MaintenanceStatusProviderApi {}
-	impl GetMaintenanceStatusTrait for MaintenanceStatusProviderApi {
-		fn is_maintenance() -> bool;
-		fn is_upgradable() -> bool;
+#[cfg(not(feature = "runtime-benchmarks"))]
+mod mocks {
+	use super::*;
+
+	mockall::mock! {
+		pub MaintenanceStatusProviderApi {}
+		impl GetMaintenanceStatusTrait for MaintenanceStatusProviderApi {
+			fn is_maintenance() -> bool;
+			fn is_upgradable() -> bool;
+		}
+	}
+
+	mockall::mock! {
+		pub ActivationReservesApi {}
+		impl ActivationReservesProviderTrait<AccountId, Balance, TokenId> for ActivationReservesApi {
+			fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &AccountId) -> Balance;
+
+			fn can_activate(
+				token_id: TokenId,
+				account_id: &AccountId,
+				amount: Balance,
+				use_balance_from: Option<ActivateKind>,
+			) -> bool;
+
+			fn activate(
+				token_id: TokenId,
+				account_id: &AccountId,
+				amount: Balance,
+				use_balance_from: Option<ActivateKind>,
+			) -> DispatchResult;
+
+			fn deactivate(token_id: TokenId, account_id: &AccountId, amount: Balance) -> Balance;
+		}
+	}
+
+	mockall::mock! {
+		pub RewardsApi {}
+
+		impl ProofOfStakeRewardsApi<AccountId, Balance, TokenId> for RewardsApi {
+
+			fn enable(liquidity_token_id: TokenId, weight: u8);
+
+			fn disable(liquidity_token_id: TokenId);
+
+			fn is_enabled(
+				liquidity_token_id: TokenId,
+			) -> bool;
+
+			fn claim_rewards_all(
+				sender: AccountId,
+				liquidity_token_id: TokenId,
+			) -> Result<Balance, DispatchError>;
+
+			fn activate_liquidity(
+				sender: AccountId,
+				liquidity_token_id: TokenId,
+				amount: Balance,
+				use_balance_from: Option<ActivateKind>,
+			) -> DispatchResult;
+
+			fn deactivate_liquidity(
+				sender: AccountId,
+				liquidity_token_id: TokenId,
+				amount: Balance,
+			) -> DispatchResult;
+
+			fn calculate_rewards_amount(
+				user: AccountId,
+				liquidity_asset_id: TokenId,
+			) -> Result<Balance, DispatchError>;
+
+			fn rewards_period() -> u32;
+		}
+	}
+
+	mockall::mock! {
+		pub AssetRegApi {}
+
+		impl AssetRegistryProviderTrait<TokenId> for AssetRegApi {
+			fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
+			fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
+			fn get_asset_l1_id(asset_id: TokenId) -> Option<L1Asset>;
+			fn create_pool_asset(
+				lp_asset: TokenId,
+				asset_1: TokenId,
+				asset_2: TokenId,
+			) -> DispatchResult;
+		}
+
+		impl orml_traits::asset_registry::Inspect for AssetRegApi {
+			type AssetId = TokenId;
+			type Balance = Balance;
+			type CustomMetadata = ();
+			type StringLimit = ConstU32<10>;
+
+			fn metadata(asset_id: &TokenId) -> Option<AssetMetadata<Balance, (), ConstU32<10>>>;
+		}
+
+		impl AssetMetadataMutationTrait<TokenId> for AssetRegApi {
+			fn set_asset_info(
+				asset: TokenId,
+				name: Vec<u8>,
+				symbol: Vec<u8>,
+				decimals: u32,
+			) -> DispatchResult;
+		}
+	}
+
+	mockall::mock! {
+		pub Issuance {}
+
+		impl ComputeIssuance for Issuance {
+			fn initialize() {}
+			fn compute_issuance(n: u32);
+		}
 	}
 }
 
-mockall::mock! {
-	pub ActivationReservesApi {}
-	impl ActivationReservesProviderTrait<AccountId, Balance, TokenId> for ActivationReservesApi {
-		fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &AccountId) -> Balance;
+#[cfg(feature = "runtime-benchmarks")]
+mod mocks {
+	use super::*;
 
-		fn can_activate(
-			token_id: TokenId,
-			account_id: &AccountId,
-			amount: Balance,
-			use_balance_from: Option<ActivateKind>,
-		) -> bool;
+	pub struct MockMaintenanceStatusProviderApi;
+
+	impl GetMaintenanceStatusTrait for MockMaintenanceStatusProviderApi {
+		fn is_maintenance() -> bool {
+			false
+		}
+
+		fn is_upgradable() -> bool {
+			unimplemented!()
+		}
+	}
+	pub struct MockActivationReservesApi;
+
+	impl ActivationReservesProviderTrait<AccountId, Balance, TokenId> for MockActivationReservesApi {
+		fn get_max_instant_unreserve_amount(_: TokenId, _: &AccountId) -> Balance {
+			Zero::zero()
+		}
+
+		fn can_activate(_: TokenId, _: &AccountId, _: Balance, _: Option<ActivateKind>) -> bool {
+			unimplemented!()
+		}
 
 		fn activate(
-			token_id: TokenId,
-			account_id: &AccountId,
-			amount: Balance,
-			use_balance_from: Option<ActivateKind>,
-		) -> DispatchResult;
+			_: TokenId,
+			_: &AccountId,
+			_: Balance,
+			_: Option<ActivateKind>,
+		) -> DispatchResult {
+			unimplemented!()
+		}
 
-		fn deactivate(token_id: TokenId, account_id: &AccountId, amount: Balance) -> Balance;
+		fn deactivate(_: TokenId, _: &AccountId, _: Balance) -> Balance {
+			unimplemented!()
+		}
 	}
-}
 
-mockall::mock! {
-	pub RewardsApi {}
+	pub struct MockRewardsApi;
 
-	impl ProofOfStakeRewardsApi<AccountId, Balance, TokenId> for RewardsApi {
+	impl ProofOfStakeRewardsApi<AccountId, Balance, TokenId> for MockRewardsApi {
+		fn enable(_: TokenId, _: u8) {}
 
-	fn enable(liquidity_token_id: TokenId, weight: u8);
+		fn disable(_: TokenId) {
+			unimplemented!()
+		}
 
-	fn disable(liquidity_token_id: TokenId);
+		fn is_enabled(_: TokenId) -> bool {
+			true
+		}
 
-	fn is_enabled(
-		liquidity_token_id: TokenId,
-	) -> bool;
+		fn claim_rewards_all(_: AccountId, _: TokenId) -> Result<Balance, DispatchError> {
+			unimplemented!()
+		}
 
-	fn claim_rewards_all(
-		sender: AccountId,
-		liquidity_token_id: TokenId,
-	) -> Result<Balance, DispatchError>;
+		fn activate_liquidity(
+			_: AccountId,
+			_: TokenId,
+			_: Balance,
+			_: Option<ActivateKind>,
+		) -> DispatchResult {
+			Ok(()).into()
+		}
 
-	fn activate_liquidity(
-		sender: AccountId,
-		liquidity_token_id: TokenId,
-		amount: Balance,
-		use_balance_from: Option<ActivateKind>,
-	) -> DispatchResult;
+		fn deactivate_liquidity(_: AccountId, _: TokenId, _: Balance) -> DispatchResult {
+			Ok(()).into()
+		}
 
-	fn deactivate_liquidity(
-		sender: AccountId,
-		liquidity_token_id: TokenId,
-		amount: Balance,
-	) -> DispatchResult;
+		fn calculate_rewards_amount(_: AccountId, _: TokenId) -> Result<Balance, DispatchError> {
+			unimplemented!()
+		}
 
-	fn calculate_rewards_amount(
-		user: AccountId,
-		liquidity_asset_id: TokenId,
-	) -> Result<Balance, DispatchError>;
-
+		fn rewards_period() -> u32 {
+			10
+		}
 	}
-}
 
-mockall::mock! {
-	pub AssetRegApi {}
+	pub struct MockAssetRegApi;
 
-	impl AssetRegistryProviderTrait<TokenId> for AssetRegApi {
-		fn get_l1_asset_id(l1_asset: L1Asset) -> Option<TokenId>;
-		fn create_l1_asset(l1_asset: L1Asset) -> Result<TokenId, DispatchError>;
-		fn get_asset_l1_id(asset_id: TokenId) -> Option<L1Asset>;
-		fn create_pool_asset(
-			lp_asset: TokenId,
-			asset_1: TokenId,
-			asset_2: TokenId,
-		) -> DispatchResult;
+	impl AssetRegistryProviderTrait<TokenId> for MockAssetRegApi {
+		fn get_l1_asset_id(_: L1Asset) -> Option<TokenId> {
+			unimplemented!()
+		}
+		fn create_l1_asset(_: L1Asset) -> Result<TokenId, DispatchError> {
+			unimplemented!()
+		}
+		fn get_asset_l1_id(_: TokenId) -> Option<L1Asset> {
+			unimplemented!()
+		}
+		fn create_pool_asset(_: TokenId, _: TokenId, _: TokenId) -> DispatchResult {
+			Ok(()).into()
+		}
 	}
-}
 
-impl orml_traits::asset_registry::Inspect for MockAssetRegApi {
-	type AssetId = TokenId;
-	type Balance = Balance;
-	type CustomMetadata = ();
-	type StringLimit = ConstU32<10>;
+	impl orml_traits::asset_registry::Inspect for MockAssetRegApi {
+		type AssetId = TokenId;
+		type Balance = Balance;
+		type CustomMetadata = ();
+		type StringLimit = ConstU32<10>;
 
-	fn metadata(asset_id: &TokenId) -> Option<AssetMetadata<Balance, (), ConstU32<10>>> {
-		Some(AssetMetadata {
-			decimals: 18,
-			name: BoundedVec::new(),
-			symbol: BoundedVec::new(),
-			existential_deposit: Zero::zero(),
-			additional: (),
-		})
+		fn metadata(_: &TokenId) -> Option<AssetMetadata<Balance, (), ConstU32<10>>> {
+			Some(AssetMetadata {
+				decimals: 18,
+				name: BoundedVec::new(),
+				symbol: BoundedVec::new(),
+				existential_deposit: Zero::zero(),
+				additional: (),
+			})
+		}
 	}
-}
 
-impl AssetMetadataMutationTrait<TokenId> for MockAssetRegApi {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		Ok(()).into()
+	impl AssetMetadataMutationTrait<TokenId> for MockAssetRegApi {
+		fn set_asset_info(_: TokenId, _: Vec<u8>, _: Vec<u8>, _: u32) -> DispatchResult {
+			Ok(()).into()
+		}
+	}
+
+	pub struct MockIssuance;
+
+	impl ComputeIssuance for MockIssuance {
+		fn initialize() {
+			unimplemented!()
+		}
+		fn compute_issuance(_: u32) {}
 	}
 }
 
@@ -234,21 +369,21 @@ impl pallet_xyk::XykBenchmarkingConfig for Test {}
 
 impl pallet_xyk::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
-	type ActivationReservesProvider = MockActivationReservesApi;
+	type MaintenanceStatusProvider = mocks::MockMaintenanceStatusProviderApi;
+	type ActivationReservesProvider = mocks::MockActivationReservesApi;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type NativeCurrencyId = ConstU32<0>;
+	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type LiquidityMiningRewards = MockRewardsApi;
+	type LiquidityMiningRewards = mocks::MockRewardsApi;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
-	type AssetMetadataMutation = MockAssetRegApi;
+	type AssetMetadataMutation = mocks::MockAssetRegApi;
 	type FeeLockWeight = ();
 }
 
@@ -257,16 +392,18 @@ impl market::Config for Test {
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type Balance = Balance;
 	type CurrencyId = TokenId;
-	type NativeCurrencyId = ConstU32<0>;
+	type NativeCurrencyId = NativeCurrencyId;
 	type Xyk = Xyk;
 	type StableSwap = StableSwap;
-	type Rewards = MockRewardsApi;
+	type Rewards = mocks::MockRewardsApi;
 	type Vesting = Vesting;
-	type AssetRegistry = MockAssetRegApi;
+	type AssetRegistry = mocks::MockAssetRegApi;
 	type DisabledTokens = Nothing;
 	type DisallowedPools = Nothing;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProviderApi;
+	type MaintenanceStatusProvider = mocks::MockMaintenanceStatusProviderApi;
 	type WeightInfo = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type ComputeIssuance = mocks::MockIssuance;
 }
 
 impl<T: Config> Pallet<T>

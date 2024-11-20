@@ -649,7 +649,7 @@ pub mod pallet {
 			let to_treasury = to_treasury - to_bnb;
 
 			T::Currency::transfer(
-				pool.assets[i],
+				pool.assets[j],
 				&pool_account,
 				&Self::treasury_account_id(),
 				to_treasury,
@@ -657,7 +657,7 @@ pub mod pallet {
 			)?;
 
 			T::Currency::transfer(
-				pool.assets[i],
+				pool.assets[j],
 				&pool_account,
 				&Self::bnb_treasury_account_id(),
 				to_bnb,

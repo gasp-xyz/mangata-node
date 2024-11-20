@@ -284,11 +284,17 @@ fn multiswap_should_work_xyk() {
 }
 
 #[test]
-fn multiswap_should_work_stable_swap() {
+fn multiswap_should_work_stable_swap_with_bnb() {
 	test_env().execute_with(|| {
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_3)));
+		// for bnb
+		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_2)));
+		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_3)));
+
+		let before = Tokens::total_issuance(NATIVE_ASSET_ID);
 
 		assert_ok!(Market::multiswap_asset(
 			origin(),
@@ -298,6 +304,12 @@ fn multiswap_should_work_stable_swap() {
 			ASSET_ID_3,
 			Zero::zero(),
 		));
+
+		let after = Tokens::total_issuance(NATIVE_ASSET_ID);
+		// issuance decreased because of bnb
+		assert!(before > after);
+		assert_eq!(before, 100000000000000000000);
+		assert_eq!(after, 99996758378067624442);
 
 		println!("{:#?}", events());
 

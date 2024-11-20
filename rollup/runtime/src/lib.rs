@@ -873,6 +873,8 @@ impl pallet_market::Config for Runtime {
 	type DisallowedPools = Bootstrap;
 	type MaintenanceStatusProvider = Maintenance;
 	type WeightInfo = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type ComputeIssuance = Issuance;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

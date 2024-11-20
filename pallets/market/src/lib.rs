@@ -802,8 +802,9 @@ pub mod pallet {
 		// private helpers
 		#[cfg(not(feature = "runtime-benchmarks"))]
 		fn get_decimals(asset_id: &T::CurrencyId) -> Result<u32, Error<T>> {
-			T::AssetRegistry::metadata(&asset_id).map(|meta| meta.decimals)
-			.ok_or(Error::<T>::AssetDoesNotExists)
+			T::AssetRegistry::metadata(&asset_id)
+				.map(|meta| meta.decimals)
+				.ok_or(Error::<T>::AssetDoesNotExists)
 		}
 
 		#[cfg(feature = "runtime-benchmarks")]

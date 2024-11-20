@@ -26,25 +26,18 @@ mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn create_pool(x: Linear<0,1>) {
-        let kind: PoolKind = match x {
-            0 => PoolKind::Xyk,
-            _ => PoolKind::StableSwap,
-        };
+	fn create_pool(x: Linear<0, 1>) {
+		let kind: PoolKind = match x {
+			0 => PoolKind::Xyk,
+			_ => PoolKind::StableSwap,
+		};
 		let caller: T::AccountId = whitelisted_caller();
 		let asset1 = create_asset::<T>(&caller);
 		let asset2 = create_asset::<T>(&caller);
 		let lp_token = T::Currency::get_next_currency_id();
 
 		#[extrinsic_call]
-		_(
-			SystemOrigin::Signed(caller.clone()),
-			kind,
-			asset1,
-			UNIT.into(),
-			asset2,
-			UNIT.into(),
-		);
+		_(SystemOrigin::Signed(caller.clone()), kind, asset1, UNIT.into(), asset2, UNIT.into());
 		let lp_supply = T::Currency::total_issuance(lp_token);
 
 		assert_last_event::<T>(

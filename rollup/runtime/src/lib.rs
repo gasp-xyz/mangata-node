@@ -10,7 +10,7 @@ use codec::{alloc::string::String, Decode, Encode, MaxEncodedLen};
 use sp_api::impl_runtime_apis;
 use sp_application_crypto::ByteArray;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, U256};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -18,12 +18,12 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, Convert, ConvertInto, DispatchInfoOf,
-		Dispatchable, Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, MaybeConvert,
-		NumberFor, PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
+		Dispatchable, Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, NumberFor,
+		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, ExtrinsicInclusionMode, FixedPointNumber,
-	OpaqueExtrinsic, Perbill, Percent, Permill, RuntimeDebug, SaturatedConversion,
+	Perbill, Percent, Permill, RuntimeDebug,
 };
 use sp_std::{
 	cmp::Ordering,
@@ -428,58 +428,14 @@ impl Into<CallType> for RuntimeCall {
 				asset_id_out,
 				asset_amount_out: min_amount_out,
 			},
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id,
-				sold_asset_amount,
-				bought_asset_id,
-				min_amount_out,
-				..
-			}) => CallType::AtomicSell {
-				sold_asset_id,
-				sold_asset_amount,
-				bought_asset_id,
-				min_amount_out,
-			},
-			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id,
-				bought_asset_amount,
-				bought_asset_id,
-				max_amount_in,
-				..
-			}) => CallType::AtomicBuy {
-				sold_asset_id,
-				bought_asset_amount,
-				bought_asset_id,
-				max_amount_in,
-			},
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out,
-				..
-			}) => CallType::MultiSell { swap_token_list, sold_asset_amount, min_amount_out },
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in,
-				..
-			}) => CallType::MultiBuy { swap_token_list, bought_asset_amount, max_amount_in },
-			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) =>
-				CallType::CompoundRewards,
-			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) =>
-				CallType::ProvideLiquidityWithConversion,
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
 			_ => CallType::Other,
 		}
 	}
 }
 
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{
-	generic::{ExtendedCall, MetamaskSigningCtx},
-	AccountId20,
-};
-use sp_std::{fmt::Write, prelude::*};
+use sp_runtime::generic::{ExtendedCall, MetamaskSigningCtx};
+use sp_std::fmt::Write;
 
 impl ExtendedCall for RuntimeCall {
 	fn context(&self) -> Option<MetamaskSigningCtx> {
@@ -737,13 +693,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			_ if matches!(c, RuntimeCall::Utility(..)) => true,
-			ProxyType::AutoCompound => {
-				matches!(
-					c,
-					RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
-						RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. })
-				)
-			},
+			ProxyType::AutoCompound => false,
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -894,8 +844,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment = 11,
 
 		// Xyk stuff
-		StableSwap: pallet_stable_swap = 12,
-		Xyk: pallet_xyk = 13,
+		StableSwap: pallet_stable_swap exclude_parts { Call } = 12,
+		Xyk: pallet_xyk exclude_parts { Call } = 13,
 		ProofOfStake: pallet_proof_of_stake = 14,
 
 		// Fee Locks
@@ -968,7 +918,6 @@ mod benches {
 		[pallet_market, Market]
 	);
 }
-use codec::alloc::string::ToString;
 
 use frame_support::dispatch::GetDispatchInfo;
 

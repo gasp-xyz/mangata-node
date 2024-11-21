@@ -73,7 +73,7 @@ pub trait MarketApi<BlockHash, Balance, TokenId> {
 		&self,
 		pool_id: Option<TokenId>,
 		at: Option<BlockHash>,
-	) -> RpcResult<sp_std::vec::Vec<RpcPoolInfo<TokenId, Balance>>>;
+	) -> RpcResult<sp_std::vec::Vec<RpcPoolInfo<TokenId, NumberOrHex>>>;
 }
 
 pub struct Market<C, M> {
@@ -228,12 +228,25 @@ where
 		&self,
 		pool_id: Option<TokenId>,
 		_at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<RpcPoolInfo<TokenId, Balance>>> {
+	) -> RpcResult<Vec<RpcPoolInfo<TokenId, NumberOrHex>>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
-		api.get_pools(at, pool_id).map_err(|e| {
-			ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
-		})
+		api.get_pools(at, pool_id)
+			.map(|infos| {
+				{
+					infos.into_iter().map(|info| RpcPoolInfo {
+						pool_id: info.pool_id,
+						kind: info.kind,
+						lp_token_id: info.lp_token_id,
+						assets: info.assets,
+						reserves: info.reserves.into_iter().map(|r| r.into()).collect(),
+					})
+				}
+				.collect()
+			})
+			.map_err(|e| {
+				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
+			})
 	}
 }

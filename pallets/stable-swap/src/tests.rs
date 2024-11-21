@@ -383,9 +383,9 @@ fn swap_should_work_dy() {
 			amount_out: dy
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 50037401982926047);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 50037401982926047);
 	});
 }
 
@@ -407,8 +407,8 @@ fn swap_should_work_dx() {
 			amount_out: 100 * UNIT,
 		});
 
-		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 50213816221710612);
+		assert_eq!(StableSwap::balance(0, TreasuryAccount::get()), 0);
 		assert_eq!(StableSwap::balance(1, TreasuryAccount::get()), 0);
-		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 0);
+		assert_eq!(StableSwap::balance(2, TreasuryAccount::get()), 50213816221710612);
 	});
 }

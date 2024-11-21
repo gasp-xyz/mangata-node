@@ -281,6 +281,7 @@ mockall::mock! {
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError>;
 
+	fn rewards_period() -> u32;
 	}
 }
 

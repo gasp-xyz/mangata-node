@@ -171,8 +171,8 @@ pub mod config {
 	pub type TreasuryPalletIdOf<T> = <T as ::pallet_treasury::Config>::PalletId;
 
 	pub struct TreasuryAccountIdOf<T: ::pallet_treasury::Config>(PhantomData<T>);
-	impl<T: ::pallet_treasury::Config> Get<AccountId> for TreasuryAccountIdOf<T> {
-		fn get() -> AccountId {
+	impl<T: ::pallet_treasury::Config> Get<T::AccountId> for TreasuryAccountIdOf<T> {
+		fn get() -> T::AccountId {
 			TreasuryPalletIdOf::<T>::get().into_account_truncating()
 		}
 	}
@@ -302,7 +302,7 @@ pub mod config {
 
 		pub struct TestTokensFilter;
 		impl Contains<TokenId> for TestTokensFilter {
-			fn contains(token_id: &TokenId) -> bool {
+			fn contains(_: &TokenId) -> bool {
 				// we dont want to allow doing anything with dummy assets previously
 				// used for testing
 				false
@@ -412,7 +412,7 @@ pub mod config {
 		parameter_types! {
 			pub const OperationalFeeMultiplier: u8 = 5;
 			pub const TransactionByteFee: Balance = 5 * consts::MILLIUNIT;
-		pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
+			pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 		}
 
 		pub type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -471,39 +471,13 @@ pub mod config {
 			FeeLockFree((T::RuntimeCall, C::CurrencyId, C::Balance)),
 		}
 
-		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
-		impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
+		pub struct FeeHelpers<T, Currency, FeeLock>(PhantomData<(T, Currency, FeeLock)>);
+		impl<T, Currency, FeeLock> FeeHelpers<T, Currency, FeeLock>
 		where
-			T: pallet_transaction_payment::Config
-				+ pallet_xyk::Config<Currency = C>
-				+ pallet_fee_lock::Config<Tokens = C>,
-			T::LengthToFee: frame_support::weights::WeightToFee<
-				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
-			>,
-			C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
-			C::PositiveImbalance: Imbalance<
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				Opposite = C::NegativeImbalance,
-			>,
-			C::NegativeImbalance: Imbalance<
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				Opposite = C::PositiveImbalance,
-			>,
-			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
-			OCA: OnChargeTransaction<
-				T,
-				LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
-				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
-			>,
-			OFLA: FeeLockTriggerTrait<
-				T::AccountId,
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
-			>,
-			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-			T::AccountId: From<sp_runtime::AccountId20> + Into<sp_runtime::AccountId20>,
-			sp_runtime::AccountId20: From<T::AccountId>,
+			T: pallet_fee_lock::Config<Tokens = Currency>,
+			Currency:
+				MultiTokenCurrencyExtended<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+			FeeLock: FeeLockTriggerTrait<T::AccountId, Balance, TokenId>,
 		{
 			pub fn is_high_value_swap(
 				fee_lock_metadata: &pallet_fee_lock::FeeLockMetadataInfo<T>,
@@ -512,7 +486,7 @@ pub mod config {
 			) -> bool {
 				if let (true, Some(valuation)) = (
 					fee_lock_metadata.is_whitelisted(asset_id),
-					OFLA::get_swap_valuation_for_token(asset_id, asset_amount),
+					FeeLock::get_swap_valuation_for_token(asset_id, asset_amount),
 				) {
 					valuation >= fee_lock_metadata.swap_value_threshold
 				} else {
@@ -530,7 +504,7 @@ pub mod config {
 				asset_amount_in: Balance,
 				asset_id_out: TokenId,
 				asset_amount_out: Balance,
-			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+			) -> Result<Option<LiquidityInfoEnum<Currency, T>>, TransactionValidityError> {
 				// allowed high value single pool swap, should have enough `asset_id_in` tokens to pay for fee
 				return if swap_pool_list.len() == 1 &&
 					(Self::is_high_value_swap(&fee_lock_metadata, asset_id_in, asset_amount_in) ||
@@ -539,18 +513,14 @@ pub mod config {
 							asset_id_out,
 							asset_amount_out,
 						)) {
-					let _ = OFLA::unlock_fee(who);
+					let _ = FeeLock::unlock_fee(who);
 					let fee = sp_runtime::helpers_128bit::multiply_by_rational_with_rounding(
 						asset_amount_in,
 						fees::MarketTotalFee::get(),
 						fees::FEE_PRECISION,
 						sp_runtime::Rounding::Down,
 					);
-					let balance =
-						orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::available_balance(
-							asset_id_in,
-							&who.clone().into(),
-						);
+					let balance = Currency::available_balance(asset_id_in, &who.clone());
 					if fee.map_or(false, |f| f > balance) {
 						return Err(TransactionValidityError::Invalid(
 							InvalidTransaction::SwapPrevalidation.into(),
@@ -564,7 +534,7 @@ pub mod config {
 					))))
 				// fee lock, withdraw native `max(fee_lock_amount, fee)` amount
 				} else {
-					match C::withdraw(
+					match Currency::withdraw(
 						tokens::RxTokenId::get().into(),
 						who,
 						sp_std::cmp::max(fee, fee_lock_metadata.fee_lock_amount),
@@ -592,41 +562,20 @@ pub mod config {
 		where
 			T: pallet_transaction_payment::Config
 				+ pallet_treasury::Config
-				+ pallet_xyk::Config<Currency = C>
 				+ pallet_fee_lock::Config<Tokens = C>,
 			<T as frame_system::Config>::RuntimeCall:
 				Into<crate::CallType> + Dispatchable<PostInfo = PostDispatchInfo>,
-			T::LengthToFee: frame_support::weights::WeightToFee<
-				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
-			>,
-			C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
-			C::PositiveImbalance: Imbalance<
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				Opposite = C::NegativeImbalance,
-			>,
-			C::NegativeImbalance: Imbalance<
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				Opposite = C::PositiveImbalance,
-			>,
-			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+			C: MultiTokenCurrencyExtended<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+			OU: OnMultiTokenUnbalanced<TokenId, NegativeImbalanceOf<C, T>>,
 			OCA: OnChargeTransaction<
 				T,
 				LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
-				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+				Balance = Balance,
 			>,
-			OFLA: FeeLockTriggerTrait<
-				T::AccountId,
-				<C as MultiTokenCurrency<T::AccountId>>::Balance,
-				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
-			>,
-			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-			T::AccountId: From<sp_runtime::AccountId20> + Into<sp_runtime::AccountId20>,
-			Balance: From<<C as MultiTokenCurrency<T::AccountId>>::Balance>,
-			sp_runtime::AccountId20: From<T::AccountId>,
+			OFLA: FeeLockTriggerTrait<T::AccountId, Balance, TokenId>,
 		{
 			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
-			type Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance;
+			type Balance = Balance;
 
 			/// Withdraw the predicted fee from the transaction origin.
 			///
@@ -684,7 +633,7 @@ pub mod config {
 							asset_amount_out,
 						},
 						Some(fee_lock_metadata),
-					) => FeeHelpers::<T, C, OU, OCA, OFLA>::can_withdraw_fee(
+					) => FeeHelpers::<T, C, OFLA>::can_withdraw_fee(
 						who,
 						call,
 						fee,
@@ -795,41 +744,26 @@ pub mod config {
 			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 		pub trait TriggerEvent<AccountIdT> {
-			fn trigger(who: AccountIdT, token_id: TokenId, fee: u128, tip: u128);
+			fn trigger(who: AccountIdT, token_id: TokenId, fee: Balance, tip: Balance);
 		}
 
 		/// Default implementation for a Currency and an OnUnbalanced handler.
 		///
 		/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 		/// then tip.
-		impl<T, C, OU, T1, T2, SF, TE> OnChargeTransaction<T> for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>
+		impl<T, C, OU, T1, T2, SF, TE> OnChargeTransaction<T>
+			for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF, TE>
 		where
 			T: pallet_transaction_payment::Config,
-			TE: TriggerEvent<<T as frame_system::Config>::AccountId>,
-			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance: From<u128>,
-			C::CurrencyId: Into<u32>,
-			T::LengthToFee: frame_support::weights::WeightToFee<
-			Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-			>,
-			C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
-			C::PositiveImbalance: Imbalance<
-				<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-				Opposite = C::NegativeImbalance,
-			>,
-			C::NegativeImbalance: Imbalance<
-				<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-				Opposite = C::PositiveImbalance,
-			>,
-			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
-			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
-				scale_info::TypeInfo,
-			T1: Get<C::CurrencyId>,
-			T2: Get<C::CurrencyId>,
-			SF: Get<u128>,
+			TE: TriggerEvent<T::AccountId>,
+			C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+			OU: OnMultiTokenUnbalanced<TokenId, NegativeImbalanceOf<C, T>>,
+			T1: Get<TokenId>,
+			T2: Get<TokenId>,
+			SF: Get<Balance>,
 		{
 			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
-			type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+			type Balance = Balance;
 
 			/// Withdraw the predicted fee from the transaction origin.
 			///
@@ -851,7 +785,7 @@ pub mod config {
 					WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 				};
 
-				let fee_2 = fee / SF::get().into();
+				let fee_2 = fee / SF::get();
 
 				match C::withdraw(
 					T1::get(),
@@ -860,8 +794,7 @@ pub mod config {
 					withdraw_reason,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(imbalance) =>
-						Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
+					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
 					Err(_) if fee_2.is_zero() => Err(InvalidTransaction::Payment.into()),
 					Err(_) => match C::withdraw(
 						T2::get(),
@@ -892,7 +825,7 @@ pub mod config {
 			) -> Result<(), TransactionValidityError> {
 				if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
 					let (corrected_fee, tip) = if token_id == T2::get() {
-						(corrected_fee / SF::get().into(), tip / SF::get().into())
+						(corrected_fee / SF::get(), tip / SF::get())
 					} else {
 						(corrected_fee, tip)
 					};
@@ -905,11 +838,11 @@ pub mod config {
 						.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id));
 					// merge the imbalance caused by paying the fees and refunding parts of it again.
 					let adjusted_paid = match paid.offset(refund_imbalance) {
-							SameOrOther::Same(a) => Ok(a),
-							SameOrOther::None => Ok(C::NegativeImbalance::from_zero(token_id)),
-							SameOrOther::Other(b) => Err(b),
-						}
-						.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+						SameOrOther::Same(a) => Ok(a),
+						SameOrOther::None => Ok(C::NegativeImbalance::from_zero(token_id)),
+						SameOrOther::Other(b) => Err(b),
+					}
+					.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 					// Call someone else to handle the imbalance (fee and tip separately)
 					let (tip_imb, fee) = adjusted_paid.split(tip);
 					OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));

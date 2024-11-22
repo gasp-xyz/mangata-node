@@ -19,7 +19,7 @@ use sp_runtime::{
 	traits::{
 		AccountIdConversion, BlakeTwo256, Block as BlockT, Convert, ConvertInto, DispatchInfoOf,
 		Dispatchable, Header as HeaderT, IdentifyAccount, IdentityLookup, Keccak256, NumberFor,
-		PostDispatchInfoOf, Saturating, SignedExtension, StaticLookup, Verify, Zero,
+		PostDispatchInfoOf, SignedExtension, StaticLookup, Verify, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, BoundedVec, DispatchError, ExtrinsicInclusionMode, FixedPointNumber,
@@ -1229,16 +1229,12 @@ impl_runtime_apis! {
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor<Runtime>,
-								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *input, input_amount)
 									||
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor<Runtime>,
-								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *output, output_amount)
 								)
@@ -1268,16 +1264,12 @@ impl_runtime_apis! {
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor<Runtime>,
-								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *input, input_amount)
 									||
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor<Runtime>,
-								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *output, output_amount)
 								)

@@ -159,6 +159,12 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// Tokens which cannot be transfered by extrinsics/user or use in pool, unless foundation override
+		type NontransferableTokens: Contains<Self::CurrencyId>;
+
+		/// A list of Foundation members with elevated rights
+		type FoundationAccountsProvider: Get<Vec<Self::AccountId>>;
+
 		#[cfg(feature = "runtime-benchmarks")]
 		type ComputeIssuance: ComputeIssuance;
 	}
@@ -189,6 +195,8 @@ pub mod pallet {
 		MultiSwapSamePool,
 		/// Input asset id is not connected with output asset id for given pools
 		MultiSwapPathInvalid,
+		/// Asset cannot be used to create or modify a pool
+		NontransferableToken,
 	}
 
 	// Pallet's events.
@@ -274,6 +282,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
+			// check assets id, or the foundation has a veto
+			ensure!(
+				(!T::NontransferableTokens::contains(&first_asset_id) &&
+					!T::NontransferableTokens::contains(&second_asset_id)) ||
+					T::FoundationAccountsProvider::get().contains(&sender),
+				Error::<T>::NontransferableToken
+			);
+
 			Self::check_assets_allowed((first_asset_id, second_asset_id))?;
 
 			ensure!(
@@ -356,6 +372,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let pool_info = Self::get_pool_info(pool_id)?;
+			// check assets id, foundation has no veto
+			ensure!(
+				!T::NontransferableTokens::contains(&pool_info.pool.0) &&
+					!T::NontransferableTokens::contains(&pool_info.pool.1),
+				Error::<T>::NontransferableToken
+			);
 			Self::check_assets_allowed(pool_info.pool)?;
 
 			let (lp_amount, other_asset_amount) = Self::do_mint_liquidity(
@@ -474,6 +496,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let pool_info = Self::get_pool_info(pool_id)?;
+			// check assets id, foundation has no veto
+			ensure!(
+				!T::NontransferableTokens::contains(&pool_info.pool.0) &&
+					!T::NontransferableTokens::contains(&pool_info.pool.1),
+				Error::<T>::NontransferableToken
+			);
 			Self::check_assets_allowed(pool_info.pool)?;
 
 			let native_id = T::NativeCurrencyId::get();
@@ -536,6 +564,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let pool_info = Self::get_pool_info(pool_id)?;
+			// check assets id, foundation has no veto
+			ensure!(
+				!T::NontransferableTokens::contains(&pool_info.pool.0) &&
+					!T::NontransferableTokens::contains(&pool_info.pool.1),
+				Error::<T>::NontransferableToken
+			);
 			Self::check_assets_allowed(pool_info.pool)?;
 
 			let native_id = T::NativeCurrencyId::get();
@@ -597,6 +631,13 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let pool_info = Self::get_pool_info(pool_id)?;
+			// check assets id, or the foundation has a veto
+			ensure!(
+				(!T::NontransferableTokens::contains(&pool_info.pool.0) &&
+					!T::NontransferableTokens::contains(&pool_info.pool.1)) ||
+					T::FoundationAccountsProvider::get().contains(&sender),
+				Error::<T>::NontransferableToken
+			);
 			Self::check_assets_allowed(pool_info.pool)?;
 
 			let amounts = match pool_info.kind {

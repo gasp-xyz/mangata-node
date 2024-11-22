@@ -55,8 +55,8 @@ pub use frame_support::{
 			UnityAssetBalanceConversion,
 		},
 		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, EnsureOrigin,
-		EnsureOriginWithArg, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
-		InstanceFilter, KeyOwnerProofSystem, NeverEnsureOrigin, Randomness, StorageInfo,
+		EnsureOriginWithArg, Equals, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance,
+		InstanceFilter, KeyOwnerProofSystem, NeverEnsureOrigin, Nothing, Randomness, StorageInfo,
 		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
@@ -308,6 +308,7 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyHooks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = cfg::orml_tokens::ReserveIdentifier;
+	type NontransferableTokens = tokens::NontransferableTokens;
 }
 
 impl pallet_xyk::Config for Runtime {
@@ -825,6 +826,8 @@ impl pallet_market::Config for Runtime {
 	type WeightInfo = weights::pallet_market_weights::ModuleWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ComputeIssuance = Issuance;
+	type NontransferableTokens = tokens::NontransferableTokens;
+	type FoundationAccountsProvider = cfg::pallet_membership::FoundationAccountsProvider;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

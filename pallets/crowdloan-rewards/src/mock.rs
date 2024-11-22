@@ -92,6 +92,7 @@ impl orml_tokens::Config for Test {
 	type CurrencyHooks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type NontransferableTokens = Nothing;
 }
 
 parameter_types! {

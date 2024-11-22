@@ -20,7 +20,7 @@ use super::*;
 use crate as pallet_issuance;
 use frame_support::{
 	assert_ok, construct_runtime, derive_impl, parameter_types,
-	traits::{Contains, Everything, WithdrawReasons},
+	traits::{Contains, Nothing, WithdrawReasons},
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
@@ -79,6 +79,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 parameter_types! {

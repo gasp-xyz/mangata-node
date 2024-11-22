@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use frame_support::{
 	assert_ok, construct_runtime, derive_impl, parameter_types,
 	traits::{
-		Contains, Everything, MultiTokenCurrency, MultiTokenVestingSchedule, OnFinalize,
+		Contains, Everything, MultiTokenCurrency, MultiTokenVestingSchedule, Nothing, OnFinalize,
 		OnInitialize,
 	},
 	PalletId,
@@ -204,6 +204,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 pub struct TokensStakingPassthrough<T: stake::Config>(PhantomData<T>);

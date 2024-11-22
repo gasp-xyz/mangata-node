@@ -420,6 +420,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let pool_info = Self::get_pool_info(pool_id)?;
+			// check assets id, foundation has no veto
+			ensure!(
+				!T::NontransferableTokens::contains(&pool_info.pool.0) &&
+					!T::NontransferableTokens::contains(&pool_info.pool.1),
+				Error::<T>::NontransferableToken
+			);
 			Self::check_assets_allowed(pool_info.pool)?;
 
 			let lp_amount = match pool_info.kind {

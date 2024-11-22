@@ -5,7 +5,7 @@ use crate as sequencer_staking;
 use core::convert::TryFrom;
 use frame_support::{
 	construct_runtime, derive_impl, parameter_types,
-	traits::{tokens::fungible::Mutate, Everything},
+	traits::{tokens::fungible::Mutate, Nothing},
 	PalletId,
 };
 use mangata_support::traits::{ComputeIssuance, GetIssuance};
@@ -124,6 +124,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 parameter_types! {

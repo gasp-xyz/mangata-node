@@ -4,7 +4,7 @@ use super::*;
 
 use crate as rolldown;
 use core::convert::TryFrom;
-use frame_support::{construct_runtime, derive_impl, parameter_types, traits::Everything};
+use frame_support::{construct_runtime, derive_impl, parameter_types, traits::Nothing};
 use sp_runtime::traits::One;
 use std::collections::HashSet;
 
@@ -66,6 +66,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 mockall::mock! {

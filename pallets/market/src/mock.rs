@@ -5,7 +5,7 @@ use frame_support::{
 	construct_runtime, derive_impl, parameter_types,
 	traits::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, ExistenceRequirement,
-		Nothing, WithdrawReasons,
+		GetDefault, Nothing, WithdrawReasons,
 	},
 	PalletId,
 };
@@ -80,6 +80,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 parameter_types! {
@@ -404,6 +405,8 @@ impl market::Config for Test {
 	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type ComputeIssuance = mocks::MockIssuance;
+	type NontransferableTokens = Nothing;
+	type FoundationAccountsProvider = GetDefault;
 }
 
 impl<T: Config> Pallet<T>

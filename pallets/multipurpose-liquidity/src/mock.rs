@@ -5,7 +5,7 @@ use super::*;
 use crate as pallet_multipurpose_liquidity;
 use frame_support::{
 	construct_runtime, derive_impl, parameter_types,
-	traits::{Contains, Everything},
+	traits::{Contains, Nothing},
 	PalletId,
 };
 use frame_system as system;
@@ -69,6 +69,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 parameter_types! {

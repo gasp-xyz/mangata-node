@@ -165,15 +165,15 @@ fn create_pool_works() {
 #[test]
 fn add_liquidity_works() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		let expected =
-			Market::calculate_expected_amount_for_minting(POOL_ID_1, NATIVE_ASSET_ID, UNIT)
+			Market::calculate_expected_amount_for_minting(POOL_ID_1, ASSET_ID_2, UNIT)
 				.unwrap();
 		let lp_expected =
 			Market::calculate_expected_lp_minted(POOL_ID_1, (UNIT, expected)).unwrap();
-		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_1, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
+		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_1, ASSET_ID_2, UNIT, 10 * UNIT));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_1,
@@ -184,11 +184,11 @@ fn add_liquidity_works() {
 		}));
 
 		let expected =
-			Market::calculate_expected_amount_for_minting(POOL_ID_2, NATIVE_ASSET_ID, UNIT)
+			Market::calculate_expected_amount_for_minting(POOL_ID_2, ASSET_ID_2, UNIT)
 				.unwrap();
 		let lp_expected =
 			Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
-		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, NATIVE_ASSET_ID, UNIT, 10 * UNIT));
+		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, ASSET_ID_2, UNIT, 10 * UNIT));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_2,
@@ -203,8 +203,8 @@ fn add_liquidity_works() {
 #[test]
 fn add_liquidity_fixed_works() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_1, (UNIT, 0), 0));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {

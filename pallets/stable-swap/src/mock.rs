@@ -7,6 +7,7 @@ use frame_support::{
 	construct_runtime, derive_impl, parameter_types,
 	traits::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, ExistenceRequirement,
+		Nothing,
 	},
 	PalletId,
 };
@@ -75,6 +76,7 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type CurrencyHooks = ();
+	type NontransferableTokens = Nothing;
 }
 
 impl swap::Config for Test {

@@ -48,7 +48,7 @@ pub mod tokens {
 	pub const RX_TOKEN_ID: TokenId = 0;
 	pub const ETH_TOKEN_ID: TokenId = 1;
 
-	#[cfg(feature = "unlocked")]
+	#[cfg(any(feature = "unlocked", feature = "runtime-benchmarks"))]
 	pub type NontransferableTokens = Nothing;
 	#[cfg(not(feature = "unlocked"))]
 	pub type NontransferableTokens = Equals<ConstU32<RX_TOKEN_ID>>;

@@ -169,8 +169,7 @@ fn add_liquidity_works() {
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		let expected =
-			Market::calculate_expected_amount_for_minting(POOL_ID_1, ASSET_ID_2, UNIT)
-				.unwrap();
+			Market::calculate_expected_amount_for_minting(POOL_ID_1, ASSET_ID_2, UNIT).unwrap();
 		let lp_expected =
 			Market::calculate_expected_lp_minted(POOL_ID_1, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_1, ASSET_ID_2, UNIT, 10 * UNIT));
@@ -184,8 +183,7 @@ fn add_liquidity_works() {
 		}));
 
 		let expected =
-			Market::calculate_expected_amount_for_minting(POOL_ID_2, ASSET_ID_2, UNIT)
-				.unwrap();
+			Market::calculate_expected_amount_for_minting(POOL_ID_2, ASSET_ID_2, UNIT).unwrap();
 		let lp_expected =
 			Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, ASSET_ID_2, UNIT, 10 * UNIT));

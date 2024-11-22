@@ -64,6 +64,18 @@ pub struct PoolInfo<CurrencyId> {
 	pub pool: mangata_support::pools::PoolInfo<CurrencyId>,
 }
 
+impl<C: PartialEq + Copy> PoolInfo<C> {
+	fn same_and_other(&self, same: C) -> Option<(C, C)> {
+		if same == self.pool.0 {
+			Some(self.pool)
+		} else if same == self.pool.1 {
+			Some((self.pool.1, self.pool.0))
+		} else {
+			None
+		}
+	}
+}
+
 #[derive(Encode, Decode, Eq, PartialEq, Debug, Clone, TypeInfo)]
 pub struct AtomicSwap<CurrencyId, Balance> {
 	pub pool_id: CurrencyId,
@@ -709,12 +721,11 @@ pub mod pallet {
 			sell_amount: T::Balance,
 		) -> Option<T::Balance> {
 			let pool_info = Self::get_pool_info(pool_id).ok()?;
-			let asset_out =
-				if pool_info.pool.0 == sell_asset_id { pool_info.pool.1 } else { pool_info.pool.0 };
+			let (_, other) = pool_info.same_and_other(sell_asset_id)?;
 			match pool_info.kind {
-				PoolKind::Xyk => T::Xyk::get_dy(pool_id, sell_asset_id, asset_out, sell_amount),
+				PoolKind::Xyk => T::Xyk::get_dy(pool_id, sell_asset_id, other, sell_amount),
 				PoolKind::StableSwap =>
-					T::StableSwap::get_dy(pool_id, sell_asset_id, asset_out, sell_amount),
+					T::StableSwap::get_dy(pool_id, sell_asset_id, other, sell_amount),
 			}
 		}
 
@@ -724,15 +735,11 @@ pub mod pallet {
 			buy_amount: T::Balance,
 		) -> Option<T::Balance> {
 			let pool_info = Self::get_pool_info(pool_id).ok()?;
-			let asset_in = if pool_info.pool.0 == bought_asset_id {
-				pool_info.pool.1
-			} else {
-				pool_info.pool.0
-			};
+			let (_, other) = pool_info.same_and_other(bought_asset_id)?;
 			match pool_info.kind {
-				PoolKind::Xyk => T::Xyk::get_dx(pool_id, asset_in, bought_asset_id, buy_amount),
+				PoolKind::Xyk => T::Xyk::get_dx(pool_id, other, bought_asset_id, buy_amount),
 				PoolKind::StableSwap =>
-					T::StableSwap::get_dx(pool_id, asset_in, bought_asset_id, buy_amount),
+					T::StableSwap::get_dx(pool_id, other, bought_asset_id, buy_amount),
 			}
 		}
 
@@ -849,13 +856,10 @@ pub mod pallet {
 				// first is asset_id_in, last is asset_id_out
 				let prev_asset_id = if let Some(&last) = path.last() { last.1 } else { asset_in };
 
-				if pool_info.pool.0 == prev_asset_id {
-					path.push(pool_info.pool);
-				} else if pool_info.pool.1 == prev_asset_id {
-					path.push((pool_info.pool.1, pool_info.pool.0));
-				} else {
-					fail!(Error::<T>::MultiSwapPathInvalid)
-				}
+				let pool = pool_info
+					.same_and_other(prev_asset_id)
+					.ok_or(Error::<T>::MultiSwapPathInvalid)?;
+				path.push(pool);
 			}
 
 			ensure!(
@@ -874,11 +878,9 @@ pub mod pallet {
 			max_amount: T::Balance,
 			activate: bool,
 		) -> Result<(T::Balance, T::Balance), DispatchError> {
-			let (asset_with_amount, asset_other) = if asset_id == pool_info.pool.0 {
-				pool_info.pool
-			} else {
-				(pool_info.pool.1, pool_info.pool.0)
-			};
+			let (asset_with_amount, asset_other) = pool_info
+				.same_and_other(asset_id)
+				.ok_or(Error::<T>::MultiSwapPathInvalid)?;
 
 			let amounts = match pool_info.kind {
 				PoolKind::Xyk => {

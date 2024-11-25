@@ -1329,6 +1329,7 @@ pub mod config {
 				match chain {
 					::pallet_rolldown::messages::Chain::Ethereum => 50 * currency::DOLLARS,
 					::pallet_rolldown::messages::Chain::Arbitrum => 50 * currency::DOLLARS,
+					::pallet_rolldown::messages::Chain::Base => 50 * currency::DOLLARS,
 				}
 			}
 		}

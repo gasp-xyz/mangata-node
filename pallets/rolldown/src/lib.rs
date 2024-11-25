@@ -1881,6 +1881,7 @@ impl Convert<(messages::Chain, [u8; 20]), L1Asset> for MultiEvmChainAddressConve
 		match chain {
 			messages::Chain::Ethereum => L1Asset::Ethereum(address),
 			messages::Chain::Arbitrum => L1Asset::Arbitrum(address),
+			messages::Chain::Base => L1Asset::Base(address),
 		}
 	}
 }

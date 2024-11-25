@@ -260,7 +260,10 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Creates a liquidity pool and an associated new `lp_token` asset
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::create_pool())]
+		#[pallet::weight(
+			T::WeightInfo::create_pool_xyk().max(
+			T::WeightInfo::create_pool_sswap()
+		))]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			kind: PoolKind,
@@ -339,7 +342,10 @@ pub mod pallet {
 		/// For a StableSwap pool a rate of 1:1 is used.
 		/// Liquidity tokens that represent this share of the pool will be sent to origin.
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(
+			T::WeightInfo::mint_liquidity_xyk().max(
+			T::WeightInfo::mint_liquidity_sswap()
+		))]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
 			pool_id: PoolIdOf<T>,
@@ -379,7 +385,10 @@ pub mod pallet {
 		/// setting both values results in error.
 		/// Liquidity tokens that represent this share of the pool will be sent to origin.
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(
+			T::WeightInfo::mint_liquidity_fixed_amounts_xyk().max(
+			T::WeightInfo::mint_liquidity_fixed_amounts_sswap()
+		))]
 		pub fn mint_liquidity_fixed_amounts(
 			origin: OriginFor<T>,
 			pool_id: PoolIdOf<T>,
@@ -451,7 +460,10 @@ pub mod pallet {
 		/// minted LP tokens are then vested instead.
 		/// Only pools paired with native asset are allowed.
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(
+			T::WeightInfo::mint_liquidity_using_vesting_native_tokens_by_vesting_index_xyk().max(
+			T::WeightInfo::mint_liquidity_using_vesting_native_tokens_by_vesting_index_sswap()
+		))]
 		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
 			origin: OriginFor<T>,
 			pool_id: PoolIdOf<T>,
@@ -511,7 +523,10 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(
+			T::WeightInfo::mint_liquidity_using_vesting_native_tokens_xyk().max(
+			T::WeightInfo::mint_liquidity_using_vesting_native_tokens_sswap()
+		))]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
 			pool_id: PoolIdOf<T>,
@@ -568,7 +583,10 @@ pub mod pallet {
 		/// burned in the process. The usage of `min_first_asset_amount`/`min_second_asset_amount`
 		/// controls the min amount of returned tokens.
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::burn_liquidity())]
+		#[pallet::weight(
+			T::WeightInfo::burn_liquidity_xyk().max(
+			T::WeightInfo::burn_liquidity_sswap()
+		))]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
 			pool_id: PoolIdOf<T>,
@@ -643,7 +661,10 @@ pub mod pallet {
 		// `OnChargeTransaction` impl should check whether the sender has funds to cover such fee
 		// or consider transaction invalid
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::multiswap_asset(swap_pool_list.len() as u32))]
+		#[pallet::weight(
+			T::WeightInfo::multiswap_asset_xyk(swap_pool_list.len() as u32).max(
+			T::WeightInfo::multiswap_asset_sswap(swap_pool_list.len() as u32)
+		))]
 		pub fn multiswap_asset(
 			origin: OriginFor<T>,
 			swap_pool_list: Vec<PoolIdOf<T>>,
@@ -674,7 +695,10 @@ pub mod pallet {
 
 		/// Buy variant of the multiswap, a precise output amount should be provided instead.
 		#[pallet::call_index(7)]
-		#[pallet::weight((T::WeightInfo::multiswap_asset_buy(swap_pool_list.len() as u32), DispatchClass::Operational, Pays::No))]
+		#[pallet::weight(
+			T::WeightInfo::multiswap_asset_buy_xyk(swap_pool_list.len() as u32).max(
+			T::WeightInfo::multiswap_asset_buy_sswap(swap_pool_list.len() as u32)
+		))]
 		pub fn multiswap_asset_buy(
 			origin: OriginFor<T>,
 			swap_pool_list: Vec<PoolIdOf<T>>,
@@ -878,9 +902,8 @@ pub mod pallet {
 			max_amount: T::Balance,
 			activate: bool,
 		) -> Result<(T::Balance, T::Balance), DispatchError> {
-			let (asset_with_amount, asset_other) = pool_info
-				.same_and_other(asset_id)
-				.ok_or(Error::<T>::MultiSwapPathInvalid)?;
+			let (asset_with_amount, asset_other) =
+				pool_info.same_and_other(asset_id).ok_or(Error::<T>::MultiSwapPathInvalid)?;
 
 			let amounts = match pool_info.kind {
 				PoolKind::Xyk => {

@@ -53,9 +53,17 @@ pub mod tokens {
 	#[cfg(not(feature = "unlocked"))]
 	pub type NontransferableTokens = Equals<ConstU32<RX_TOKEN_ID>>;
 
+	#[cfg(any(feature = "unlocked", feature = "runtime-benchmarks"))]
+	pub type ArbitrageBot = Nothing;
+	#[cfg(not(feature = "unlocked"))]
+	pub type ArbitrageBot = Equals<ArbitrageBotAddr>;
+
 	parameter_types! {
 		pub const RxTokenId: TokenId = RX_TOKEN_ID;
 		pub const EthTokenId: TokenId = ETH_TOKEN_ID;
+		pub ArbitrageBotAddr: AccountId = sp_runtime::AccountId20::from(
+			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c"]
+		);
 	}
 }
 

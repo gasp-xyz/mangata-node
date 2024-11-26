@@ -165,6 +165,9 @@ pub mod pallet {
 		/// A list of Foundation members with elevated rights
 		type FoundationAccountsProvider: Get<Vec<Self::AccountId>>;
 
+		/// A special account used for nontransferable tokens to allow 'selling' to balance pools
+		type ArbitrageBot: Contains<Self::AccountId>;
+
 		#[cfg(feature = "runtime-benchmarks")]
 		type ComputeIssuance: ComputeIssuance;
 	}
@@ -1000,7 +1003,7 @@ pub mod pallet {
 				// check input asset id, or the foundation has a veto
 				ensure!(
 					!T::NontransferableTokens::contains(&swap.0) ||
-						T::FoundationAccountsProvider::get().contains(&sender),
+						T::ArbitrageBot::contains(sender),
 					Error::<T>::NontransferableToken
 				);
 

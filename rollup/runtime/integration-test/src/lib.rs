@@ -6,6 +6,7 @@ mod identity;
 mod maintenance;
 mod market;
 mod membership;
+mod nontransfer;
 mod proof_of_stake;
 mod proxy;
 mod setup;

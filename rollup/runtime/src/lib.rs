@@ -828,6 +828,7 @@ impl pallet_market::Config for Runtime {
 	type ComputeIssuance = Issuance;
 	type NontransferableTokens = tokens::NontransferableTokens;
 	type FoundationAccountsProvider = cfg::pallet_membership::FoundationAccountsProvider;
+	type ArbitrageBot = tokens::ArbitrageBot;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

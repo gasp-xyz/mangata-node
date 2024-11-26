@@ -997,6 +997,13 @@ pub mod pallet {
 			let mut swaps: Vec<AtomicSwapOf<T>> = vec![];
 			let mut amount_out = amount_in;
 			for (pool, swap) in pools.iter().zip(path.into_iter()) {
+				// check input asset id, or the foundation has a veto
+				ensure!(
+					!T::NontransferableTokens::contains(&swap.0) ||
+						T::FoundationAccountsProvider::get().contains(&sender),
+					Error::<T>::NontransferableToken
+				);
+
 				let amount_in = amount_out;
 				amount_out = match pool.kind {
 					PoolKind::StableSwap => {

@@ -36,8 +36,8 @@ use sp_std::{convert::TryInto, fmt::Debug, vec, vec::Vec};
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::asset_registry::Inspect as AssetRegistryInspect;
 
-mod weights;
-use crate::weights::WeightInfo;
+pub mod weights;
+pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
 

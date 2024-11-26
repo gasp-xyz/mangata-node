@@ -74,7 +74,7 @@ pub trait WeightInfo {
 
 /// Weights for pallet_market using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> pallet_market::WeightInfo for ModuleWeight<T> {
 	// Storage: `AssetRegistry::Metadata` (r:3 w:1)
 	// Proof: `AssetRegistry::Metadata` (`max_values`: None, `max_size`: Some(153), added: 2628, mode: `MaxEncodedLen`)
 	// Storage: `Bootstrap::BootstrapSchedule` (r:1 w:0)

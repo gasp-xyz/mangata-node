@@ -822,7 +822,7 @@ impl pallet_market::Config for Runtime {
 		(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
 	type DisallowedPools = Bootstrap;
 	type MaintenanceStatusProvider = Maintenance;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_market_weights::ModuleWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ComputeIssuance = Issuance;
 }

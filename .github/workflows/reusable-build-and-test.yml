@@ -602,9 +602,9 @@ jobs:
           echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
           echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
       - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock -p pallet-market
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock
       - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-bootstrap
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-market
       # NOTE: MGX-742
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake

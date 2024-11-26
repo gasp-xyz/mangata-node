@@ -433,7 +433,7 @@ fn test_diff_decimals_work() {
 
 		let pool = Market::get_pools(Some(POOL_ID_1));
 		let price = Market::calculate_sell_price(POOL_ID_1, ASSET_ID_5, 1).unwrap();
-		
+
 		println!("{:#?}", pool);
 		println!("{:#?}", price);
 
@@ -450,16 +450,14 @@ fn test_diff_decimals_work() {
 
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
-			swaps: vec![
-				AtomicSwap {
-					pool_id: POOL_ID_1,
-					kind: PoolKind::StableSwap,
-					asset_in: ASSET_ID_5,
-					asset_out: ASSET_ID_6,
-					amount_in: 1,
-					amount_out: 99,
-				},
-			],
+			swaps: vec![AtomicSwap {
+				pool_id: POOL_ID_1,
+				kind: PoolKind::StableSwap,
+				asset_in: ASSET_ID_5,
+				asset_out: ASSET_ID_6,
+				amount_in: 1,
+				amount_out: 99,
+			}],
 		}));
 	})
 }

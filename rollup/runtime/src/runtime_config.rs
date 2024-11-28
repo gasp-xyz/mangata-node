@@ -50,12 +50,12 @@ pub mod tokens {
 
 	#[cfg(any(feature = "unlocked", feature = "runtime-benchmarks"))]
 	pub type NontransferableTokens = Nothing;
-	#[cfg(not(feature = "unlocked"))]
+	#[cfg(not(any(feature = "unlocked", feature = "runtime-benchmarks")))]
 	pub type NontransferableTokens = Equals<ConstU32<RX_TOKEN_ID>>;
 
 	#[cfg(any(feature = "unlocked", feature = "runtime-benchmarks"))]
 	pub type ArbitrageBot = Nothing;
-	#[cfg(not(feature = "unlocked"))]
+	#[cfg(not(any(feature = "unlocked", feature = "runtime-benchmarks")))]
 	pub type ArbitrageBot = Equals<ArbitrageBotAddr>;
 
 	parameter_types! {

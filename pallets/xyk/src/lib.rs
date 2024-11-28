@@ -3725,6 +3725,20 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		Self::calculate_sell_price_id(asset_in, asset_out, dx).ok()
 	}
 
+	fn get_dy_with_impact(
+		_: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dx: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		let mut reserves = Self::get_reserves(asset_in, asset_out).ok()?;
+		let dy = Self::calculate_sell_price(reserves.0, reserves.1, dx).ok()?;
+		reserves.0 = reserves.0 + dx;
+		reserves.1 = reserves.1 - dy;
+		let dy2 = Self::calculate_sell_price(reserves.0, reserves.1, dx).ok()?;
+		Some((dy, dy2))
+	}
+
 	fn get_dx(
 		_: Self::CurrencyId,
 		asset_in: Self::CurrencyId,
@@ -3732,6 +3746,20 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		dy: Self::Balance,
 	) -> Option<Self::Balance> {
 		Self::calculate_buy_price_id(asset_in, asset_out, dy).ok()
+	}
+
+	fn get_dx_with_impact(
+		_: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dy: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		let mut reserves = Self::get_reserves(asset_in, asset_out).ok()?;
+		let dx = Self::calculate_buy_price(reserves.0, reserves.1, dy).ok()?;
+		reserves.0 = reserves.0 + dx;
+		reserves.1 = reserves.1 - dy;
+		let dx2 = Self::calculate_buy_price(reserves.0, reserves.1, dy).ok()?;
+		Some((dx, dx2))
 	}
 
 	fn get_burn_amounts(

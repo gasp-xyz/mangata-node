@@ -6,10 +6,7 @@ use sp_runtime::{traits::Zero, DispatchResult};
 const ASSET_ID_1: u32 = NATIVE_ASSET_ID + 1;
 const ASSET_ID_2: u32 = ASSET_ID_1 + 1;
 const ASSET_ID_3: u32 = ASSET_ID_2 + 1;
-const ASSET_ID_4_DISABLED: u32 = ASSET_ID_3 + 1;
-const ASSET_ID_5: u32 = ASSET_ID_4_DISABLED + 1;
-const ASSET_ID_6: u32 = ASSET_ID_5 + 1;
-const POOL_ID_1: u32 = ASSET_ID_6 + 1;
+const POOL_ID_1: u32 = ASSET_ID_3 + 1;
 const POOL_ID_2: u32 = POOL_ID_1 + 1;
 const POOL_ID_3: u32 = POOL_ID_2 + 1;
 
@@ -20,84 +17,6 @@ fn test_env() -> TestExternalities {
 			(AccountId::from(ALICE), ASSET_ID_1, 100 * UNIT),
 			(AccountId::from(ALICE), ASSET_ID_2, 100 * UNIT),
 			(AccountId::from(ALICE), ASSET_ID_3, 100 * UNIT),
-			(AccountId::from(ALICE), ASSET_ID_4_DISABLED, 100 * UNIT),
-			(AccountId::from(ALICE), ASSET_ID_5, 100 * UNIT),
-			(AccountId::from(ALICE), ASSET_ID_6, 100 * UNIT),
-		],
-		assets: vec![
-			(
-				NATIVE_ASSET_ID,
-				AssetMetadataOf {
-					decimals: 18,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
-			(
-				ASSET_ID_1,
-				AssetMetadataOf {
-					decimals: 18,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
-			(
-				ASSET_ID_2,
-				AssetMetadataOf {
-					decimals: 18,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
-			(
-				ASSET_ID_3,
-				AssetMetadataOf {
-					decimals: 18,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
-			(
-				ASSET_ID_4_DISABLED,
-				AssetMetadataOf {
-					decimals: 18,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: CustomMetadata {
-						xyk: Some(XykMetadata { operations_disabled: true }),
-						..CustomMetadata::default()
-					},
-				},
-			),
-			(
-				ASSET_ID_5,
-				AssetMetadataOf {
-					decimals: 10,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
-			(
-				ASSET_ID_6,
-				AssetMetadataOf {
-					decimals: 12,
-					name: BoundedVec::truncate_from(b"Asset".to_vec()),
-					symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
-					existential_deposit: Default::default(),
-					additional: Default::default(),
-				},
-			),
 		],
 		..ExtBuilder::default()
 	}
@@ -111,6 +30,10 @@ fn origin() -> RuntimeOrigin {
 }
 
 fn create_pool(kind: PoolKind, assets: (u32, u32)) -> DispatchResult {
+	Market::create_pool(origin(), kind, assets.0, 10 * UNIT, assets.1, 10 * UNIT)
+}
+
+fn create_pool_unb(kind: PoolKind, assets: (u32, u32)) -> DispatchResult {
 	Market::create_pool(origin(), kind, assets.0, 10 * UNIT, assets.1, 5 * UNIT)
 }
 
@@ -138,13 +61,17 @@ fn create_pool_works() {
 		System::assert_has_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_1,
-			amounts_provided: (10000000000000000000, 5000000000000000000),
+			amounts_provided: (10000000000000000000, 10000000000000000000),
 			lp_token: POOL_ID_1,
-			lp_token_minted: 7500000000000000000,
-			total_supply: 7500000000000000000,
+			lp_token_minted: 10000000000000000000,
+			total_supply: 10000000000000000000,
 		}));
 
 		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+
+		let p = pallet_stable_swap::Pools::<Runtime>::get(POOL_ID_2).unwrap();
+		assert_eq!(p.rate_multipliers[0], UNIT);
+		assert_eq!(p.rate_multipliers[1], UNIT);
 		System::assert_has_event(RuntimeEvent::Market(Event::PoolCreated {
 			creator: AccountId::from(ALICE),
 			pool_id: POOL_ID_2,
@@ -154,10 +81,33 @@ fn create_pool_works() {
 		System::assert_has_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_2,
-			amounts_provided: (10000000000000000000, 5000000000000000000),
+			amounts_provided: (10000000000000000000, 10000000000000000000),
 			lp_token: POOL_ID_2,
-			lp_token_minted: 14999063611862273044,
-			total_supply: 14999063611862273044,
+			lp_token_minted: 20000000000000000000,
+			total_supply: 20000000000000000000,
+		}));
+
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+
+		let p = pallet_stable_swap::Pools::<Runtime>::get(POOL_ID_3).unwrap();
+		println!("{:?}", p);
+		assert_eq!(p.rate_multipliers[0], 5 * UNIT);
+		assert_eq!(p.rate_multipliers[1], 10 * UNIT);
+
+		System::assert_has_event(RuntimeEvent::Market(Event::PoolCreated {
+			creator: AccountId::from(ALICE),
+			pool_id: POOL_ID_3,
+			lp_token: POOL_ID_3,
+			assets: (0, 1),
+		}));
+		// lp_token_minted are correct since we applied the rates, and the pool is balanced
+		System::assert_has_event(RuntimeEvent::Market(Event::LiquidityMinted {
+			who: AccountId::from(ALICE),
+			pool_id: POOL_ID_3,
+			amounts_provided: (10000000000000000000, 5000000000000000000),
+			lp_token: POOL_ID_3,
+			lp_token_minted: 100000000000000000000,
+			total_supply: 100000000000000000000,
 		}));
 	})
 }
@@ -165,8 +115,8 @@ fn create_pool_works() {
 #[test]
 fn add_liquidity_works() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		let expected =
 			Market::calculate_expected_amount_for_minting(POOL_ID_1, ASSET_ID_2, UNIT).unwrap();
@@ -193,7 +143,7 @@ fn add_liquidity_works() {
 			amounts_provided: (1000000000000000000, expected),
 			lp_token: POOL_ID_2,
 			lp_token_minted: lp_expected,
-			total_supply: 16998182477145509576,
+			total_supply: 114992390693470089383,
 		}));
 	})
 }
@@ -201,8 +151,8 @@ fn add_liquidity_works() {
 #[test]
 fn add_liquidity_fixed_works() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_1, (UNIT, 0), 0));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
@@ -214,15 +164,15 @@ fn add_liquidity_fixed_works() {
 			total_supply: 7865524961509654622,
 		}));
 
-		let expected = Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, 5 * UNIT)).unwrap();
-		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_2, (UNIT, 5 * UNIT), 0));
+		let expected = Market::calculate_expected_lp_minted(POOL_ID_2, (5 * UNIT, UNIT)).unwrap();
+		assert_ok!(Market::mint_liquidity_fixed_amounts(origin(), POOL_ID_2, (5 * UNIT, UNIT), 0));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_2,
-			amounts_provided: (1000000000000000000, 5000000000000000000),
+			amounts_provided: (5000000000000000000, 1000000000000000000),
 			lp_token: POOL_ID_2,
 			lp_token_minted: expected,
-			total_supply: 20990943480975169792,
+			total_supply: 154925100814226884776,
 		}));
 	})
 }
@@ -230,8 +180,8 @@ fn add_liquidity_fixed_works() {
 #[test]
 fn remove_liquidity_works() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
 
 		assert_ok!(Market::burn_liquidity(origin(), POOL_ID_1, UNIT, 0, 0));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityBurned {
@@ -246,9 +196,9 @@ fn remove_liquidity_works() {
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityBurned {
 			who: AccountId::from(ALICE),
 			pool_id: POOL_ID_2,
-			amounts: (666708286515387818, 333354143257693909),
+			amounts: (100000000000000000, 50000000000000000),
 			burned_amount: 1000000000000000000,
-			total_supply: 13999063611862273044,
+			total_supply: 99000000000000000000,
 		}));
 	})
 }
@@ -256,9 +206,9 @@ fn remove_liquidity_works() {
 #[test]
 fn multiswap_should_work_xyk() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_1, ASSET_ID_2)));
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_1, ASSET_ID_2)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
 
 		assert_ok!(Market::multiswap_asset(
 			origin(),
@@ -306,13 +256,22 @@ fn multiswap_should_work_xyk() {
 #[test]
 fn multiswap_should_work_stable_swap_with_bnb() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_3, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
+		// 2:1 rate
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_3, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
+		// 1:1 rate
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_3)));
 		// for bnb
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_2)));
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_3)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_2)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_3)));
+
+		let p = pallet_stable_swap::Pools::<Runtime>::get(POOL_ID_1).unwrap();
+		// println!("{:#?}", p);
+		// assets are ordered by id, same sa as the corresponding rates
+		assert_eq!(p.assets, vec![ASSET_ID_1, ASSET_ID_3]);
+		assert_eq!(p.rate_multipliers[0], 10 * UNIT);
+		assert_eq!(p.rate_multipliers[1], 5 * UNIT);
 
 		let before = Tokens::total_issuance(NATIVE_ASSET_ID);
 
@@ -329,9 +288,9 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 		// issuance decreased because of bnb
 		assert!(before > after);
 		assert_eq!(before, 100000000000000000000);
-		assert_eq!(after, 99996802265592678132);
+		assert_eq!(after, 99999001734203514767);
 
-		println!("{:#?}", events());
+		// println!("{:#?}", events());
 
 		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
 			who: AccountId::from(ALICE),
@@ -342,23 +301,23 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 					asset_in: ASSET_ID_3,
 					asset_out: 1,
 					amount_in: 1000000000000000000,
-					amount_out: 997511813093464885,
+					amount_out: 498447826003559573,
 				},
 				AtomicSwap {
 					pool_id: POOL_ID_2,
 					kind: PoolKind::StableSwap,
 					asset_in: 1,
 					asset_out: 2,
-					amount_in: 997511813093464885,
-					amount_out: 993119273493188322,
+					amount_in: 498447826003559573,
+					amount_out: 248463606016707341,
 				},
 				AtomicSwap {
 					pool_id: POOL_ID_3,
 					kind: PoolKind::StableSwap,
 					asset_in: 2,
 					asset_out: 3,
-					amount_in: 993119273493188322,
-					amount_out: 988748104475813118,
+					amount_in: 248463606016707341,
+					amount_out: 247712005295675461,
 				},
 			],
 		}));
@@ -368,9 +327,9 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 #[test]
 fn multiswap_should_work_mixed() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
-		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
-		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
+		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
+		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
 
 		assert_ok!(Market::multiswap_asset(
 			origin(),
@@ -400,62 +359,17 @@ fn multiswap_should_work_mixed() {
 					asset_in: 1,
 					asset_out: 2,
 					amount_in: 453305446940074565,
-					amount_out: 451412806019623895,
+					amount_out: 225962336828316482,
 				},
 				AtomicSwap {
 					pool_id: POOL_ID_3,
 					kind: PoolKind::Xyk,
 					asset_in: 2,
 					asset_out: 3,
-					amount_in: 451412806019623895,
-					amount_out: 215337820687860400,
+					amount_in: 225962336828316482,
+					amount_out: 110160480582936294,
 				},
 			],
-		}));
-	})
-}
-
-#[test]
-fn test_diff_decimals_work() {
-	test_env().execute_with(|| {
-		let unit10 = 10_000_000_000_u128;
-		let unit12 = 1_000_000_000_000_u128;
-		assert_ok!(Market::create_pool(
-			origin(),
-			PoolKind::StableSwap,
-			ASSET_ID_5,
-			100 * unit10,
-			ASSET_ID_6,
-			100 * unit12
-		));
-
-		let pool = Market::get_pools(Some(POOL_ID_1));
-		let price = Market::calculate_sell_price(POOL_ID_1, ASSET_ID_5, 1).unwrap();
-
-		println!("{:#?}", pool);
-		println!("{:#?}", price);
-
-		assert_ok!(Market::multiswap_asset(
-			origin(),
-			vec![POOL_ID_1],
-			ASSET_ID_5,
-			1,
-			ASSET_ID_6,
-			1,
-		));
-
-		println!("{:#?}", events());
-
-		System::assert_last_event(RuntimeEvent::Market(Event::AssetsSwapped {
-			who: AccountId::from(ALICE),
-			swaps: vec![AtomicSwap {
-				pool_id: POOL_ID_1,
-				kind: PoolKind::StableSwap,
-				asset_in: ASSET_ID_5,
-				asset_out: ASSET_ID_6,
-				amount_in: 1,
-				amount_out: 99,
-			}],
 		}));
 	})
 }

@@ -256,14 +256,14 @@ fn remove_liquidity_works() {
 #[test]
 fn multiswap_should_work_xyk() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_1, ASSET_ID_2)));
 		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
 
 		assert_ok!(Market::multiswap_asset(
 			origin(),
 			vec![POOL_ID_1, POOL_ID_2, POOL_ID_3],
-			NATIVE_ASSET_ID,
+			ASSET_ID_3,
 			UNIT,
 			ASSET_ID_3,
 			Zero::zero(),
@@ -277,7 +277,7 @@ fn multiswap_should_work_xyk() {
 				AtomicSwap {
 					pool_id: POOL_ID_1,
 					kind: PoolKind::Xyk,
-					asset_in: 0,
+					asset_in: 3,
 					asset_out: 1,
 					amount_in: 1000000000000000000,
 					amount_out: 453305446940074565,
@@ -306,7 +306,7 @@ fn multiswap_should_work_xyk() {
 #[test]
 fn multiswap_should_work_stable_swap_with_bnb() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::StableSwap, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_3, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_3)));
 		// for bnb
@@ -319,7 +319,7 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 		assert_ok!(Market::multiswap_asset(
 			origin(),
 			vec![POOL_ID_1, POOL_ID_2, POOL_ID_3],
-			NATIVE_ASSET_ID,
+			ASSET_ID_3,
 			UNIT,
 			ASSET_ID_3,
 			Zero::zero(),
@@ -329,7 +329,7 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 		// issuance decreased because of bnb
 		assert!(before > after);
 		assert_eq!(before, 100000000000000000000);
-		assert_eq!(after, 99996758378067624442);
+		assert_eq!(after, 99996802265592678132);
 
 		println!("{:#?}", events());
 
@@ -339,26 +339,26 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 				AtomicSwap {
 					pool_id: POOL_ID_1,
 					kind: PoolKind::StableSwap,
-					asset_in: 0,
+					asset_in: ASSET_ID_3,
 					asset_out: 1,
 					amount_in: 1000000000000000000,
-					amount_out: 995595345298031754,
+					amount_out: 997511813093464885,
 				},
 				AtomicSwap {
 					pool_id: POOL_ID_2,
 					kind: PoolKind::StableSwap,
 					asset_in: 1,
 					asset_out: 2,
-					amount_in: 995595345298031754,
-					amount_out: 991212132384121611,
+					amount_in: 997511813093464885,
+					amount_out: 993119273493188322,
 				},
 				AtomicSwap {
 					pool_id: POOL_ID_3,
 					kind: PoolKind::StableSwap,
 					asset_in: 2,
 					asset_out: 3,
-					amount_in: 991212132384121611,
-					amount_out: 986850235267668399,
+					amount_in: 993119273493188322,
+					amount_out: 988748104475813118,
 				},
 			],
 		}));
@@ -368,14 +368,14 @@ fn multiswap_should_work_stable_swap_with_bnb() {
 #[test]
 fn multiswap_should_work_mixed() {
 	test_env().execute_with(|| {
-		assert_ok!(create_pool(PoolKind::Xyk, (NATIVE_ASSET_ID, ASSET_ID_1)));
+		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_3, ASSET_ID_1)));
 		assert_ok!(create_pool(PoolKind::StableSwap, (ASSET_ID_1, ASSET_ID_2)));
 		assert_ok!(create_pool(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_3)));
 
 		assert_ok!(Market::multiswap_asset(
 			origin(),
 			vec![POOL_ID_1, POOL_ID_2, POOL_ID_3],
-			NATIVE_ASSET_ID,
+			ASSET_ID_3,
 			UNIT,
 			ASSET_ID_3,
 			Zero::zero(),
@@ -389,7 +389,7 @@ fn multiswap_should_work_mixed() {
 				AtomicSwap {
 					pool_id: POOL_ID_1,
 					kind: PoolKind::Xyk,
-					asset_in: 0,
+					asset_in: ASSET_ID_3,
 					asset_out: 1,
 					amount_in: 1000000000000000000,
 					amount_out: 453305446940074565,

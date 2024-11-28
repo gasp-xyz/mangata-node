@@ -407,6 +407,7 @@ impl market::Config for Test {
 	type ComputeIssuance = mocks::MockIssuance;
 	type NontransferableTokens = Nothing;
 	type FoundationAccountsProvider = GetDefault;
+	type ArbitrageBot = Nothing;
 }
 
 impl<T: Config> Pallet<T>

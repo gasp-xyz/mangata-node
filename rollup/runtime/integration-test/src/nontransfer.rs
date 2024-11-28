@@ -1,5 +1,3 @@
-use sp_runtime::AccountId20;
-
 use crate::setup::*;
 
 const ASSET_ID_1: TokenId = NATIVE_ASSET_ID + 1;

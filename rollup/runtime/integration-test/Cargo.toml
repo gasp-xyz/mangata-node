@@ -40,6 +40,7 @@ pallet-proof-of-stake = { path = "../../../pallets/proof-of-stake" }
 pallet-rolldown = { path = "../../../pallets/rolldown" }
 pallet-sudo-origin = { path = "../../../pallets/sudo-origin" }
 pallet-xyk = { path = "../../../pallets/xyk" }
+pallet-stable-swap = { path = "../../../pallets/stable-swap" }
 parachain-staking = { path = "../../../pallets/parachain-staking" }
 rolldown-runtime-api = { path = "../../../pallets/rolldown/runtime-api" }
 rollup-runtime = { path = "../" }

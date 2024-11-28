@@ -139,6 +139,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Amplification coefficient lower then 1 or too large
 		AmpCoeffOutOfRange,
+		/// Initial pool rate multipliers are too large
+		InitialPoolRateOutOfRange,
 		/// Too many assets for pool creation
 		TooManyAssets,
 		/// Pool already exists
@@ -277,6 +279,8 @@ pub mod pallet {
 		///
 		/// * `assets` - An array of asset ids in pool
 		/// * `rates` - An array of: [10 ** (36 - _coins[n].decimals()), ... for n in range(N_COINS)]
+		/// 			A custom rate can also be used & values needs to be multiplied by 1e18, with max value of 1e36
+		/// 			eg. for a rate 2:1 it's [2e18, 1e18]
 		/// * `amp_coeff` - Amplification co-efficient - a lower value here means less tolerance for imbalance within the pool's assets.
 		/// 				Suggested values include:
 		///    					* Uncollateralized algorithmic stablecoins: 5-10
@@ -534,7 +538,8 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub const FEE_DENOMINATOR: u128 = 10_u128.pow(10);
-		const PRECISION: u128 = 10_u128.pow(18);
+		pub(crate) const PRECISION_EXP: u32 = 18;
+		const PRECISION: u128 = 10_u128.pow(Self::PRECISION_EXP);
 		const A_PRECISION: u128 = 100;
 
 		// calls impl
@@ -884,45 +889,32 @@ pub mod pallet {
 			let i = pool.get_asset_index::<T>(asset_in)?;
 			let j = pool.get_asset_index::<T>(asset_out)?;
 
-			let (_, d) = Self::get_invariant_pool(&pool_account, &pool)?;
+			Self::get_dx_xp(&pool, i, j, dy, xp)
+		}
 
-			let mut x = xp[i];
-			let mut y = xp[j];
-			for _i in 0..255 {
-				let x_prev = x;
-				let dyn_fee = Self::dynamic_fee(
-					&Self::checked_add_div_2(&xp[i], &x)?,
-					&Self::checked_add_div_2(&xp[j], &y)?,
-				)?;
-				let dy_fee = Self::checked_mul_div_u128(
-					&T::HigherPrecisionBalance::from(dy),
-					&T::HigherPrecisionBalance::from(pool.rate_multipliers[j]),
-					Self::PRECISION,
-				)?
-				.checked_add(&One::one())
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_mul(&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR))
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_div(
-					&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR)
-						.checked_sub(&dyn_fee)
-						.ok_or(Error::<T>::MathOverflow)?,
-				)
-				.ok_or(Error::<T>::MathOverflow)?;
+		pub fn get_dx_with_impact(
+			pool_id: &PoolIdOf<T>,
+			asset_in: T::CurrencyId,
+			asset_out: T::CurrencyId,
+			dy: T::Balance,
+		) -> Result<(T::Balance, T::Balance), Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+			let (reserves, xp) = Self::get_balances_xp_pool(&pool_account, &pool)?;
+			let i = pool.get_asset_index::<T>(asset_in)?;
+			let j = pool.get_asset_index::<T>(asset_out)?;
 
-				y = xp[j].checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?;
-				x = Self::get_y(j, i, &y, &xp, pool.amp_coeff, &d)?;
+			let dx = Self::get_dx_xp(&pool, i, j, dy, xp)?;
 
-				// if we don't have dynamic fee we can return immediatelly, otherwise loop with adjusted fee
-				if !Self::has_dynamic_fee() || Self::check_diff_le_one(&x, &x_prev) {
-					return Ok(Self::checked_mul_div_to_balance(
-						&x.checked_sub(&xp[i]).ok_or(Error::<T>::MathOverflow)?,
-						pool.rate_multipliers[i],
-					)?);
-				}
-			}
+			let mut reserves = reserves.clone();
+			reserves[i] = reserves[i] + T::HigherPrecisionBalance::from(dx);
+			reserves[j] = reserves[j] - T::HigherPrecisionBalance::from(dy);
+			let xp = Self::xp(&pool.rate_multipliers, &reserves)?;
 
-			Err(Error::<T>::UnexpectedFailure)
+			let dx2 = Self::get_dx_xp(&pool, i, j, dy, xp)?;
+
+			Ok((dx, dx2))
 		}
 
 		/// Calculate the output dy given input dx.
@@ -939,19 +931,32 @@ pub mod pallet {
 			let i = pool.get_asset_index::<T>(asset_in)?;
 			let j = pool.get_asset_index::<T>(asset_out)?;
 
-			let (dy, dy_fee) = Self::calc_dy(
-				i,
-				j,
-				T::HigherPrecisionBalance::from(dx),
-				pool.amp_coeff,
-				&xp,
-				pool.rate_multipliers.to_vec(),
-			)?;
+			Self::get_dy_xp(&pool, i, j, dx, xp)
+		}
 
-			Self::checked_mul_div_to_balance(
-				&dy.checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?,
-				pool.rate_multipliers[j],
-			)
+		pub fn get_dy_with_impact(
+			pool_id: &PoolIdOf<T>,
+			asset_in: T::CurrencyId,
+			asset_out: T::CurrencyId,
+			dx: T::Balance,
+		) -> Result<(T::Balance, T::Balance), Error<T>> {
+			let maybe_pool = Pools::<T>::get(pool_id.clone());
+			let pool = maybe_pool.as_ref().ok_or(Error::<T>::NoSuchPool)?;
+			let pool_account = Self::get_pool_account(&pool_id);
+			let (reserves, xp) = Self::get_balances_xp_pool(&pool_account, &pool)?;
+			let i = pool.get_asset_index::<T>(asset_in)?;
+			let j = pool.get_asset_index::<T>(asset_out)?;
+
+			let dy = Self::get_dy_xp(&pool, i, j, dx, xp)?;
+
+			let mut reserves = reserves.clone();
+			reserves[i] = reserves[i] + T::HigherPrecisionBalance::from(dx);
+			reserves[j] = reserves[j] - T::HigherPrecisionBalance::from(dy);
+			let xp = Self::xp(&pool.rate_multipliers, &reserves)?;
+
+			let dy2 = Self::get_dy_xp(&pool, i, j, dx, xp)?;
+
+			Ok((dy, dy2))
 		}
 
 		pub fn calc_lp_token_amount(
@@ -1182,6 +1187,76 @@ pub mod pallet {
 				)?);
 			}
 			Ok(xp)
+		}
+
+		pub fn get_dx_xp(
+			pool: &PoolInfoOf<T>,
+			i: usize,
+			j: usize,
+			dy: T::Balance,
+			xp: Vec<T::HigherPrecisionBalance>,
+		) -> Result<T::Balance, Error<T>> {
+			let d = Self::get_invariant(&xp, pool.amp_coeff)?;
+
+			let mut x = xp[i];
+			let mut y = xp[j];
+			for _i in 0..255 {
+				let x_prev = x;
+				let dyn_fee = Self::dynamic_fee(
+					&Self::checked_add_div_2(&xp[i], &x)?,
+					&Self::checked_add_div_2(&xp[j], &y)?,
+				)?;
+				let dy_fee = Self::checked_mul_div_u128(
+					&T::HigherPrecisionBalance::from(dy),
+					&T::HigherPrecisionBalance::from(pool.rate_multipliers[j]),
+					Self::PRECISION,
+				)?
+				.checked_add(&One::one())
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_mul(&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR))
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_div(
+					&T::HigherPrecisionBalance::from(Self::FEE_DENOMINATOR)
+						.checked_sub(&dyn_fee)
+						.ok_or(Error::<T>::MathOverflow)?,
+				)
+				.ok_or(Error::<T>::MathOverflow)?;
+
+				y = xp[j].checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?;
+				x = Self::get_y(j, i, &y, &xp, pool.amp_coeff, &d)?;
+
+				// if we don't have dynamic fee we can return immediatelly, otherwise loop with adjusted fee
+				if !Self::has_dynamic_fee() || Self::check_diff_le_one(&x, &x_prev) {
+					return Ok(Self::checked_mul_div_to_balance(
+						&x.checked_sub(&xp[i]).ok_or(Error::<T>::MathOverflow)?,
+						pool.rate_multipliers[i],
+					)?);
+				}
+			}
+
+			Err(Error::<T>::UnexpectedFailure)
+		}
+
+		fn get_dy_xp(
+			pool: &PoolInfoOf<T>,
+			i: usize,
+			j: usize,
+			dx: T::Balance,
+			xp: Vec<T::HigherPrecisionBalance>,
+		) -> Result<T::Balance, Error<T>> {
+			let (dy, dy_fee) = Self::calc_dy(
+				i,
+				j,
+				T::HigherPrecisionBalance::from(dx),
+				pool.amp_coeff,
+				&xp,
+				pool.rate_multipliers.to_vec(),
+			)?;
+
+			Self::checked_mul_div_to_balance(
+				&dy.checked_sub(&dy_fee).ok_or(Error::<T>::MathOverflow)?,
+				pool.rate_multipliers[j],
+			)
 		}
 
 		/// Computes the Stable Swap invariant (D).
@@ -1620,14 +1695,6 @@ pub mod pallet {
 			}
 			return false;
 		}
-
-		// 10 ** (36 - _coins[n].decimals())
-		pub(crate) fn get_decimals_mul(asset_decimals: u32) -> Result<T::Balance, Error<T>> {
-			let m = (36_u32 - asset_decimals)
-				.try_into()
-				.map_err(|_| Error::<T>::UnexpectedFailure)?;
-			checked_pow(T::Balance::from(10_u32), m).ok_or(Error::<T>::MathOverflow)
-		}
 	}
 }
 
@@ -1662,6 +1729,15 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		Self::get_dy(&pool_id, asset_in, asset_out, dx).ok()
 	}
 
+	fn get_dy_with_impact(
+		pool_id: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dx: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		Self::get_dy_with_impact(&pool_id, asset_in, asset_out, dx).ok()
+	}
+
 	fn get_dx(
 		pool_id: Self::CurrencyId,
 		asset_in: Self::CurrencyId,
@@ -1669,6 +1745,15 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		dy: Self::Balance,
 	) -> Option<Self::Balance> {
 		Self::get_dx(&pool_id, asset_in, asset_out, dy).ok()
+	}
+
+	fn get_dx_with_impact(
+		pool_id: Self::CurrencyId,
+		asset_in: Self::CurrencyId,
+		asset_out: Self::CurrencyId,
+		dy: Self::Balance,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		Self::get_dx_with_impact(&pool_id, asset_in, asset_out, dy).ok()
 	}
 
 	fn get_burn_amounts(
@@ -1702,13 +1787,40 @@ impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
 	fn create_pool(
 		sender: &T::AccountId,
 		asset_1: Self::CurrencyId,
-		asset_1_decimals: u32,
+		amount_1: Self::Balance,
 		asset_2: Self::CurrencyId,
-		asset_2_decimals: u32,
+		amount_2: Self::Balance,
 	) -> Result<Self::CurrencyId, DispatchError> {
 		let assets = vec![asset_1, asset_2];
-		let rate_1 = Self::get_decimals_mul(asset_1_decimals)?;
-		let rate_2 = Self::get_decimals_mul(asset_2_decimals)?;
+		let ten = T::Balance::from(10_u32);
+
+		let exp = |amount: Self::Balance| {
+			let mut i = 0_usize;
+			let mut pow_10 = T::Balance::one() * ten;
+			while amount % pow_10 == Zero::zero() {
+				i += 1;
+				pow_10 *= ten;
+			}
+			i
+		};
+
+		let exp1 = exp(amount_1);
+		let exp2 = exp(amount_2);
+		let min = exp1.min(exp2);
+		let exp = checked_pow(ten, min).ok_or(Error::<T>::MathOverflow)?;
+
+		let rate_1_mul = amount_1 / exp;
+		let rate_2_mul = amount_2 / exp;
+
+		// the max rate cannot be more than 1e18
+		let precision =
+			checked_pow(ten, Self::PRECISION_EXP as usize).ok_or(Error::<T>::MathOverflow)?;
+		ensure!(rate_1_mul <= precision, Error::<T>::InitialPoolRateOutOfRange);
+		ensure!(rate_2_mul <= precision, Error::<T>::InitialPoolRateOutOfRange);
+
+		let rate_1 = rate_2_mul.checked_mul(&precision).ok_or(Error::<T>::MathOverflow)?;
+		let rate_2 = rate_1_mul.checked_mul(&precision).ok_or(Error::<T>::MathOverflow)?;
+
 		let rates = vec![rate_1, rate_2];
 		let info = Self::do_create_pool(sender, assets, rates, T::DefaultApmCoeff::get())?;
 		Ok(info.lp_token)

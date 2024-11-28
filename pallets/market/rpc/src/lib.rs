@@ -25,6 +25,15 @@ pub trait MarketApi<BlockHash, Balance, TokenId> {
 		at: Option<BlockHash>,
 	) -> RpcResult<NumberOrHex>;
 
+	#[method(name = "market_calculate_sell_price_with_impact")]
+	fn calculate_sell_price_with_impact(
+		&self,
+		pool_id: TokenId,
+		sell_asset_id: TokenId,
+		sell_amount: NumberOrHex,
+		at: Option<BlockHash>,
+	) -> RpcResult<(NumberOrHex, NumberOrHex)>;
+
 	#[method(name = "market_calculate_buy_price")]
 	fn calculate_buy_price(
 		&self,
@@ -33,6 +42,15 @@ pub trait MarketApi<BlockHash, Balance, TokenId> {
 		buy_amount: NumberOrHex,
 		at: Option<BlockHash>,
 	) -> RpcResult<NumberOrHex>;
+
+	#[method(name = "market_calculate_buy_price_with_impact")]
+	fn calculate_buy_price_with_impact(
+		&self,
+		pool_id: TokenId,
+		buy_asset_id: TokenId,
+		buy_amount: NumberOrHex,
+		at: Option<BlockHash>,
+	) -> RpcResult<(NumberOrHex, NumberOrHex)>;
 
 	#[method(name = "market_calculate_expected_amount_for_minting")]
 	fn calculate_expected_amount_for_minting(
@@ -130,6 +148,27 @@ where
 			})
 	}
 
+	fn calculate_sell_price_with_impact(
+		&self,
+		pool_id: TokenId,
+		sell_asset_id: TokenId,
+		sell_amount: NumberOrHex,
+		_at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<(NumberOrHex, NumberOrHex)> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.calculate_sell_price_with_impact(
+			at,
+			pool_id,
+			sell_asset_id,
+			sell_amount.try_into_balance()?,
+		)
+		.map(|val| val.unwrap_or_default())
+		.map(|val| (val.0.into(), val.1.into()))
+		.map_err(|e| ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e))))
+	}
+
 	fn calculate_buy_price(
 		&self,
 		pool_id: TokenId,
@@ -145,6 +184,27 @@ where
 			.map_err(|e| {
 				ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e)))
 			})
+	}
+
+	fn calculate_buy_price_with_impact(
+		&self,
+		pool_id: TokenId,
+		buy_asset_id: TokenId,
+		buy_amount: NumberOrHex,
+		_at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<(NumberOrHex, NumberOrHex)> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.calculate_buy_price_with_impact(
+			at,
+			pool_id,
+			buy_asset_id,
+			buy_amount.try_into_balance()?,
+		)
+		.map(|val| val.unwrap_or_default())
+		.map(|val| (val.0.into(), val.1.into()))
+		.map_err(|e| ErrorObject::owned(1, "Unable to serve the request", Some(format!("{:?}", e))))
 	}
 
 	fn get_burn_amount(

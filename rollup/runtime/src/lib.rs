@@ -428,6 +428,19 @@ impl Into<CallType> for RuntimeCall {
 				asset_id_out,
 				asset_amount_out: min_amount_out,
 			},
+			RuntimeCall::Market(pallet_market::Call::multiswap_asset_buy {
+				swap_pool_list,
+				asset_id_out,
+				asset_amount_out,
+				asset_id_in,
+				max_amount_in,
+			}) => CallType::Swap {
+				swap_pool_list,
+				asset_id_in,
+				asset_amount_in: max_amount_in,
+				asset_id_out,
+				asset_amount_out,
+			},
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
 			_ => CallType::Other,
 		}
@@ -1314,8 +1327,16 @@ impl_runtime_apis! {
 			Market::calculate_sell_price(pool_id, sell_asset_id, sell_amount)
 		}
 
+		fn calculate_sell_price_with_impact(pool_id: TokenId, sell_asset_id: TokenId, sell_amount: Balance) -> Option<(Balance, Balance)> {
+			Market::calculate_sell_price_with_impact(pool_id, sell_asset_id, sell_amount)
+		}
+
 		fn calculate_buy_price(pool_id: TokenId, buy_asset_id: TokenId, buy_amount: Balance) -> Option<Balance> {
 			Market::calculate_buy_price(pool_id, buy_asset_id, buy_amount)
+		}
+
+		fn calculate_buy_price_with_impact(pool_id: TokenId, buy_asset_id: TokenId, buy_amount: Balance) -> Option<(Balance, Balance)> {
+			Market::calculate_buy_price_with_impact(pool_id, buy_asset_id, buy_amount)
 		}
 
 		fn get_burn_amount(pool_id: TokenId, lp_burn_amount: Balance) -> Option<(Balance, Balance)> {

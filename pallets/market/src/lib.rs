@@ -693,7 +693,7 @@ pub mod pallet {
 		}
 
 		/// Executes a multiswap asset in a series of swap asset atomic swaps.
-		/// The precise output amount is provided instead. 
+		/// The precise output amount is provided instead.
 		///
 		/// Multiswaps must fee lock instead of paying transaction fees.
 		/// For a single atomic swap, both `asset_amount_out` and `max_amount_in` are considered to allow free execution without locks.

@@ -1812,6 +1812,11 @@ impl<T: Config> Pallet<T> {
 		chain: <T as Config>::ChainId,
 		deposit: messages::Deposit,
 	) -> Result<(), Error<T>> {
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::BlockedByMaintenanceMode
+		);
+
 		let deposit_hash = deposit.abi_encode_hash();
 
 		if deposit.requestId.id <= LastProcessedRequestOnL2::<T>::get(chain) {

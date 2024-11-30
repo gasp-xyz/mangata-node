@@ -7578,7 +7578,7 @@ dependencies = [
 name = "pallet-fee-lock"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7709,7 +7709,7 @@ dependencies = [
 name = "pallet-maintenance"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7789,7 +7789,7 @@ dependencies = [
 name = "pallet-multipurpose-liquidity"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -7959,7 +7959,7 @@ dependencies = [
 name = "pallet-proof-of-stake"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -8530,7 +8530,7 @@ dependencies = [
 name = "pallet-xyk"
 version = "0.1.0"
 dependencies = [
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -11178,7 +11178,7 @@ dependencies = [
  "common-runtime",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
- "env_logger 0.9.3",
+ "env_logger 0.10.1",
  "frame-support",
  "frame-system",
  "hex-literal 0.3.4",

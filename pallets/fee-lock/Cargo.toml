@@ -30,7 +30,7 @@ sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "de
 orml-tokens = { git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "develop", default-features = false }
 
 [dev-dependencies]
-env_logger = "0.9.0"
+env_logger = "0.10.1"
 lazy_static = "1.1.1"
 serial_test = { version = "0.6.0", default-features = false }
 test-case = "2.0.2"

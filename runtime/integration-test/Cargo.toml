@@ -5,7 +5,7 @@ edition = "2021"
 
 [dev-dependencies]
 env_logger = "0.9.1"
-log = "0.4.17"
+log = "0.4.21"
 
 # Substrate
 frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

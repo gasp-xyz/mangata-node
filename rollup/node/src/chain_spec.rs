@@ -261,7 +261,7 @@ fn rollup_genesis(
 	let initial_sequencers_stake = 10_000_000_u128;
 
 	rollup_runtime::RuntimeGenesisConfig {
-		system: rollup_runtime::SystemConfig { chain_genesis_salt: chain_genesis_salt, ..Default::default() },
+		system: rollup_runtime::SystemConfig { chain_genesis_salt, ..Default::default() },
 		tokens: rollup_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
 				.iter()

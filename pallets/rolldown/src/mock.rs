@@ -155,6 +155,7 @@ impl rolldown::Config for Test {
 	type SequencerStakingRewards = ();
 	type WithdrawFee = ConvertToValue<ConstU128<500>>;
 	type WeightInfo = ();
+	type NontransferableTokens = Nothing;
 }
 
 pub struct ExtBuilder {

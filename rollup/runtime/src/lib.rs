@@ -794,6 +794,7 @@ impl pallet_rolldown::Config for Runtime {
 	type SequencerStakingRewards = SequencerStaking;
 	type WithdrawFee = cfg::pallet_rolldown::WithdrawFee;
 	type WeightInfo = weights::pallet_rolldown::ModuleWeight<Runtime>;
+	type NontransferableTokens = tokens::NontransferableTokens;
 }
 
 impl pallet_rolldown::RolldownBenchmarkingConfig for Runtime {}

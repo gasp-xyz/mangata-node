@@ -13,7 +13,9 @@ pub use weights::WeightInfo;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion},
+	traits::{
+		tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get, StorageVersion,
+	},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use messages::{Cancel, FailedDepositResolution, Origin, RequestId, Withdrawal};
@@ -493,6 +495,8 @@ pub mod pallet {
 		RequestDoesNotExist,
 		NotEnoughAssets,
 		NotEnoughAssetsForFee,
+		// Ferry tip is larger then ferried amount
+		NotEnoughAssetsForFerryTip,
 		BalanceOverflow,
 		L1AssetCreationFailed,
 		MathOverflow,
@@ -519,6 +523,8 @@ pub mod pallet {
 		UpdateHashMishmatch,
 		AlreadyExecuted,
 		UninitializedChainId,
+		// Asset can be withdrawn only to sender's address
+		NontransferableToken,
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -574,6 +580,9 @@ pub mod pallet {
 		type WithdrawFee: Convert<ChainIdOf<Self>, BalanceOf<Self>>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// Tokens which cannot be transfered by extrinsics/user or use in pool
+		type NontransferableTokens: Contains<CurrencyIdOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -731,9 +740,20 @@ pub mod pallet {
 				Error::<T>::BlockedByMaintenanceMode
 			);
 
+			ensure!(
+				amount >= ferry_tip.unwrap_or_default(),
+				Error::<T>::NotEnoughAssetsForFerryTip
+			);
+
 			let eth_asset = T::AssetAddressConverter::convert((chain, token_address));
 			let asset_id = T::AssetRegistryProvider::get_l1_asset_id(eth_asset)
 				.ok_or(Error::<T>::TokenDoesNotExist)?;
+
+			ensure!(
+				!T::NontransferableTokens::contains(&asset_id) ||
+					account == T::AddressConverter::convert(recipient),
+				Error::<T>::NontransferableToken,
+			);
 
 			// fail will occur if user has not enough balance
 			<T as Config>::Tokens::ensure_can_withdraw(

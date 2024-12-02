@@ -98,10 +98,10 @@ jobs:
             fast: false
             unlocked: true
           - command: "yarn test-sequential-no-bootstrap"
-            fast: true
+            fast: false
             unlocked: true
           - command: "yarn test-seqgasless"
-            fast: true
+            fast: false
             unlocked: true
           - command: "yarn test-maintenance"
             fast: true

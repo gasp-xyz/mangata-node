@@ -5,6 +5,7 @@ WORKDIR /app
 COPY . .
 
 ARG ENABLE_FAST_RUNTIME=false
+ARG ENABLE_UNLOCKED_RUNTIME=false
 
 # Set RUSTC_WRAPPER to empty string by default, as it's causing random issues on arm64 image builds in CI
 # To enable sccache set RUSTC_WRAPPER build arg to "sccache" in your image build command with `--build-arg RUSTC_WRAPPER=sccache`
@@ -16,6 +17,8 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     export RUSTC_WRAPPER=${RUSTC_WRAPPER} && \
     if [ "$ENABLE_FAST_RUNTIME" = "true" ]; then \
         cargo build --release --no-default-features --features=fast-runtime; \
+    elif [ "$ENABLE_UNLOCKED_RUNTIME" = "true" ]; then \
+        cargo build --release --no-default-features --features=unlocked; \
     else \
         cargo build --locked --release; \
     fi \

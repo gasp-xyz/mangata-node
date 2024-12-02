@@ -104,6 +104,7 @@ pub fn rollup_local_config(
 	properties.insert("tokenDecimals".into(), 18u32.into());
 	properties.insert("ss58Format".into(), 42u32.into());
 	properties.insert("isEthereum".into(), true.into());
+	// This is quite useless here :/
 	properties.insert(
 		"chainGenesisSalt".into(),
 		array_bytes::bytes2hex("0x", chain_genesis_salt_arr).into(),
@@ -141,6 +142,8 @@ pub fn rollup_local_config(
 			.collect::<Vec<_>>();
 
 			rollup_genesis(
+				// chain genesis salt
+				H256::from(chain_genesis_salt_arr),
 				// initial collators.
 				vec![
 					(
@@ -240,6 +243,7 @@ pub fn rollup_local_config(
 
 /// Configure initial storage state for FRAME modules.
 fn rollup_genesis(
+	chain_genesis_salt: H256,
 	initial_authorities: Vec<(AccountId, (AuraId, GrandpaId))>,
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
@@ -257,7 +261,7 @@ fn rollup_genesis(
 	let initial_sequencers_stake = 10_000_000_u128;
 
 	rollup_runtime::RuntimeGenesisConfig {
-		system: rollup_runtime::SystemConfig { ..Default::default() },
+		system: rollup_runtime::SystemConfig { chain_genesis_salt, ..Default::default() },
 		tokens: rollup_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
 				.iter()

@@ -95,19 +95,19 @@ jobs:
       matrix:
         include:
           - command: "yarn test-parallel --max-workers=10"
-            fast: false
+            fast: true
           - command: "yarn test-sequential-no-bootstrap"
-            fast: false
+            fast: true
           - command: "yarn test-seqgasless"
-            fast: false
+            fast: true
           - command: "yarn test-maintenance"
             fast: true
           - command: "yarn test-rollupUpdate"
             fast: true
           - command: "yarn test-bootstrap"
-            fast: false
+            fast: true
           - command: "yarn test-rewards-bootstrap"
-            fast: false
+            fast: true
           - command: "yarn test-parallel-autocompound"
             fast: true
           - command: "yarn test-sequential-autocompound"
@@ -117,11 +117,11 @@ jobs:
           - command: "yarn test-governance"
             fast: true
           - command: "yarn test-multiswap"
-            fast: false
+            fast: true
           - command: "yarn test-experimentalStaking"
             fast: true
           - command: "yarn test-crowdloan"
-            fast: false
+            fast: true
           - command: "yarn test-sdk"
             fast: true
           - command: "yarn test-parallel-3rdPartyRewards"

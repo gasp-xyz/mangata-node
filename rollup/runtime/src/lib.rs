@@ -588,7 +588,7 @@ impl parachain_staking::Config for Runtime {
 	type MinCandidateStk = cfg::parachain_staking::MinCandidateStk;
 	type MinDelegation = cfg::parachain_staking::MinDelegatorStk;
 	type NativeTokenId = tokens::RxTokenId;
-	type StakingLiquidityTokenValuator = Xyk;
+	type ValuateForNative = Market;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;

@@ -150,9 +150,12 @@ use frame_support::{
 	transactional,
 };
 use frame_system::{pallet_prelude::*, RawOrigin};
-pub use mangata_support::traits::{
-	ComputeIssuance, GetIssuance, PoolCreateApi, ProofOfStakeRewardsApi,
-	SequencerStakingRewardsTrait, StakingReservesProviderTrait, Valuate, XykFunctionsTrait,
+pub use mangata_support::{
+	pools::ValuateFor,
+	traits::{
+		ComputeIssuance, GetIssuance, PoolCreateApi, ProofOfStakeRewardsApi,
+		SequencerStakingRewardsTrait, StakingReservesProviderTrait, Valuate, XykFunctionsTrait,
+	},
 };
 pub use mangata_types::multipurpose_liquidity::BondKind;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -1499,7 +1502,11 @@ pub mod pallet {
 		type NativeTokenId: Get<CurrencyIdOf<Self>>;
 		/// The valuator for our staking liquidity tokens, i.e., XYK
 		/// This should never return (_, Zero::zero())
-		type StakingLiquidityTokenValuator: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>;
+		type ValuateForNative: ValuateFor<
+			Self::NativeTokenId,
+			Balance = BalanceOf<Self>,
+			CurrencyId = CurrencyIdOf<Self>,
+		>;
 		/// The module used for computing and getting issuance
 		type Issuance: ComputeIssuance + GetIssuance<BalanceOf<Self>>;
 		#[pallet::constant]
@@ -2534,12 +2541,9 @@ pub mod pallet {
 
 			let added_liquidity_token: CurrencyIdOf<T> = match paired_or_liquidity_token {
 				PairedOrLiquidityToken::Paired(x) =>
-					T::StakingLiquidityTokenValuator::get_liquidity_asset(
-						x.into(),
-						T::NativeTokenId::get().into(),
-					)?,
+					T::ValuateForNative::find_paired_pool_for(x)?,
 				PairedOrLiquidityToken::Liquidity(x) => {
-					T::StakingLiquidityTokenValuator::get_liquidity_token_mga_pool(x.into())?;
+					T::ValuateForNative::check_can_valuate(x)?;
 					x
 				},
 			};
@@ -2573,10 +2577,7 @@ pub mod pallet {
 
 			let removed_liquidity_token: CurrencyIdOf<T> = match paired_or_liquidity_token {
 				PairedOrLiquidityToken::Paired(x) =>
-					T::StakingLiquidityTokenValuator::get_liquidity_asset(
-						x.into(),
-						T::NativeTokenId::get().into(),
-					)?,
+					T::ValuateForNative::find_paired_pool_for(x)?,
 				PairedOrLiquidityToken::Liquidity(x) => x,
 			};
 
@@ -3314,7 +3315,7 @@ pub mod pallet {
 			let mut staking_liquidity_tokens = <StakingLiquidityTokens<T>>::get();
 
 			for (token, valuation) in staking_liquidity_tokens.iter_mut() {
-				*valuation = T::StakingLiquidityTokenValuator::get_pool_state((*token).into());
+				*valuation = T::ValuateForNative::get_reserve_and_lp_supply(*token);
 			}
 
 			<StakingLiquidityTokens<T>>::put(staking_liquidity_tokens);
@@ -3376,10 +3377,7 @@ pub mod pallet {
 			if liquidity_token == T::NativeTokenId::get() {
 				bond.checked_div(&2_u32.into()).unwrap_or_default()
 			} else {
-				T::StakingLiquidityTokenValuator::valuate_liquidity_token(
-					liquidity_token.into(),
-					bond,
-				)
+				T::ValuateForNative::get_valuation_for_paired(liquidity_token, bond)
 			}
 		}
 

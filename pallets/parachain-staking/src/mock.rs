@@ -18,17 +18,17 @@
 use crate as stake;
 use crate::{
 	pallet, AwardedPts, BondKind, ComputeIssuance, Config, DispatchError, GetIssuance, Points,
-	RoundCollatorRewardInfo, StakingReservesProviderTrait, Valuate,
+	RoundCollatorRewardInfo, StakingReservesProviderTrait,
 };
 use codec::{Decode, Encode};
 use frame_support::{
 	assert_ok, construct_runtime, derive_impl, parameter_types,
 	traits::{
-		Contains, Everything, MultiTokenCurrency, MultiTokenVestingSchedule, Nothing, OnFinalize,
-		OnInitialize,
+		Contains, MultiTokenCurrency, MultiTokenVestingSchedule, Nothing, OnFinalize, OnInitialize,
 	},
 	PalletId,
 };
+use mangata_support::pools::{Inspect, ValuateFor};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
@@ -280,7 +280,7 @@ impl Config for Test {
 	type MinCandidateStk = MinCollatorStk;
 	type MinDelegation = MinDelegation;
 	type NativeTokenId = MgaTokenId;
-	type StakingLiquidityTokenValuator = TestTokenValuator;
+	type ValuateForNative = TestTokenValuator;
 	type Issuance = MockIssuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = ();
@@ -291,37 +291,40 @@ impl Config for Test {
 #[derive(Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TestTokenValuator {}
 
-impl Valuate<Balance, TokenId> for TestTokenValuator {
-	fn get_liquidity_asset(
-		first_asset_id: TokenId,
-		_second_asset_id: TokenId,
-	) -> Result<TokenId, DispatchError> {
-		Ok(first_asset_id / 100)
-	}
+impl Inspect for TestTokenValuator {
+	type Balance = Balance;
+	type CurrencyId = TokenId;
 
-	fn get_liquidity_token_mga_pool(
-		_liquidity_token_id: TokenId,
-	) -> Result<(TokenId, TokenId), DispatchError> {
-		Ok((0_u32, 1_u32))
-	}
-
-	fn valuate_liquidity_token(
-		_liquidity_token_id: TokenId,
-		liquidity_token_amount: Balance,
-	) -> Balance {
-		liquidity_token_amount
-	}
-
-	fn scale_liquidity_by_mga_valuation(
-		_mga_valuation: Balance,
-		_liquidity_token_amount: Balance,
-		_mga_token_amount: Balance,
-	) -> Balance {
+	fn get_pool_info(
+		_: Self::CurrencyId,
+	) -> Option<mangata_support::pools::PoolInfo<Self::CurrencyId>> {
 		unimplemented!("Not required in tests!")
 	}
 
-	fn get_pool_state(liquidity_token_id: TokenId) -> Option<(Balance, Balance)> {
-		match liquidity_token_id {
+	fn get_pool_reserves(
+		_: Self::CurrencyId,
+	) -> Option<mangata_support::pools::PoolReserves<Self::Balance>> {
+		unimplemented!("Not required in tests!")
+	}
+
+	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
+		unimplemented!("Not required in tests!")
+	}
+}
+
+impl ValuateFor<MgaTokenId> for TestTokenValuator {
+	fn find_paired_pool_for(asset_id: Self::CurrencyId) -> Result<Self::CurrencyId, DispatchError> {
+		Ok(asset_id / 100)
+	}
+
+	fn check_can_valuate(_: Self::CurrencyId) -> Result<(), DispatchError> {
+		Ok(())
+	}
+
+	fn get_reserve_and_lp_supply(
+		pool_id: Self::CurrencyId,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		match pool_id {
 			1 => Some((1, 1)),
 			2 => Some((2, 1)),
 			3 => Some((5, 1)),
@@ -332,22 +335,12 @@ impl Valuate<Balance, TokenId> for TestTokenValuator {
 		}
 	}
 
-	fn get_reserves(
-		_first_asset_id: TokenId,
-		_second_asset_id: TokenId,
-	) -> Result<(Balance, Balance), DispatchError> {
-		todo!()
+	fn get_valuation_for_paired(_: Self::CurrencyId, amount: Self::Balance) -> Self::Balance {
+		amount
 	}
 
-	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
-		todo!()
-	}
-
-	fn valuate_non_liquidity_token(
-		liquidity_token_id: TokenId,
-		liquidity_token_amount: Balance,
-	) -> Balance {
-		todo!()
+	fn find_valuation_for(_: Self::CurrencyId) -> Result<Self::Balance, DispatchError> {
+		unimplemented!("Not required in tests!")
 	}
 }
 

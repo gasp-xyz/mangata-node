@@ -19,7 +19,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::{
-	pools::{Inspect, Mutate, SwapResult, TreasuryBurn},
+	pools::{ComputeBalances, Inspect, Mutate, SwapResult, TreasuryBurn, ValuateFor},
 	traits::{
 		AssetRegistryProviderTrait, GetMaintenanceStatusTrait, ProofOfStakeRewardsApi,
 		XykFunctionsTrait,
@@ -124,14 +124,16 @@ pub mod pallet {
 
 		/// Xyk pools
 		type Xyk: XykFunctionsTrait<Self::AccountId, Self::Balance, Self::CurrencyId>
-			+ TreasuryBurn<Self::AccountId, CurrencyId = Self::CurrencyId, Balance = Self::Balance>;
+			+ Inspect<CurrencyId = Self::CurrencyId, Balance = Self::Balance>
+			+ TreasuryBurn
+			+ ComputeBalances;
 
 		/// StableSwap pools
 		type StableSwap: Mutate<
 			Self::AccountId,
 			CurrencyId = Self::CurrencyId,
 			Balance = Self::Balance,
-		>;
+		> + ComputeBalances;
 
 		/// Reward apis for native asset LP tokens activation
 		type Rewards: ProofOfStakeRewardsApi<Self::AccountId, Self::Balance, Self::CurrencyId>;
@@ -983,7 +985,7 @@ pub mod pallet {
 			activate: bool,
 		) -> Result<(T::Balance, T::Balance), DispatchError> {
 			let (asset_with_amount, asset_other) =
-				pool_info.same_and_other(asset_id).ok_or(Error::<T>::MultiSwapPathInvalid)?;
+				pool_info.same_and_other(asset_id).ok_or(Error::<T>::NoSuchPool)?;
 
 			let amounts = match pool_info.kind {
 				PoolKind::Xyk => {
@@ -1078,6 +1080,51 @@ pub mod pallet {
 
 			Ok(swaps)
 		}
+	}
+}
+
+impl<T: Config> Inspect for Pallet<T> {
+	type CurrencyId = T::CurrencyId;
+	type Balance = T::Balance;
+
+	fn get_pool_info(
+		pool_id: Self::CurrencyId,
+	) -> Option<mangata_support::pools::PoolInfo<Self::CurrencyId>> {
+		todo!()
+	}
+
+	fn get_pool_reserves(
+		pool_id: Self::CurrencyId,
+	) -> Option<mangata_support::pools::PoolReserves<Self::Balance>> {
+		todo!()
+	}
+
+	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
+		todo!()
+	}
+}
+
+impl<T: Config> ValuateFor<T::NativeCurrencyId> for Pallet<T> {
+	fn find_paired_pool_for(asset_id: Self::CurrencyId) -> Result<Self::CurrencyId, DispatchError> {
+		todo!()
+	}
+
+	fn check_can_valuate(pool_id: Self::CurrencyId) -> Result<(), DispatchError> {
+		todo!()
+	}
+
+	fn get_reserve_and_lp_supply(
+		pool_id: Self::CurrencyId,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		todo!()
+	}
+
+	fn get_valuation_for_paired(pool_id: Self::CurrencyId, amount: Self::Balance) -> Self::Balance {
+		todo!()
+	}
+
+	fn find_valuation_for(asset_id: Self::CurrencyId) -> Result<Self::Balance, DispatchError> {
+		todo!()
 	}
 }
 

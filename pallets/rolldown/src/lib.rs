@@ -1521,8 +1521,8 @@ impl<T: Config> Pallet<T> {
 			update_hash: update.abi_encode_hash(),
 			update_size: update.pendingDeposits.len() as u128 +
 				update.pendingCancelResolutions.len() as u128,
-			max_id: lowest_id,
-			min_id: last_id,
+			min_id: lowest_id,
+			max_id: last_id,
 		})
 	}
 

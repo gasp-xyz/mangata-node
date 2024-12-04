@@ -1496,7 +1496,7 @@ impl<T: Config> Pallet<T> {
 			(update.pendingDeposits.len() as u128) +
 			(update.pendingCancelResolutions.len() as u128);
 
-		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
+		ensure!(last_id >= LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut cancel_it = update.pendingCancelResolutions.iter();

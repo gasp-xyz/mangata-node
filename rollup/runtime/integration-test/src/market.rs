@@ -116,6 +116,7 @@ fn create_pool_works() {
 fn add_liquidity_works() {
 	test_env().execute_with(|| {
 		assert_ok!(create_pool_unb(PoolKind::Xyk, (ASSET_ID_2, ASSET_ID_1)));
+		// note that the created pool will be sorted as (ASSET_ID_1, ASSET_ID_2)
 		assert_ok!(create_pool_unb(PoolKind::StableSwap, (ASSET_ID_2, ASSET_ID_1)));
 
 		let expected =
@@ -135,7 +136,7 @@ fn add_liquidity_works() {
 		let expected =
 			Market::calculate_expected_amount_for_minting(POOL_ID_2, ASSET_ID_2, UNIT).unwrap();
 		let lp_expected =
-			Market::calculate_expected_lp_minted(POOL_ID_2, (UNIT, expected)).unwrap();
+			Market::calculate_expected_lp_minted(POOL_ID_2, (expected, UNIT)).unwrap();
 		assert_ok!(Market::mint_liquidity(origin(), POOL_ID_2, ASSET_ID_2, UNIT, 10 * UNIT));
 		System::assert_last_event(RuntimeEvent::Market(Event::LiquidityMinted {
 			who: AccountId::from(ALICE),
@@ -143,7 +144,7 @@ fn add_liquidity_works() {
 			amounts_provided: (1000000000000000000, expected),
 			lp_token: POOL_ID_2,
 			lp_token_minted: lp_expected,
-			total_supply: 114992390693470089383,
+			total_supply: 110000000000000000000,
 		}));
 	})
 }

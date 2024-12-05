@@ -229,10 +229,6 @@ impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 	) -> DispatchResult {
 		unimplemented!()
 	}
-
-	fn expected_amount_for_minting(_: u32, _: u32, _: u128) -> Option<u128> {
-		unimplemented!()
-	}
 }
 
 // This function basically just builds a genesis storage key/value store according to

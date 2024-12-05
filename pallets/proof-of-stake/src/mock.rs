@@ -298,6 +298,7 @@ impl pos::Config for Test {
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -314,6 +315,7 @@ impl pos::Config for Test {
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 	type Xyk = Xyk;
 }
 

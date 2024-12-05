@@ -335,6 +335,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -351,6 +352,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

@@ -525,6 +525,8 @@ pub mod pallet {
 		UninitializedChainId,
 		// Asset can be withdrawn only to sender's address
 		NontransferableToken,
+		// the deposit was already ferried
+		AlreadyFerried,
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -1496,7 +1498,7 @@ impl<T: Config> Pallet<T> {
 			(update.pendingDeposits.len() as u128) +
 			(update.pendingCancelResolutions.len() as u128);
 
-		ensure!(last_id > LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
+		ensure!(last_id >= LastProcessedRequestOnL2::<T>::get(l1), Error::<T>::WrongRequestId);
 
 		let mut deposit_it = update.pendingDeposits.iter();
 		let mut cancel_it = update.pendingCancelResolutions.iter();
@@ -1521,8 +1523,8 @@ impl<T: Config> Pallet<T> {
 			update_hash: update.abi_encode_hash(),
 			update_size: update.pendingDeposits.len() as u128 +
 				update.pendingCancelResolutions.len() as u128,
-			max_id: lowest_id,
-			min_id: last_id,
+			min_id: lowest_id,
+			max_id: last_id,
 		})
 	}
 
@@ -1842,6 +1844,11 @@ impl<T: Config> Pallet<T> {
 		if deposit.requestId.id <= LastProcessedRequestOnL2::<T>::get(chain) {
 			return Err(Error::<T>::AlreadyExecuted);
 		}
+
+		ensure!(
+			!FerriedDeposits::<T>::contains_key((chain, deposit_hash)),
+			Error::<T>::AlreadyFerried
+		);
 
 		let amount = deposit
 			.amount

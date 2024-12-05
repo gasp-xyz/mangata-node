@@ -96,48 +96,70 @@ jobs:
         include:
           - command: "yarn test-parallel --max-workers=10"
             fast: false
+            unlocked: true
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
+            unlocked: true
           - command: "yarn test-seqgasless"
             fast: false
+            unlocked: true
           - command: "yarn test-maintenance"
             fast: true
+            unlocked: false
           - command: "yarn test-rollupUpdate"
             fast: true
+            unlocked: false
           - command: "yarn test-bootstrap"
             fast: false
+            unlocked: true
           - command: "yarn test-rewards-bootstrap"
             fast: false
+            unlocked: true
           - command: "yarn test-parallel-autocompound"
             fast: true
+            unlocked: false
           - command: "yarn test-sequential-autocompound"
             fast: true
+            unlocked: false
           - command: "yarn test-poolliquidity"
             fast: true
+            unlocked: false
           - command: "yarn test-governance"
             fast: true
+            unlocked: false
           - command: "yarn test-multiswap"
             fast: false
+            unlocked: true
           - command: "yarn test-experimentalStaking"
             fast: true
+            unlocked: false
           - command: "yarn test-crowdloan"
             fast: false
+            unlocked: true
           - command: "yarn test-sdk"
             fast: true
+            unlocked: false
           - command: "yarn test-parallel-3rdPartyRewards"
             fast: true
+            unlocked: false
           - command: "yarn test-sequencerStaking"
             fast: true
+            unlocked: false
           - command: "yarn test-sequencerCancellation"
             fast: true
+            unlocked: false
           - command: "yarn test-rolldown"
             fast: true
+            unlocked: false
           - command: "yarn test-rolldownWithdrawal"
             fast: true
+            unlocked: false
           - command: "yarn test-rolldownPreOperationWithdrawal"
             fast: true
+            unlocked: false
           - command: "yarn test-sequencerRewards"
             fast: true
+            unlocked: false
 
 
 
@@ -159,6 +181,9 @@ jobs:
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.NODE_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "NODE_DOCKER_IMAGE=${{ env.NODE_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
+      - name: Adapt if unlocked
+        if:  ${{  !contains(env.NODE_DOCKER_IMAGE, 'fast') && matrix.unlocked == true }}
+        run: echo "NODE_DOCKER_IMAGE=${{ env.NODE_DOCKER_IMAGE }}-unlocked" >> $GITHUB_ENV
 
 
       - name: Download node Docker image

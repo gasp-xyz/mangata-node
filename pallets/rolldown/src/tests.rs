@@ -1030,7 +1030,7 @@ fn reject_update_with_invalid_too_high_request_id() {
 #[serial]
 // changed to accept
 // seq gets the rights BEFORE LastProcessedRequestOnL2 is updated
-// a single request would be duplicated, extrinsic fail and break seq 
+// a single request would be duplicated, extrinsic fail and break seq
 fn accept_update_without_new_updates() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		forward_to_block::<Test>(10);
@@ -1047,9 +1047,10 @@ fn accept_update_without_new_updates() {
 		forward_to_block::<Test>(16);
 		assert_eq!(LastProcessedRequestOnL2::<Test>::get(consts::CHAIN), 1u128.into());
 
-		assert_ok!(
-			Rolldown::update_l2_from_l1_unsafe(RuntimeOrigin::signed(ALICE), deposit_update)
-		);
+		assert_ok!(Rolldown::update_l2_from_l1_unsafe(
+			RuntimeOrigin::signed(ALICE),
+			deposit_update
+		));
 	});
 }
 

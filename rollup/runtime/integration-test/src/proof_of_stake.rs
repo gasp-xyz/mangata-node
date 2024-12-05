@@ -1,6 +1,7 @@
 use crate::setup::*;
 use frame_support::traits::{OnFinalize, OnInitialize};
 use orml_tokens::MultiTokenCurrencyExtended;
+use pallet_market::PoolKind;
 
 type TokensOf<Test> = <Test as pallet_proof_of_stake::Config>::Currency;
 type XykOf<Test> = <Test as pallet_proof_of_stake::Config>::ValuationApi;
@@ -45,6 +46,7 @@ fn rewards_are_aligned_with_sessions() {
 
 		XykOf::<Runtime>::create_pool(
 			RuntimeOrigin::signed(alice.clone()),
+			PoolKind::Xyk,
 			first_token_id,
 			100000_u128,
 			second_token_id,
@@ -66,8 +68,8 @@ fn rewards_are_aligned_with_sessions() {
 		assert_eq!(0, pallet_session::Pallet::<Runtime>::current_index());
 		XykOf::<Runtime>::mint_liquidity(
 			RuntimeOrigin::signed(charlie.clone()),
+			liqudity_token_id,
 			first_token_id,
-			second_token_id,
 			1000,
 			10000,
 		)
@@ -77,8 +79,8 @@ fn rewards_are_aligned_with_sessions() {
 		assert_eq!(0, pallet_session::Pallet::<Runtime>::current_index());
 		XykOf::<Runtime>::mint_liquidity(
 			RuntimeOrigin::signed(bob.clone()),
+			liqudity_token_id,
 			first_token_id,
-			second_token_id,
 			1000,
 			10000,
 		)

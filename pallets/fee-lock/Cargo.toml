@@ -34,6 +34,7 @@ env_logger.workspace = true
 lazy_static.workspace = true
 serial_test.workspace = true
 test-case.workspace = true
+mockall.workspace = true
 
 sp-io = { workspace = true, default-features = false }
 

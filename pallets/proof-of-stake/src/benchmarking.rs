@@ -34,7 +34,7 @@ where
 
 type TokensOf<Test> = <Test as Config>::Currency;
 type AccountIdOf<Test> = <Test as frame_system::Config>::AccountId;
-type XykOf<Test> = <Test as Config>::ValuationApi;
+type XykOf<Test> = <Test as Config>::Xyk;
 
 fn forward_to_next_session<T>()
 where
@@ -282,7 +282,7 @@ benchmarks! {
 
 			PoS::<T>::reward_pool(
 				RawOrigin::Signed(caller.clone().into()).into(),
-				(native_asset_id, token_id),
+				reward_token,
 				reward_token.into(),
 				(REWARDS_AMOUNT).to_balance::<T>(),
 				10u32.into(),
@@ -294,7 +294,7 @@ benchmarks! {
 		let reward_token = token_id + One::one();
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
-			(native_asset_id, token_id),
+			reward_token,
 			reward_token.into(),
 			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
@@ -313,7 +313,7 @@ benchmarks! {
 			(schedules_limit - 1 ) as u64
 		);
 
-	}: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,token_id), reward_token.into(), REWARDS_AMOUNT.to_balance::<T>(), 10u32.into())
+	}: reward_pool(RawOrigin::Signed(caller.clone().into()), reward_token, reward_token.into(), REWARDS_AMOUNT.to_balance::<T>(), 10u32.into())
 	verify {
 
 		assert_eq!(
@@ -357,7 +357,7 @@ benchmarks! {
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
-			(native_asset_id, first_token_id),
+			liquidity_asset_id,
 			reward_token_id.into(),
 			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
@@ -407,7 +407,7 @@ benchmarks! {
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
-			(native_asset_id, first_token_id),
+			liquidity_asset_id,
 			reward_token_id.into(),
 			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
@@ -488,7 +488,7 @@ benchmarks! {
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
-			(native_asset_id, first_token_id),
+			liquidity_asset_id,
 			reward_token_id.into(),
 			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),

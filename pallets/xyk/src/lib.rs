@@ -309,7 +309,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::{
-	pools::{ComputeBalances, Inspect, PoolInfo, PoolReserves, TreasuryBurn},
+	pools::{ComputeBalances, Inspect, PoolPair, PoolReserves, TreasuryBurn},
 	traits::{
 		ActivationReservesProviderTrait, GetMaintenanceStatusTrait, PoolCreateApi,
 		PreValidateSwaps, ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
@@ -3706,11 +3706,11 @@ impl<T: Config> PoolCreateApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> for P
 impl<T: Config> Inspect for Pallet<T> {
 	type CurrencyId = CurrencyIdOf<T>;
 	type Balance = BalanceOf<T>;
-	
-	fn get_pool_info(pool_id: Self::CurrencyId) -> Option<PoolInfo<Self::CurrencyId>> {
+
+	fn get_pool_info(pool_id: Self::CurrencyId) -> Option<PoolPair<Self::CurrencyId>> {
 		LiquidityPools::<T>::get(pool_id)
 	}
-	
+
 	fn get_pool_reserves(pool_id: Self::CurrencyId) -> Option<PoolReserves<Self::Balance>> {
 		let info = Self::get_pool_info(pool_id)?;
 		Some(Pools::<T>::get(info))

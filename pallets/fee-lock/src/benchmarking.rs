@@ -103,12 +103,8 @@ benchmarks! {
 
 		// Order of tokens in the create_pool call below is important
 		#[cfg(not(test))]
-		assert_ok!(<T as Config>::PoolReservesProvider::create_pool(caller, valuating_token_id, pool_amount, token_id, pool_amount.saturating_mul(2u8.into())));
+		assert_ok!(<T as Config>::Xyk::create_pool(caller, valuating_token_id, pool_amount, token_id, pool_amount.saturating_mul(2u8.into())));
 
-		// We want to avoid having the value being 1000, since that is what get_swap_valuation_for_token returns if the valuating_token_id is the native token id
-		#[cfg(test)]
-		let value: BalanceOf<T> = 500_u32.into();
-		#[cfg(not(test))]
 		let value: BalanceOf<T> = 2000_u32.into();
 		let mut valuation: Option<BalanceOf<T>> = None;
 	}: {valuation = FeeLock::<T>::get_swap_valuation_for_token(valuating_token_id, valuating_token_amount);}

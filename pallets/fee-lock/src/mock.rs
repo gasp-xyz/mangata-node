@@ -10,6 +10,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
+use mangata_support::pools::{PoolInfo, Valuate, ValuateFor};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::AccountIdConversion, BuildStorage};
 use sp_std::convert::TryFrom;
@@ -77,63 +78,48 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
-pub struct MockPoolReservesProvider<T>(PhantomData<T>);
+pub struct MockValuateForNative {}
+impl ValuateFor<NativeCurrencyId> for MockValuateForNative {}
+impl Valuate for MockValuateForNative {
+	type Balance = Balance;
+	type CurrencyId = TokenId;
 
-impl<T: pallet_fee_lock::Config> Valuate<Balance, TokenId> for MockPoolReservesProvider<T> {
-	fn get_liquidity_asset(
-		_first_asset_id: TokenId,
-		_second_asset_id: TokenId,
-	) -> Result<TokenId, DispatchError> {
+	fn find_paired_pool(
+		base_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
+	) -> Result<PoolInfo<Self::CurrencyId, Self::Balance>, DispatchError> {
 		unimplemented!()
 	}
 
-	fn get_liquidity_token_mga_pool(
-		_liquidity_token_id: TokenId,
-	) -> Result<(TokenId, TokenId), DispatchError> {
+	fn check_can_valuate(_: Self::CurrencyId, _: Self::CurrencyId) -> Result<(), DispatchError> {
 		unimplemented!()
 	}
 
-	fn valuate_liquidity_token(
-		_liquidity_token_id: TokenId,
-		_liquidity_token_amount: Balance,
-	) -> Balance {
+	fn check_pool_exist(pool_id: Self::CurrencyId) -> Result<(), DispatchError> {
 		unimplemented!()
 	}
 
-	fn scale_liquidity_by_mga_valuation(
-		_mga_valuation: Balance,
-		_liquidity_token_amount: Balance,
-		_mga_token_amount: Balance,
-	) -> Balance {
+	fn get_reserve_and_lp_supply(
+		_: Self::CurrencyId,
+		pool_id: Self::CurrencyId,
+	) -> Option<(Self::Balance, Self::Balance)> {
 		unimplemented!()
 	}
 
-	fn get_pool_state(_liquidity_token_id: TokenId) -> Option<(Balance, Balance)> {
+	fn get_valuation_for_paired(
+		_: Self::CurrencyId,
+		_: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> Self::Balance {
 		unimplemented!()
 	}
 
-	fn get_reserves(
-		first_asset_id: TokenId,
-		second_asset_id: TokenId,
-	) -> Result<(Balance, Balance), DispatchError> {
-		match (first_asset_id, second_asset_id) {
-			(0, 1) => Ok((5000, 10000)),
-			(0, 2) => Ok((10000, 5000)),
-			(0, 3) => Ok((0, 10000)),
-			(0, 4) => Ok((5000, 0)),
-			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into()),
-		}
-	}
-
-	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
-		unimplemented!()
-	}
-
-	fn valuate_non_liquidity_token(
-		liquidity_token_id: TokenId,
-		liquidity_token_amount: Balance,
-	) -> Balance {
-		unimplemented!()
+	fn find_valuation(
+		_: Self::CurrencyId,
+		_: Self::CurrencyId,
+		_: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
+		Ok(2000_u128)
 	}
 }
 
@@ -146,7 +132,7 @@ impl pallet_fee_lock::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type PoolReservesProvider = MockPoolReservesProvider<Test>;
+	type ValuateForNative = MockValuateForNative;
 	type NativeTokenId = NativeCurrencyId;
 	type WeightInfo = ();
 }

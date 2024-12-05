@@ -25,7 +25,10 @@ use frame_support::{
 		WithdrawReasons,
 	},
 };
-use mangata_support::traits::ActivationReservesProviderTrait;
+use mangata_support::{
+	pools::{PoolInfo, Valuate, ValuateFor},
+	traits::ActivationReservesProviderTrait,
+};
 use mangata_types::multipurpose_liquidity::ActivateKind;
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
@@ -139,6 +142,28 @@ impl pallet_xyk::Config for Test {
 	type FeeLockWeight = ();
 }
 
+mockall::mock! {
+	pub ValuationApi {}
+
+	impl Valuate for ValuationApi {
+		type CurrencyId = TokenId;
+		type Balance = Balance;
+
+		fn find_paired_pool(base_id: TokenId, asset_id: TokenId) -> Result<PoolInfo<TokenId, Balance>, DispatchError>;
+
+		fn check_can_valuate(base_id: TokenId, pool_id: TokenId) -> Result<(), DispatchError>;
+
+		fn check_pool_exist(pool_id: TokenId) -> Result<(), DispatchError>;
+
+		fn get_reserve_and_lp_supply(base_id: TokenId, pool_id: TokenId) -> Option<(Balance, Balance)>;
+
+		fn get_valuation_for_paired(base_id: TokenId, pool_id: TokenId, amount: Balance) -> Balance;
+
+		fn find_valuation(base_id: TokenId, asset_id: TokenId, amount: Balance) -> Result<Balance, DispatchError>;
+	}
+}
+impl ValuateFor<NativeCurrencyId> for MockValuationApi {}
+
 impl pallet_proof_of_stake::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -150,7 +175,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type RewardsSchedulesLimit = ConstU32<10>;
 	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
 	type Min3rdPartyRewardVolume = ConstU128<10>;
-	type ValuationApi = Xyk;
+	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
 }
 

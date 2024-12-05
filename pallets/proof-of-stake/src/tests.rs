@@ -7,8 +7,6 @@ use frame_support::{assert_err, assert_err_ignore_postinfo, assert_ok};
 use mockall::predicate::eq;
 use serial_test::serial;
 
-use mangata_support::traits::{ComputeIssuance, GetIssuance};
-
 fn mint_and_activate_tokens(who: AccountId, token_id: TokenId, amount: Balance) {
 	TokensOf::<Test>::mint(token_id, &who, amount).unwrap();
 	ProofOfStake::activate_liquidity_for_native_rewards(
@@ -31,8 +29,8 @@ fn initialize_liquidity_rewards() {
 	TokensOf::<Test>::create(&acc_id, amount).unwrap();
 	TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 
-	let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
-	is_liquidity_token_mock.expect().return_const(true);
+	let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+	check_pool_exist_mock.expect().return_const(Ok(()));
 
 	ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
 	PromotedPoolRewards::<Test>::mutate(|pools| {
@@ -1199,7 +1197,7 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 }
 
 const MILLION: u128 = 1_000_000;
-const REWARDED_PAIR: (TokenId, TokenId) = (0u32, 4u32);
+const REWARDED_PAIR: TokenId = 10_u32;
 const FIRST_REWARDED_PAIR: (TokenId, TokenId) = (0u32, 4u32);
 const SECOND_REWARDED_PAIR: (TokenId, TokenId) = (0u32, 5u32);
 const REWARD_AMOUNT: u128 = 10_000u128;
@@ -1296,12 +1294,13 @@ fn cannot_reward_unexisting_pool() {
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.build()
 		.execute_with(|| {
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock
 				.expect()
 				.return_const(Err(Error::<Test>::PoolDoesNotExist.into()));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(11u128);
 
 			assert_err!(
 				ProofOfStake::reward_pool(
@@ -1921,14 +1920,14 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 		.build()
 		.execute_with(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(1u128);
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(1u128);
 
-			let valuate_non_liquidity_token_mock =
-				MockValuationApi::valuate_non_liquidity_token_context();
-			valuate_non_liquidity_token_mock.expect().return_const(0u128);
+			let find_valuation_mock = MockValuationApi::find_valuation_context();
+			find_valuation_mock.expect().return_const(Ok(0u128));
 
 			roll_to_session::<Test>(4);
 
@@ -1953,12 +1952,14 @@ fn accept_schedule_valuated_in_native_token() {
 		.build()
 		.execute_with(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(0u128);
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(0u128);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock
 				.expect()
 				.return_const(Some((min_req_volume(), min_req_volume())));
 
@@ -1983,17 +1984,18 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 		.build()
 		.execute_with(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(0u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(0u128);
 
-			let valuate_non_liquidity_token_mock =
-				MockValuationApi::valuate_non_liquidity_token_context();
-			valuate_non_liquidity_token_mock.expect().return_const(10u128);
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock
+			let find_valuation_mock = MockValuationApi::find_valuation_context();
+			find_valuation_mock.expect().return_const(Ok(10u128));
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock
 				.expect()
 				.return_const(Some((min_req_volume(), min_req_volume())));
 
@@ -2096,24 +2098,25 @@ fn overlapping_3rdparty_rewards_works() {
 		.execute_with(|| {
 			System::set_block_number(1);
 			const LIQUIDITY_TOKEN: u32 = 5;
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(11u128);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock
 				.expect()
 				.return_const(Some((min_req_volume(), min_req_volume())));
 
 			let first_reward_token = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 200).unwrap();
 
-			let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 			let amount = 10_000u128;
 
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
+				LIQUIDITY_TOKEN,
 				first_reward_token,
 				amount,
 				10u32.into(),
@@ -2134,7 +2137,7 @@ fn overlapping_3rdparty_rewards_works() {
 			let second_reward_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
+				LIQUIDITY_TOKEN,
 				second_reward_token_id,
 				100_000,
 				15u32.into(),
@@ -2330,28 +2333,23 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 		.issue(BOB, SECOND_LIQUIDITY_TOKEN, 100)
 		.build()
 		.execute_with(|| {
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock
-				.expect()
-				.with(eq(FIRST_REWARDED_PAIR.0), eq(FIRST_REWARDED_PAIR.1))
-				.return_const(Ok(FIRST_LIQUIDITY_TOKEN));
-			get_liquidity_asset_mock
-				.expect()
-				.with(eq(SECOND_REWARDED_PAIR.0), eq(SECOND_REWARDED_PAIR.1))
-				.return_const(Ok(SECOND_LIQUIDITY_TOKEN));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(11u128);
 
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock
 				.expect()
 				.return_const(Some((min_req_volume(), min_req_volume())));
 
 			System::set_block_number(1);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				FIRST_REWARDED_PAIR,
+				FIRST_LIQUIDITY_TOKEN,
 				FIRST_REWARD_TOKEN,
 				REWARD_AMOUNT,
 				10u32.into(),
@@ -2373,7 +2371,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				FIRST_REWARDED_PAIR,
+				FIRST_LIQUIDITY_TOKEN,
 				SECOND_REWARD_TOKEN,
 				2 * REWARD_AMOUNT,
 				12u32.into(),
@@ -2408,7 +2406,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				SECOND_REWARDED_PAIR,
+				SECOND_LIQUIDITY_TOKEN,
 				FIRST_REWARD_TOKEN,
 				REWARD_AMOUNT,
 				14u32.into(),
@@ -2434,7 +2432,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				SECOND_REWARDED_PAIR,
+				SECOND_LIQUIDITY_TOKEN,
 				SECOND_REWARD_TOKEN,
 				2 * REWARD_AMOUNT,
 				15u32.into(),
@@ -4062,18 +4060,19 @@ fn reject_3rdparty_rewards_with_non_liq_token_and_too_small_volume() {
 			System::set_block_number(1);
 			let too_small_volume = Some((min_req_volume() - 1, min_req_volume() - 1));
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(0u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(0u128);
 
-			let valuate_non_liquidity_token_mock =
-				MockValuationApi::valuate_non_liquidity_token_context();
-			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+			let find_valuation_mock = MockValuationApi::find_valuation_context();
+			find_valuation_mock.expect().return_const(Ok(10u128));
 
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(too_small_volume);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock.expect().return_const(too_small_volume);
 
 			roll_to_session::<Test>(4);
 
@@ -4100,18 +4099,19 @@ fn accept_3rdparty_rewards_with_non_liq_token_and_proper_valuation() {
 			System::set_block_number(1);
 			let min_volume = Some((min_req_volume(), min_req_volume()));
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(0u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(0u128);
 
-			let valuate_non_liquidity_token_mock =
-				MockValuationApi::valuate_non_liquidity_token_context();
-			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+			let find_valuation_mock = MockValuationApi::find_valuation_context();
+			find_valuation_mock.expect().return_const(Ok(10u128));
 
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(min_volume);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock.expect().return_const(min_volume);
 
 			roll_to_session::<Test>(4);
 
@@ -4135,17 +4135,19 @@ fn reject_3rdparty_rewards_with_liq_token_and_too_small_volume() {
 			System::set_block_number(1);
 			let too_small_volume = Some((min_req_volume() - 1, min_req_volume() - 1));
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(10u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(10u128);
 
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(None);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock.expect().return_const(None);
 
-			let get_reserves_mock = MockValuationApi::get_reserves_context();
-			get_reserves_mock.expect().return_const(Ok((9u128, 0u128)));
+			let find_paired_pool_mock = MockValuationApi::find_paired_pool_context();
+			find_paired_pool_mock.expect().return_const(Ok((0, (0, 5), (9, 0u128))));
 
 			roll_to_session::<Test>(4);
 
@@ -4171,17 +4173,21 @@ fn accept_3rdparty_rewards_with_liq_token_and_min_volume() {
 		.execute_with(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+			check_pool_exist_mock.expect().return_const(Ok(()));
 
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(10u128);
+			let get_valuation_for_paired_mock =
+				MockValuationApi::get_valuation_for_paired_context();
+			get_valuation_for_paired_mock.expect().return_const(10u128);
 
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(None);
+			let get_reserve_and_lp_supply_mock =
+				MockValuationApi::get_reserve_and_lp_supply_context();
+			get_reserve_and_lp_supply_mock.expect().return_const(None);
 
-			let get_reserves_mock = MockValuationApi::get_reserves_context();
-			get_reserves_mock.expect().return_const(Ok((min_req_volume(), 0u128)));
+			let find_paired_pool_mock = MockValuationApi::find_paired_pool_context();
+			find_paired_pool_mock
+				.expect()
+				.return_const(Ok((0, (0, 5), (min_req_volume(), 0u128))));
 
 			roll_to_session::<Test>(4);
 

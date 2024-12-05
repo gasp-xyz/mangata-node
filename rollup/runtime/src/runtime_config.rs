@@ -1345,4 +1345,13 @@ pub mod config {
 			}
 		}
 	}
+
+	pub mod pallet_market {
+		use super::*;
+
+		// in case of other valuation use a struct
+		// that impl the ValuateFor trait and delegates to Market for Valuate impl
+		// use such struct in pallet configs instead of Market
+		impl ValuateFor<tokens::RxTokenId> for Market {}
+	}
 }

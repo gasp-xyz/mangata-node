@@ -2490,6 +2490,9 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 		let amount_permille = Permill::from_parts(part_permille);
 		System::set_block_number(1);
 
+		let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+		check_pool_exist_mock.expect().return_const(Ok(()));
+
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
 
 		XykStorage::create_new_token(&2, amount);
@@ -2529,6 +2532,9 @@ fn test_compound_rewards_pool_assets_order_swapped() {
 		let amount_permille = Permill::from_parts(1_000_000);
 		System::set_block_number(1);
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
+
+		let check_pool_exist_mock = MockValuationApi::check_pool_exist_context();
+		check_pool_exist_mock.expect().return_const(Ok(()));
 
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_new_token(&2, amount);

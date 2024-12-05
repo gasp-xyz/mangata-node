@@ -12,14 +12,12 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::{
 	pools::ValuateFor,
-	traits::{FeeLockTriggerTrait, Valuate, XykFunctionsTrait},
+	traits::{FeeLockTriggerTrait, XykFunctionsTrait},
 };
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use sp_arithmetic::per_things::Rounding;
-use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
 use sp_runtime::{
-	traits::{Bounded, CheckedAdd, SaturatedConversion, Zero},
+	traits::{CheckedAdd, Zero},
 	Saturating,
 };
 use sp_std::{convert::TryInto, prelude::*};
@@ -228,14 +226,16 @@ pub mod pallet {
 		type MaxCuratedTokens: Get<u32>;
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
-		#[cfg(not(all(feature = "runtime-benchmarks", not(test))))]
-		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>;
-		#[cfg(all(feature = "runtime-benchmarks", not(test)))]
-		type PoolReservesProvider: Valuate<BalanceOf<Self>, CurrencyIdOf<Self>>
-			+ XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
+		type ValuateForNative: ValuateFor<
+			Self::NativeTokenId,
+			Balance = BalanceOf<Self>,
+			CurrencyId = CurrencyIdOf<Self>,
+		>;
 		#[pallet::constant]
 		type NativeTokenId: Get<CurrencyIdOf<Self>>;
 		type WeightInfo: WeightInfo;
+		#[cfg(all(feature = "runtime-benchmarks", not(test)))]
+		type Xyk: XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
 	}
 
 	#[pallet::genesis_config]
@@ -396,25 +396,10 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 		if T::NativeTokenId::get() == valuating_token_id {
 			return Some(valuating_token_amount)
 		}
-		let (native_token_pool_reserve, valuating_token_pool_reserve) =
-			<T::PoolReservesProvider as Valuate<BalanceOf<T>, CurrencyIdOf<T>>>::get_reserves(
-				T::NativeTokenId::get(),
-				valuating_token_id,
-			)
-			.ok()?;
-		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {
-			return None
-		}
-		Some(
-			multiply_by_rational_with_rounding(
-				valuating_token_amount.into(),
-				native_token_pool_reserve.into(),
-				valuating_token_pool_reserve.into(),
-				Rounding::Down,
-			)
-			.map(SaturatedConversion::saturated_into)
-			.unwrap_or(BalanceOf::<T>::max_value()),
-		)
+		let value =
+			T::ValuateForNative::find_valuation_for(valuating_token_id, valuating_token_amount)
+				.ok()?;
+		Some(value)
 	}
 
 	fn process_fee_lock(who: &T::AccountId) -> DispatchResult {

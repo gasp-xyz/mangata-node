@@ -28,7 +28,7 @@ use frame_support::{
 	},
 	PalletId,
 };
-use mangata_support::pools::{Inspect, ValuateFor};
+use mangata_support::pools::{PoolInfo, Valuate, ValuateFor};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
@@ -290,38 +290,28 @@ impl Config for Test {
 
 #[derive(Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TestTokenValuator {}
-
-impl Inspect for TestTokenValuator {
+impl ValuateFor<MgaTokenId> for TestTokenValuator {}
+impl Valuate for TestTokenValuator {
 	type Balance = Balance;
 	type CurrencyId = TokenId;
 
-	fn get_pool_info(
-		_: Self::CurrencyId,
-	) -> Option<mangata_support::pools::PoolInfo<Self::CurrencyId>> {
-		unimplemented!("Not required in tests!")
+	fn find_paired_pool(
+		base_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
+	) -> Result<PoolInfo<Self::CurrencyId, Self::Balance>, DispatchError> {
+		Ok((asset_id / 100, (base_id, asset_id), (0, 0)))
 	}
 
-	fn get_pool_reserves(
-		_: Self::CurrencyId,
-	) -> Option<mangata_support::pools::PoolReserves<Self::Balance>> {
-		unimplemented!("Not required in tests!")
+	fn check_can_valuate(_: Self::CurrencyId, _: Self::CurrencyId) -> Result<(), DispatchError> {
+		Ok(())
 	}
 
-	fn get_non_empty_pools() -> Option<Vec<Self::CurrencyId>> {
-		unimplemented!("Not required in tests!")
-	}
-}
-
-impl ValuateFor<MgaTokenId> for TestTokenValuator {
-	fn find_paired_pool_for(asset_id: Self::CurrencyId) -> Result<Self::CurrencyId, DispatchError> {
-		Ok(asset_id / 100)
-	}
-
-	fn check_can_valuate(_: Self::CurrencyId) -> Result<(), DispatchError> {
+	fn check_pool_exist(pool_id: Self::CurrencyId) -> Result<(), DispatchError> {
 		Ok(())
 	}
 
 	fn get_reserve_and_lp_supply(
+		_: Self::CurrencyId,
 		pool_id: Self::CurrencyId,
 	) -> Option<(Self::Balance, Self::Balance)> {
 		match pool_id {
@@ -335,11 +325,19 @@ impl ValuateFor<MgaTokenId> for TestTokenValuator {
 		}
 	}
 
-	fn get_valuation_for_paired(_: Self::CurrencyId, amount: Self::Balance) -> Self::Balance {
+	fn get_valuation_for_paired(
+		_: Self::CurrencyId,
+		_: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> Self::Balance {
 		amount
 	}
 
-	fn find_valuation_for(_: Self::CurrencyId) -> Result<Self::Balance, DispatchError> {
+	fn find_valuation(
+		_: Self::CurrencyId,
+		_: Self::CurrencyId,
+		_: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
 		unimplemented!("Not required in tests!")
 	}
 }

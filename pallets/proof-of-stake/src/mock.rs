@@ -15,7 +15,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-pub use mangata_support::traits::ProofOfStakeRewardsApi;
+pub use mangata_support::pools::{PoolInfo, Valuate};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
 use pallet_xyk::AssetMetadataMutationTrait;
@@ -174,50 +174,70 @@ lazy_static::lazy_static! {
 	};
 }
 
+#[cfg(not(feature = "runtime-benchmarks"))]
 mockall::mock! {
 	pub ValuationApi {}
 
-	impl Valuate<Balance, TokenId> for ValuationApi {
+	impl Valuate for ValuationApi {
+		type CurrencyId = TokenId;
+		type Balance = Balance;
 
-	fn get_liquidity_asset(
-	first_asset_id: TokenId,
-	second_asset_id: TokenId,
-	) -> Result<TokenId, DispatchError>;
+		fn find_paired_pool(base_id: TokenId, asset_id: TokenId) -> Result<PoolInfo<TokenId, Balance>, DispatchError>;
 
-	fn get_liquidity_token_mga_pool(
-	liquidity_token_id: TokenId,
-	) -> Result<(TokenId, TokenId), DispatchError>;
+		fn check_can_valuate(base_id: TokenId, pool_id: TokenId) -> Result<(), DispatchError>;
 
-		fn is_liquidity_token(
-			liquidity_token_id: TokenId,
-		) -> bool;
+		fn check_pool_exist(pool_id: TokenId) -> Result<(), DispatchError>;
 
-	fn valuate_liquidity_token(
-	liquidity_token_id: TokenId,
-	liquidity_token_amount: Balance,
-	) -> Balance;
+		fn get_reserve_and_lp_supply(base_id: TokenId, pool_id: TokenId) -> Option<(Balance, Balance)>;
 
-	fn valuate_non_liquidity_token(
-	liquidity_token_id: TokenId,
-	liquidity_token_amount: Balance,
-	) -> Balance;
+		fn get_valuation_for_paired(base_id: TokenId, pool_id: TokenId, amount: Balance) -> Balance;
 
-	fn scale_liquidity_by_mga_valuation(
-	mga_valuation: Balance,
-	liquidity_token_amount: Balance,
-	mga_token_amount: Balance,
-	) -> Balance;
-
-	fn get_pool_state(liquidity_token_id: TokenId) -> Option<(Balance, Balance)>;
-
-	fn get_reserves(
-	first_asset_id: TokenId,
-	second_asset_id: TokenId,
-	) -> Result<(Balance, Balance), DispatchError>;
-
-
+		fn find_valuation(base_id: TokenId, asset_id: TokenId, amount: Balance) -> Result<Balance, DispatchError>;
 	}
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct MockValuationApi;
+#[cfg(feature = "runtime-benchmarks")]
+impl Valuate for MockValuationApi {
+	type CurrencyId = TokenId;
+	type Balance = Balance;
+
+	fn find_paired_pool(
+		base_id: TokenId,
+		asset_id: TokenId,
+	) -> Result<PoolInfo<TokenId, Balance>, DispatchError> {
+		unimplemented!()
+	}
+
+	fn check_can_valuate(base_id: TokenId, pool_id: TokenId) -> Result<(), DispatchError> {
+		unimplemented!()
+	}
+
+	fn check_pool_exist(pool_id: TokenId) -> Result<(), DispatchError> {
+		Ok(())
+	}
+
+	fn get_reserve_and_lp_supply(base_id: TokenId, pool_id: TokenId) -> Option<(Balance, Balance)> {
+		let volume =
+			<<Test as Config>::Min3rdPartyRewardVolume as Get<Balance>>::get() * 1_000_000u128;
+		Some((volume, volume / 2))
+	}
+
+	fn get_valuation_for_paired(base_id: TokenId, pool_id: TokenId, amount: Balance) -> Balance {
+		min_req_volume()
+	}
+
+	fn find_valuation(
+		base_id: TokenId,
+		asset_id: TokenId,
+		amount: Balance,
+	) -> Result<Balance, DispatchError> {
+		unimplemented!()
+	}
+}
+
+impl ValuateFor<NativeCurrencyId> for MockValuationApi {}
 
 pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait<TokenId> for AssetMetadataMutation {
@@ -292,8 +312,9 @@ impl pos::Config for Test {
 	type Min3rdPartyRewardValutationPerSession = ConstU128<100_000>;
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
-	type ValuationApi = Xyk;
+	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type Xyk = Xyk;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
@@ -415,15 +436,16 @@ impl ExtBuilder {
 		self.ext
 	}
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
 		self.ext.execute_with(|| {
-			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
-			is_liquidity_token_mock.expect().return_const(true);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			let is_liquidity_token_mock = MockValuationApi::check_pool_exist_context();
+			is_liquidity_token_mock.expect().return_const(Ok(()));
+			let get_liquidity_asset_mock = MockValuationApi::find_paired_pool_context();
+			get_liquidity_asset_mock.expect().return_const(Ok((10u32, (0, 0), (0, 0))));
+			let valuate_liquidity_token_mock = MockValuationApi::get_valuation_for_paired_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
-			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			let get_pool_state_mock = MockValuationApi::get_reserve_and_lp_supply_context();
 			get_pool_state_mock
 				.expect()
 				.return_const(Some((min_req_volume(), min_req_volume())));

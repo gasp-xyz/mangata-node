@@ -152,6 +152,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = Xyk;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}

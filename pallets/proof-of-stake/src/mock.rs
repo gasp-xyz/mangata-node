@@ -278,6 +278,7 @@ impl pos::Config for Test {
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -294,6 +295,7 @@ impl pos::Config for Test {
 	type WeightInfo = ();
 	type ValuationApi = Xyk;
 	type SchedulesPerBlock = ConstU32<5>;
+	type NontransferableTokens = Nothing;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

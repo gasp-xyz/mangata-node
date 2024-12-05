@@ -172,7 +172,7 @@ use sp_runtime::traits::AccountIdConversion;
 
 use frame_support::{
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get},
+	traits::{tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get},
 	transactional,
 };
 
@@ -446,6 +446,9 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 		type ValuationApi: ValutationApiTrait<Self>;
+
+		/// Tokens which cannot be transfered by extrinsics/user or use in pool, unless foundation override
+		type NontransferableTokens: Contains<CurrencyIdOf<Self>>;
 	}
 
 	#[pallet::error]
@@ -483,6 +486,8 @@ pub mod pallet {
 		NoThirdPartyPartyRewardsToClaim,
 		// cannot promote solo token
 		SoloTokenPromotionForbiddenError,
+		/// Asset cannot be used for rewards
+		NontransferableToken,
 	}
 
 	#[pallet::event]
@@ -770,6 +775,12 @@ pub mod pallet {
 			schedule_end: SessionId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!T::NontransferableTokens::contains(&token_id),
+				Error::<T>::NontransferableToken
+			);
+
 			Self::reward_pool_impl(sender, pool, token_id, amount, schedule_end)
 		}
 
@@ -791,6 +802,11 @@ pub mod pallet {
 			use_balance_from: Option<ThirdPartyActivationKind<CurrencyIdOf<T>>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!T::NontransferableTokens::contains(&reward_token),
+				Error::<T>::NontransferableToken
+			);
 
 			Self::activate_liquidity_for_3rdparty_rewards_impl(
 				sender,

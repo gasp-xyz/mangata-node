@@ -363,6 +363,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type Min3rdPartyRewardVolume = cfg::pallet_proof_of_stake::Min3rdPartyRewardVolume;
 	type SchedulesPerBlock = cfg::pallet_proof_of_stake::SchedulesPerBlock;
 	type ValuationApi = Xyk;
+	type NontransferableTokens = tokens::NontransferableTokens;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}

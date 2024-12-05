@@ -3519,28 +3519,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> f
 	fn is_liquidity_token(liquidity_asset_id: CurrencyIdOf<T>) -> bool {
 		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
 	}
-
-	// copypasta from mint_liquidity
-	fn expected_amount_for_minting(
-		liquidity_asset_id: CurrencyIdOf<T>,
-		asset_id: CurrencyIdOf<T>,
-		amount: BalanceOf<T>,
-	) -> Option<BalanceOf<T>> {
-		let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(liquidity_asset_id)?;
-		let (first_asset_reserve, second_asset_reserve) =
-			Pallet::<T>::get_reserves(first_asset_id, second_asset_id).ok()?;
-
-		let (b, c) = if asset_id == first_asset_id {
-			(second_asset_reserve, first_asset_reserve)
-		} else {
-			(first_asset_reserve, second_asset_reserve)
-		};
-
-		multiply_by_rational_with_rounding(amount.into(), b.into(), c.into(), Rounding::Down)?
-			.checked_add(1)?
-			.try_into()
-			.ok()
-	}
 }
 
 pub trait AssetMetadataMutationTrait<CurrencyId> {
@@ -3798,8 +3776,8 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		let reserves = Pools::<T>::get(pool);
 		let supply = <T as Config>::Currency::total_issuance(pool_id);
 
-		let exp_1 = Self::expected_amount_for_minting(pool_id, pool.0, amounts.0)?;
-		let exp_0 = Self::expected_amount_for_minting(pool_id, pool.1, amounts.1)?;
+		let exp_1 = Self::get_expected_amount_for_mint(pool_id, pool.0, amounts.0)?;
+		let exp_0 = Self::get_expected_amount_for_mint(pool_id, pool.1, amounts.1)?;
 
 		let (amount, reserve) = if exp_1 == amounts.1 {
 			(amounts.0, reserves.0)
@@ -3817,6 +3795,28 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 		)?
 		.try_into()
 		.ok()
+	}
+
+	// copypasta from mint_liquidity
+	fn get_expected_amount_for_mint(
+		pool_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> Option<Self::Balance> {
+		let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(pool_id)?;
+		let (first_asset_reserve, second_asset_reserve) =
+			Pallet::<T>::get_reserves(first_asset_id, second_asset_id).ok()?;
+
+		let (b, c) = if asset_id == first_asset_id {
+			(second_asset_reserve, first_asset_reserve)
+		} else {
+			(first_asset_reserve, second_asset_reserve)
+		};
+
+		multiply_by_rational_with_rounding(amount.into(), b.into(), c.into(), Rounding::Down)?
+			.checked_add(1)?
+			.try_into()
+			.ok()
 	}
 }
 

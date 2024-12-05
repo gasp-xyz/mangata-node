@@ -1785,6 +1785,32 @@ impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 	) -> Option<Self::Balance> {
 		Self::calc_lp_token_amount(&pool_id, vec![amounts.0, amounts.1], true).ok()
 	}
+
+	fn get_expected_amount_for_mint(
+		pool_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> Option<Self::Balance> {
+		let info = Pools::<T>::get(pool_id)?;
+		let asset1 = info.assets.get(0)?;
+		let asset2 = info.assets.get(1)?;
+		let exp1 = info.rate_multipliers.get(0)?;
+		let exp2 = info.rate_multipliers.get(1)?;
+
+		let (same, other) = if asset_id == *asset1 {
+			(exp1, exp2)
+		} else if asset_id == *asset2 {
+			(exp2, exp1)
+		} else {
+			return None;
+		};
+
+		T::HigherPrecisionBalance::from(amount)
+			.checked_mul(&T::HigherPrecisionBalance::from(*same))?
+			.checked_div(&T::HigherPrecisionBalance::from(*other))?
+			.try_into()
+			.ok()
+	}
 }
 
 impl<T: Config> Mutate<T::AccountId> for Pallet<T> {

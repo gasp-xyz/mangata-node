@@ -899,8 +899,9 @@ pub mod pallet {
 		) -> Option<T::Balance> {
 			let pool_info = Self::get_pool_info(pool_id).ok()?;
 			match pool_info.kind {
-				PoolKind::Xyk => T::Xyk::expected_amount_for_minting(pool_id, asset_id, amount),
-				PoolKind::StableSwap => Some(amount),
+				PoolKind::Xyk => T::Xyk::get_expected_amount_for_mint(pool_id, asset_id, amount),
+				PoolKind::StableSwap =>
+					T::StableSwap::get_expected_amount_for_mint(pool_id, asset_id, amount),
 			}
 		}
 
@@ -998,11 +999,25 @@ pub mod pallet {
 					(lp_amount, second_asset_withdrawn)
 				},
 				PoolKind::StableSwap => {
-					// use 1:1 rate for amounts
+					let expected = T::StableSwap::get_expected_amount_for_mint(
+						pool_info.pool_id,
+						asset_id,
+						amount,
+					)
+					.unwrap_or_default();
+
+					ensure!(expected <= max_amount, Error::<T>::ExcesiveInputAmount);
+
+					let amounts = if asset_id == pool_info.pool.0 {
+						(amount, expected)
+					} else {
+						(expected, amount)
+					};
+
 					let lp_amount = T::StableSwap::add_liquidity(
 						&sender,
 						pool_info.pool_id,
-						(amount, amount),
+						amounts,
 						Zero::zero(),
 					)?;
 					if activate && T::Rewards::native_rewards_enabled(pool_info.pool_id) {
@@ -1013,7 +1028,7 @@ pub mod pallet {
 							Some(ActivateKind::AvailableBalance),
 						)?;
 					}
-					(lp_amount, amount)
+					(lp_amount, expected)
 				},
 			};
 

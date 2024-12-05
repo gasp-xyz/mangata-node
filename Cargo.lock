@@ -306,7 +306,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb00293ba84f51ce3bd026bd0de55899c4e68f0a39a5728cebae3a73ffdc0a4f"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
 ]
@@ -318,7 +318,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20c7021f180a0cbea0380eba97c2af3c57074cdaffe0eef7e840e1c9f2841e55"
 dependencies = [
  "ark-bls12-377",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-models-ext",
  "ark-std 0.4.0",
 ]
@@ -329,7 +329,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c775f0d12169cba7aae4caeb547bb6a50781c7449a8aa53793827c9ec4abf488"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
@@ -342,7 +342,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1dc4b3d08f19e8ec06e949712f95b8361e43f1391d94f65e4234df03480631c"
 dependencies = [
  "ark-bls12-381",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-models-ext",
  "ark-serialize 0.4.2",
@@ -356,7 +356,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e0605daf0cc5aa2034b78d008aaf159f56901d92a52ee4f6ecdfdac4f426700"
 dependencies = [
  "ark-bls12-377",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
 ]
@@ -368,7 +368,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ccee5fba47266f460067588ee1bf070a9c760bf2050c1c509982c5719aadb4f2"
 dependencies = [
  "ark-bw6-761",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-models-ext",
  "ark-std 0.4.0",
@@ -381,7 +381,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "defd9a439d56ac24968cca0571f598a61bc8c55f71d50a89cda591cb750670ba"
 dependencies = [
  "ark-ff 0.4.2",
- "ark-poly",
+ "ark-poly 0.4.2",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
  "derivative",
@@ -393,13 +393,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-ec"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43d68f2d516162846c1238e755a7c4d131b892b70cc70c471a8e3ca3ed818fce"
+dependencies = [
+ "ahash 0.8.11",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "educe",
+ "fnv",
+ "hashbrown 0.15.2",
+ "itertools 0.13.0",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "zeroize",
+]
+
+[[package]]
 name = "ark-ed-on-bls12-377"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b10d901b9ac4b38f9c32beacedfadcdd64e46f8d7f8e88c1ae1060022cf6f6c6"
 dependencies = [
  "ark-bls12-377",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
 ]
@@ -410,7 +431,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "524a4fb7540df2e1a8c2e67a83ba1d1e6c3947f4f9342cc2359fc2e789ad731d"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ed-on-bls12-377",
  "ark-ff 0.4.2",
  "ark-models-ext",
@@ -424,7 +445,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9cde0f2aa063a2a5c28d39b47761aa102bda7c13c84fc118a61b87c7b2f785c"
 dependencies = [
  "ark-bls12-381",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-std 0.4.0",
 ]
@@ -435,7 +456,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d15185f1acb49a07ff8cbe5f11a1adc5a93b19e211e325d826ae98e98e124346"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ed-on-bls12-381-bandersnatch",
  "ark-ff 0.4.2",
  "ark-models-ext",
@@ -481,6 +502,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-ff"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a177aba0ed1e0fbb62aa9f6d0502e9b46dad8c2eab04c14258a1212d2557ea70"
+dependencies = [
+ "ark-ff-asm 0.5.0",
+ "ark-ff-macros 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "arrayvec 0.7.6",
+ "digest 0.10.7",
+ "educe",
+ "itertools 0.13.0",
+ "num-bigint",
+ "num-traits",
+ "paste",
+ "zeroize",
+]
+
+[[package]]
 name = "ark-ff-asm"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -498,6 +539,16 @@ checksum = "3ed4aa4fe255d0bc6d79373f7e31d2ea147bcf486cba1be5ba7ea85abdb92348"
 dependencies = [
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "ark-ff-asm"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62945a2f7e6de02a31fe400aa489f0e0f5b2502e69f95f853adb82a96c7a6b60"
+dependencies = [
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -526,12 +577,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-ff-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09be120733ee33f7693ceaa202ca41accd5653b779563608f1234f78ae07c4b3"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
+]
+
+[[package]]
 name = "ark-models-ext"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e9eab5d4b5ff2f228b763d38442adc9b084b0a465409b059fac5c2308835ec2"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
@@ -552,12 +616,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-poly"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "579305839da207f02b89cd1679e50e67b4331e2f9294a57693e5051b7703fe27"
+dependencies = [
+ "ahash 0.8.11",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "educe",
+ "fnv",
+ "hashbrown 0.15.2",
+]
+
+[[package]]
 name = "ark-scale"
 version = "0.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f69c00b3b529be29528a6f2fd5fa7b1790f8bed81b9cdca17e326538545a179"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
@@ -570,11 +649,11 @@ name = "ark-secret-scalar"
 version = "0.0.2"
 source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2",
  "digest 0.10.7",
  "getrandom_or_panic",
  "zeroize",
@@ -596,8 +675,21 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb7b85a02b83d2f22f89bd5cac66c9c89474240cb6207cb1efc16d098e822a5"
 dependencies = [
- "ark-serialize-derive",
+ "ark-serialize-derive 0.4.2",
  "ark-std 0.4.0",
+ "digest 0.10.7",
+ "num-bigint",
+]
+
+[[package]]
+name = "ark-serialize"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f4d068aaf107ebcd7dfb52bc748f8030e0fc930ac8e360146ca54c1203088f7"
+dependencies = [
+ "ark-serialize-derive 0.5.0",
+ "ark-std 0.5.0",
+ "arrayvec 0.7.6",
  "digest 0.10.7",
  "num-bigint",
 ]
@@ -611,6 +703,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "ark-serialize-derive"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213888f660fddcca0d257e88e54ac05bca01885f258ccdf695bafd77031bb69d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -635,10 +738,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ark-std"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "246a225cc6131e9ee4f24619af0f19d67761fff15d7ccc22e42b80846e69449a"
+dependencies = [
+ "num-traits",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "ark-transcript"
 version = "0.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "563084372d89271122bd743ef0a608179726f5fad0566008ba55bd0f756489b8"
+source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
@@ -650,12 +762,12 @@ dependencies = [
 
 [[package]]
 name = "ark-transcript"
-version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+version = "0.0.3"
+source = "git+https://github.com/w3f/ark-transcript#37a169f587f45d67e5afad143bc2a7c9c864884b"
 dependencies = [
- "ark-ff 0.4.2",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
  "digest 0.10.7",
  "rand_core 0.6.4",
  "sha3",
@@ -859,7 +971,7 @@ version = "0.0.4"
 source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
 dependencies = [
  "ark-bls12-381",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ed-on-bls12-381-bandersnatch",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
@@ -1472,13 +1584,13 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/w3f/ring-proof#1eedf08d97effe1921f4aa2e926575088b068e2b"
 dependencies = [
- "ark-ec",
- "ark-ff 0.4.2",
- "ark-poly",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
  "fflonk",
  "getrandom_or_panic",
  "rand_core 0.6.4",
@@ -2118,13 +2230,13 @@ name = "dleq_vrf"
 version = "0.0.2"
 source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
 dependencies = [
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-scale",
  "ark-secret-scalar",
  "ark-serialize 0.4.2",
  "ark-std 0.4.0",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2",
  "arrayvec 0.7.6",
  "zeroize",
 ]
@@ -2256,6 +2368,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "educe"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d7bc049e1bd8cdeb31b68bbd586a9464ecf9f3944af3958a7a9d0f8b9799417"
+dependencies = [
+ "enum-ordinalize",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2297,6 +2421,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "enum-ordinalize"
+version = "4.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea0dcfa4e54eeb516fe454635a95753ddd39acda650ce703031c6973e315dd5"
+dependencies = [
+ "enum-ordinalize-derive",
+]
+
+[[package]]
+name = "enum-ordinalize-derive"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d28318a75d4aead5c4db25382e8ef717932d0346600cacae6357eb5941bc5ff"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -2421,7 +2565,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "derive_more",
  "log",
@@ -2492,14 +2636,14 @@ dependencies = [
 
 [[package]]
 name = "fflonk"
-version = "0.1.0"
-source = "git+https://github.com/w3f/fflonk#1e854f35e9a65d08b11a86291405cdc95baa0a35"
+version = "0.1.1"
+source = "git+https://github.com/w3f/fflonk#eda051ea3b80042e844a3ebd17c2f60536e6ee3f"
 dependencies = [
- "ark-ec",
- "ark-ff 0.4.2",
- "ark-poly",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
  "merlin 3.0.0",
 ]
 
@@ -2604,7 +2748,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fork-tree"
 version = "12.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -2627,7 +2771,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -2652,7 +2796,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "32.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "Inflector",
  "array-bytes 6.2.3",
@@ -2706,7 +2850,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "aquamarine 0.3.3",
  "extrinsic-shuffler",
@@ -2740,7 +2884,7 @@ dependencies = [
 [[package]]
 name = "frame-remote-externalities"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#46fdae444f71731021c0d8107dced84c4fc36278"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
 dependencies = [
  "futures",
  "indicatif",
@@ -2762,7 +2906,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "aquamarine 0.5.0",
  "array-bytes 6.2.3",
@@ -2804,7 +2948,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -2823,7 +2967,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 3.2.0",
@@ -2835,7 +2979,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2845,7 +2989,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "cfg-if",
  "docify",
@@ -2867,7 +3011,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2882,7 +3026,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -2891,7 +3035,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3310,6 +3454,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
  "ahash 0.8.11",
+ "allocator-api2",
+]
+
+[[package]]
+name = "hashbrown"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf151400ff0baff5465007dd2f3e717f3fe502074ca563069ce3a6629d07b289"
+dependencies = [
  "allocator-api2",
 ]
 
@@ -3801,6 +3954,15 @@ name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -4775,7 +4937,7 @@ dependencies = [
 [[package]]
 name = "mangata-support"
 version = "0.1.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "mangata-types",
@@ -4788,7 +4950,7 @@ dependencies = [
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -5490,7 +5652,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5507,7 +5669,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5522,7 +5684,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5546,7 +5708,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -5594,7 +5756,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective-mangata"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5665,7 +5827,7 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5688,7 +5850,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -5785,7 +5947,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5887,7 +6049,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5964,7 +6126,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6009,7 +6171,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo-mangata"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6043,7 +6205,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6063,7 +6225,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6079,7 +6241,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6095,7 +6257,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -6107,7 +6269,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6126,7 +6288,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6142,7 +6304,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6158,7 +6320,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7377,15 +7539,14 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/w3f/ring-proof#1eedf08d97effe1921f4aa2e926575088b068e2b"
 dependencies = [
- "ark-ec",
- "ark-ff 0.4.2",
- "ark-poly",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "ark-transcript 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "arrayvec 0.7.6",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-poly 0.5.0",
+ "ark-serialize 0.5.0",
+ "ark-std 0.5.0",
+ "ark-transcript 0.0.3",
  "blake2 0.10.6",
  "common",
  "fflonk",
@@ -7983,7 +8144,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "log",
  "sp-core",
@@ -7994,7 +8155,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "aquamarine 0.3.3",
  "futures",
@@ -8020,7 +8181,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -8035,7 +8196,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder-ver"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "aquamarine 0.1.12",
  "extrinsic-shuffler",
@@ -8055,7 +8216,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "docify",
@@ -8081,7 +8242,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "proc-macro-crate 3.2.0",
  "proc-macro2",
@@ -8092,7 +8253,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.36.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "chrono",
@@ -8133,7 +8294,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "fnv",
  "futures",
@@ -8160,7 +8321,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -8186,7 +8347,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -8211,7 +8372,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -8240,7 +8401,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa"
 version = "0.19.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "ahash 0.8.11",
  "array-bytes 6.2.3",
@@ -8283,7 +8444,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -8308,7 +8469,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -8331,7 +8492,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "polkavm",
  "sc-allocator",
@@ -8344,7 +8505,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-polkavm"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "log",
  "polkavm",
@@ -8355,7 +8516,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.29.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -8373,7 +8534,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "ansi_term",
  "futures",
@@ -8390,7 +8551,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "25.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "parking_lot 0.12.3",
@@ -8404,7 +8565,7 @@ dependencies = [
 [[package]]
 name = "sc-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 4.2.0",
  "arrayvec 0.7.6",
@@ -8433,7 +8594,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8476,7 +8637,7 @@ dependencies = [
 [[package]]
 name = "sc-network-bitswap"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-channel",
  "cid",
@@ -8496,7 +8657,7 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -8513,7 +8674,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "ahash 0.8.11",
  "futures",
@@ -8532,7 +8693,7 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8553,7 +8714,7 @@ dependencies = [
 [[package]]
 name = "sc-network-sync"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "async-channel",
@@ -8589,7 +8750,7 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "futures",
@@ -8608,7 +8769,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "bytes",
@@ -8642,7 +8803,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.17.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -8651,7 +8812,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -8683,7 +8844,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -8703,7 +8864,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "futures",
  "governor",
@@ -8721,7 +8882,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "futures",
@@ -8752,7 +8913,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "directories",
@@ -8817,7 +8978,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.30.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -8828,7 +8989,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "derive_more",
  "futures",
@@ -8849,7 +9010,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "15.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "chrono",
  "futures",
@@ -8868,7 +9029,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "ansi_term",
  "chrono",
@@ -8898,7 +9059,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "proc-macro-crate 3.2.0",
  "proc-macro2",
@@ -8909,7 +9070,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -8936,7 +9097,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -8952,7 +9113,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-channel",
  "futures",
@@ -9498,7 +9659,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "hash-db",
  "log",
@@ -9520,7 +9681,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "15.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "Inflector",
  "blake2 0.10.6",
@@ -9534,7 +9695,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9547,7 +9708,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "23.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -9579,7 +9740,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "sp-api",
  "sp-inherents",
@@ -9590,7 +9751,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "futures",
  "log",
@@ -9608,7 +9769,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "futures",
@@ -9623,7 +9784,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -9640,7 +9801,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -9659,7 +9820,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-grandpa"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -9677,7 +9838,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.32.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9689,7 +9850,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "28.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "bandersnatch_vrfs",
@@ -9736,7 +9897,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-ec-utils"
 version = "0.10.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#46fdae444f71731021c0d8107dced84c4fc36278"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -9744,7 +9905,7 @@ dependencies = [
  "ark-bls12-381-ext",
  "ark-bw6-761",
  "ark-bw6-761-ext",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ed-on-bls12-377",
  "ark-ed-on-bls12-377-ext",
  "ark-ed-on-bls12-381-bandersnatch",
@@ -9757,7 +9918,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing"
 version = "0.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -9770,7 +9931,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing-proc-macro"
 version = "0.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "quote",
  "sp-crypto-hashing",
@@ -9780,7 +9941,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.3",
@@ -9789,7 +9950,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9799,7 +9960,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -9810,7 +9971,7 @@ dependencies = [
 [[package]]
 name = "sp-genesis-builder"
 version = "0.7.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "serde_json",
  "sp-api",
@@ -9821,7 +9982,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -9835,7 +9996,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "30.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "bytes",
  "ed25519-dalek",
@@ -9861,7 +10022,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "31.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -9871,7 +10032,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.34.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -9882,7 +10043,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "thiserror",
  "zstd 0.12.4",
@@ -9891,7 +10052,7 @@ dependencies = [
 [[package]]
 name = "sp-metadata-ir"
 version = "0.6.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -9902,7 +10063,7 @@ dependencies = [
 [[package]]
 name = "sp-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -9914,7 +10075,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -9924,7 +10085,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -9934,7 +10095,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -9944,7 +10105,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "31.0.1"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -9975,7 +10136,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -9994,7 +10155,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "Inflector",
  "expander",
@@ -10007,7 +10168,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10022,7 +10183,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -10036,7 +10197,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "hash-db",
  "log",
@@ -10057,7 +10218,7 @@ dependencies = [
 [[package]]
 name = "sp-statement-store"
 version = "10.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "aes-gcm",
  "curve25519-dalek 4.1.1",
@@ -10082,12 +10243,12 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -10100,7 +10261,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10113,7 +10274,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "sp-std",
@@ -10125,7 +10286,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "sp-api",
  "sp-runtime",
@@ -10134,7 +10295,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "26.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10149,7 +10310,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "ahash 0.8.11",
  "hash-db",
@@ -10173,7 +10334,7 @@ dependencies = [
 [[package]]
 name = "sp-ver"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -10190,7 +10351,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "29.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -10207,7 +10368,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "13.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -10218,7 +10379,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
@@ -10231,7 +10392,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "27.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "bounded-collections",
  "parity-scale-codec",
@@ -10390,7 +10551,7 @@ dependencies = [
 [[package]]
 name = "substrate-bip39"
 version = "0.4.7"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "hmac 0.12.1",
  "pbkdf2",
@@ -10402,12 +10563,12 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.17.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "hyper",
  "log",
@@ -10419,7 +10580,7 @@ dependencies = [
 [[package]]
 name = "substrate-rpc-client"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#46fdae444f71731021c0d8107dced84c4fc36278"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
 dependencies = [
  "async-trait",
  "jsonrpsee",
@@ -10432,7 +10593,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-client"
 version = "2.0.1"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "async-trait",
@@ -10459,7 +10620,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-runtime"
 version = "2.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "array-bytes 6.2.3",
  "frame-executive",
@@ -10502,7 +10663,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-runtime-client"
 version = "2.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "futures",
  "sc-block-builder",
@@ -10521,7 +10682,7 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "17.0.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "build-helper",
  "cargo_metadata",
@@ -11137,7 +11298,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "try-runtime-cli"
 version = "0.38.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#46fdae444f71731021c0d8107dced84c4fc36278"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
 dependencies = [
  "async-trait",
  "clap",
@@ -11323,7 +11484,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 [[package]]
 name = "ver-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com//gasp-xyz/polkadot-sdk?branch=fix/market-mint-ratio#859dad177ab1c51f6570873c24266de6d3b2b349"
 dependencies = [
  "derive_more",
  "frame-support",
@@ -11360,10 +11521,10 @@ checksum = "9c5da5fa2c6afa2c9158eaa7cd9aee249765eb32b5fb0c63ad8b9e79336a47ec"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-381",
- "ark-ec",
+ "ark-ec 0.4.2",
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
- "ark-serialize-derive",
+ "ark-serialize-derive 0.4.2",
  "arrayref",
  "constcat",
  "digest 0.10.7",

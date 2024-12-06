@@ -1110,9 +1110,9 @@ pub mod config {
 				asset_1: T::AssetId,
 				asset_2: T::AssetId,
 			) -> DispatchResult {
-				let name_lp = format_u128_with_leading_zeros(lp_asset, 8);
-				let name_asset_1 = format_u128_with_leading_zeros(asset_1, 8);
-				let name_asset_2 = format_u128_with_leading_zeros(asset_2, 8);
+				let name_lp = format_asset_id(lp_asset);
+				let name_asset_1 = format_asset_id(asset_1);
+				let name_asset_2 = format_asset_id(asset_2);
 
 				let mut name: Vec<u8> = Vec::<u8>::new();
 				name.extend_from_slice(LIQUIDITY_TOKEN_IDENTIFIER);
@@ -1157,27 +1157,20 @@ pub mod config {
 			}
 		}
 
-		fn format_u128_with_leading_zeros(num: TokenId, width: usize) -> Vec<u8> {
+		// 48 in utf-8 '0'
+		// 55 in utf-8 '0' + gap between '9' and 'A'
+		pub fn format_asset_id(num: TokenId) -> Vec<u8> {
 			let mut result = Vec::new();
-			let mut current = num;
-			let mut digits = 0;
-
-			while current != 0 {
-				current /= 10;
-				digits += 1;
+			for bytes in num.to_be_bytes().iter() {
+				match (bytes >> 4) as u8 {
+					x @ 0u8..=9u8 => result.push(x + 48),
+					x => result.push(x + 55),
+				}
+				match (bytes & 0b0000_1111) as u8 {
+					x @ 0u8..=9u8 => result.push(x + 48),
+					x => result.push(x + 55),
+				}
 			}
-
-			for _ in 0..width - digits {
-				result.push(b'0');
-			}
-
-			current = num;
-			while current != 0 {
-				let digit = (current % 10) as u8;
-				result.push(digit + b'0');
-				current /= 10;
-			}
-
 			result
 		}
 	}

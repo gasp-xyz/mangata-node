@@ -2884,7 +2884,7 @@ dependencies = [
 [[package]]
 name = "frame-remote-externalities"
 version = "0.35.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e5bbc9b3eaa4f69cd39000bb69f6963f36dd93b8"
 dependencies = [
  "futures",
  "indicatif",
@@ -9899,7 +9899,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-ec-utils"
 version = "0.10.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e5bbc9b3eaa4f69cd39000bb69f6963f36dd93b8"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -10582,7 +10582,7 @@ dependencies = [
 [[package]]
 name = "substrate-rpc-client"
 version = "0.33.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e5bbc9b3eaa4f69cd39000bb69f6963f36dd93b8"
 dependencies = [
  "async-trait",
  "jsonrpsee",
@@ -11300,7 +11300,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "try-runtime-cli"
 version = "0.38.0"
-source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#6b71a3c1276a1e0d8a75eaf5932d9afb82bb477a"
+source = "git+https://github.com/gasp-xyz/polkadot-sdk?branch=eth-rollup-develop#e5bbc9b3eaa4f69cd39000bb69f6963f36dd93b8"
 dependencies = [
  "async-trait",
  "clap",

@@ -22,7 +22,7 @@ where
 	T::Balance: From<u128>,
 {
 	let native = T::NativeCurrencyId::get();
-	let id = T::Currency::create(who, (1_000 * UNIT).into()).expect("is ok");
+	let id = T::Currency::create(who, (1_000_000_000 * UNIT).into()).expect("is ok");
 	// create some default entries for stable swap to work
 	let _ = T::AssetRegistry::create_pool_asset(id, native, native);
 	id
@@ -42,9 +42,9 @@ where
 		SystemOrigin::Signed(who.clone()).into(),
 		kind,
 		asset1,
-		UNIT.into(),
+		(1_000_000 * UNIT).into(),
 		asset2,
-		UNIT.into()
+		(UNIT / 1_000_000).into()
 	));
 
 	(asset1, asset2, lp_token)
@@ -88,9 +88,9 @@ mod benchmarks {
 			SystemOrigin::Signed(caller.clone()),
 			kind,
 			asset1,
-			UNIT.into(),
+			(10 * UNIT).into(),
 			asset2,
-			UNIT.into(),
+			10.into(),
 		);
 
 		let lp_supply = T::Currency::total_issuance(lp_token);
@@ -98,7 +98,7 @@ mod benchmarks {
 			Event::LiquidityMinted {
 				who: caller,
 				pool_id: lp_token,
-				amounts_provided: (UNIT.into(), UNIT.into()),
+				amounts_provided: ((10 * UNIT).into(), 10.into()),
 				lp_token,
 				lp_token_minted: lp_supply,
 				total_supply: lp_supply,
@@ -169,7 +169,7 @@ mod benchmarks {
 
 		// xyk returns None in this case, does a swap internally
 		let lp_minted = Market::<T>::calculate_expected_lp_minted(pool_id, amounts)
-			.unwrap_or(4192957199889574550.into());
+			.unwrap_or(2496237962221088530.into());
 
 		#[extrinsic_call]
 		mint_liquidity_fixed_amounts(
@@ -502,9 +502,9 @@ mod benchmarks {
 			SystemOrigin::Signed(caller.clone()),
 			kind,
 			asset1,
-			UNIT.into(),
+			(10 * UNIT).into(),
 			asset2,
-			UNIT.into(),
+			10.into(),
 		);
 
 		let lp_supply = T::Currency::total_issuance(lp_token);
@@ -512,7 +512,7 @@ mod benchmarks {
 			Event::LiquidityMinted {
 				who: caller,
 				pool_id: lp_token,
-				amounts_provided: (UNIT.into(), UNIT.into()),
+				amounts_provided: ((10 * UNIT).into(), 10.into()),
 				lp_token,
 				lp_token_minted: lp_supply,
 				total_supply: lp_supply,

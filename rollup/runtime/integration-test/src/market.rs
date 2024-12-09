@@ -15,8 +15,8 @@ fn test_env() -> TestExternalities {
 		balances: vec![
 			(AccountId::from(ALICE), NATIVE_ASSET_ID, 100 * UNIT),
 			(AccountId::from(ALICE), ASSET_ID_1, 100 * UNIT),
-			(AccountId::from(ALICE), ASSET_ID_2, 100 * UNIT),
-			(AccountId::from(ALICE), ASSET_ID_3, 100 * UNIT),
+			(AccountId::from(ALICE), ASSET_ID_2, Balance::MAX),
+			(AccountId::from(ALICE), ASSET_ID_3, Balance::MAX),
 		],
 		..ExtBuilder::default()
 	}
@@ -110,6 +110,54 @@ fn create_pool_works() {
 			total_supply: 100000000000000000000,
 		}));
 	})
+}
+
+#[test]
+fn create_pool_works_ss_min_max() {
+	test_env().execute_with(|| {
+		let min = 1;
+		let max_round_to_decimal: u128 = 300000000000000000000000000000000000000 / 10;
+
+		assert_ok!(Market::create_pool(
+			origin(),
+			PoolKind::StableSwap,
+			ASSET_ID_2,
+			min,
+			ASSET_ID_3,
+			min,
+		));
+
+		let max_rate = UNIT; // 1e18
+		let max_rate_fail = UNIT * 10; // 1e19
+		assert_ok!(Market::create_pool(
+			origin(),
+			PoolKind::StableSwap,
+			ASSET_ID_2,
+			min,
+			ASSET_ID_3,
+			max_rate,
+		));
+		assert_err!(
+			Market::create_pool(
+				origin(),
+				PoolKind::StableSwap,
+				ASSET_ID_2,
+				min,
+				ASSET_ID_3,
+				max_rate_fail,
+			),
+			pallet_stable_swap::Error::<Runtime>::InitialPoolRateOutOfRange
+		);
+
+		assert_ok!(Market::create_pool(
+			origin(),
+			PoolKind::StableSwap,
+			ASSET_ID_2,
+			max_round_to_decimal,
+			ASSET_ID_3,
+			max_round_to_decimal,
+		));
+	});
 }
 
 #[test]

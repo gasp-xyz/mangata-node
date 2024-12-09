@@ -339,7 +339,7 @@ impl pallet_stable_swap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type Balance = Balance;
-	type HigherPrecisionBalance = sp_core::U256;
+	type HigherPrecisionBalance = sp_core::U512;
 	type CurrencyId = TokenId;
 	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type BnbTreasurySubAccDerive = cfg::pallet_xyk::BnbTreasurySubAccDerive;

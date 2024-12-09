@@ -1824,23 +1824,35 @@ impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
 		let assets = vec![asset_1, asset_2];
 		let ten = T::Balance::from(10_u32);
 
-		let exp = |amount: Self::Balance| {
-			let mut i = 0_usize;
-			let mut pow_10 = T::Balance::one() * ten;
-			while amount % pow_10 == Zero::zero() {
-				i += 1;
-				pow_10 *= ten;
-			}
-			i
+		ensure!(!amount_1.is_zero(), Error::<T>::InitialLiquidityZeroAmount);
+		ensure!(!amount_2.is_zero(), Error::<T>::InitialLiquidityZeroAmount);
+
+		let (rate_1_mul, rate_2_mul) = if amount_1 == amount_2 {
+			(One::one(), One::one())
+		} else {
+			let exp = |amount: Self::Balance| {
+				let mut i = 0_usize;
+				let mut pow_10 = T::Balance::one() * ten;
+				loop {
+					if amount % pow_10 != Zero::zero() {
+						break;
+					}
+					i += 1;
+					if amount / pow_10 < ten {
+						break;
+					}
+					pow_10 *= ten;
+				}
+				i
+			};
+
+			let exp1 = exp(amount_1);
+			let exp2 = exp(amount_2);
+			let min = exp1.min(exp2);
+			let exp = checked_pow(ten, min).ok_or(Error::<T>::MathOverflow)?;
+
+			(amount_1 / exp, amount_2 / exp)
 		};
-
-		let exp1 = exp(amount_1);
-		let exp2 = exp(amount_2);
-		let min = exp1.min(exp2);
-		let exp = checked_pow(ten, min).ok_or(Error::<T>::MathOverflow)?;
-
-		let rate_1_mul = amount_1 / exp;
-		let rate_2_mul = amount_2 / exp;
 
 		// the max rate cannot be more than 1e18
 		let precision =

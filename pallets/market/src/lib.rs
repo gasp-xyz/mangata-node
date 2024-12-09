@@ -144,8 +144,7 @@ pub mod pallet {
 		>;
 
 		/// Apis for LP asset creation in asset registry
-		type AssetRegistry: AssetRegistryProviderTrait<Self::CurrencyId>
-			+ AssetRegistryInspect<AssetId = Self::CurrencyId>;
+		type AssetRegistry: AssetRegistryProviderTrait<Self::CurrencyId>;
 
 		/// List of tokens ids that are not allowed to be used at all
 		type DisabledTokens: Contains<Self::CurrencyId>;

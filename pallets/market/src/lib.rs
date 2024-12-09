@@ -1024,7 +1024,7 @@ pub mod pallet {
 						T::Rewards::activate_liquidity(
 							sender.clone(),
 							pool_info.pool_id,
-							amount,
+							lp_amount,
 							Some(ActivateKind::AvailableBalance),
 						)?;
 					}

@@ -813,7 +813,7 @@ impl pallet_sequencer_staking::Config for Runtime {
 	type MinimumSequencers = frame_support::traits::ConstU32<2>;
 	type RolldownProvider = Rolldown;
 	type NoOfPastSessionsForEligibility = frame_support::traits::ConstU32<10>;
-	type MaxSequencers = frame_support::traits::ConstU32<10>;
+	type MaxSequencers = frame_support::traits::ConstU32<1000>;
 	type BlocksForSequencerUpdate = frame_support::traits::ConstU32<10>;
 	type CancellerRewardPercentage = cfg::pallet_sequencer_staking::CancellerRewardPercentage;
 	type ChainId = pallet_rolldown::messages::Chain;

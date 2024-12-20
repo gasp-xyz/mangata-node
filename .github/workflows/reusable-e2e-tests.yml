@@ -160,6 +160,9 @@ jobs:
           - command: "yarn test-sequencerRewards"
             fast: true
             unlocked: false
+          - command: "yarn test-nonTransToken"
+            fast: false
+            unlocked: false
 
 
 

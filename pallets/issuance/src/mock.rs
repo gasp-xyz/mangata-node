@@ -92,7 +92,7 @@ parameter_types! {
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
-	pub const IssuanceAmount: Balance = 4_000_000_000;
+	pub const LinearIssuanceAmount: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(222222222);
@@ -126,7 +126,7 @@ impl pallet_issuance::Config for Test {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type SequencersIssuanceVault = SequencersIssuanceVault;
 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-	type IssuanceAmount = IssuanceAmount;
+	type LinearIssuanceAmount = LinearIssuanceAmount;
 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
 	type LiquidityMiningSplit = LiquidityMiningSplit;
 	type StakingSplit = StakingSplit;

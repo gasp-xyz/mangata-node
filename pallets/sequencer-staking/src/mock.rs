@@ -62,7 +62,7 @@ parameter_types! {
 	pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
 
 	pub const TotalCrowdloanAllocation: Balance = 0;
-	pub const IssuanceAmount: Balance = 4_000_000_000;
+	pub const LinearIssuanceAmount: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 10_000u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(344444444);
@@ -96,7 +96,7 @@ impl GetIssuance<Balance> for MockIssuance {
 	}
 	fn get_sequencer_issuance(_n: u32) -> Option<Balance> {
 		let to_be_issued: Balance =
-			IssuanceAmount::get() - TargetTge::get() - TotalCrowdloanAllocation::get();
+			LinearIssuanceAmount::get() - TargetTge::get() - TotalCrowdloanAllocation::get();
 		let linear_issuance_sessions: u32 = LinearIssuanceBlocks::get() / BlocksPerRound::get();
 		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
 		let issuance = SequencerSplit::get() * linear_issuance_per_session;

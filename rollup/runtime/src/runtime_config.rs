@@ -1000,7 +1000,7 @@ pub mod config {
 			pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
 
 			pub const TotalCrowdloanAllocation: Balance = 0 * DOLLARS;
-			pub const IssuanceAmount: Balance = 10_200_000 * DOLLARS; // IssuanceAmount is the value that is issued over the LinearIssuanceBlocks
+			pub const LinearIssuanceAmount: Balance = 10_200_000 * DOLLARS; // LinearIssuanceAmount/(LinearIssuanceBlocks/BlocksPerRound) is the value that is issued every session indefintely FOREVER!
 			pub const LinearIssuanceBlocks: u32 = 10_512_000u32; // 2 years
 			pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(686000000); // 6_997_200
 			pub const StakingSplit: Perbill = Perbill::from_parts(314000000); // 3_202_800

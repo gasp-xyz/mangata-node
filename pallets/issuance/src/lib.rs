@@ -28,7 +28,7 @@ mod benchmarking;
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 pub struct IssuanceInfo<Balance> {
 	// Max number of MGA to target
-	pub issuance_amount: Balance,
+	pub linear_issuance_amount: Balance,
 	// MGA created at token generation event
 	// We aasume that there is only one tge
 	pub issuance_at_init: Balance,
@@ -134,7 +134,7 @@ pub mod pallet {
 		type ImmediateTGEReleasePercent: Get<Percent>;
 		#[pallet::constant]
 		/// The maximum amount of Mangata tokens
-		type IssuanceAmount: Get<BalanceOf<Self>>;
+		type LinearIssuanceAmount: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		/// The number of blocks the issuance is linear
 		type LinearIssuanceBlocks: Get<u32>;
@@ -313,7 +313,10 @@ impl<T: Config> ComputeIssuance for Pallet<T> {
 
 	fn compute_issuance(n: u32) {
 		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
-		let _ = Pallet::<T>::clear_round_issuance_history(n);
+		// So that we have easy access to the complete issuance record
+		// TODO?
+		// Maybe enable this and clean?
+		// let _ = Pallet::<T>::clear_round_issuance_history(n);
 	}
 }
 
@@ -352,7 +355,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
 
 		let issuance_config: IssuanceInfo<BalanceOf<T>> = IssuanceInfo {
-			issuance_amount: T::IssuanceAmount::get(),
+			linear_issuance_amount: T::LinearIssuanceAmount::get(),
 			issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into()),
 			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 			liquidity_mining_split: T::LiquidityMiningSplit::get(),
@@ -393,11 +396,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
-		let issuance_config =
-			IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
-		let to_be_issued: BalanceOf<T> = issuance_config.issuance_amount;
-		let linear_issuance_sessions: u32 = issuance_config
-			.linear_issuance_blocks
+		let _ = IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
+		// Get everything from config and ignore the storage config data
+		let to_be_issued: BalanceOf<T> = T::LinearIssuanceAmount::get();
+		let linear_issuance_sessions: u32 = T::LinearIssuanceBlocks::get()
 			.checked_div(T::BlocksPerRound::get())
 			.ok_or(Error::<T>::MathError)?;
 		let linear_issuance_per_session = to_be_issued
@@ -407,10 +409,10 @@ impl<T: Config> Pallet<T> {
 		let current_round_issuance: BalanceOf<T> = linear_issuance_per_session;
 
 		let liquidity_mining_issuance =
-			issuance_config.liquidity_mining_split * current_round_issuance;
+			T::LiquidityMiningSplit::get() * current_round_issuance;
 
-		let staking_issuance = issuance_config.staking_split * current_round_issuance;
-		let sequencers_issuance = issuance_config.sequencers_split * current_round_issuance;
+		let staking_issuance = T::StakingSplit::get() * current_round_issuance;
+		let sequencers_issuance = T::SequencersSplit::get() * current_round_issuance;
 
 		T::LiquidityMiningApi::distribute_rewards(liquidity_mining_issuance);
 

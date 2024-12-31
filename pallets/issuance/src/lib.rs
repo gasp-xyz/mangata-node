@@ -28,7 +28,7 @@ mod benchmarking;
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 pub struct IssuanceInfo<Balance> {
 	// Max number of MGA to target
-	pub cap: Balance,
+	pub issuance_amount: Balance,
 	// MGA created at token generation event
 	// We aasume that there is only one tge
 	pub issuance_at_init: Balance,
@@ -352,7 +352,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
 
 		let issuance_config: IssuanceInfo<BalanceOf<T>> = IssuanceInfo {
-			cap: T::IssuanceCap::get(),
+			issuance_amount: T::IssuanceCap::get(),
 			issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into()),
 			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 			liquidity_mining_split: T::LiquidityMiningSplit::get(),
@@ -380,14 +380,6 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(
-			issuance_config.cap >=
-				issuance_config
-					.issuance_at_init
-					.checked_add(&issuance_config.total_crowdloan_allocation)
-					.ok_or(Error::<T>::IssuanceConfigInvalid)?,
-			Error::<T>::IssuanceConfigInvalid
-		);
-		ensure!(
 			issuance_config.linear_issuance_blocks != u32::zero(),
 			Error::<T>::IssuanceConfigInvalid
 		);
@@ -404,11 +396,7 @@ impl<T: Config> Pallet<T> {
 		let issuance_config =
 			IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
 		let to_be_issued: BalanceOf<T> = issuance_config
-			.cap
-			.checked_sub(&issuance_config.issuance_at_init)
-			.ok_or(Error::<T>::MathError)?
-			.checked_sub(&issuance_config.total_crowdloan_allocation)
-			.ok_or(Error::<T>::MathError)?;
+			.issuance_amount;
 		let linear_issuance_sessions: u32 = issuance_config
 			.linear_issuance_blocks
 			.checked_div(T::BlocksPerRound::get())
@@ -417,31 +405,7 @@ impl<T: Config> Pallet<T> {
 			.checked_div(&linear_issuance_sessions.into())
 			.ok_or(Error::<T>::MathError)?;
 
-		let current_round_issuance: BalanceOf<T>;
-		// We do not want issuance to overshoot
-		// Sessions begin from 0 and linear_issuance_sessions is the total number of linear sessions including 0
-		// So we stop before that
-		if current_round < linear_issuance_sessions {
-			current_round_issuance = linear_issuance_per_session;
-		} else {
-			let current_mga_total_issuance: BalanceOf<T> =
-				T::Tokens::total_issuance(T::NativeCurrencyId::get().into());
-			if issuance_config.cap > current_mga_total_issuance {
-				// TODO
-				// Here we assume that the crowdloan ends before linear issuance period ends
-				// We could get the amount that the crowdloan rewards still need to mint and account for that
-				// But that largely depends on on how the next crowdloan will be implemented
-				// Not very useful for the first crowdloan, as we know that it will end before linear issuance period ends and we check for this
-				current_round_issuance = linear_issuance_per_session.min(
-					issuance_config
-						.cap
-						.checked_sub(&current_mga_total_issuance)
-						.ok_or(Error::<T>::MathError)?,
-				)
-			} else {
-				current_round_issuance = Zero::zero();
-			}
-		}
+		let current_round_issuance: BalanceOf<T> = linear_issuance_per_session;
 
 		let liquidity_mining_issuance =
 			issuance_config.liquidity_mining_split * current_round_issuance;

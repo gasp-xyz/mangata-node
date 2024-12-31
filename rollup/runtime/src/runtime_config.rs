@@ -1000,11 +1000,11 @@ pub mod config {
 			pub SequencerIssuanceVault: AccountId = SequencerIssuanceVaultId::get().into_account_truncating();
 
 			pub const TotalCrowdloanAllocation: Balance = 0 * DOLLARS;
-			pub const IssuanceCap: Balance = 25_400_000 * DOLLARS;
-			pub const LinearIssuanceBlocks: u32 = 10_512_000u32; // 5 years
-			pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(647050000); // 13'199'820
-			pub const StakingSplit: Perbill = Perbill::from_parts(235300000); // 4'800'120
-			pub const SequencerSplit: Perbill = Perbill::from_parts(117650000); // 2'400'060
+			pub const IssuanceCap: Balance = 10_200_000 * DOLLARS; // IssuanceAmount is the value that is issued over the LinearIssuanceBlocks
+			pub const LinearIssuanceBlocks: u32 = 10_512_000u32; // 2 years
+			pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(686000000); // 6_997_200
+			pub const StakingSplit: Perbill = Perbill::from_parts(314000000); // 3_202_800
+			pub const SequencerSplit: Perbill = Perbill::from_parts(0); // 0
 			pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(100);
 			// Just some safe values to avoid zero diision etc
 			// TGE happens on L1 either way

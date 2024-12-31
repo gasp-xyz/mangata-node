@@ -408,8 +408,7 @@ impl<T: Config> Pallet<T> {
 
 		let current_round_issuance: BalanceOf<T> = linear_issuance_per_session;
 
-		let liquidity_mining_issuance =
-			T::LiquidityMiningSplit::get() * current_round_issuance;
+		let liquidity_mining_issuance = T::LiquidityMiningSplit::get() * current_round_issuance;
 
 		let staking_issuance = T::StakingSplit::get() * current_round_issuance;
 		let sequencers_issuance = T::SequencersSplit::get() * current_round_issuance;

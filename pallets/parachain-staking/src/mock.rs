@@ -74,7 +74,7 @@ parameter_types! {
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
-	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const IssuanceAmount: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
@@ -109,7 +109,7 @@ impl GetIssuance<Balance> for MockIssuance {
 	}
 	fn get_staking_issuance(_n: u32) -> Option<Balance> {
 		let to_be_issued: Balance =
-			IssuanceCap::get() - TargetTge::get() - TotalCrowdloanAllocation::get();
+			IssuanceAmount::get() - TargetTge::get() - TotalCrowdloanAllocation::get();
 		let linear_issuance_sessions: u32 = LinearIssuanceBlocks::get() / BlocksPerRound::get();
 		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
 		let staking_issuance = StakingSplit::get() * linear_issuance_per_session;

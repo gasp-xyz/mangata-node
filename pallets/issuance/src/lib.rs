@@ -134,7 +134,7 @@ pub mod pallet {
 		type ImmediateTGEReleasePercent: Get<Percent>;
 		#[pallet::constant]
 		/// The maximum amount of Mangata tokens
-		type IssuanceCap: Get<BalanceOf<Self>>;
+		type IssuanceAmount: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		/// The number of blocks the issuance is linear
 		type LinearIssuanceBlocks: Get<u32>;
@@ -352,7 +352,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
 
 		let issuance_config: IssuanceInfo<BalanceOf<T>> = IssuanceInfo {
-			issuance_amount: T::IssuanceCap::get(),
+			issuance_amount: T::IssuanceAmount::get(),
 			issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into()),
 			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 			liquidity_mining_split: T::LiquidityMiningSplit::get(),

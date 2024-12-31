@@ -635,7 +635,7 @@ impl pallet_issuance::Config for Runtime {
 	type StakingIssuanceVault = cfg::pallet_issuance::StakingIssuanceVault;
 	type SequencersIssuanceVault = cfg::pallet_issuance::SequencerIssuanceVault;
 	type TotalCrowdloanAllocation = cfg::pallet_issuance::TotalCrowdloanAllocation;
-	type IssuanceCap = cfg::pallet_issuance::IssuanceCap;
+	type IssuanceAmount = cfg::pallet_issuance::IssuanceAmount;
 	type LinearIssuanceBlocks = cfg::pallet_issuance::LinearIssuanceBlocks;
 	type LiquidityMiningSplit = cfg::pallet_issuance::LiquidityMiningSplit;
 	type StakingSplit = cfg::pallet_issuance::StakingSplit;

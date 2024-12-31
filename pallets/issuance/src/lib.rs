@@ -395,8 +395,7 @@ impl<T: Config> Pallet<T> {
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
 		let issuance_config =
 			IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
-		let to_be_issued: BalanceOf<T> = issuance_config
-			.issuance_amount;
+		let to_be_issued: BalanceOf<T> = issuance_config.issuance_amount;
 		let linear_issuance_sessions: u32 = issuance_config
 			.linear_issuance_blocks
 			.checked_div(T::BlocksPerRound::get())

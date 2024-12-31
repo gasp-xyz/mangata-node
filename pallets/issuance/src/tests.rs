@@ -20,7 +20,7 @@ fn init_issuance_config_works() {
 		assert_eq!(
 			Issuance::get_issuance_config(),
 			Some(IssuanceInfo {
-				cap: 4_000_000_000u128,
+				issuance_amount: 4_000_000_000u128,
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
 				liquidity_mining_split: Perbill::from_parts(555555556),
@@ -71,7 +71,7 @@ fn cannot_init_issuance_config_when_already_init() {
 		assert_eq!(
 			Issuance::get_issuance_config(),
 			Some(IssuanceInfo {
-				cap: 4_000_000_000u128,
+				issuance_amount: 4_000_000_000u128,
 				issuance_at_init: current_issuance,
 				linear_issuance_blocks: 22_222u32,
 				liquidity_mining_split: Perbill::from_parts(555555556),

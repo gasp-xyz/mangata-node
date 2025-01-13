@@ -915,7 +915,7 @@ pub mod pallet {
 			}
 		}
 
-		pub(crate) fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {
+		pub fn get_pool_info(pool_id: PoolIdOf<T>) -> Result<PoolInfoOf<T>, Error<T>> {
 			if let Some(pool) = T::Xyk::get_pool_info(pool_id) {
 				return Ok(PoolInfo { pool_id, kind: PoolKind::Xyk, pool })
 			}

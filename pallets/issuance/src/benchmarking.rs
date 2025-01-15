@@ -68,7 +68,6 @@ benchmarks! {
 	}
 
 	execute_tge {
-
 		let x in 3..100;
 
 		assert!(!IsTGEFinalized::<T>::get());
@@ -102,6 +101,20 @@ benchmarks! {
 		}
 
 	}
+
+	set_issuance_config {
+		let new_linear_issuance_amount: BalanceOf<T> = 10_000_000_000u128.try_into().ok().expect("balance");
+
+		assert_ok!(Issuance::<T>::finalize_tge(RawOrigin::Root.into()));
+		assert_ok!(Issuance::<T>::init_issuance_config(RawOrigin::Root.into()));
+
+		assert!(IssuanceConfigStore::<T>::get().unwrap().linear_issuance_amount != new_linear_issuance_amount);
+
+	}: _(RawOrigin::Root, Some(new_linear_issuance_amount), None, None, None, None)
+	verify {
+		assert_eq!(IssuanceConfigStore::<T>::get().unwrap().linear_issuance_amount, new_linear_issuance_amount);
+	}
+
 
 	impl_benchmark_test_suite!(Issuance, crate::mock::new_test_ext_without_issuance_config(), crate::mock::Test)
 }

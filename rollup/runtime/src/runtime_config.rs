@@ -516,8 +516,6 @@ pub mod config {
 
 			pub fn can_withdraw_fee(
 				who: &<T>::AccountId,
-				call: &T::RuntimeCall,
-				fee: Balance,
 				fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
 				swap_pool_list: Vec<TokenId>,
 				asset_id_in: TokenId,
@@ -736,8 +734,6 @@ pub mod config {
 						Some(fee_lock_metadata),
 					) => FeeHelpers::<T, C, OFLA>::can_withdraw_fee(
 						who,
-						call,
-						fee,
 						fee_lock_metadata,
 						swap_pool_list,
 						asset_id_in,

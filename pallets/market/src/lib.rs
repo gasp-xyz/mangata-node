@@ -781,7 +781,7 @@ pub mod pallet {
 				id = if id == swap.0 { swap.1 } else { swap.0 };
 			}
 
-			ensure!(amount_in < max_amount_in, Error::<T>::ExcesiveInputAmount);
+			ensure!(amount_in <= max_amount_in, Error::<T>::ExcesiveInputAmount);
 
 			let swaps = Self::do_swaps(&sender, pools, path.clone(), amount_in, asset_amount_out)?;
 

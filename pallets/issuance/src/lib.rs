@@ -52,36 +52,9 @@ pub struct TgeInfo<AccountId, Balance> {
 	pub amount: Balance,
 }
 
-/// Weight functions needed for pallet_xyk.
-pub trait WeightInfo {
-	fn init_issuance_config() -> Weight;
-	fn finalize_tge() -> Weight;
-	fn execute_tge(x: u32) -> Weight;
-}
-
-// For backwards compatibility and tests
-impl WeightInfo for () {
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	fn init_issuance_config() -> Weight {
-		Weight::from_parts(50_642_000, 0)
-	}
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	fn finalize_tge() -> Weight {
-		Weight::from_parts(50_830_000, 0)
-	}
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	// Storage: System Account (r:1 w:1)
-	fn execute_tge(l: u32) -> Weight {
-		Weight::from_parts(52_151_000, 0)
-			// Standard Error: 1_000
-			.saturating_add((Weight::from_parts(130_000, 0)).saturating_mul(l as u64))
-	}
-}
-
+pub mod weights;
 pub use pallet::*;
+pub use weights::WeightInfo;
 
 type BalanceOf<T> =
 	<<T as Config>::Tokens as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -304,7 +277,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::finalize_tge())]
+		#[pallet::weight(T::WeightInfo::set_issuance_config())]
 		pub fn set_issuance_config(
 			origin: OriginFor<T>,
 			linear_issuance_amount: Option<BalanceOf<T>>,

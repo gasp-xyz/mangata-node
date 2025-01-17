@@ -52,36 +52,9 @@ pub struct TgeInfo<AccountId, Balance> {
 	pub amount: Balance,
 }
 
-/// Weight functions needed for pallet_xyk.
-pub trait WeightInfo {
-	fn init_issuance_config() -> Weight;
-	fn finalize_tge() -> Weight;
-	fn execute_tge(x: u32) -> Weight;
-}
-
-// For backwards compatibility and tests
-impl WeightInfo for () {
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	fn init_issuance_config() -> Weight {
-		Weight::from_parts(50_642_000, 0)
-	}
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	fn finalize_tge() -> Weight {
-		Weight::from_parts(50_830_000, 0)
-	}
-	// Storage: Vesting Vesting (r:1 w:1)
-	// Storage: Balances Locks (r:1 w:1)
-	// Storage: System Account (r:1 w:1)
-	fn execute_tge(l: u32) -> Weight {
-		Weight::from_parts(52_151_000, 0)
-			// Standard Error: 1_000
-			.saturating_add((Weight::from_parts(130_000, 0)).saturating_mul(l as u64))
-	}
-}
-
+pub mod weights;
 pub use pallet::*;
+pub use weights::WeightInfo;
 
 type BalanceOf<T> =
 	<<T as Config>::Tokens as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -203,6 +176,8 @@ pub mod pallet {
 		MathError,
 		/// unknown pool
 		UnknownPool,
+		/// The issuance config has not been initialized
+		InvalidSplitAmounts,
 	}
 
 	// XYK extrinsics.
@@ -300,6 +275,54 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::WeightInfo::set_issuance_config())]
+		pub fn set_issuance_config(
+			origin: OriginFor<T>,
+			linear_issuance_amount: Option<BalanceOf<T>>,
+			linear_issuance_blocks: Option<u32>,
+			liquidity_mining_split: Option<Perbill>,
+			staking_split: Option<Perbill>,
+			sequencers_split: Option<Perbill>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			let config = IssuanceConfigStore::<T>::try_mutate(|config| {
+				let cfg = config.as_mut().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
+
+				if let Some(linear_issuance_amount) = linear_issuance_amount {
+					cfg.linear_issuance_amount = linear_issuance_amount;
+				}
+
+				if let Some(linear_issuance_blocks) = linear_issuance_blocks {
+					cfg.linear_issuance_blocks = linear_issuance_blocks;
+				}
+
+				if let Some(liquidity_mining_split) = liquidity_mining_split {
+					cfg.liquidity_mining_split = liquidity_mining_split;
+				}
+
+				if let Some(staking_split) = staking_split {
+					cfg.staking_split = staking_split;
+				}
+
+				if let Some(sequencers_split) = sequencers_split {
+					cfg.sequencers_split = sequencers_split;
+				}
+
+				Ok::<IssuanceInfo<BalanceOf<T>>, Error<T>>(cfg.clone())
+			})?;
+
+			let total_splits =
+				config.liquidity_mining_split + config.staking_split + config.sequencers_split;
+
+			ensure!(total_splits.is_one(), Error::<T>::InvalidSplitAmounts);
+
+			Pallet::<T>::deposit_event(Event::IssuanceConfigSet(config));
+
+			Ok(().into())
+		}
 	}
 
 	#[pallet::event]
@@ -317,6 +340,8 @@ pub mod pallet {
 		TGEInstanceFailed(TgeInfo<T::AccountId, BalanceOf<T>>),
 		/// A TGE instance has succeeded
 		TGEInstanceSucceeded(TgeInfo<T::AccountId, BalanceOf<T>>),
+		/// Issuance configuration updated
+		IssuanceConfigSet(IssuanceInfo<BalanceOf<T>>),
 	}
 }
 
@@ -411,10 +436,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
-		let _ = IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
+		let config =
+			IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
 		// Get everything from config and ignore the storage config data
-		let to_be_issued: BalanceOf<T> = T::LinearIssuanceAmount::get();
-		let linear_issuance_sessions: u32 = T::LinearIssuanceBlocks::get()
+		let to_be_issued: BalanceOf<T> = config.linear_issuance_amount;
+		let linear_issuance_sessions: u32 = config
+			.linear_issuance_blocks
 			.checked_div(T::BlocksPerRound::get())
 			.ok_or(Error::<T>::MathError)?;
 		let linear_issuance_per_session = to_be_issued
@@ -423,10 +450,9 @@ impl<T: Config> Pallet<T> {
 
 		let current_round_issuance: BalanceOf<T> = linear_issuance_per_session;
 
-		let liquidity_mining_issuance = T::LiquidityMiningSplit::get() * current_round_issuance;
-
-		let staking_issuance = T::StakingSplit::get() * current_round_issuance;
-		let sequencers_issuance = T::SequencersSplit::get() * current_round_issuance;
+		let liquidity_mining_issuance = config.liquidity_mining_split * current_round_issuance;
+		let staking_issuance = config.staking_split * current_round_issuance;
+		let sequencers_issuance = config.sequencers_split * current_round_issuance;
 
 		T::LiquidityMiningApi::distribute_rewards(liquidity_mining_issuance);
 

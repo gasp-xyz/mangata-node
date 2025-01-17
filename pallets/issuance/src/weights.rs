@@ -62,7 +62,7 @@ pub trait WeightInfo {
 
 /// Weights for pallet_issuance using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_issuance::WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> WeightInfo for ModuleWeight<T> {
 	// Storage: `Issuance::IssuanceConfigStore` (r:1 w:1)
 	// Proof: `Issuance::IssuanceConfigStore` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
 	// Storage: `Issuance::IsTGEFinalized` (r:1 w:0)

@@ -3,7 +3,7 @@ use mock::{
 	new_test_ext, new_test_ext_without_issuance_config, roll_to_while_minting, BlocksPerRound,
 	Issuance, RuntimeOrigin, StakeCurrency, System, Test, Tokens, Vesting, MGA_TOKEN_ID,
 };
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{traits::BadOrigin, SaturatedConversion};
 
 use frame_support::{assert_noop, assert_ok};
 
@@ -352,5 +352,95 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 		roll_to_while_minting(23051, Some(81008));
 
 		assert_eq!(3902430240, Tokens::total_issuance(0u32));
+	});
+}
+
+#[test]
+fn update_issuance_config_only_as_root() {
+	new_test_ext_without_issuance_config().execute_with(|| {
+		const USER_ID: u64 = 0;
+
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
+
+		assert_noop!(
+			Issuance::set_issuance_config(
+				RuntimeOrigin::signed(USER_ID),
+				None,
+				None,
+				None,
+				None,
+				None
+			),
+			sp_runtime::traits::BadOrigin
+		);
+	});
+}
+
+#[test]
+fn set_issuance_modifies_the_config() {
+	new_test_ext_without_issuance_config().execute_with(|| {
+		const USER_ID: u64 = 0;
+
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
+
+		let initial_config = IssuanceConfigStore::<Test>::get().unwrap();
+
+		let linear_issuance_amount = 5_000_000_000u128;
+		let linear_issuance_blocks = 33_222u32;
+		let liquidity_mining_split = Perbill::from_percent(10);
+		let staking_split = Perbill::from_percent(20);
+		let sequencers_split = Perbill::from_percent(70);
+
+		assert!(initial_config.linear_issuance_amount != linear_issuance_amount);
+		assert!(initial_config.linear_issuance_blocks != linear_issuance_blocks);
+		assert!(initial_config.liquidity_mining_split != liquidity_mining_split);
+		assert!(initial_config.staking_split != staking_split);
+		assert!(initial_config.sequencers_split != sequencers_split);
+
+		assert_ok!(Issuance::set_issuance_config(
+			RuntimeOrigin::root(),
+			Some(linear_issuance_amount),
+			Some(linear_issuance_blocks),
+			Some(liquidity_mining_split),
+			Some(staking_split),
+			Some(sequencers_split)
+		));
+
+		let cfg = IssuanceConfigStore::<Test>::get().unwrap();
+		assert_eq!(cfg.linear_issuance_amount, linear_issuance_amount);
+		assert_eq!(cfg.linear_issuance_blocks, linear_issuance_blocks);
+		assert_eq!(cfg.liquidity_mining_split, liquidity_mining_split);
+		assert_eq!(cfg.staking_split, staking_split);
+		assert_eq!(cfg.sequencers_split, sequencers_split);
+	});
+}
+
+#[test]
+fn test_fail_on_wrong_splits_amounts() {
+	new_test_ext_without_issuance_config().execute_with(|| {
+		const USER_ID: u64 = 0;
+
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
+
+		let initial_config = IssuanceConfigStore::<Test>::get().unwrap();
+
+		let liquidity_mining_split = Perbill::from_percent(10);
+		let staking_split = Perbill::from_percent(20);
+		let sequencers_split = Perbill::from_percent(30);
+
+		assert_noop!(
+			Issuance::set_issuance_config(
+				RuntimeOrigin::root(),
+				None,
+				None,
+				Some(liquidity_mining_split),
+				Some(staking_split),
+				Some(sequencers_split)
+			),
+			Error::<Test>::InvalidSplitAmounts
+		);
 	});
 }

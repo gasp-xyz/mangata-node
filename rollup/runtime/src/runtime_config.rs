@@ -917,7 +917,8 @@ pub mod config {
 		use crate::*;
 
 		parameter_types! {
-			pub const MaxMembers: u32 = 3;
+			pub const MaxMembersFoundation: u32 = 3;
+			pub const MaxMembersTransfer: u32 = 50;
 		}
 
 		// todo change the `Get` to `Contains` trait and use membership pallet directly

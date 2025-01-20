@@ -708,5 +708,6 @@ fn rollup_genesis(
 			),
 			phantom: Default::default(),
 		},
+		transfer_members: Default::default(),
 	}
 }

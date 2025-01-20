@@ -312,6 +312,7 @@ impl orml_tokens::Config for Runtime {
 	type MaxReserves = ();
 	type ReserveIdentifier = cfg::orml_tokens::ReserveIdentifier;
 	type NontransferableTokens = tokens::NontransferableTokens;
+	type NontransferableTokensAllowList = TransferMembers;
 }
 
 impl pallet_xyk::Config for Runtime {
@@ -764,7 +765,7 @@ impl pallet_identity::Config for Runtime {
 
 /// membership pallets is used to maintain Foundation accounts
 /// only a `change_key` of existing -> new member account id is allowed
-impl pallet_membership::Config for Runtime {
+impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = NeverEnsureOrigin<()>;
 	type RemoveOrigin = NeverEnsureOrigin<()>;
@@ -773,7 +774,7 @@ impl pallet_membership::Config for Runtime {
 	type PrimeOrigin = NeverEnsureOrigin<()>;
 	type MembershipInitialized = ();
 	type MembershipChanged = ();
-	type MaxMembers = cfg::pallet_membership::MaxMembers;
+	type MaxMembers = cfg::pallet_membership::MaxMembersFoundation;
 	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
 }
 
@@ -852,6 +853,19 @@ impl pallet_market::Config for Runtime {
 	type ArbitrageBot = tokens::ArbitrageBot;
 }
 
+impl pallet_membership::Config<pallet_membership::Instance2> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type RemoveOrigin = EnsureRoot<AccountId>;
+	type SwapOrigin = EnsureRoot<AccountId>;
+	type ResetOrigin = EnsureRoot<AccountId>;
+	type PrimeOrigin = NeverEnsureOrigin<()>;
+	type MembershipInitialized = ();
+	type MembershipChanged = ();
+	type MaxMembers = cfg::pallet_membership::MaxMembersTransfer;
+	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime {
@@ -910,7 +924,8 @@ construct_runtime!(
 		SudoOrigin: pallet_sudo_origin = 62,
 		Council: pallet_collective_mangata::<Instance1> = 63,
 		Identity: pallet_identity = 64,
-		FoundationMembers: pallet_membership = 65,
+		FoundationMembers: pallet_membership::<Instance1> = 65,
+		TransferMembers: pallet_membership::<Instance2> = 66,
 	}
 );
 

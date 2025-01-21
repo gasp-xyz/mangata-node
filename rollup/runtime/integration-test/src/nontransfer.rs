@@ -78,6 +78,58 @@ fn test_tokens_calls_should_block() {
 }
 
 #[test]
+fn test_tokens_calls_should_work_for_allow_listed() {
+	let mut ext = test_env();
+	ext.execute_with(|| {
+		let who = AccountId::from(ALICE);
+		let bob = AccountId::from(BOB);
+		let amount = UNIT;
+
+		assert_ok!(TransferMembers::add_member(root(), who));
+
+		assert_err!(
+			orml_tokens::Pallet::<Runtime>::mint(root(), NATIVE_ASSET_ID, who, amount),
+			orml_tokens::Error::<Runtime>::NontransferableToken
+		);
+		assert_err!(
+			orml_tokens::Pallet::<Runtime>::set_balance(
+				root(),
+				who,
+				NATIVE_ASSET_ID,
+				amount,
+				amount
+			),
+			orml_tokens::Error::<Runtime>::NontransferableToken
+		);
+		assert_ok!(orml_tokens::Pallet::<Runtime>::transfer(
+			origin(),
+			bob,
+			NATIVE_ASSET_ID,
+			amount
+		));
+		assert_ok!(orml_tokens::Pallet::<Runtime>::force_transfer(
+			root(),
+			who,
+			bob,
+			NATIVE_ASSET_ID,
+			amount
+		));
+		assert_ok!(orml_tokens::Pallet::<Runtime>::transfer_keep_alive(
+			origin(),
+			bob,
+			NATIVE_ASSET_ID,
+			amount
+		));
+		assert_ok!(orml_tokens::Pallet::<Runtime>::transfer_all(
+			origin(),
+			bob,
+			NATIVE_ASSET_ID,
+			false
+		));
+	});
+}
+
+#[test]
 fn test_market_should_block() {
 	let mut ext = test_env();
 	ext.execute_with(|| {

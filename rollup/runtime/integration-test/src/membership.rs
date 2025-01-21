@@ -17,7 +17,7 @@ fn change_key_works() {
 
 		assert_err!(
 			FoundationMembers::change_key(RuntimeOrigin::signed(bob.clone()), alice),
-			pallet_membership::Error::<Runtime>::NotMember,
+			pallet_membership::Error::<Runtime, pallet_membership::Instance1>::NotMember,
 		);
 
 		assert!(<FoundationMembers as Contains<_>>::contains(&alice));
@@ -72,5 +72,37 @@ fn other_fn_doesnt_work_for_foundation() {
 		assert_err!(FoundationMembers::reset_members(origin.clone(), vec![]), BadOrigin,);
 		assert_err!(FoundationMembers::set_prime(origin.clone(), bob), BadOrigin,);
 		assert_err!(FoundationMembers::clear_prime(origin.clone()), BadOrigin,);
+	});
+}
+
+#[test]
+fn transfer_memebership_fns_work_for_root() {
+	let mut ext = test_env();
+	ext.execute_with(|| {
+		System::set_block_number(1);
+
+		let alice = AccountId::from(ALICE);
+		let bob = AccountId::from(BOB);
+		let origin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
+
+		assert_ok!(TransferMembers::add_member(origin.clone(), bob));
+		assert_ok!(TransferMembers::swap_member(origin.clone(), bob, alice));
+		assert_ok!(TransferMembers::remove_member(origin.clone(), alice));
+		assert_ok!(TransferMembers::reset_members(origin.clone(), vec![]));
+	});
+}
+
+#[test]
+fn transfer_memebership_fns_blocked_for_root() {
+	let mut ext = test_env();
+	ext.execute_with(|| {
+		System::set_block_number(1);
+
+		let alice = AccountId::from(ALICE);
+		let bob = AccountId::from(BOB);
+		let origin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
+
+		assert_err!(TransferMembers::set_prime(origin.clone(), bob), BadOrigin,);
+		assert_err!(TransferMembers::clear_prime(origin.clone()), BadOrigin,);
 	});
 }

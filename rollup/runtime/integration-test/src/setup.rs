@@ -15,14 +15,13 @@ mod rollup_imports {
 	pub use rollup_runtime::{
 		consts::UNIT,
 		runtime_config::config::{
-			orml_asset_registry::AssetMetadataOf,
-			pallet_membership::{FoundationAccountsProvider, MaxMembers},
+			orml_asset_registry::AssetMetadataOf, pallet_membership::FoundationAccountsProvider,
 			pallet_proxy::ProxyType,
 		},
 		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, DispatchClass, FeeLock,
 		FoundationMembers, Identity, Maintenance, OnChargeTransaction, Pays, ProofOfStake, Proxy,
 		Rolldown, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, System, TokenId, Tokens,
-		UncheckedExtrinsic, Weight, Xyk, XykMetadata,
+		TransferMembers, UncheckedExtrinsic, Weight, Xyk, XykMetadata,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;
@@ -99,7 +98,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-		pallet_membership::GenesisConfig::<Runtime> {
+		pallet_membership::GenesisConfig::<Runtime, pallet_membership::Instance1> {
 			members: BoundedVec::truncate_from([AccountId::from(ALICE)].to_vec()),
 			..Default::default()
 		}

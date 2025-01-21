@@ -1,6 +1,6 @@
 [package]
 name = "rollup-runtime"
-version = "1.0.0"
+version = "1.0.3"
 description = "Mangata rollup runtime"
 authors = ["Mangata Team"]
 edition.workspace = true

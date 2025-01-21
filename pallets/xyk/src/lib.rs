@@ -1502,6 +1502,30 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn settle_pool_fees(
+		who: &T::AccountId,
+		pool_id: CurrencyIdOf<T>,
+		asset_id: CurrencyIdOf<T>,
+		fee: BalanceOf<T>,
+	) -> Result<(), DispatchError> {
+		let pool = Self::get_pool_info(pool_id).ok_or(Error::<T>::NoSuchPool)?;
+		let reserves = Self::get_reserves(pool.0, pool.1)?;
+		let new_reserves = if asset_id == pool.0 {
+			(reserves.0 + fee, reserves.1)
+		} else {
+			(reserves.0, reserves.1 + fee)
+		};
+		<T as pallet::Config>::Currency::transfer(
+			asset_id,
+			who,
+			&Self::account_id(),
+			fee,
+			ExistenceRequirement::AllowDeath,
+		)?;
+		Self::set_reserves(pool.0, new_reserves.0, pool.1, new_reserves.1)?;
+		Ok(())
+	}
+
 	// Calculate first and second token amounts depending on liquidity amount to burn
 	pub fn get_burn_amount(
 		first_asset_id: CurrencyIdOf<T>,
@@ -1679,7 +1703,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn account_id() -> T::AccountId {
+	pub fn account_id() -> T::AccountId {
 		PALLET_ID.into_account_truncating()
 	}
 
@@ -3594,8 +3618,15 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 				Ok(reserves) => reserves,
 				Err(_) => return Default::default(),
 			};
-		Pallet::<T>::calculate_sell_price_no_fee(token_reserves, native_reserves, amount)
-			.unwrap_or_default()
+
+		multiply_by_rational_with_rounding(
+			amount.into(),
+			native_reserves.into(),
+			token_reserves.into(),
+			Rounding::Down,
+		)
+		.map(SaturatedConversion::saturated_into)
+		.unwrap_or(BalanceOf::<T>::max_value())
 	}
 
 	fn scale_liquidity_by_mga_valuation(

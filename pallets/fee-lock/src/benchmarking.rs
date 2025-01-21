@@ -105,7 +105,7 @@ benchmarks! {
 		#[cfg(not(test))]
 		assert_ok!(<T as Config>::Xyk::create_pool(caller, valuating_token_id, pool_amount, token_id, pool_amount.saturating_mul(2u8.into())));
 
-		let value: BalanceOf<T> = 1980_u32.into();
+		let value: BalanceOf<T> = 2000_u32.into();
 		let mut valuation: Option<BalanceOf<T>> = None;
 	}: {valuation = FeeLock::<T>::get_swap_valuation_for_token(valuating_token_id, valuating_token_amount);}
 	verify{

@@ -839,6 +839,23 @@ pub mod pallet {
 			Ok(BoundedVec::truncate_from(amounts))
 		}
 
+		pub fn settle_pool_fees(
+			who: &T::AccountId,
+			pool_id: PoolIdOf<T>,
+			asset_id: T::CurrencyId,
+			fee: T::Balance,
+		) -> Result<(), DispatchError> {
+			let pool_account = Self::get_pool_account(&pool_id);
+			T::Currency::transfer(
+				asset_id,
+				who,
+				&pool_account,
+				fee,
+				ExistenceRequirement::AllowDeath,
+			)?;
+			Ok(())
+		}
+
 		/// The account of the pool that store asset balances.
 		///
 		/// This actually does computation. If you need to keep using it, then make sure you cache

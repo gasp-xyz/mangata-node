@@ -429,12 +429,21 @@ impl Into<CallType> for RuntimeCall {
 				asset_amount_in,
 				asset_id_out,
 				min_amount_out,
-			}) => CallType::Swap {
-				swap_pool_list,
-				asset_id_in,
-				asset_amount_in,
-				asset_id_out,
-				asset_amount_out: min_amount_out,
+			}) => {
+				// we need the exact out value to consider high value swap for the bought asset too
+				let asset_amount_out = if swap_pool_list.len() == 1 {
+					Market::calculate_sell_price(swap_pool_list[0], asset_id_in, asset_amount_in)
+						.unwrap_or(min_amount_out)
+				} else {
+					min_amount_out
+				};
+				CallType::Swap {
+					swap_pool_list,
+					asset_id_in,
+					asset_amount_in,
+					asset_id_out,
+					asset_amount_out,
+				}
 			},
 			RuntimeCall::Market(pallet_market::Call::multiswap_asset_buy {
 				swap_pool_list,
@@ -442,12 +451,21 @@ impl Into<CallType> for RuntimeCall {
 				asset_amount_out,
 				asset_id_in,
 				max_amount_in,
-			}) => CallType::Swap {
-				swap_pool_list,
-				asset_id_in,
-				asset_amount_in: max_amount_in,
-				asset_id_out,
-				asset_amount_out,
+			}) => {
+				// we need the exact in value to consider high value swap for the sold asset too
+				let asset_amount_in = if swap_pool_list.len() == 1 {
+					Market::calculate_buy_price(swap_pool_list[0], asset_id_out, asset_amount_out)
+						.unwrap_or(max_amount_in)
+				} else {
+					max_amount_in
+				};
+				CallType::Swap {
+					swap_pool_list,
+					asset_id_in,
+					asset_amount_in,
+					asset_id_out,
+					asset_amount_out,
+				}
 			},
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
 			_ => CallType::Other,

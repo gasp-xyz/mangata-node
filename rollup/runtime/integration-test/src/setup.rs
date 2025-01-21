@@ -20,8 +20,8 @@ mod rollup_imports {
 		},
 		AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, DispatchClass, FeeLock,
 		FoundationMembers, Identity, Maintenance, OnChargeTransaction, Pays, ProofOfStake, Proxy,
-		Rolldown, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, System, TokenId, Tokens,
-		TransferMembers, UncheckedExtrinsic, Weight, Xyk, XykMetadata,
+		Rolldown, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, StableSwap, System, TokenId,
+		Tokens, TransferMembers, UncheckedExtrinsic, Weight, Xyk, XykMetadata,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = rollup_runtime::runtime_config::tokens::RX_TOKEN_ID;

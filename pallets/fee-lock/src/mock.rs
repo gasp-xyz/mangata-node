@@ -120,7 +120,7 @@ impl Valuate for MockValuateForNative {
 		_: Self::CurrencyId,
 		_: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		Ok(1980_u128)
+		Ok(2000_u128)
 	}
 }
 

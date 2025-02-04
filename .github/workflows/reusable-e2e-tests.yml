@@ -160,6 +160,15 @@ jobs:
           - command: "yarn test-sequencerRewards"
             fast: true
             unlocked: false
+          - command: "yarn test-nonTransToken"
+            fast: false
+            unlocked: false
+          - command: "test-issuanceConfig"
+            fast: true
+            unlocked: false
+          - command: "test-sudoRemoval"
+            fast: true
+            unlocked: false
 
 
 
